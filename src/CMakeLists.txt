@@ -1,4 +1,4 @@
-SET(SOURCES
+set(SOURCES
         benchmark.cpp
         benchmark.hpp
         benchmark_factory.cpp
@@ -6,7 +6,7 @@ SET(SOURCES
         benchmark_suite.cpp
         benchmark_suite.hpp
         config_parser.cpp
-        config_parser.cpp
+        config_parser.hpp
         io_operation.cpp
         io_operation.hpp
 )
