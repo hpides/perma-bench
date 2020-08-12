@@ -1,4 +1,6 @@
-set(SOURCES
+set(
+        SOURCES
+
         benchmark.cpp
         benchmark.hpp
         benchmark_factory.cpp
@@ -11,4 +13,6 @@ set(SOURCES
         io_operation.hpp
 )
 
-add_executable(nvmbm ../nvmbm.cpp SOURCES)
+add_executable(nvmbm ../nvmbm.cpp ${SOURCES})
+add_dependencies(nvmbm PMDK)
+target_link_libraries(nvmbm pmem)

@@ -1,15 +1,19 @@
 #pragma once
 
+#include <vector>
+
+#include "io_operation.hpp"
+
 namespace nvmbm {
 
 class Benchmark {
-public:
-    void run();
+  public:
+    virtual void run() = 0;
 
-    void getResult();
+    virtual void getResult() = 0;
 
-private:
-    std::list<IoOperation> io_operations;
+  private:
+    std::vector<IoOperation> io_operations_;
 };
 
 }  // namespace nvmbm

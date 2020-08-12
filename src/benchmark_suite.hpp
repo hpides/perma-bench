@@ -1,10 +1,14 @@
 #pragma once
 
+#include "benchmark.hpp"
+#include "benchmark_factory.hpp"
+
 namespace nvmbm {
 
 class BenchmarkSuite {
-private:
-    std::list<Benchmark> benchmarks;
+
+  private:
+    std::vector<Benchmark> benchmarks;
     BenchmarkFactory builder;
 };
 
