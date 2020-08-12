@@ -1,6 +1,7 @@
 #pragma once
 
 #include <thread>
+#include <vector>
 
 namespace nvmbm {
 
@@ -24,6 +25,7 @@ class ActiveIoOperation : public IoOperation {
   protected:
     void* start_addr_;
     void* end_addr_;
+    std::vector<char*> read_addresses;
     const uint32_t number_ops_;
     const uint32_t access_size_;
     const bool random_;
