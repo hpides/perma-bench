@@ -14,18 +14,18 @@ namespace internal {
 class IoOperation {
   public:
     virtual void run() = 0;
-    virtual bool is_active() { return false; }
+    virtual bool is_active() const { return false; }
 };
 
 class ActiveIoOperation : public IoOperation {
   public:
     ActiveIoOperation(void* start_addr, void* end_addr, uint32_t num_ops, uint32_t access_size, bool random);
-    bool is_active() override;
+    bool is_active() const override;
 
   protected:
     void* start_addr_;
     void* end_addr_;
-    std::vector<char*> read_addresses;
+    std::vector<char*> op_addresses_;
     const uint32_t number_ops_;
     const uint32_t access_size_;
     const bool random_;

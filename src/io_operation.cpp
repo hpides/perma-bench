@@ -3,13 +3,20 @@
 #include <libpmem.h>
 #include <vector>
 #include <random>
+#include <immintrin.h>
 
 namespace nvmbm {
+
+// This tells the compiler to keep whatever x is and not optimize it away.
+// Inspired by Google Benchmark's DoNotOptimize and this talk https://youtu.be/nXaxk27zwlk?t=2441.
+#define KEEP(x) asm volatile("" : : "g"(x) : "memory")
+
+static constexpr size_t CACHE_LINE_SIZE = 64;
 
 ActiveIoOperation::ActiveIoOperation(void* startAddr, void* endAddr, const uint32_t numberOps,
                                      const uint32_t accessSize, const bool random)
     : start_addr_(startAddr), end_addr_(endAddr), number_ops_(numberOps), access_size_(accessSize), random_(random) {
-  read_addresses = std::vector<char*>{number_ops_};
+    op_addresses_ = std::vector<char*>{number_ops_};
 
   char* start_addr = static_cast<char*>(start_addr_);
   char* end_addr = static_cast<char*>(end_addr_);
@@ -24,17 +31,17 @@ ActiveIoOperation::ActiveIoOperation(void* startAddr, void* endAddr, const uint3
 
     // Random read
     for (uint32_t op = 0; op < number_ops_; ++op) {
-      read_addresses[op] = start_addr + (access_distribution(rnd_generator) * access_size_);
+        op_addresses_[op] = start_addr + (access_distribution(rnd_generator) * access_size_);
     }
   } else {
     // Sequential read
     for (uint32_t op = 0; op < number_ops_; ++op) {
-      read_addresses[op] = start_addr + (op * access_size_);
+        op_addresses_[op] = start_addr + (op * access_size_);
     }
   }
 }
 
-bool ActiveIoOperation::is_active() {
+bool ActiveIoOperation::is_active() const {
     return true;
 }
 
@@ -43,22 +50,24 @@ void Pause::run() {
 }
 
 void Read::run() {
-    for (char* addr : read_addresses) {
+    for (char* addr : op_addresses_) {
         const char* access_end_addr = addr + access_size_;
-        for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += 64) {
-            // Read 512 Bit / 64 Byte
-            asm volatile(
-            "mov       %[addr],     %%rsi  \n"
-            "vmovntdqa 0*64(%%rsi), %%zmm0 \n"
-            :
-            : [addr] "r" (mem_addr)
-            );
-            asm volatile("mfence \n");
+        for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
+            // Read 512 Bit (64 Byte) and do not optimize it out.
+            KEEP(_mm512_stream_load_si512(mem_addr));
         }
     }
 }
 
 void Write::run() {
-    pmem_persist(nullptr, 10);
+    for (char* addr : op_addresses_) {
+        const char* access_end_addr = addr + access_size_;
+        __m512i* data = (__m512i*)(internal::WRITE_DATA);
+        for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
+            // Write 512 Bit (64 Byte) and persist it.
+            _mm512_stream_si512(reinterpret_cast<__m512i*>(mem_addr), *data);
+            pmem_persist(mem_addr, CACHE_LINE_SIZE);
+        }
+    }
 }
 }  // namespace nvmbm

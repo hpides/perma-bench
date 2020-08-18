@@ -4,9 +4,11 @@ project(nvmbm)
 include(ExternalProject)
 set(CMAKE_CXX_STANDARD 17)
 
+SET(COMPILE_FLAGS "-march=native")
+
 if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
     message("-- Release mode, all optimizations enabled")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -Ofast")
+    set(COMPILE_FLAGS "${COMPILE_FLAGS} -O3 -DNDEBUG")
 endif ()
 
 ##################### PMDK ####################
