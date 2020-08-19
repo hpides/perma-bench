@@ -11,6 +11,8 @@ set(
         config_parser.hpp
         io_operation.cpp
         io_operation.hpp
+        utils.cpp
+        utils.hpp
 )
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")

@@ -6,8 +6,10 @@
 namespace nvmbm {
 
 namespace internal {
-static const char WRITE_DATA[64] __attribute__((aligned(64))) =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+";
+
+// Exactly 64 characters to write in one cache line.
+static const char WRITE_DATA[] __attribute__((aligned(64))) =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-";
 
 }  // namespace internal
 
