@@ -43,12 +43,14 @@ class Pause: public IoOperation {
 
 class Read : public ActiveIoOperation {
   public:
+    using ActiveIoOperation::ActiveIoOperation;
     void run() override;
 
 };
 
 class Write : public ActiveIoOperation {
   public:
+    using ActiveIoOperation::ActiveIoOperation;
     void run() override;
 };
 

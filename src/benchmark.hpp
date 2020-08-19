@@ -8,12 +8,13 @@ namespace nvmbm {
 
 class Benchmark {
   public:
-    virtual void run() = 0;
+    Benchmark(std::vector<IoOperation *> io_operations);
+    void run();
 
-    virtual void getResult() = 0;
+    void getResult();
 
   private:
-    std::vector<IoOperation> io_operations_;
+    std::vector<IoOperation *> io_operations_;
 };
 
 }  // namespace nvmbm

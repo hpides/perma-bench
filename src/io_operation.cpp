@@ -1,9 +1,10 @@
 #include "io_operation.hpp"
 
-#include <libpmem.h>
-#include <vector>
-#include <random>
 #include <immintrin.h>
+#include <iostream>
+#include <libpmem.h>
+#include <random>
+#include <vector>
 
 namespace nvmbm {
 
@@ -46,28 +47,32 @@ bool ActiveIoOperation::is_active() const {
 }
 
 void Pause::run() {
+    std::cout << "Sleeping for " << length_ << " milliseconds" << std::endl;
     std::this_thread::sleep_for(std::chrono::microseconds(length_));
+    std::cout << "Slept for " << length_ << " milliseconds" << std::endl;
 }
 
 void Read::run() {
-    for (char* addr : op_addresses_) {
-        const char* access_end_addr = addr + access_size_;
-        for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
-            // Read 512 Bit (64 Byte) and do not optimize it out.
-            KEEP(_mm512_stream_load_si512(mem_addr));
-        }
-    }
+//    for (char* addr : op_addresses_) {
+//        const char* access_end_addr = addr + access_size_;
+//        for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
+//            // Read 512 Bit (64 Byte) and do not optimize it out.
+//            KEEP(_mm512_stream_load_si512(mem_addr));
+//        }
+//    }
+  std::cout << "Running read..." << std::endl;
 }
 
 void Write::run() {
-    for (char* addr : op_addresses_) {
-        const char* access_end_addr = addr + access_size_;
-        __m512i* data = (__m512i*)(internal::WRITE_DATA);
-        for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
-            // Write 512 Bit (64 Byte) and persist it.
-            _mm512_stream_si512(reinterpret_cast<__m512i*>(mem_addr), *data);
-            pmem_persist(mem_addr, CACHE_LINE_SIZE);
-        }
-    }
+//    for (char* addr : op_addresses_) {
+//        const char* access_end_addr = addr + access_size_;
+//        __m512i* data = (__m512i*)(internal::WRITE_DATA);
+//        for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
+//            // Write 512 Bit (64 Byte) and persist it.
+//            _mm512_stream_si512(reinterpret_cast<__m512i*>(mem_addr), *data);
+//            pmem_persist(mem_addr, CACHE_LINE_SIZE);
+//        }
+//    }
+  std::cout << "Running write..." << std::endl;
 }
 }  // namespace nvmbm
