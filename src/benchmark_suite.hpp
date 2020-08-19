@@ -6,11 +6,9 @@
 namespace nvmbm {
 
 class BenchmarkSuite {
-
-  private:
-    std::vector<Benchmark> benchmarks;
-    BenchmarkFactory builder;
+ private:
+  std::vector<Benchmark> benchmarks;
+  BenchmarkFactory builder;
 };
 
 }  // namespace nvmbm
-

@@ -2,10 +2,6 @@
 
 namespace nvmbm {
 
-class BenchmarkFactory {
-
-};
+class BenchmarkFactory {};
 
 }  // namespace nvmbm
-
-

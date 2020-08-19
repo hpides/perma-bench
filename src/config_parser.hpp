@@ -2,8 +2,6 @@
 
 namespace nvmbm {
 
-class ConfigParser {
-
-};
+class ConfigParser {};
 
 }  // namespace nvmbm
