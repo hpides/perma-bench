@@ -14,9 +14,10 @@ jobs:
     # See: https://docs.github.com/en/actions/configuring-and-managing-workflows/configuring-a-workflow#configuring-a-build-matrix
     runs-on: ubuntu-latest
 
-    continue-on-error: true
 
     steps:
+      continue-on-error: true
+
     - uses: actions/checkout@v2
 
     - name: Download Dependencies
