@@ -16,7 +16,7 @@ jobs:
 
 
     steps:
-      continue-on-error: true
+    - continue-on-error: true
 
     - uses: actions/checkout@v2
 
