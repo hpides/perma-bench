@@ -20,18 +20,9 @@ jobs:
 
     - name: Download Dependencies
       # Install PMDK's dependencies
-      run: sudo apt-get update && sudo apt-get install -y autoconf pkg-config libndctl-dev libdaxctl-dev
-
-#    - name: Install libndctl
-#        run: |
-#          curl -OL https://github.com/pmem/ndctl/archive/v69.tar.gz
-#          tar xzf ndctl-69.tar.gz
-#          cd ndctl-69
-#          ./autogen.sh
-#          ./configure CFLAGS='-g -O2' --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64
-#          make
-#          make check
-#          sudo make install
+      run: |
+       sudo apt-get update
+       sudo apt-get install -y autoconf automake pkg-config libglib2.0-dev libfabric-dev pandoc libncurses5-dev libndctl-dev libdaxctl-dev
 
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
