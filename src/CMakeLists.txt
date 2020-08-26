@@ -17,5 +17,5 @@ set(
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")
 add_executable(nvmbm nvmbm.cpp ${SOURCES})
-add_dependencies(nvmbm PMDK yaml-cpp)
+add_dependencies(nvmbm PMDK YAML)
 target_link_libraries(nvmbm pmem yaml-cpp)

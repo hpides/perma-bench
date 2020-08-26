@@ -38,7 +38,7 @@ endif ()
 ##################### YAML ####################
 set(YAML_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/yaml")
 ExternalProject_Add(
-        yaml-cpp
+        YAML
 
         GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
         GIT_TAG yaml-cpp-0.6.3
@@ -49,7 +49,7 @@ ExternalProject_Add(
         LOG_BUILD ON
 )
 
-include_directories(${YAML_PREFIX}/src/yaml-cpp/include)
-link_directories(${YAML_PREFIX}/src/yaml-cpp/src)
+include_directories(${YAML_PREFIX}/src/YAML/include)
+link_directories(${YAML_PREFIX}/src/YAML)
 
 add_subdirectory(src)
