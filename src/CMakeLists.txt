@@ -7,13 +7,11 @@ set(
         benchmark_factory.hpp
         benchmark_suite.cpp
         benchmark_suite.hpp
-        config_parser.cpp
-        config_parser.hpp
         io_operation.cpp
         io_operation.hpp
         utils.cpp
         utils.hpp
-)
+        benchmarks/bm0.cpp benchmarks/bm0.hpp)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")
 add_executable(nvmbm nvmbm.cpp ${SOURCES})
