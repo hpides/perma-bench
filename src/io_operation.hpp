@@ -11,6 +11,8 @@ namespace internal {
 static const char WRITE_DATA[] __attribute__((aligned(64))) =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-";
 
+static const uint32_t number_ios = 1000;
+
 }  // namespace internal
 
 class IoOperation {
@@ -21,13 +23,13 @@ class IoOperation {
 
 class ActiveIoOperation : public IoOperation {
  public:
-  ActiveIoOperation(void* start_addr, void* end_addr, uint32_t num_ops,
+  ActiveIoOperation(char* start_addr, char* end_addr, uint32_t num_ops,
                     uint32_t access_size, bool random);
   bool is_active() const override;
 
  protected:
-  void* start_addr_;
-  void* end_addr_;
+  char* start_addr_;
+  char* end_addr_;
   std::vector<char*> op_addresses_;
   const uint32_t number_ops_;
   const uint32_t access_size_;

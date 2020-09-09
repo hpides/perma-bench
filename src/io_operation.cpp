@@ -16,7 +16,7 @@ namespace nvmbm {
 
 static constexpr size_t CACHE_LINE_SIZE = 64;
 
-ActiveIoOperation::ActiveIoOperation(void* startAddr, void* endAddr,
+ActiveIoOperation::ActiveIoOperation(char* startAddr, char* endAddr,
                                      const uint32_t numberOps,
                                      const uint32_t accessSize,
                                      const bool random)
@@ -27,11 +27,8 @@ ActiveIoOperation::ActiveIoOperation(void* startAddr, void* endAddr,
       random_(random) {
   op_addresses_ = std::vector<char*>{number_ops_};
 
-  char* start_addr = static_cast<char*>(start_addr_);
-  char* end_addr = static_cast<char*>(end_addr_);
-
   if (random_) {
-    const ptrdiff_t range = end_addr - start_addr;
+    const ptrdiff_t range = end_addr_ - start_addr_;
     const uint32_t num_accesses_in_range = range / access_size_;
 
     std::random_device rnd_device;
@@ -42,12 +39,12 @@ ActiveIoOperation::ActiveIoOperation(void* startAddr, void* endAddr,
     // Random read
     for (uint32_t op = 0; op < number_ops_; ++op) {
       op_addresses_[op] =
-          start_addr + (access_distribution(rnd_generator) * access_size_);
+          start_addr_ + (access_distribution(rnd_generator) * access_size_);
     }
   } else {
     // Sequential read
     for (uint32_t op = 0; op < number_ops_; ++op) {
-      op_addresses_[op] = start_addr + (op * access_size_);
+      op_addresses_[op] = start_addr_ + (op * access_size_);
     }
   }
 }

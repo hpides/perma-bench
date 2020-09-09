@@ -6,7 +6,7 @@
 #include <string>
 
 #include "benchmark.hpp"
-#include "benchmarks/bm0.hpp"
+#include "benchmarks/read_benchmark.hpp"
 
 namespace nvmbm {
 
@@ -17,15 +17,11 @@ std::vector<std::unique_ptr<Benchmark>> BenchmarkFactory::create_benchmarks(
     YAML::Node config = YAML::LoadFile(file_name);
     for (YAML::const_iterator it = config.begin(); it != config.end(); ++it) {
       switch (internal::resolveBenchmarkOption(it->first.as<std::string>())) {
-        case internal::bm0: {
-          auto bm = std::make_unique<bm0>(it->second);
-          // Where to run set up method?
+        case internal::readBenchmark: {
+          ReadBenchmarkConfig read_benchmark_config =
+              ReadBenchmarkConfig::decode(it->second);
+          auto bm = std::make_unique<ReadBenchmark>(read_benchmark_config);
           benchmarks.push_back(std::move(bm));
-          break;
-        }
-        case internal::bm1: {
-          // Run specific benchmark factory
-          // Add to benchmarks
           break;
         }
         case internal::InvalidBenchmark: {

@@ -8,10 +8,10 @@
 
 namespace nvmbm {
 namespace internal {
-enum BenchmarkOptions { InvalidBenchmark, bm0, bm1 };
+enum BenchmarkOptions { InvalidBenchmark, readBenchmark };
 
 static const std::map<std::string, BenchmarkOptions> optionStrings{
-    {"bm0", BenchmarkOptions::bm0}, {"bm1", BenchmarkOptions::bm1}};
+    {"read_benchmark", BenchmarkOptions::readBenchmark}};
 
 enum Mode { Sequential, Random };
 BenchmarkOptions resolveBenchmarkOption(const std::string& benchmark_option);
@@ -32,7 +32,7 @@ class Benchmark {
   };
 
  protected:
-  std::vector<IoOperation*> io_operations_;
+  std::vector<std::unique_ptr<IoOperation>> io_operations_;
 };
 
 }  // namespace nvmbm

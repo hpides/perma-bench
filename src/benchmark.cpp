@@ -15,7 +15,7 @@ BenchmarkOptions resolveBenchmarkOption(const std::string& benchmark_option) {
 }  // namespace internal
 
 void Benchmark::run() {
-  for (IoOperation* io_op : io_operations_) {
+  for (auto& io_op : io_operations_) {
     io_op->run();
   }
 }

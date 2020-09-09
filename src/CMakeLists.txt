@@ -11,7 +11,7 @@ set(
         io_operation.hpp
         utils.cpp
         utils.hpp
-        benchmarks/bm0.cpp benchmarks/bm0.hpp)
+        benchmarks/read_benchmark.cpp benchmarks/read_benchmark.hpp)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")
 add_executable(nvmbm nvmbm.cpp ${SOURCES})
