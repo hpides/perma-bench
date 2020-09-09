@@ -7,12 +7,12 @@
 namespace nvmbm {
 
 struct ReadBenchmarkConfig {
-  unsigned int access_size_{512};
-  unsigned int target_size_{1024};
-  unsigned int number_operations_{10000};
+  uint32_t access_size_{512};
+  uint32_t target_size_{1024};
+  uint32_t number_operations_{10000};
   internal::Mode exec_mode_{internal::Mode::Sequential};
-  unsigned int pause_frequency_{1000};
-  unsigned int pause_length_{1000};
+  uint32_t pause_frequency_{1000};
+  uint32_t pause_length_{1000};
 
   static ReadBenchmarkConfig decode(const YAML::Node& init_data);
 
