@@ -23,8 +23,7 @@ class IoOperation {
 
 class ActiveIoOperation : public IoOperation {
  public:
-  ActiveIoOperation(char* start_addr, char* end_addr, uint32_t num_ops,
-                    uint32_t access_size, bool random);
+  ActiveIoOperation(char* start_addr, char* end_addr, uint32_t num_ops, uint32_t access_size, bool random);
   bool is_active() const override;
 
  protected:

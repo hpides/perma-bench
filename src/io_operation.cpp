@@ -16,15 +16,9 @@ namespace nvmbm {
 
 static constexpr size_t CACHE_LINE_SIZE = 64;
 
-ActiveIoOperation::ActiveIoOperation(char* startAddr, char* endAddr,
-                                     const uint32_t numberOps,
-                                     const uint32_t accessSize,
-                                     const bool random)
-    : start_addr_(startAddr),
-      end_addr_(endAddr),
-      number_ops_(numberOps),
-      access_size_(accessSize),
-      random_(random) {
+ActiveIoOperation::ActiveIoOperation(char* startAddr, char* endAddr, const uint32_t numberOps,
+                                     const uint32_t accessSize, const bool random)
+    : start_addr_(startAddr), end_addr_(endAddr), number_ops_(numberOps), access_size_(accessSize), random_(random) {
   op_addresses_ = std::vector<char*>{number_ops_};
 
   if (random_) {
@@ -33,13 +27,11 @@ ActiveIoOperation::ActiveIoOperation(char* startAddr, char* endAddr,
 
     std::random_device rnd_device;
     std::default_random_engine rnd_generator{rnd_device()};
-    std::uniform_int_distribution<int> access_distribution(
-        0, num_accesses_in_range);
+    std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range);
 
     // Random read
     for (uint32_t op = 0; op < number_ops_; ++op) {
-      op_addresses_[op] =
-          start_addr_ + (access_distribution(rnd_generator) * access_size_);
+      op_addresses_[op] = start_addr_ + (access_distribution(rnd_generator) * access_size_);
     }
   } else {
     // Sequential read
@@ -60,8 +52,7 @@ void Pause::run() {
 void Read::run() {
   for (char* addr : op_addresses_) {
     const char* access_end_addr = addr + access_size_;
-    for (char* mem_addr = addr; mem_addr < access_end_addr;
-         mem_addr += CACHE_LINE_SIZE) {
+    for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
       // Read 512 Bit (64 Byte) and do not optimize it out.
       //      KEEP(_mm512_stream_load_si512(mem_addr));
       __m512i x = _mm512_stream_load_si512(mem_addr);
@@ -75,8 +66,7 @@ void Write::run() {
   for (char* addr : op_addresses_) {
     const char* access_end_addr = addr + access_size_;
     __m512i* data = (__m512i*)(internal::WRITE_DATA);
-    for (char* mem_addr = addr; mem_addr < access_end_addr;
-         mem_addr += CACHE_LINE_SIZE) {
+    for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
       // Write 512 Bit (64 Byte) and persist it.
       _mm512_stream_si512(reinterpret_cast<__m512i*>(mem_addr), *data);
       pmem_persist(mem_addr, CACHE_LINE_SIZE);

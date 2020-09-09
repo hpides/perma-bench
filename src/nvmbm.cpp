@@ -10,8 +10,14 @@
 using namespace nvmbm;
 
 int main() {
-  BenchmarkFactory::create_benchmarks(
-      "/hpi/fs00/home/leon.papke/nvmbm/benchmark_config.yaml");
+  std::vector<std::unique_ptr<Benchmark>> benchmarks =
+      BenchmarkFactory::create_benchmarks("/hpi/fs00/home/leon.papke/nvmbm/benchmark_config.yaml");
+
+  for (std::unique_ptr<Benchmark>& benchmark : benchmarks) {
+    benchmark->SetUp();
+    benchmark->run();
+  }
+
   //  size_t mapped_size;
   //  void* read_addr = map_pmem_file("/mnt/nvram-nvmbm/test.file",
   //  &mapped_size); void* write_addr =
