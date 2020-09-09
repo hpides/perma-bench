@@ -34,7 +34,7 @@ class ActiveIoOperation : public IoOperation {
   std::vector<char*> op_addresses_;
   const uint32_t number_ops_;
   const uint32_t access_size_;
-  const internal::Mode random_;
+  const internal::Mode mode_;
 };
 
 class Pause : public IoOperation {

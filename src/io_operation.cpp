@@ -18,10 +18,10 @@ static constexpr size_t CACHE_LINE_SIZE = 64;
 
 ActiveIoOperation::ActiveIoOperation(char* startAddr, char* endAddr, const uint32_t numberOps,
                                      const uint32_t accessSize, const internal::Mode mode)
-    : start_addr_(startAddr), end_addr_(endAddr), number_ops_(numberOps), access_size_(accessSize), random_(mode) {
+    : start_addr_(startAddr), end_addr_(endAddr), number_ops_(numberOps), access_size_(accessSize), mode_(mode) {
   op_addresses_ = std::vector<char*>{number_ops_};
 
-  if (random_ == internal::Mode::Random) {
+  if (mode_ == internal::Mode::Random) {
     const ptrdiff_t range = end_addr_ - start_addr_;
     const uint32_t num_accesses_in_range = range / access_size_;
 
