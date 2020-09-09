@@ -14,8 +14,10 @@ static const std::map<std::string, BenchmarkOptions> optionStrings{
     {"read_benchmark", BenchmarkOptions::readBenchmark}};
 
 enum Mode { Sequential, Random };
+
 BenchmarkOptions resolveBenchmarkOption(const std::string& benchmark_option);
 }  // namespace internal
+
 class Benchmark {
  public:
   void run();
@@ -23,9 +25,11 @@ class Benchmark {
     std::cerr << "getResult not implemented for super class Benchmark"
               << std::endl;
   };
+  
   virtual void SetUp() {
     std::cerr << "SetUp not implemented for super class Benchmark" << std::endl;
   };
+  
   virtual void TearDown() {
     std::cerr << "TearDown not implemented for super class Benchmark"
               << std::endl;
