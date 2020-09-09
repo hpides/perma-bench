@@ -22,13 +22,9 @@ void ReadBenchmark::SetUp() {
       io_operations_.push_back(std::move(pause_io));
     }
 
-    auto end_addr = mapped_size > config_.target_size_
-                        ? read_addr + config_.target_size_
-                        : read_addr + mapped_size;
-    auto read_io = std::make_unique<Read>(
-        read_addr, end_addr, internal::number_ios, config_.access_size_,
-        (config_.exec_mode_ == internal::Mode::Random));
-    io_operations_.push_back(std::move(read_io));
+    char* end_addr = mapped_size > config_.target_size_ ? read_addr + config_.target_size_ : read_addr + mapped_size;
+    io_operations_.push_back(std::make_unique<Read>(read_addr, end_addr, internal::NUMBER_IO_OPERATIONS,
+                                                    config_.access_size_, config_.exec_mode_));
   }
 }
 
@@ -49,7 +45,7 @@ ReadBenchmarkConfig ReadBenchmarkConfig::decode(const YAML::Node& raw_config_dat
       // Assumption: incorrect parameter is not caught
     }
   } catch (const YAML::InvalidNode& e) {
-    std::runtime_error("Exception during config parsing: " + e.msg);
+    throw std::runtime_error("Exception during config parsing: " + e.msg);
   }
   return read_bm_config;
 }

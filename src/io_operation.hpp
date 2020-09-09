@@ -11,7 +11,9 @@ namespace internal {
 static const char WRITE_DATA[] __attribute__((aligned(64))) =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-";
 
-static const uint32_t number_ios = 1000;
+static const uint32_t NUMBER_IO_OPERATIONS = 1000;
+
+enum Mode { Sequential, Random };
 
 }  // namespace internal
 
@@ -23,7 +25,7 @@ class IoOperation {
 
 class ActiveIoOperation : public IoOperation {
  public:
-  ActiveIoOperation(char* start_addr, char* end_addr, uint32_t num_ops, uint32_t access_size, bool random);
+  ActiveIoOperation(char* start_addr, char* end_addr, uint32_t num_ops, uint32_t access_size, internal::Mode mode);
   bool is_active() const override;
 
  protected:
@@ -32,7 +34,7 @@ class ActiveIoOperation : public IoOperation {
   std::vector<char*> op_addresses_;
   const uint32_t number_ops_;
   const uint32_t access_size_;
-  const bool random_;
+  const internal::Mode random_;
 };
 
 class Pause : public IoOperation {
