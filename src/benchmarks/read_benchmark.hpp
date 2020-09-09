@@ -14,20 +14,19 @@ struct ReadBenchmarkConfig {
   uint32_t pause_frequency_{1000};
   uint32_t pause_length_{1000};
 
-  static ReadBenchmarkConfig decode(const YAML::Node& init_data);
+  static ReadBenchmarkConfig decode(const YAML::Node& raw_config_data);
 
   template <typename T>
-  static void getIfPresent(const std::string& name, const YAML::Node& data,
-                           T* attribute) {
+  static void getIfPresent(const YAML::Node& data, const std::string& name, T* attribute) {
     if (data[name] != nullptr) {
-      attribute = data[name].as<T>();
+      *attribute = data[name].as<T>();
     }
   };
 };
 
 class ReadBenchmark : public Benchmark {
  public:
-  explicit ReadBenchmark(const ReadBenchmarkConfig& config) : config_(config) {};
+  explicit ReadBenchmark(const ReadBenchmarkConfig& config) : config_(config){};
 
   void getResult() override;
   void SetUp() override;

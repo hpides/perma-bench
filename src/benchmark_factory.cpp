@@ -18,20 +18,18 @@ std::vector<std::unique_ptr<Benchmark>> BenchmarkFactory::create_benchmarks(cons
       switch (internal::resolveBenchmarkOption(it->first.as<std::string>())) {
         case internal::readBenchmark: {
           ReadBenchmarkConfig read_benchmark_config = ReadBenchmarkConfig::decode(it->second);
-          auto bm = std::make_unique<ReadBenchmark>(read_benchmark_config);
           benchmarks.push_back(std::make_unique<ReadBenchmark>(read_benchmark_config));
           break;
         }
         case internal::InvalidBenchmark: {
-          std::cerr << "Benchmark " << it->first.as<std::string>() << " not implemented." << std::endl;
-          break;
+          throw std::runtime_error{"Benchmark " + it->first.as<std::string>() + " is not implemented."};
         }
       }
     }
   } catch (const YAML::ParserException& e1) {
-    std::cerr << "Exception during config parsing: " << e1.msg << std::endl;
+    throw std::runtime_error{"Exception during config parsing: " + e1.msg};
   } catch (const YAML::BadFile& e2) {
-    std::cerr << "Exception during config parsing: " << e2.msg << std::endl;
+    throw std::runtime_error{"Exception during config parsing: " + e2.msg};
   }
   return benchmarks;
 }

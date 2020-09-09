@@ -7,7 +7,9 @@
 #include "io_operation.hpp"
 
 namespace nvmbm {
+
 namespace internal {
+
 enum BenchmarkOptions { InvalidBenchmark, readBenchmark };
 
 static const std::map<std::string, BenchmarkOptions> optionStrings{
