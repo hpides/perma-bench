@@ -35,4 +35,21 @@ else ()
     link_directories(${PMDK_PREFIX}/src/PMDK/src/nondebug)
 endif ()
 
+##################### YAML ####################
+set(YAML_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/yaml")
+ExternalProject_Add(
+        YAML
+
+        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+        GIT_TAG yaml-cpp-0.6.3
+        BUILD_IN_SOURCE 1
+        PREFIX ${YAML_PREFIX}
+        INSTALL_COMMAND ""
+        LOG_DOWNLOAD ON
+        LOG_BUILD ON
+)
+
+include_directories(${YAML_PREFIX}/src/YAML/include)
+link_directories(${YAML_PREFIX}/src/YAML)
+
 add_subdirectory(src)
