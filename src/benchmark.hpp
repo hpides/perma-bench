@@ -10,11 +10,14 @@ namespace nvmbm {
 namespace internal {
 enum BenchmarkOptions { InvalidBenchmark, readBenchmark };
 
-static const std::map<std::string, BenchmarkOptions> optionStrings{{"read_benchmark", BenchmarkOptions::readBenchmark}};
+static const std::map<std::string, BenchmarkOptions> optionStrings{
+    {"read_benchmark", BenchmarkOptions::readBenchmark}};
 
 enum Mode { Sequential, Random };
+
 BenchmarkOptions resolveBenchmarkOption(const std::string& benchmark_option);
 }  // namespace internal
+
 class Benchmark {
  public:
   void run();

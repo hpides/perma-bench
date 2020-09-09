@@ -13,13 +13,13 @@ namespace nvmbm {
 std::vector<std::unique_ptr<Benchmark>> BenchmarkFactory::create_benchmarks(const std::string& file_name) {
   std::vector<std::unique_ptr<Benchmark>> benchmarks;
   try {
-    YAML::Node config = YAML::LoadFile(file_name);
+    const YAML::Node& config = YAML::LoadFile(file_name);
     for (YAML::const_iterator it = config.begin(); it != config.end(); ++it) {
       switch (internal::resolveBenchmarkOption(it->first.as<std::string>())) {
         case internal::readBenchmark: {
           ReadBenchmarkConfig read_benchmark_config = ReadBenchmarkConfig::decode(it->second);
           auto bm = std::make_unique<ReadBenchmark>(read_benchmark_config);
-          benchmarks.push_back(std::move(bm));
+          benchmarks.push_back(std::make_unique<ReadBenchmark>(read_benchmark_config));
           break;
         }
         case internal::InvalidBenchmark: {

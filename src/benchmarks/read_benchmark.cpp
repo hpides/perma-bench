@@ -24,9 +24,13 @@ void ReadBenchmark::SetUp() {
       auto pause_io = std::make_unique<Pause>(config_.pause_length_);
       io_operations_.push_back(std::move(pause_io));
     }
-    auto end_addr = mapped_size > config_.target_size_ ? read_addr + config_.target_size_ : read_addr + mapped_size;
-    auto read_io = std::make_unique<Read>(read_addr, end_addr, internal::number_ios, config_.access_size_,
-                                          (config_.exec_mode_ == internal::Mode::Random));
+
+    auto end_addr = mapped_size > config_.target_size_
+                        ? read_addr + config_.target_size_
+                        : read_addr + mapped_size;
+    auto read_io = std::make_unique<Read>(
+        read_addr, end_addr, internal::number_ios, config_.access_size_,
+        (config_.exec_mode_ == internal::Mode::Random));
     io_operations_.push_back(std::move(read_io));
   }
 }
@@ -34,9 +38,9 @@ void ReadBenchmark::SetUp() {
 void ReadBenchmark::TearDown() {}
 
 ReadBenchmarkConfig ReadBenchmarkConfig::decode(const YAML::Node& init_data) {
-  ReadBenchmarkConfig read_bm_config = {};
+  ReadBenchmarkConfig read_bm_config{};
   try {
-    for (YAML::Node node : init_data) {
+    for (const YAML::Node& node : init_data) {
       getIfPresent("access_size", node, read_bm_config.access_size_);
       getIfPresent("target_size", node, read_bm_config.target_size_);
       getIfPresent("number_operations", node, read_bm_config.number_operations_);
