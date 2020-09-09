@@ -6,11 +6,11 @@
 
 namespace nvmbm {
 
-void* map_pmem_file(const std::filesystem::path& file, size_t* mapped_length) {
+char* map_pmem_file(const std::filesystem::path& file, size_t* mapped_length) {
   int is_pmem;
   void* pmem_addr =
       pmem_map_file(file.c_str(), 0, 0, 0, mapped_length, &is_pmem);
-  if (pmem_addr == nullptr) {
+  if (pmem_addr == nullptr || (unsigned long)pmem_addr == 0xFFFFFFFFFFFFFFFF) {
     throw std::runtime_error{"Could not map file: " + file.string()};
   }
 
@@ -19,15 +19,15 @@ void* map_pmem_file(const std::filesystem::path& file, size_t* mapped_length) {
               << std::endl;
   }
 
-  return pmem_addr;
+  return static_cast<char*>(pmem_addr);
 }
 
-void* create_pmem_file(const std::filesystem::path& file, size_t length) {
+char* create_pmem_file(const std::filesystem::path& file, size_t length) {
   int is_pmem;
   size_t mapped_length;
   void* pmem_addr = pmem_map_file(file.c_str(), length, PMEM_FILE_CREATE, 0644,
                                   &mapped_length, &is_pmem);
-  if (pmem_addr == nullptr) {
+  if (pmem_addr == nullptr || (unsigned long)pmem_addr == 0xFFFFFFFFFFFFFFFF) {
     throw std::runtime_error{"Could not create file: " + file.string()};
   }
 
@@ -40,7 +40,7 @@ void* create_pmem_file(const std::filesystem::path& file, size_t length) {
     throw std::runtime_error{"Mapped size different than specified size!"};
   }
 
-  return pmem_addr;
+  return static_cast<char*>(pmem_addr);
 }
 
 }  // namespace nvmbm
