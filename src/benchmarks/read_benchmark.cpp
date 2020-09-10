@@ -4,7 +4,7 @@
 
 #include "../utils.hpp"
 
-namespace nvmbm {
+namespace perma {
 
 void ReadBenchmark::getResult() {}
 
@@ -49,4 +49,4 @@ ReadBenchmarkConfig ReadBenchmarkConfig::decode(const YAML::Node& raw_config_dat
   }
   return read_bm_config;
 }
-}  // namespace nvmbm
+}  // namespace perma

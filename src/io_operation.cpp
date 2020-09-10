@@ -7,7 +7,7 @@
 #include <random>
 #include <vector>
 
-namespace nvmbm {
+namespace perma {
 
 // This tells the compiler to keep whatever x is and not optimize it away.
 // Inspired by Google Benchmark's DoNotOptimize and this talk
@@ -74,4 +74,4 @@ void Write::run() {
   }
   std::cout << "Running write..." << std::endl;
 }
-}  // namespace nvmbm
+}  // namespace perma

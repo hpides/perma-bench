@@ -3,7 +3,7 @@
 #include "benchmark.hpp"
 #include "benchmark_factory.hpp"
 
-namespace nvmbm {
+namespace perma {
 
 class BenchmarkSuite {
  private:
@@ -11,4 +11,4 @@ class BenchmarkSuite {
   BenchmarkFactory builder;
 };
 
-}  // namespace nvmbm
+}  // namespace perma

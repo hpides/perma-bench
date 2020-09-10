@@ -2,7 +2,7 @@
 
 #include <map>
 
-namespace nvmbm {
+namespace perma {
 
 namespace internal {
 BenchmarkOptions resolveBenchmarkOption(const std::string& benchmark_option) {
@@ -19,4 +19,4 @@ void Benchmark::run() {
     io_op->run();
   }
 }
-}  // namespace nvmbm
+}  // namespace perma
