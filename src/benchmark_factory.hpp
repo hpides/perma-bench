@@ -1,7 +1,5 @@
 #pragma once
 
-#include <yaml-cpp/yaml.h>
-
 #include "benchmark.hpp"
 
 namespace nvmbm {
