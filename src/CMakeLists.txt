@@ -15,6 +15,6 @@ set(
         benchmarks/read_benchmark.hpp)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")
-add_executable(perma-bench nvmbm.cpp ${SOURCES})
+add_executable(perma-bench perma.cpp ${SOURCES})
 add_dependencies(perma-bench PMDK YAML)
 target_link_libraries(perma-bench pmem yaml-cpp)
