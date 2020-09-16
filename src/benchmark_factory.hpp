@@ -4,11 +4,11 @@
 
 #include "benchmark.hpp"
 
-namespace nvmbm {
+namespace perma {
 
 class BenchmarkFactory {
  public:
   static std::vector<std::unique_ptr<Benchmark>> create_benchmarks(const std::string& file_name);
 };
 
-}  // namespace nvmbm
+}  // namespace perma

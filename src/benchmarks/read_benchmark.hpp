@@ -4,7 +4,7 @@
 
 #include "../benchmark.hpp"
 
-namespace nvmbm {
+namespace perma {
 
 struct ReadBenchmarkConfig {
   uint32_t access_size_{512};
@@ -35,4 +35,4 @@ class ReadBenchmark : public Benchmark {
  private:
   ReadBenchmarkConfig config_;
 };
-}  // namespace nvmbm
+}  // namespace perma

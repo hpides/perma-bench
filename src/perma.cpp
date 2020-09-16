@@ -7,7 +7,7 @@
 #include "io_operation.hpp"
 #include "utils.hpp"
 
-using namespace nvmbm;
+using namespace perma;
 
 int main() {
   std::vector<std::unique_ptr<Benchmark>> benchmarks =

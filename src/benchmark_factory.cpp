@@ -8,7 +8,7 @@
 #include "benchmark.hpp"
 #include "benchmarks/read_benchmark.hpp"
 
-namespace nvmbm {
+namespace perma {
 
 std::vector<std::unique_ptr<Benchmark>> BenchmarkFactory::create_benchmarks(const std::string& file_name) {
   std::vector<std::unique_ptr<Benchmark>> benchmarks;
@@ -34,4 +34,4 @@ std::vector<std::unique_ptr<Benchmark>> BenchmarkFactory::create_benchmarks(cons
   return benchmarks;
 }
 
-}  // namespace nvmbm
+}  // namespace perma

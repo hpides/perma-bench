@@ -6,7 +6,7 @@
 
 #include "io_operation.hpp"
 
-namespace nvmbm {
+namespace perma {
 
 namespace internal {
 
@@ -28,4 +28,4 @@ class Benchmark {
   std::vector<std::unique_ptr<IoOperation>> io_operations_;
 };
 
-}  // namespace nvmbm
+}  // namespace perma
