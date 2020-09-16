@@ -2,7 +2,7 @@
 
 #include "benchmark_factory.hpp"
 
-namespace nvmbm {
+namespace perma {
 
 void BenchmarkSuite::start_benchmarks(const std::string& file_name) {
   prepare_benchmarks(file_name);
@@ -22,4 +22,4 @@ void BenchmarkSuite::run_benchmarks() {
   }
 }
 
-}  // namespace nvmbm
+}  // namespace perma

@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-namespace nvmbm {
+namespace perma {
 
 char* map_pmem_file(const std::filesystem::path& file, size_t* mapped_length) {
   int is_pmem;
@@ -39,4 +39,4 @@ char* create_pmem_file(const std::filesystem::path& file, size_t length) {
   return static_cast<char*>(pmem_addr);
 }
 
-}  // namespace nvmbm
+}  // namespace perma

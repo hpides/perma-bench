@@ -3,7 +3,7 @@
 #include <thread>
 #include <vector>
 
-namespace nvmbm {
+namespace perma {
 
 namespace internal {
 
@@ -59,4 +59,4 @@ class Write : public ActiveIoOperation {
   void run() override;
 };
 
-}  // namespace nvmbm
+}  // namespace perma

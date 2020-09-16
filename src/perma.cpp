@@ -1,6 +1,6 @@
 #include "benchmark_suite.hpp"
 
-using namespace nvmbm;
+using namespace perma;
 
 int main() {
   BenchmarkSuite bm_suite{};

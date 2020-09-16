@@ -2,7 +2,7 @@
 
 #include "benchmark.hpp"
 
-namespace nvmbm {
+namespace perma {
 
 class BenchmarkSuite {
  public:
@@ -14,4 +14,4 @@ class BenchmarkSuite {
   std::vector<std::unique_ptr<Benchmark>> benchmarks_;
 };
 
-}  // namespace nvmbm
+}  // namespace perma
