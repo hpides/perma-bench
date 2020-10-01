@@ -14,19 +14,19 @@ enum BenchmarkOptions { InvalidBenchmark, readBenchmark };
 
 static const std::map<std::string, BenchmarkOptions> optionStrings{{"read_benchmark", BenchmarkOptions::readBenchmark}};
 
-BenchmarkOptions resolveBenchmarkOption(const std::string& benchmark_option);
+BenchmarkOptions resolve_benchmark_option(const std::string& benchmark_option);
 }  // namespace internal
 
 class Benchmark {
  public:
   void run();
-  void generateData();
-  virtual void getResult() { std::cerr << "getResult not implemented for super class Benchmark" << std::endl; };
-  virtual void SetUp() { std::cerr << "SetUp not implemented for super class Benchmark" << std::endl; };
-  virtual void TearDown() { std::cerr << "TearDown not implemented for super class Benchmark" << std::endl; };
+  void generate_data();
+  virtual void get_result() = 0;
+  virtual void set_up() = 0;
+  virtual void tear_down() = 0;
 
  protected:
-  virtual size_t getLength() { return 0; };
+  virtual size_t get_length() = 0;
   char* pmem_file_;
   std::vector<std::unique_ptr<IoOperation>> io_operations_;
 };

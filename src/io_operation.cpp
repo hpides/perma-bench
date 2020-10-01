@@ -63,12 +63,12 @@ void Read::run() {
 void Write::run() {
   for (char* addr : op_addresses_) {
     const char* access_end_addr = addr + access_size_;
-    writeData(addr, access_end_addr);
+    write_data(addr, access_end_addr);
   }
   std::cout << "Running write..." << std::endl;
 }
 
-void writeData(char* from, const char* to) {
+void write_data(char* from, const char* to) {
   __m512i* data = (__m512i*)(internal::WRITE_DATA);
   for (char* mem_addr = from; mem_addr < to; mem_addr += internal::CACHE_LINE_SIZE) {
     // Write 512 Bit (64 Byte) and persist it.

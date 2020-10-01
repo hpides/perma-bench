@@ -6,10 +6,10 @@
 
 namespace perma {
 
-void ReadBenchmark::getResult() {}
+void ReadBenchmark::get_result() {}
 
-void ReadBenchmark::SetUp() {
-  char* end_addr = pmem_file_ + getLength();
+void ReadBenchmark::set_up() {
+  char* end_addr = pmem_file_ + get_length();
   // Create IOReadOperations
   for (uint32_t i = 0; i < config_.number_operations_; i += internal::NUMBER_IO_OPERATIONS) {
     // Assumption: num_ops is multiple of internal::number_ios(1000)
@@ -24,19 +24,19 @@ void ReadBenchmark::SetUp() {
   }
 }
 
-void ReadBenchmark::TearDown() {}
+void ReadBenchmark::tear_down() {}
 
-size_t ReadBenchmark::getLength() { return config_.target_size_ * config_.number_operations_; }
+size_t ReadBenchmark::get_length() { return config_.target_size_ * config_.number_operations_; }
 
 ReadBenchmarkConfig ReadBenchmarkConfig::decode(const YAML::Node& raw_config_data) {
   ReadBenchmarkConfig read_bm_config{};
   try {
     for (const YAML::Node& node : raw_config_data) {
-      getIfPresent(node, "access_size", &read_bm_config.access_size_);
-      getIfPresent(node, "target_size", &read_bm_config.target_size_);
-      getIfPresent(node, "number_operations", &read_bm_config.number_operations_);
-      getIfPresent(node, "pause_frequency", &read_bm_config.pause_frequency_);
-      getIfPresent(node, "pause_length", &read_bm_config.pause_length_);
+      get_if_present(node, "access_size", &read_bm_config.access_size_);
+      get_if_present(node, "target_size", &read_bm_config.target_size_);
+      get_if_present(node, "number_operations", &read_bm_config.number_operations_);
+      get_if_present(node, "pause_frequency", &read_bm_config.pause_frequency_);
+      get_if_present(node, "pause_length", &read_bm_config.pause_length_);
       if (node["exec_mode"] != nullptr && node["exec_mode"].as<std::string>() == "random") {
         read_bm_config.exec_mode_ = internal::Mode::Random;
       }

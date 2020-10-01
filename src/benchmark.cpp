@@ -10,7 +10,7 @@
 namespace perma {
 
 namespace internal {
-BenchmarkOptions resolveBenchmarkOption(const std::string& benchmark_option) {
+BenchmarkOptions resolve_benchmark_option(const std::string& benchmark_option) {
   auto it = optionStrings.find(benchmark_option);
   if (it != optionStrings.end()) {
     return it->second;
@@ -25,9 +25,9 @@ void Benchmark::run() {
   }
 }
 
-void Benchmark::generateData() {
-  size_t length = getLength();
+void Benchmark::generate_data() {
+  size_t length = get_length();
   pmem_file_ = create_pmem_file("/mnt/nvram-nvmbm/read_benchmark.file", length);
-  writeData(pmem_file_, pmem_file_ + length);
+  write_data(pmem_file_, pmem_file_ + length);
 }
 }  // namespace perma

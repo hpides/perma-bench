@@ -4,7 +4,7 @@ using namespace perma;
 
 int main() {
   BenchmarkSuite bm_suite{};
-  bm_suite.start_benchmarks("/mnt/nvram-nvmbm/benchmark_config.yaml");
+  bm_suite.run_benchmarks("/mnt/nvram-nvmbm/benchmark_config.yaml");
 
   return 0;
 }

@@ -15,7 +15,7 @@ std::vector<std::unique_ptr<Benchmark>> BenchmarkFactory::create_benchmarks(cons
   try {
     const YAML::Node& config = YAML::LoadFile(file_name);
     for (YAML::const_iterator it = config.begin(); it != config.end(); ++it) {
-      switch (internal::resolveBenchmarkOption(it->first.as<std::string>())) {
+      switch (internal::resolve_benchmark_option(it->first.as<std::string>())) {
         case internal::readBenchmark: {
           ReadBenchmarkConfig read_benchmark_config = ReadBenchmarkConfig::decode(it->second);
           benchmarks.push_back(std::make_unique<ReadBenchmark>(read_benchmark_config));
