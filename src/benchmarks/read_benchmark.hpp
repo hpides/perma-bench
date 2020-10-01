@@ -32,6 +32,9 @@ class ReadBenchmark : public Benchmark {
   void SetUp() override;
   void TearDown() override;
 
+ protected:
+  size_t getLength() override;
+
  private:
   ReadBenchmarkConfig config_;
 };

@@ -9,10 +9,7 @@ namespace perma {
 void ReadBenchmark::getResult() {}
 
 void ReadBenchmark::SetUp() {
-  // Map read file
-  size_t mapped_size;
-  char* read_addr = map_pmem_file("/mnt/nvram-nvmbm/test.file", &mapped_size);
-
+  char* end_addr = pmem_file_ + getLength();
   // Create IOReadOperations
   for (uint32_t i = 0; i < config_.number_operations_; i += internal::NUMBER_IO_OPERATIONS) {
     // Assumption: num_ops is multiple of internal::number_ios(1000)
@@ -22,13 +19,14 @@ void ReadBenchmark::SetUp() {
       io_operations_.push_back(std::move(pause_io));
     }
 
-    char* end_addr = mapped_size > config_.target_size_ ? read_addr + config_.target_size_ : read_addr + mapped_size;
-    io_operations_.push_back(std::make_unique<Read>(read_addr, end_addr, internal::NUMBER_IO_OPERATIONS,
+    io_operations_.push_back(std::make_unique<Read>(pmem_file_, end_addr, internal::NUMBER_IO_OPERATIONS,
                                                     config_.access_size_, config_.exec_mode_));
   }
 }
 
 void ReadBenchmark::TearDown() {}
+
+size_t ReadBenchmark::getLength() { return config_.target_size_ * config_.number_operations_; }
 
 ReadBenchmarkConfig ReadBenchmarkConfig::decode(const YAML::Node& raw_config_data) {
   ReadBenchmarkConfig read_bm_config{};
