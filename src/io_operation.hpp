@@ -61,4 +61,6 @@ class Write : public ActiveIoOperation {
   void run() override;
 };
 
+void writeData(char* from, const char* to);
+
 }  // namespace perma

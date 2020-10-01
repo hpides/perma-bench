@@ -24,8 +24,8 @@ ActiveIoOperation::ActiveIoOperation(char* startAddr, char* endAddr, const uint3
     const uint32_t num_accesses_in_range = range / access_size_;
 
     std::random_device rnd_device;
-    std::default_random_engine rnd_generator{rnd_device()};
-    std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range);
+    std::mt19937_64 rnd_generator{rnd_device()};
+    std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
 
     // Random read
     for (uint32_t op = 0; op < number_ops_; ++op) {
@@ -63,13 +63,17 @@ void Read::run() {
 void Write::run() {
   for (char* addr : op_addresses_) {
     const char* access_end_addr = addr + access_size_;
-    __m512i* data = (__m512i*)(internal::WRITE_DATA);
-    for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += internal::CACHE_LINE_SIZE) {
-      // Write 512 Bit (64 Byte) and persist it.
-      _mm512_stream_si512(reinterpret_cast<__m512i*>(mem_addr), *data);
-      pmem_persist(mem_addr, internal::CACHE_LINE_SIZE);
-    }
+    writeData(addr, access_end_addr);
   }
   std::cout << "Running write..." << std::endl;
+}
+
+void writeData(char* from, const char* to) {
+  __m512i* data = (__m512i*)(internal::WRITE_DATA);
+  for (char* mem_addr = from; mem_addr < to; mem_addr += internal::CACHE_LINE_SIZE) {
+    // Write 512 Bit (64 Byte) and persist it.
+    _mm512_stream_si512(reinterpret_cast<__m512i*>(mem_addr), *data);
+    pmem_persist(mem_addr, internal::CACHE_LINE_SIZE);
+  }
 }
 }  // namespace perma
