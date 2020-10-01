@@ -10,6 +10,8 @@ void BenchmarkSuite::run_benchmarks(const std::string& file_name) {
     benchmark->generate_data();
     benchmark->set_up();
     benchmark->run();
+    // TODO: Handle get_result
+    benchmark->tear_down();
   }
 }
 

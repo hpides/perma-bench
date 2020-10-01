@@ -24,8 +24,6 @@ void ReadBenchmark::set_up() {
   }
 }
 
-void ReadBenchmark::tear_down() {}
-
 size_t ReadBenchmark::get_length() { return config_.target_size_ * config_.number_operations_; }
 
 ReadBenchmarkConfig ReadBenchmarkConfig::decode(const YAML::Node& raw_config_data) {

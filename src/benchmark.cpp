@@ -1,8 +1,5 @@
 #include "benchmark.hpp"
 
-#include <immintrin.h>
-#include <libpmem.h>
-
 #include <map>
 
 #include "utils.hpp"

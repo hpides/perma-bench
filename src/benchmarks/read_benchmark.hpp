@@ -30,7 +30,6 @@ class ReadBenchmark : public Benchmark {
 
   void get_result() override;
   void set_up() override;
-  void tear_down() override;
 
  protected:
   size_t get_length() override;

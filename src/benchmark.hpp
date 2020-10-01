@@ -1,5 +1,8 @@
 #pragma once
 
+#include <libpmem.h>
+
+#include <filesystem>
 #include <iostream>
 #include <map>
 #include <vector>
@@ -23,11 +26,16 @@ class Benchmark {
   void generate_data();
   virtual void get_result() = 0;
   virtual void set_up() = 0;
-  virtual void tear_down() = 0;
+  virtual void tear_down() {
+    if (pmem_file_ != nullptr) {
+      pmem_unmap(pmem_file_, get_length());
+    }
+    bool result = std::filesystem::remove("/mnt/nvram-nvmbm/read_benchmark.file");
+  }
 
  protected:
   virtual size_t get_length() = 0;
-  char* pmem_file_;
+  char* pmem_file_{nullptr};
   std::vector<std::unique_ptr<IoOperation>> io_operations_;
 };
 
