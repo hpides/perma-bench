@@ -1,7 +1,5 @@
 #include "benchmark.hpp"
 
-#include <map>
-
 #include "utils.hpp"
 
 namespace perma {
@@ -17,8 +15,13 @@ BenchmarkOptions resolve_benchmark_option(const std::string& benchmark_option) {
 }  // namespace internal
 
 void Benchmark::run() {
+  measurements_.reserve(io_operations_.size());
+
   for (std::unique_ptr<IoOperation>& io_op : io_operations_) {
+    auto start_ts = std::chrono::high_resolution_clock::now();
     io_op->run();
+    auto end_ts = std::chrono::high_resolution_clock::now();
+    measurements_.push_back(internal::Measurement{start_ts, end_ts});
   }
 }
 
