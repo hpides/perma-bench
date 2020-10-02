@@ -20,8 +20,8 @@ static const std::map<std::string, BenchmarkOptions> optionStrings{{"read_benchm
 BenchmarkOptions resolve_benchmark_option(const std::string& benchmark_option);
 
 struct Measurement {
-  std::chrono::high_resolution_clock::time_point start_ts;
-  std::chrono::high_resolution_clock::time_point end_ts;
+  const std::chrono::high_resolution_clock::time_point start_ts;
+  const std::chrono::high_resolution_clock::time_point end_ts;
 };
 
 }  // namespace internal

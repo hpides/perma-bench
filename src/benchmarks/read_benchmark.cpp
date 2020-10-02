@@ -10,6 +10,7 @@ void ReadBenchmark::get_result() {}
 
 void ReadBenchmark::set_up() {
   char* end_addr = pmem_file_ + get_length();
+  io_operations_.reserve(config_.number_operations_ / internal::NUMBER_IO_OPERATIONS);
   // Create IOReadOperations
   for (uint32_t i = 1; i <= config_.number_operations_; i += internal::NUMBER_IO_OPERATIONS) {
     io_operations_.push_back(std::make_unique<Read>(pmem_file_, end_addr, internal::NUMBER_IO_OPERATIONS,
