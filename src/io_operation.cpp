@@ -52,12 +52,10 @@ void Read::run() {
     const char* access_end_addr = addr + access_size_;
     for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += internal::CACHE_LINE_SIZE) {
       // Read 512 Bit (64 Byte) and do not optimize it out.
-      //      KEEP(_mm512_stream_load_si512(mem_addr));
-      __m512i x = _mm512_stream_load_si512(mem_addr);
-      std::cout << "Read: " << (std::string{(char*)&x, 64}) << std::endl;
+      KEEP(_mm512_stream_load_si512(mem_addr));
+      // __m512i x = _mm512_stream_load_si512(mem_addr);
     }
   }
-  std::cout << "Running read..." << std::endl;
 }
 
 void Write::run() {
@@ -65,7 +63,6 @@ void Write::run() {
     const char* access_end_addr = addr + access_size_;
     write_data(addr, access_end_addr);
   }
-  std::cout << "Running write..." << std::endl;
 }
 
 void write_data(char* from, const char* to) {

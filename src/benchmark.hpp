@@ -18,6 +18,12 @@ enum BenchmarkOptions { InvalidBenchmark, readBenchmark };
 static const std::map<std::string, BenchmarkOptions> optionStrings{{"read_benchmark", BenchmarkOptions::readBenchmark}};
 
 BenchmarkOptions resolve_benchmark_option(const std::string& benchmark_option);
+
+struct Measurement {
+  const std::chrono::high_resolution_clock::time_point start_ts;
+  const std::chrono::high_resolution_clock::time_point end_ts;
+};
+
 }  // namespace internal
 
 class Benchmark {
@@ -37,6 +43,7 @@ class Benchmark {
   virtual size_t get_length() = 0;
   char* pmem_file_{nullptr};
   std::vector<std::unique_ptr<IoOperation>> io_operations_;
+  std::vector<internal::Measurement> measurements_;
 };
 
 }  // namespace perma
