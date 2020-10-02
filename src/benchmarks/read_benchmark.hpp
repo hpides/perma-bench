@@ -17,7 +17,7 @@ struct ReadBenchmarkConfig {
   static ReadBenchmarkConfig decode(const YAML::Node& raw_config_data);
 
   template <typename T>
-  static void getIfPresent(const YAML::Node& data, const std::string& name, T* attribute) {
+  static void get_if_present(const YAML::Node& data, const std::string& name, T* attribute) {
     if (data[name] != nullptr) {
       *attribute = data[name].as<T>();
     }
@@ -28,9 +28,11 @@ class ReadBenchmark : public Benchmark {
  public:
   explicit ReadBenchmark(const ReadBenchmarkConfig& config) : config_(config){};
 
-  void getResult() override;
-  void SetUp() override;
-  void TearDown() override;
+  void get_result() override;
+  void set_up() override;
+
+ protected:
+  size_t get_length() override;
 
  private:
   ReadBenchmarkConfig config_;

@@ -13,6 +13,8 @@ static const char WRITE_DATA[] __attribute__((aligned(64))) =
 
 static const uint32_t NUMBER_IO_OPERATIONS = 1000;
 
+static constexpr size_t CACHE_LINE_SIZE = 64;
+
 enum Mode { Sequential, Random };
 
 }  // namespace internal
@@ -58,5 +60,7 @@ class Write : public ActiveIoOperation {
   using ActiveIoOperation::ActiveIoOperation;
   void run() override;
 };
+
+void write_data(char* from, const char* to);
 
 }  // namespace perma
