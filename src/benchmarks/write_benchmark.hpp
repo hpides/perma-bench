@@ -5,8 +5,7 @@
 #include "../benchmark.hpp"
 
 namespace perma {
-
-struct ReadBenchmarkConfig {
+struct WriteBenchmarkConfig {
   uint32_t access_size_{512};
   uint32_t target_size_{1024};
   uint32_t number_operations_{10000};
@@ -14,12 +13,11 @@ struct ReadBenchmarkConfig {
   uint32_t pause_frequency_{1000};
   uint32_t pause_length_{1000};
 
-  static ReadBenchmarkConfig decode(const YAML::Node& raw_config_data);
+  static WriteBenchmarkConfig decode(const YAML::Node& raw_config_data);
 };
-
-class ReadBenchmark : public Benchmark {
+class WriteBenchmark : public Benchmark {
  public:
-  explicit ReadBenchmark(const ReadBenchmarkConfig& config) : config_(config){};
+  explicit WriteBenchmark(const WriteBenchmarkConfig& config) : config_(config){};
 
   void get_result() override;
   void set_up() override;
@@ -28,6 +26,7 @@ class ReadBenchmark : public Benchmark {
   size_t get_length() override;
 
  private:
-  ReadBenchmarkConfig config_;
+  WriteBenchmarkConfig config_;
 };
+
 }  // namespace perma

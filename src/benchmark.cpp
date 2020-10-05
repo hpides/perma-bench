@@ -10,7 +10,7 @@ BenchmarkOptions resolve_benchmark_option(const std::string& benchmark_option) {
   if (it != optionStrings.end()) {
     return it->second;
   }
-  return BenchmarkOptions::InvalidBenchmark;
+  return BenchmarkOptions::invalidBenchmark;
 }
 }  // namespace internal
 
