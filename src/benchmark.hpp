@@ -13,9 +13,10 @@ namespace perma {
 
 namespace internal {
 
-enum BenchmarkOptions { InvalidBenchmark, readBenchmark };
+enum BenchmarkOptions { InvalidBenchmark, readBenchmark, writeBenchmark };
 
-static const std::map<std::string, BenchmarkOptions> optionStrings{{"read_benchmark", BenchmarkOptions::readBenchmark}};
+static const std::map<std::string, BenchmarkOptions> optionStrings{
+    {"read_benchmark", BenchmarkOptions::readBenchmark}, {"write_benchmark", BenchmarkOptions::writeBenchmark}};
 
 BenchmarkOptions resolve_benchmark_option(const std::string& benchmark_option);
 

@@ -12,7 +12,9 @@ set(
         utils.cpp
         utils.hpp
         benchmarks/read_benchmark.cpp 
-        benchmarks/read_benchmark.hpp)
+        benchmarks/read_benchmark.hpp
+        benchmarks/write_benchmark.cpp
+        benchmarks/write_benchmark.hpp)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")
 add_executable(perma-bench perma.cpp ${SOURCES})

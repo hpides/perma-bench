@@ -7,6 +7,7 @@
 
 #include "benchmark.hpp"
 #include "benchmarks/read_benchmark.hpp"
+#include "benchmarks/write_benchmark.hpp"
 
 namespace perma {
 
@@ -19,6 +20,11 @@ std::vector<std::unique_ptr<Benchmark>> BenchmarkFactory::create_benchmarks(cons
         case internal::readBenchmark: {
           ReadBenchmarkConfig read_benchmark_config = ReadBenchmarkConfig::decode(it->second);
           benchmarks.push_back(std::make_unique<ReadBenchmark>(read_benchmark_config));
+          break;
+        }
+        case internal::writeBenchmark: {
+          WriteBenchmarkConfig write_benchmark_config = WriteBenchmarkConfig::decode(it->second);
+          benchmarks.push_back(std::make_unique<WriteBenchmark>(write_benchmark_config));
           break;
         }
         case internal::InvalidBenchmark: {
