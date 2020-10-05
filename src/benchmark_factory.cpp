@@ -27,7 +27,7 @@ std::vector<std::unique_ptr<Benchmark>> BenchmarkFactory::create_benchmarks(cons
           benchmarks.push_back(std::make_unique<WriteBenchmark>(write_benchmark_config));
           break;
         }
-        case internal::InvalidBenchmark: {
+        case internal::invalidBenchmark: {
           throw std::runtime_error{"Benchmark " + it->first.as<std::string>() + " is not implemented."};
         }
       }

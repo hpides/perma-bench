@@ -26,11 +26,11 @@ WriteBenchmarkConfig WriteBenchmarkConfig::decode(const YAML::Node& raw_config_d
   WriteBenchmarkConfig write_bm_config{};
   try {
     for (const YAML::Node& node : raw_config_data) {
-      get_if_present(node, "access_size", &write_bm_config.access_size_);
-      get_if_present(node, "target_size", &write_bm_config.target_size_);
-      get_if_present(node, "number_operations", &write_bm_config.number_operations_);
-      get_if_present(node, "pause_frequency", &write_bm_config.pause_frequency_);
-      get_if_present(node, "pause_length", &write_bm_config.pause_length_);
+      internal::get_if_present(node, "access_size", &write_bm_config.access_size_);
+      internal::get_if_present(node, "target_size", &write_bm_config.target_size_);
+      internal::get_if_present(node, "number_operations", &write_bm_config.number_operations_);
+      internal::get_if_present(node, "pause_frequency", &write_bm_config.pause_frequency_);
+      internal::get_if_present(node, "pause_length", &write_bm_config.pause_length_);
       if (node["exec_mode"] != nullptr && node["exec_mode"].as<std::string>() == "random") {
         write_bm_config.exec_mode_ = internal::Mode::Random;
       }

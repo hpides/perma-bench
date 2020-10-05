@@ -14,13 +14,6 @@ struct WriteBenchmarkConfig {
   uint32_t pause_length_{1000};
 
   static WriteBenchmarkConfig decode(const YAML::Node& raw_config_data);
-
-  template <typename T>
-  static void get_if_present(const YAML::Node& data, const std::string& name, T* attribute) {
-    if (data[name] != nullptr) {
-      *attribute = data[name].as<T>();
-    }
-  };
 };
 class WriteBenchmark : public Benchmark {
  public:

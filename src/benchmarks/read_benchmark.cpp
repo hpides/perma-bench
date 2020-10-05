@@ -30,11 +30,11 @@ ReadBenchmarkConfig ReadBenchmarkConfig::decode(const YAML::Node& raw_config_dat
   ReadBenchmarkConfig read_bm_config{};
   try {
     for (const YAML::Node& node : raw_config_data) {
-      get_if_present(node, "access_size", &read_bm_config.access_size_);
-      get_if_present(node, "target_size", &read_bm_config.target_size_);
-      get_if_present(node, "number_operations", &read_bm_config.number_operations_);
-      get_if_present(node, "pause_frequency", &read_bm_config.pause_frequency_);
-      get_if_present(node, "pause_length", &read_bm_config.pause_length_);
+      internal::get_if_present(node, "access_size", &read_bm_config.access_size_);
+      internal::get_if_present(node, "target_size", &read_bm_config.target_size_);
+      internal::get_if_present(node, "number_operations", &read_bm_config.number_operations_);
+      internal::get_if_present(node, "pause_frequency", &read_bm_config.pause_frequency_);
+      internal::get_if_present(node, "pause_length", &read_bm_config.pause_length_);
       if (node["exec_mode"] != nullptr && node["exec_mode"].as<std::string>() == "random") {
         read_bm_config.exec_mode_ = internal::Mode::Random;
       }
