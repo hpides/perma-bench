@@ -21,10 +21,10 @@ class ReadBenchmark : public Benchmark {
  public:
   explicit ReadBenchmark(const ReadBenchmarkConfig& config) : config_(config){};
 
-  void get_result() override;
   void set_up() override;
 
  protected:
+  nlohmann::json get_config() override;
   size_t get_length() override;
 
  private:

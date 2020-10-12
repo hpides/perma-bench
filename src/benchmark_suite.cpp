@@ -12,6 +12,7 @@ void BenchmarkSuite::run_benchmarks(const std::string& file_name) {
     benchmark->run();
     // TODO: Handle get_result
     benchmark->tear_down();
+    benchmark->get_result();
   }
 }
 

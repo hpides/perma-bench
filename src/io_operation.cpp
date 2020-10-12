@@ -41,6 +41,8 @@ ActiveIoOperation::ActiveIoOperation(char* startAddr, char* endAddr, const uint3
 
 bool ActiveIoOperation::is_active() const { return true; }
 
+uint32_t Pause::get_length() const { return length_; }
+
 void Pause::run() {
   std::cout << "Sleeping for " << length_ << " microseconds" << std::endl;
   std::this_thread::sleep_for(std::chrono::microseconds(length_));

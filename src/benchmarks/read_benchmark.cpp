@@ -1,12 +1,11 @@
 #include "read_benchmark.hpp"
 
 #include <iostream>
+#include <json.hpp>
 
 #include "../utils.hpp"
 
 namespace perma {
-
-void ReadBenchmark::get_result() {}
 
 void ReadBenchmark::set_up() {
   char* end_addr = pmem_file_ + get_length();
@@ -24,7 +23,16 @@ void ReadBenchmark::set_up() {
   }
 }
 
-size_t ReadBenchmark::get_length() { return config_.target_size_ * config_.number_operations_; }
+nlohmann::json ReadBenchmark::get_config() {
+  return {{"number_operations", config_.number_operations_},
+          {"access_size", config_.access_size_},
+          {"target_size", config_.target_size_},
+          {"pause_length", config_.pause_length_},
+          {"pause_frequency", config_.pause_frequency_},
+          {"exec_mode", config_.exec_mode_}};
+}
+
+size_t ReadBenchmark::get_length() { return config_.target_size_; }
 
 ReadBenchmarkConfig ReadBenchmarkConfig::decode(const YAML::Node& raw_config_data) {
   ReadBenchmarkConfig read_bm_config{};

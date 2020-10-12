@@ -29,6 +29,7 @@ class ActiveIoOperation : public IoOperation {
  public:
   ActiveIoOperation(char* start_addr, char* end_addr, uint32_t num_ops, uint32_t access_size, internal::Mode mode);
   bool is_active() const override;
+  uint64_t get_io_size() const { return number_ops_ * access_size_; };
 
  protected:
   char* start_addr_;
@@ -44,6 +45,7 @@ class Pause : public IoOperation {
   explicit Pause(uint32_t length) : IoOperation(), length_{length} {}
 
   void run() final;
+  uint32_t get_length() const;
 
  protected:
   const uint32_t length_;
