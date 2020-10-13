@@ -17,12 +17,12 @@ struct WriteBenchmarkConfig {
 };
 class WriteBenchmark : public Benchmark {
  public:
-  explicit WriteBenchmark(const WriteBenchmarkConfig& config) : config_(config){};
+  explicit WriteBenchmark(const WriteBenchmarkConfig& config) : Benchmark("writeBenchmark"), config_(config){};
 
-  void get_result() override;
   void set_up() override;
 
  protected:
+  nlohmann::json get_config() override;
   size_t get_length() override;
 
  private:

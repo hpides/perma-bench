@@ -2,8 +2,6 @@
 
 namespace perma {
 
-void WriteBenchmark::get_result() {}
-
 void WriteBenchmark::set_up() {
   char* end_addr = pmem_file_ + get_length();
   io_operations_.reserve(config_.number_operations_ / internal::NUMBER_IO_OPERATIONS);
@@ -20,7 +18,16 @@ void WriteBenchmark::set_up() {
   }
 }
 
-size_t WriteBenchmark::get_length() { return config_.target_size_ * config_.number_operations_; }
+nlohmann::json WriteBenchmark::get_config() {
+  return {{"number_operations", config_.number_operations_},
+          {"access_size", config_.access_size_},
+          {"target_size", config_.target_size_},
+          {"pause_length", config_.pause_length_},
+          {"pause_frequency", config_.pause_frequency_},
+          {"exec_mode", config_.exec_mode_}};
+}
+
+size_t WriteBenchmark::get_length() { return config_.target_size_ * internal::BYTE_IN_MEBIBYTE; }
 
 WriteBenchmarkConfig WriteBenchmarkConfig::decode(const YAML::Node& raw_config_data) {
   WriteBenchmarkConfig write_bm_config{};

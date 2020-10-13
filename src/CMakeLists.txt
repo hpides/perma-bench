@@ -18,5 +18,5 @@ set(
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")
 add_executable(perma-bench perma.cpp ${SOURCES})
-add_dependencies(perma-bench PMDK YAML)
+add_dependencies(perma-bench PMDK YAML JSON)
 target_link_libraries(perma-bench pmem yaml-cpp)

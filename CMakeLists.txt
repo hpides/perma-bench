@@ -52,4 +52,20 @@ ExternalProject_Add(
 include_directories(${YAML_PREFIX}/src/YAML/include)
 link_directories(${YAML_PREFIX}/src/YAML)
 
+##################### JSON ####################
+set(JSON_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/json")
+ExternalProject_Add(
+        JSON
+
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG v3.9.1
+        BUILD_IN_SOURCE 1
+        PREFIX ${JSON_PREFIX}
+        INSTALL_COMMAND ""
+        LOG_DOWNLOAD ON
+        LOG_BUILD ON
+)
+
+include_directories(${JSON_PREFIX}/src/JSON/single_include/nlohmann)
+
 add_subdirectory(src)

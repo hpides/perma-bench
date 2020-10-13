@@ -1,9 +1,10 @@
 #pragma once
 #include <libpmem.h>
+#include <search.h>
 #include <yaml-cpp/yaml.h>
 
 #include <filesystem>
-#include <iostream>
+#include <json.hpp>
 #include <map>
 #include <vector>
 
@@ -30,7 +31,11 @@ static void get_if_present(const YAML::Node& data, const std::string& name, T* a
   if (data[name] != nullptr) {
     *attribute = data[name].as<T>();
   }
-};
+}
+
+static const size_t BYTE_IN_MEBIBYTE = pow(1024, 2);
+static const size_t BYTE_IN_GIGABYTE = 1e9;
+static const size_t NANOSECONDS_IN_SECONDS = 1e9;
 
 }  // namespace internal
 
@@ -38,17 +43,21 @@ class Benchmark {
  public:
   void run();
   void generate_data();
-  virtual void get_result() = 0;
+  virtual nlohmann::json get_result();
   virtual void set_up() = 0;
   virtual void tear_down() {
     if (pmem_file_ != nullptr) {
       pmem_unmap(pmem_file_, get_length());
     }
-    bool result = std::filesystem::remove("/mnt/nvram-nvmbm/read_benchmark.file");
+    std::filesystem::remove("/mnt/nvram-nvmbm/read_benchmark.file");
   }
 
  protected:
+  explicit Benchmark(std::string benchmark_name) : benchmark_name_(std::move(benchmark_name)) {}
   virtual size_t get_length() = 0;
+  virtual nlohmann::json get_config() = 0;
+
+  const std::string benchmark_name_;
   char* pmem_file_{nullptr};
   std::vector<std::unique_ptr<IoOperation>> io_operations_;
   std::vector<internal::Measurement> measurements_;
