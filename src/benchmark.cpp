@@ -44,7 +44,7 @@ nlohmann::json Benchmark::get_result() {
       uint64_t latency = duration_to_nanoseconds(measurement.end_ts - measurement.start_ts);
       uint64_t start_ts = duration_to_nanoseconds(measurement.start_ts.time_since_epoch());
       uint64_t end_ts = duration_to_nanoseconds(measurement.end_ts.time_since_epoch());
-      uint64_t data_size = dynamic_cast<const ActiveIoOperation*>(io_op)->get_io_size();
+      uint64_t data_size = dynamic_cast<const ActiveIoOperation*>(io_op)->get_io_size() / 1e9; // B to GB
       double bandwidth = data_size / (latency / 1e9) / 1e9;  // First 1e9 nanoseconds to seconds. Second 1e9 B to GB
 
       std::string type;
