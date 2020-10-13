@@ -38,13 +38,13 @@ nlohmann::json Benchmark::get_result() {
   nlohmann::json result_points = nlohmann::json::array();
   for (int i = 0; i < io_operations_.size(); i++) {
     const internal::Measurement measurement = measurements_.at(i);
-    IoOperation* io_op = io_operations_.at(i).get();
+    const IoOperation* io_op = io_operations_.at(i).get();
 
     if (io_op->is_active()) {
       uint64_t latency = duration_to_nanoseconds(measurement.end_ts - measurement.start_ts);
       uint64_t start_ts = duration_to_nanoseconds(measurement.start_ts.time_since_epoch());
       uint64_t end_ts = duration_to_nanoseconds(measurement.end_ts.time_since_epoch());
-      uint64_t data_size = dynamic_cast<ActiveIoOperation*>(io_op)->get_io_size();
+      uint64_t data_size = dynamic_cast<const ActiveIoOperation*>(io_op)->get_io_size();
       double bandwidth = data_size / (latency / 1e9);
 
       std::string type;
@@ -59,7 +59,7 @@ nlohmann::json Benchmark::get_result() {
       result_points += {{"type", type},           {"latency", latency},          {"bandwidth", bandwidth},
                         {"data_size", data_size}, {"start_timestamp", start_ts}, {"end_timestamp", end_ts}};
     } else {
-      result_points += {{"type", "pause"}, {"length", dynamic_cast<Pause*>(io_op)->get_length()}};
+      result_points += {{"type", "pause"}, {"length", dynamic_cast<const Pause*>(io_op)->get_length()}};
     }
   }
   result["results"] = result_points;
