@@ -4,7 +4,6 @@
 #include <yaml-cpp/yaml.h>
 
 #include <filesystem>
-#include <iostream>
 #include <json.hpp>
 #include <map>
 #include <vector>
@@ -40,35 +39,7 @@ class Benchmark {
  public:
   void run();
   void generate_data();
-  virtual void get_result() {
-    nlohmann::json result;
-    result["benchmark_name"] = benchmark_name_;
-    result["config"] = get_config();
-    nlohmann::json measurements = nlohmann::json::array();
-    for (int i = 0; i < io_operations_.size(); i++) {
-      if (io_operations_.at(i)->is_active()) {
-        uint64_t latency = duration_to_nanoseconds_in_long(measurements_.at(i).end_ts - measurements_.at(i).start_ts);
-        uint64_t start_ts = duration_to_nanoseconds_in_long(measurements_.at(i).start_ts.time_since_epoch());
-        uint64_t end_ts = duration_to_nanoseconds_in_long(measurements_.at(i).end_ts.time_since_epoch());
-        uint64_t data_size = dynamic_cast<ActiveIoOperation*>(io_operations_.at(i).get())->get_io_size();
-        double bandwidth = data_size / (latency / 1e9);
-
-        std::string type;
-        if (typeid(*io_operations_.at(i).get()) == typeid(Read)) {
-          type = "read";
-        } else if (typeid(*io_operations_.at(i).get()) == typeid(Write)) {
-          type = "write";
-        }
-
-        measurements += {{"type", type},           {"latency", latency},          {"bandwidth", bandwidth},
-                         {"data_size", data_size}, {"start_timestamp", start_ts}, {"end_timestamp", end_ts}};
-      } else {
-        measurements += {{"type", "pause"}, {"length", dynamic_cast<Pause*>(io_operations_.at(i).get())->get_length()}};
-      }
-    }
-    result["results"] = measurements;
-    std::cout << result.dump() << std::endl;
-  };
+  virtual nlohmann::json get_result();
   virtual void set_up() = 0;
   virtual void tear_down() {
     if (pmem_file_ != nullptr) {
@@ -81,15 +52,11 @@ class Benchmark {
   explicit Benchmark(std::string benchmark_name) : benchmark_name_(std::move(benchmark_name)) {}
   virtual size_t get_length() = 0;
   virtual nlohmann::json get_config() = 0;
+
   const std::string benchmark_name_;
   char* pmem_file_{nullptr};
   std::vector<std::unique_ptr<IoOperation>> io_operations_;
   std::vector<internal::Measurement> measurements_;
-
- private:
-  static uint64_t duration_to_nanoseconds_in_long(const std::chrono::high_resolution_clock::duration& duration) {
-    return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
-  }
 };
 
 }  // namespace perma

@@ -39,4 +39,8 @@ char* create_pmem_file(const std::filesystem::path& file, size_t length) {
   return static_cast<char*>(pmem_addr);
 }
 
+uint64_t duration_to_nanoseconds(std::chrono::high_resolution_clock::duration duration) {
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+}
+
 }  // namespace perma

@@ -1,5 +1,8 @@
 #include "benchmark_suite.hpp"
 
+#include <iostream>
+#include <json.hpp>
+
 #include "benchmark_factory.hpp"
 
 namespace perma {
@@ -11,8 +14,9 @@ void BenchmarkSuite::run_benchmarks(const std::string& file_name) {
     benchmark->set_up();
     benchmark->run();
     // TODO: Handle get_result
+    nlohmann::json result = benchmark->get_result();
+    std::cout << result.dump() << std::endl;
     benchmark->tear_down();
-    benchmark->get_result();
   }
 }
 
