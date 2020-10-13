@@ -31,7 +31,9 @@ static void get_if_present(const YAML::Node& data, const std::string& name, T* a
   if (data[name] != nullptr) {
     *attribute = data[name].as<T>();
   }
-};
+}
+
+static const uint32_t CONVERSION_FACTOR_B_TO_MB = pow(1024, 2);
 
 }  // namespace internal
 
