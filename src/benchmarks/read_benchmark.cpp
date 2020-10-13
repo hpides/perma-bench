@@ -32,9 +32,7 @@ nlohmann::json ReadBenchmark::get_config() {
           {"exec_mode", config_.exec_mode_}};
 }
 
-size_t ReadBenchmark::get_length() {
-  return config_.target_size_ * internal::CONVERSION_FACTOR_B_TO_MB;  // Target size in MiB
-}
+size_t ReadBenchmark::get_length() { return config_.target_size_ * internal::BYTE_IN_MEBIBYTE; }
 
 ReadBenchmarkConfig ReadBenchmarkConfig::decode(const YAML::Node& raw_config_data) {
   ReadBenchmarkConfig read_bm_config{};

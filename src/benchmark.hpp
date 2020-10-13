@@ -33,7 +33,9 @@ static void get_if_present(const YAML::Node& data, const std::string& name, T* a
   }
 }
 
-static const uint32_t CONVERSION_FACTOR_B_TO_MB = pow(1024, 2);
+static const size_t BYTE_IN_MEBIBYTE = pow(1024, 2);
+static const size_t BYTE_IN_GIGABYTE = 1e9;
+static const size_t NANOSECONDS_IN_SECONDS = 1e9;
 
 }  // namespace internal
 
