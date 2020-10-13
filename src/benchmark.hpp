@@ -42,7 +42,7 @@ class Benchmark {
   void generate_data();
   virtual void get_result() {
     nlohmann::json result;
-    // TODO: add benchmark name
+    result["benchmark_name"] = benchmark_name_;
     result["config"] = get_config();
     nlohmann::json measurements = nlohmann::json::array();
     for (int i = 0; i < io_operations_.size(); i++) {
@@ -78,14 +78,16 @@ class Benchmark {
   }
 
  protected:
+  explicit Benchmark(std::string benchmark_name) : benchmark_name_(std::move(benchmark_name)) {}
   virtual size_t get_length() = 0;
   virtual nlohmann::json get_config() = 0;
+  const std::string benchmark_name_;
   char* pmem_file_{nullptr};
   std::vector<std::unique_ptr<IoOperation>> io_operations_;
   std::vector<internal::Measurement> measurements_;
 
  private:
-  static unsigned long duration_to_nanoseconds_in_long(const std::chrono::high_resolution_clock::duration& duration) {
+  static uint64_t duration_to_nanoseconds_in_long(const std::chrono::high_resolution_clock::duration& duration) {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
   }
 };

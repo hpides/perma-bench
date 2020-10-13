@@ -19,7 +19,7 @@ struct ReadBenchmarkConfig {
 
 class ReadBenchmark : public Benchmark {
  public:
-  explicit ReadBenchmark(const ReadBenchmarkConfig& config) : config_(config){};
+  explicit ReadBenchmark(const ReadBenchmarkConfig& config) : Benchmark("readBenchmark"), config_(config){};
 
   void set_up() override;
 

@@ -2,6 +2,8 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <utility>
+
 #include "../benchmark.hpp"
 
 namespace perma {
@@ -17,7 +19,7 @@ struct WriteBenchmarkConfig {
 };
 class WriteBenchmark : public Benchmark {
  public:
-  explicit WriteBenchmark(const WriteBenchmarkConfig& config) : config_(config){};
+  explicit WriteBenchmark(const WriteBenchmarkConfig& config) : Benchmark("writeBenchmark"), config_(config){};
 
   void set_up() override;
 
