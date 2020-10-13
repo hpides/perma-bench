@@ -2,8 +2,6 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <utility>
-
 #include "../benchmark.hpp"
 
 namespace perma {
