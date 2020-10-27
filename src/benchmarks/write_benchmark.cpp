@@ -24,7 +24,8 @@ nlohmann::json WriteBenchmark::get_config() {
           {"target_size", config_.target_size_},
           {"pause_length", config_.pause_length_},
           {"pause_frequency", config_.pause_frequency_},
-          {"exec_mode", config_.exec_mode_}};
+          {"exec_mode", config_.exec_mode_},
+          {"number_threads", config_.number_threads_}};
 }
 
 size_t WriteBenchmark::get_length() { return config_.target_size_ * internal::BYTE_IN_MEBIBYTE; }
@@ -38,6 +39,7 @@ WriteBenchmarkConfig WriteBenchmarkConfig::decode(const YAML::Node& raw_config_d
       internal::get_if_present(node, "number_operations", &write_bm_config.number_operations_);
       internal::get_if_present(node, "pause_frequency", &write_bm_config.pause_frequency_);
       internal::get_if_present(node, "pause_length", &write_bm_config.pause_length_);
+      internal::get_if_present(node, "number_threads", &write_bm_config.number_threads_);
       if (node["exec_mode"] != nullptr && node["exec_mode"].as<std::string>() == "random") {
         write_bm_config.exec_mode_ = internal::Mode::Random;
       }
