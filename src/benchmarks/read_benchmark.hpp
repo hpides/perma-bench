@@ -1,7 +1,5 @@
 #pragma once
 
-#include <yaml-cpp/yaml.h>
-
 #include "../benchmark.hpp"
 
 namespace perma {
@@ -27,6 +25,7 @@ class ReadBenchmark : public Benchmark {
  protected:
   nlohmann::json get_config() override;
   size_t get_length() override;
+  uint16_t get_number_threads() override;
 
  private:
   ReadBenchmarkConfig config_;

@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "io_operation.hpp"
+#include "thread_manager.hpp"
 
 namespace perma {
 
@@ -20,11 +21,6 @@ static const std::map<std::string, BenchmarkOptions> optionStrings{
     {"read_benchmark", BenchmarkOptions::readBenchmark}, {"write_benchmark", BenchmarkOptions::writeBenchmark}};
 
 BenchmarkOptions resolve_benchmark_option(const std::string& benchmark_option);
-
-struct Measurement {
-  const std::chrono::high_resolution_clock::time_point start_ts;
-  const std::chrono::high_resolution_clock::time_point end_ts;
-};
 
 template <typename T>
 static void get_if_present(const YAML::Node& data, const std::string& name, T* attribute) {
@@ -52,15 +48,18 @@ class Benchmark {
     std::filesystem::remove("/mnt/nvram-nvmbm/read_benchmark.file");
   }
 
+  std::vector<std::vector<std::unique_ptr<IoOperation>>> io_operations_;
+
  protected:
   explicit Benchmark(std::string benchmark_name) : benchmark_name_(std::move(benchmark_name)) {}
   virtual size_t get_length() = 0;
   virtual nlohmann::json get_config() = 0;
+  virtual uint16_t get_number_threads() = 0;
 
   const std::string benchmark_name_;
   char* pmem_file_{nullptr};
-  std::vector<std::unique_ptr<IoOperation>> io_operations_;
-  std::vector<internal::Measurement> measurements_;
+  std::vector<std::thread> pool_;
+  std::vector<std::vector<internal::Measurement>> measurements_;
 };
 
 }  // namespace perma

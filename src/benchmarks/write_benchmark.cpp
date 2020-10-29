@@ -4,17 +4,26 @@ namespace perma {
 
 void WriteBenchmark::set_up() {
   char* end_addr = pmem_file_ + get_length();
-  io_operations_.reserve(config_.number_operations_ / internal::NUMBER_IO_OPERATIONS);
-  // Create IOReadOperations
-  for (uint32_t i = 1; i <= config_.number_operations_; i += internal::NUMBER_IO_OPERATIONS) {
-    io_operations_.push_back(std::make_unique<Write>(pmem_file_, end_addr, internal::NUMBER_IO_OPERATIONS,
-                                                     config_.access_size_, config_.exec_mode_));
-    // Assumption: num_ops is multiple of internal::number_ios(1000)
-    if (i % config_.pause_frequency_ == 0) {
-      // Assumption: pause_frequency is multiple of internal:: number_ios (1000)
-      auto pause_io = std::make_unique<Pause>(config_.pause_length_);
-      io_operations_.push_back(std::move(pause_io));
+  uint64_t number_ios = config_.number_operations_ / internal::NUMBER_IO_OPERATIONS;
+  io_operations_.reserve(config_.number_threads_);
+  measurements_.reserve(config_.number_threads_);
+  pool_.reserve(config_.number_threads_ - 1);
+  for (uint16_t i = 0; i < config_.number_threads_; i++) {
+    measurements_[i].reserve(number_ios);
+    std::vector<std::unique_ptr<IoOperation>> io_ops{};
+    io_ops.reserve(number_ios);
+
+    // Create IOWriteOperations
+    for (uint32_t j = 1; j <= config_.number_operations_; j += internal::NUMBER_IO_OPERATIONS) {
+      io_ops.push_back(std::make_unique<Write>(pmem_file_, end_addr, internal::NUMBER_IO_OPERATIONS,
+                                               config_.access_size_, config_.exec_mode_));
+      // Assumption: num_ops is multiple of internal::number_ios(1000)
+      if (j % config_.pause_frequency_ == 0) {
+        // Assumption: pause_frequency is multiple of internal:: number_ios (1000)
+        io_ops.push_back(std::make_unique<Pause>(config_.pause_length_));
+      }
     }
+    io_operations_.push_back(std::move(io_ops));
   }
 }
 
@@ -29,6 +38,8 @@ nlohmann::json WriteBenchmark::get_config() {
 }
 
 size_t WriteBenchmark::get_length() { return config_.target_size_ * internal::BYTE_IN_MEBIBYTE; }
+
+uint16_t WriteBenchmark::get_number_threads() { return config_.number_threads_; }
 
 WriteBenchmarkConfig WriteBenchmarkConfig::decode(const YAML::Node& raw_config_data) {
   WriteBenchmarkConfig write_bm_config{};

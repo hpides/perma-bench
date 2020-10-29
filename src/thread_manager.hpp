@@ -1,25 +1,29 @@
 #pragma once
 
 #include <atomic>
-#include <iostream>
+#include <chrono>
+#include <vector>
 
 namespace perma {
 
+namespace internal {
+
+struct Measurement {
+  const std::chrono::high_resolution_clock::time_point start_ts;
+  const std::chrono::high_resolution_clock::time_point end_ts;
+};
+
+}  // namespace internal
 class ThreadManager {
  public:
-  static ThreadManager* get_manager();
-  void reset(int number_threads);
+  explicit ThreadManager(int number_threads) : threads_alive_(number_threads), results_(number_threads){};
   void wait_for_all_threads();
   void notify_thread_complete();
 
- private:
-  ThreadManager() { std::cout << "Created ThreadManager Singleton" << std::endl; };  // = default;
-  static ThreadManager* manager_;
-  std::atomic<int> threads_alive_{};
+  std::vector<std::vector<internal::Measurement>> results_;
 
- public:
-  ThreadManager(ThreadManager const&) = delete;
-  void operator=(ThreadManager const&) = delete;
+ private:
+  std::atomic<int> threads_alive_{};
 };
 
 }  // namespace perma

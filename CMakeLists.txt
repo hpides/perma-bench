@@ -3,8 +3,8 @@ project(perma-bench)
 
 include(ExternalProject)
 set(CMAKE_CXX_STANDARD 17)
-
-SET(COMPILE_FLAGS "-march=native")
+set(COMPILE_FLAGS "-march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
     message("-- Release mode, all optimizations enabled")
