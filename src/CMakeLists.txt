@@ -9,8 +9,6 @@ set(
         benchmark_suite.hpp
         io_operation.cpp
         io_operation.hpp
-        thread_manager.cpp
-        thread_manager.hpp
         utils.cpp
         utils.hpp
         benchmarks/read_benchmark.cpp

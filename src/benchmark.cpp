@@ -17,32 +17,24 @@ BenchmarkOptions resolve_benchmark_option(const std::string& benchmark_option) {
 }
 }  // namespace internal
 
-void run_in_thread(const Benchmark* benchmark, const uint16_t thread_id, ThreadManager* manager) {
-  manager->results_[thread_id].reserve(benchmark->io_operations_[thread_id].size());
+void run_in_thread(Benchmark* benchmark, const uint16_t thread_id) {
   for (const std::unique_ptr<IoOperation>& io_op : benchmark->io_operations_[thread_id]) {
     const auto start_ts = std::chrono::high_resolution_clock::now();
     io_op->run();
     const auto end_ts = std::chrono::high_resolution_clock::now();
-    manager->results_[thread_id].push_back(internal::Measurement{start_ts, end_ts});
+    benchmark->measurements_[thread_id].push_back(internal::Measurement{start_ts, end_ts});
   }
-  // notify thread complete
 }
 
 void Benchmark::run() {
-  auto manager = std::make_unique<ThreadManager>(get_number_threads());
-
   for (std::size_t ti = 0; ti < pool_.size(); ti++) {
-    pool_[ti] = std::thread(&run_in_thread, this, ti + 1, manager.get());
+    pool_[ti] = std::thread(&run_in_thread, this, ti + 1);
   }
 
-  run_in_thread(this, 0, manager.get());
+  run_in_thread(this, 0);
 
   // wait for all threads
   for (std::thread& thread : pool_) thread.join();
-
-  // measurements_ = manager->results;
-
-  manager.reset();
 }
 
 void Benchmark::generate_data() {
@@ -65,8 +57,8 @@ nlohmann::json Benchmark::get_result() {
         uint64_t latency = duration_to_nanoseconds(measurement.end_ts - measurement.start_ts);
         uint64_t start_ts = duration_to_nanoseconds(measurement.start_ts.time_since_epoch());
         uint64_t end_ts = duration_to_nanoseconds(measurement.end_ts.time_since_epoch());
-        double data_size = dynamic_cast<const ActiveIoOperation*>(io_op)->get_io_size() / internal::BYTE_IN_GIGABYTE;
-        double bandwidth = data_size / (latency / internal::NANOSECONDS_IN_SECONDS);
+        double data_size = dynamic_cast<const ActiveIoOperation*>(io_op)->get_io_size() / static_cast<double>(internal::BYTE_IN_GIGABYTE);
+        double bandwidth = data_size / (latency / static_cast<double>(internal::NANOSECONDS_IN_SECONDS));
 
         std::string type;
         if (typeid(*io_op) == typeid(Read)) {

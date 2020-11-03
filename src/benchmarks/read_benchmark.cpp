@@ -6,8 +6,8 @@ void ReadBenchmark::set_up() {
   char* end_addr = pmem_file_ + get_length();
   uint64_t number_ios = config_.number_operations_ / internal::NUMBER_IO_OPERATIONS;
   io_operations_.reserve(config_.number_threads_);
-  measurements_.reserve(config_.number_threads_);
-  pool_.reserve(config_.number_threads_ - 1);
+  measurements_.resize(config_.number_threads_);
+  pool_.resize(config_.number_threads_ - 1);
   for (uint16_t i = 0; i < config_.number_threads_; i++) {
     measurements_[i].reserve(number_ios);
     std::vector<std::unique_ptr<IoOperation>> io_ops{};
