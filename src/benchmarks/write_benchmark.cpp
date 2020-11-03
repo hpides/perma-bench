@@ -8,17 +8,17 @@ void WriteBenchmark::set_up() {
   io_operations_.reserve(config_.number_threads_);
   measurements_.resize(config_.number_threads_);
   pool_.resize(config_.number_threads_ - 1);
-  for (uint16_t i = 0; i < config_.number_threads_; i++) {
-    measurements_[i].reserve(number_ios);
+  for (uint16_t thread_num = 0; thread_num < config_.number_threads_; thread_num++) {
+    measurements_[thread_num].reserve(number_ios);
     std::vector<std::unique_ptr<IoOperation>> io_ops{};
     io_ops.reserve(number_ios);
 
     // Create IOWriteOperations
-    for (uint32_t j = 1; j <= config_.number_operations_; j += internal::NUMBER_IO_OPERATIONS) {
+    for (uint32_t io_op = 1; io_op <= config_.number_operations_; io_op += internal::NUMBER_IO_OPERATIONS) {
       io_ops.push_back(std::make_unique<Write>(pmem_file_, end_addr, internal::NUMBER_IO_OPERATIONS,
                                                config_.access_size_, config_.exec_mode_));
       // Assumption: num_ops is multiple of internal::number_ios(1000)
-      if (j % config_.pause_frequency_ == 0) {
+      if (io_op % config_.pause_frequency_ == 0) {
         // Assumption: pause_frequency is multiple of internal:: number_ios (1000)
         io_ops.push_back(std::make_unique<Pause>(config_.pause_length_));
       }

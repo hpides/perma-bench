@@ -22,19 +22,21 @@ void run_in_thread(Benchmark* benchmark, const uint16_t thread_id) {
     const auto start_ts = std::chrono::high_resolution_clock::now();
     io_op->run();
     const auto end_ts = std::chrono::high_resolution_clock::now();
-    benchmark->measurements_[thread_id].push_back(internal::Measurement{start_ts, end_ts});
+    benchmark->measurements_[thread_id].emplace_back(internal::Measurement{start_ts, end_ts});
   }
 }
 
 void Benchmark::run() {
-  for (std::size_t ti = 0; ti < pool_.size(); ti++) {
-    pool_[ti] = std::thread(&run_in_thread, this, ti + 1);
+  for (size_t thread_index = 0; thread_index < pool_.size(); thread_index++) {
+    pool_[thread_index] = std::thread(&run_in_thread, this, thread_index + 1);
   }
 
   run_in_thread(this, 0);
 
   // wait for all threads
-  for (std::thread& thread : pool_) thread.join();
+  for (std::thread& thread : pool_) {
+    thread.join();
+  }
 }
 
 void Benchmark::generate_data() {
@@ -57,7 +59,8 @@ nlohmann::json Benchmark::get_result() {
         uint64_t latency = duration_to_nanoseconds(measurement.end_ts - measurement.start_ts);
         uint64_t start_ts = duration_to_nanoseconds(measurement.start_ts.time_since_epoch());
         uint64_t end_ts = duration_to_nanoseconds(measurement.end_ts.time_since_epoch());
-        double data_size = dynamic_cast<const ActiveIoOperation*>(io_op)->get_io_size() / static_cast<double>(internal::BYTE_IN_GIGABYTE);
+        double data_size = dynamic_cast<const ActiveIoOperation*>(io_op)->get_io_size() /
+                           static_cast<double>(internal::BYTE_IN_GIGABYTE);
         double bandwidth = data_size / (latency / static_cast<double>(internal::NANOSECONDS_IN_SECONDS));
 
         std::string type;
