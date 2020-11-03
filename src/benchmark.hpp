@@ -14,12 +14,9 @@ namespace perma {
 
 namespace internal {
 
-enum BenchmarkOptions { invalidBenchmark, readBenchmark, writeBenchmark };
-
-static const std::map<std::string, BenchmarkOptions> optionStrings{
-    {"read_benchmark", BenchmarkOptions::readBenchmark}, {"write_benchmark", BenchmarkOptions::writeBenchmark}};
-
-BenchmarkOptions resolve_benchmark_option(const std::string& benchmark_option);
+static const size_t BYTE_IN_MEBIBYTE = pow(1024, 2);
+static const size_t BYTE_IN_GIGABYTE = 1e9;
+static const size_t NANOSECONDS_IN_SECONDS = 1e9;
 
 struct Measurement {
   Measurement(const std::chrono::high_resolution_clock::time_point start_ts,
@@ -36,21 +33,36 @@ static void get_if_present(const YAML::Node& data, const std::string& name, T* a
   }
 }
 
-static const size_t BYTE_IN_MEBIBYTE = pow(1024, 2);
-static const size_t BYTE_IN_GIGABYTE = 1e9;
-static const size_t NANOSECONDS_IN_SECONDS = 1e9;
-
 }  // namespace internal
+
+struct BenchmarkConfig {
+  uint64_t total_memory_range_{1024};
+  uint32_t access_size_{512};
+  uint64_t number_operations_{10000};
+  internal::Mode exec_mode_{internal::Mode::Sequential};
+
+  double write_ratio_{0.5};
+  double read_ratio_{0.5};
+
+  uint64_t pause_frequency_{1000};
+  uint64_t pause_length_micros_{1000};
+
+  uint16_t number_partitions_{1};
+
+  uint16_t number_threads_{1};
+
+  static BenchmarkConfig decode(const YAML::Node& raw_config_data);
+};
 
 class Benchmark {
  public:
   void run();
   void generate_data();
-  virtual nlohmann::json get_result();
-  virtual void set_up() = 0;
-  virtual void tear_down() {
+  nlohmann::json get_result();
+  void set_up();
+  void tear_down() {
     if (pmem_file_ != nullptr) {
-      pmem_unmap(pmem_file_, get_length());
+      pmem_unmap(pmem_file_, get_length_in_bytes());
     }
     std::filesystem::remove("/mnt/nvram-nvmbm/read_benchmark.file");
   }
@@ -59,11 +71,12 @@ class Benchmark {
   std::vector<std::vector<internal::Measurement>> measurements_;
 
  protected:
-  explicit Benchmark(std::string benchmark_name) : benchmark_name_(std::move(benchmark_name)) {}
-  virtual size_t get_length() = 0;
-  virtual nlohmann::json get_config() = 0;
-  virtual uint16_t get_number_threads() = 0;
+  Benchmark(std::string benchmark_name, BenchmarkConfig config)
+      : benchmark_name_(std::move(benchmark_name)), config_(config){};
+  size_t get_length_in_bytes();
+  nlohmann::json get_config();
 
+  const BenchmarkConfig config_;
   const std::string benchmark_name_;
   char* pmem_file_{nullptr};
   std::vector<std::thread> pool_;

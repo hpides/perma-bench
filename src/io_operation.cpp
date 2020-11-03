@@ -3,10 +3,6 @@
 #include <immintrin.h>
 #include <libpmem.h>
 
-#include <iostream>
-#include <random>
-#include <vector>
-
 namespace perma {
 
 // This tells the compiler to keep whatever x is and not optimize it away.
@@ -14,40 +10,9 @@ namespace perma {
 // https://youtu.be/nXaxk27zwlk?t=2441.
 #define KEEP(x) asm volatile("" : : "g"(x) : "memory")
 
-ActiveIoOperation::ActiveIoOperation(char* startAddr, char* endAddr, const uint32_t numberOps,
-                                     const uint32_t accessSize, const internal::Mode mode)
-    : start_addr_(startAddr), end_addr_(endAddr), number_ops_(numberOps), access_size_(accessSize), mode_(mode) {
-  op_addresses_ = std::vector<char*>{number_ops_};
-
-  if (mode_ == internal::Mode::Random) {
-    const ptrdiff_t range = end_addr_ - start_addr_;
-    const uint32_t num_accesses_in_range = range / access_size_;
-
-    std::random_device rnd_device;
-    std::mt19937_64 rnd_generator{rnd_device()};
-    std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
-
-    // Random read
-    for (uint32_t op = 0; op < number_ops_; ++op) {
-      op_addresses_[op] = start_addr_ + (access_distribution(rnd_generator) * access_size_);
-    }
-  } else {
-    // Sequential read
-    for (uint32_t op = 0; op < number_ops_; ++op) {
-      op_addresses_[op] = start_addr_ + (op * access_size_);
-    }
-  }
-}
-
-bool ActiveIoOperation::is_active() const { return true; }
-
 uint32_t Pause::get_length() const { return length_; }
 
-void Pause::run() {
-  std::cout << "Sleeping for " << length_ << " microseconds" << std::endl;
-  std::this_thread::sleep_for(std::chrono::microseconds(length_));
-  std::cout << "Slept for " << length_ << " microseconds" << std::endl;
-}
+void Pause::run() { std::this_thread::sleep_for(std::chrono::microseconds(length_)); }
 
 void Read::run() {
   for (char* addr : op_addresses_) {
