@@ -7,7 +7,7 @@ void WriteBenchmark::set_up() {
   uint64_t number_ios = config_.number_operations_ / internal::NUMBER_IO_OPERATIONS;
   io_operations_.reserve(config_.number_threads_);
   measurements_.resize(config_.number_threads_);
-  pool_.resize(config_.number_threads_ - 1);
+  pool_.reserve(config_.number_threads_ - 1);
   for (uint16_t thread_num = 0; thread_num < config_.number_threads_; thread_num++) {
     measurements_[thread_num].reserve(number_ios);
     std::vector<std::unique_ptr<IoOperation>> io_ops{};

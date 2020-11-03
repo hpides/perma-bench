@@ -27,8 +27,8 @@ void run_in_thread(Benchmark* benchmark, const uint16_t thread_id) {
 }
 
 void Benchmark::run() {
-  for (size_t thread_index = 0; thread_index < pool_.size(); thread_index++) {
-    pool_[thread_index] = std::thread(&run_in_thread, this, thread_index + 1);
+  for (size_t thread_index = 0; thread_index < get_number_threads() - 1; thread_index++) {
+    pool_.emplace_back(std::thread(&run_in_thread, this, thread_index + 1));
   }
 
   run_in_thread(this, 0);
