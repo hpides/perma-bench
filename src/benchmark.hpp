@@ -22,8 +22,11 @@ static const std::map<std::string, BenchmarkOptions> optionStrings{
 BenchmarkOptions resolve_benchmark_option(const std::string& benchmark_option);
 
 struct Measurement {
-  const std::chrono::high_resolution_clock::time_point start_ts;
-  const std::chrono::high_resolution_clock::time_point end_ts;
+  Measurement(const std::chrono::high_resolution_clock::time_point start_ts,
+              const std::chrono::high_resolution_clock::time_point end_ts)
+      : start_ts_(start_ts), end_ts_(end_ts){};
+  const std::chrono::high_resolution_clock::time_point start_ts_;
+  const std::chrono::high_resolution_clock::time_point end_ts_;
 };
 
 template <typename T>
