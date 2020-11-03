@@ -11,7 +11,7 @@ set(
         io_operation.hpp
         utils.cpp
         utils.hpp
-        benchmarks/read_benchmark.cpp 
+        benchmarks/read_benchmark.cpp
         benchmarks/read_benchmark.hpp
         benchmarks/write_benchmark.cpp
         benchmarks/write_benchmark.hpp)

@@ -22,8 +22,11 @@ static const std::map<std::string, BenchmarkOptions> optionStrings{
 BenchmarkOptions resolve_benchmark_option(const std::string& benchmark_option);
 
 struct Measurement {
-  const std::chrono::high_resolution_clock::time_point start_ts;
-  const std::chrono::high_resolution_clock::time_point end_ts;
+  Measurement(const std::chrono::high_resolution_clock::time_point start_ts,
+              const std::chrono::high_resolution_clock::time_point end_ts)
+      : start_ts_(start_ts), end_ts_(end_ts){};
+  const std::chrono::high_resolution_clock::time_point start_ts_;
+  const std::chrono::high_resolution_clock::time_point end_ts_;
 };
 
 template <typename T>
@@ -52,15 +55,18 @@ class Benchmark {
     std::filesystem::remove("/mnt/nvram-nvmbm/read_benchmark.file");
   }
 
+  std::vector<std::vector<std::unique_ptr<IoOperation>>> io_operations_;
+  std::vector<std::vector<internal::Measurement>> measurements_;
+
  protected:
   explicit Benchmark(std::string benchmark_name) : benchmark_name_(std::move(benchmark_name)) {}
   virtual size_t get_length() = 0;
   virtual nlohmann::json get_config() = 0;
+  virtual uint16_t get_number_threads() = 0;
 
   const std::string benchmark_name_;
   char* pmem_file_{nullptr};
-  std::vector<std::unique_ptr<IoOperation>> io_operations_;
-  std::vector<internal::Measurement> measurements_;
+  std::vector<std::thread> pool_;
 };
 
 }  // namespace perma
