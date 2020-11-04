@@ -65,10 +65,10 @@ nlohmann::json Benchmark::get_result() {
 
         result_points += {{"type", type},           {"latency", latency},          {"bandwidth", bandwidth},
                           {"data_size", data_size}, {"start_timestamp", start_ts}, {"end_timestamp", end_ts},
-                          {"thread_id", i}};
+                          {"thread_id", thread_num}};
       } else {
         result_points +=
-            {{"type", "pause"}, {"length", dynamic_cast<const Pause*>(io_op)->get_length()}, {"thread_id", i}};
+            {{"type", "pause"}, {"length", dynamic_cast<const Pause*>(io_op)->get_length()}, {"thread_id", thread_num}};
       }
     }
   }
