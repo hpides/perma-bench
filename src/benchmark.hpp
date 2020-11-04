@@ -56,6 +56,8 @@ struct BenchmarkConfig {
 
 class Benchmark {
  public:
+  Benchmark(std::string benchmark_name, BenchmarkConfig config)
+      : benchmark_name_(std::move(benchmark_name)), config_(config){};
   void run();
   void generate_data();
   nlohmann::json get_result();
@@ -71,9 +73,7 @@ class Benchmark {
   std::vector<std::vector<internal::Measurement>> measurements_;
 
  protected:
-  Benchmark(std::string benchmark_name, BenchmarkConfig config)
-      : benchmark_name_(std::move(benchmark_name)), config_(config){};
-  size_t get_length_in_bytes();
+  size_t get_length_in_bytes() const;
   nlohmann::json get_config();
 
   const BenchmarkConfig config_;

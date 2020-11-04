@@ -99,7 +99,8 @@ void Benchmark::set_up() {
       measurements_[index].reserve(num_io_chunks);
 
       std::vector<std::unique_ptr<IoOperation>> io_ops{};
-      const uint64_t num_pauses = config_.number_operations_ / config_.pause_frequency_ - 1;
+      const uint64_t num_pauses =
+          config_.pause_frequency_ == 0 ? 0 : config_.number_operations_ / config_.pause_frequency_ - 1;
       io_ops.reserve(num_io_chunks + num_pauses);
 
       // Create IOOperations
@@ -139,7 +140,8 @@ void Benchmark::set_up() {
           }
         }
         // Assumption: num_ops is multiple of internal::number_ios(1000)
-        if (io_op % config_.pause_frequency_ == 0 && io_op < config_.number_operations_) {
+        if (config_.pause_frequency_ != 0 && io_op % config_.pause_frequency_ == 0 &&
+            io_op < config_.number_operations_) {
           // Assumption: pause_frequency is multiple of internal:: number_ios (1000)
           io_ops.push_back(std::make_unique<Pause>(config_.pause_length_micros_));
         }
@@ -147,6 +149,21 @@ void Benchmark::set_up() {
       io_operations_.push_back(std::move(io_ops));
     }
   }
+}
+
+size_t Benchmark::get_length_in_bytes() const { return config_.total_memory_range_ * internal::BYTE_IN_MEBIBYTE; }
+
+nlohmann::json Benchmark::get_config() {
+  return {{"total_memory_range", config_.total_memory_range_},
+          {"access_size", config_.access_size_},
+          {"number_operations", config_.number_operations_},
+          {"exec_mode", config_.exec_mode_},
+          {"write_ratio", config_.write_ratio_},
+          {"read_ratio", config_.read_ratio_},
+          {"pause_frequency", config_.pause_frequency_},
+          {"pause_length_micros", config_.pause_length_micros_},
+          {"number_threads", config_.number_threads_},
+          {"number_threads", config_.number_threads_}};
 }
 
 BenchmarkConfig BenchmarkConfig::decode(const YAML::Node& raw_config_data) {
