@@ -11,7 +11,7 @@ namespace internal {
 static const char WRITE_DATA[] __attribute__((aligned(64))) =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-";
 
-static constexpr uint32_t NUMBER_IO_OPERATIONS = 1000;
+static constexpr uint32_t NUM_IO_OPS_PER_CHUNK = 1000;
 
 static constexpr size_t CACHE_LINE_SIZE = 64;
 
@@ -31,10 +31,10 @@ class ActiveIoOperation : public IoOperation {
  public:
   explicit ActiveIoOperation(uint32_t access_size) : access_size_(access_size){};
   bool is_active() const override { return true; }
-  uint64_t get_io_size() const { return internal::NUMBER_IO_OPERATIONS * access_size_; };
+  uint64_t get_io_size() const { return internal::NUM_IO_OPS_PER_CHUNK * access_size_; };
 
  protected:
-  std::array<char*, internal::NUMBER_IO_OPERATIONS> op_addresses_;
+  std::array<char*, internal::NUM_IO_OPS_PER_CHUNK> op_addresses_;
   const uint32_t access_size_;
 };
 

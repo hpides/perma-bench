@@ -31,7 +31,7 @@ void Benchmark::run() {
 }
 
 void Benchmark::generate_data() {
-  size_t length = get_length_in_bytes();
+  const size_t length = get_length_in_bytes();
   pmem_file_ = create_pmem_file("/mnt/nvram-nvmbm/read_benchmark.file", length);
   write_data(pmem_file_, pmem_file_ + length);
 }
@@ -41,10 +41,10 @@ nlohmann::json Benchmark::get_result() {
   result["benchmark_name"] = benchmark_name_;
   result["config"] = get_config();
   nlohmann::json result_points = nlohmann::json::array();
-  for (int i = 0; i < config_.number_threads_; i++) {
-    for (int j = 0; j < io_operations_.size(); j++) {
-      const internal::Measurement measurement = measurements_[i].at(j);
-      const IoOperation* io_op = io_operations_[i].at(j).get();
+  for (uint16_t thread_num = 0; thread_num < config_.number_threads_; thread_num++) {
+    for (int io_op_num = 0; io_op_num < io_operations_.size(); io_op_num++) {
+      const internal::Measurement measurement = measurements_[thread_num].at(io_op_num);
+      const IoOperation* io_op = io_operations_[thread_num].at(io_op_num).get();
 
       if (io_op->is_active()) {
         uint64_t latency = duration_to_nanoseconds(measurement.end_ts_ - measurement.start_ts_);
@@ -78,7 +78,7 @@ nlohmann::json Benchmark::get_result() {
 
 void Benchmark::set_up() {
   const char* end_addr = pmem_file_ + get_length_in_bytes();
-  const uint64_t num_io_chunks = config_.number_operations_ / internal::NUMBER_IO_OPERATIONS;
+  const uint64_t num_io_chunks = config_.number_operations_ / internal::NUM_IO_OPS_PER_CHUNK;
 
   io_operations_.reserve(config_.number_threads_);
   pool_.reserve(config_.number_threads_ - 1);
@@ -108,7 +108,8 @@ void Benchmark::set_up() {
 
       std::uniform_real_distribution<double> io_mode_distribution(0, 1);
 
-      for (uint32_t io_op = 1; io_op <= config_.number_operations_; io_op += internal::NUMBER_IO_OPERATIONS) {
+      // Assumption: num_ops is multiple of internal::number_ios(1000)
+      for (uint32_t io_op = 1; io_op <= config_.number_operations_; io_op += internal::NUM_IO_OPS_PER_CHUNK) {
         const double random_num = io_mode_distribution(rnd_generator);
         if (random_num < config_.read_ratio_) {
           io_ops.push_back(std::make_unique<Read>(config_.access_size_));
@@ -116,7 +117,7 @@ void Benchmark::set_up() {
           io_ops.push_back(std::make_unique<Write>(config_.access_size_));
         }
 
-        std::array<char*, internal::NUMBER_IO_OPERATIONS>& op_addresses =
+        std::array<char*, internal::NUM_IO_OPS_PER_CHUNK>& op_addresses =
             dynamic_cast<ActiveIoOperation*>(io_ops.back().get())->op_addresses_;
 
         switch (config_.exec_mode_) {
@@ -126,20 +127,20 @@ void Benchmark::set_up() {
 
             std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
 
-            for (uint32_t op = 0; op < internal::NUMBER_IO_OPERATIONS; ++op) {
+            for (uint32_t op = 0; op < internal::NUM_IO_OPS_PER_CHUNK; ++op) {
               op_addresses[op] = partition_start + (access_distribution(rnd_generator) * config_.access_size_);
             }
             break;
           }
           case internal::Mode::Sequential: {
-            for (uint32_t op = 0; op < internal::NUMBER_IO_OPERATIONS; ++op) {
+            for (uint32_t op = 0; op < internal::NUM_IO_OPS_PER_CHUNK; ++op) {
               op_addresses[op] = next_op_position + (op * config_.access_size_);
             }
-            next_op_position += internal::NUMBER_IO_OPERATIONS * config_.access_size_;
+            next_op_position += internal::NUM_IO_OPS_PER_CHUNK * config_.access_size_;
             break;
           }
         }
-        // Assumption: num_ops is multiple of internal::number_ios(1000)
+
         if (config_.pause_frequency_ != 0 && io_op % config_.pause_frequency_ == 0 &&
             io_op < config_.number_operations_) {
           // Assumption: pause_frequency is multiple of internal:: number_ios (1000)
