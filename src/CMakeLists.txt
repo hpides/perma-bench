@@ -10,13 +10,9 @@ set(
         io_operation.cpp
         io_operation.hpp
         utils.cpp
-        utils.hpp
-        benchmarks/read_benchmark.cpp
-        benchmarks/read_benchmark.hpp
-        benchmarks/write_benchmark.cpp
-        benchmarks/write_benchmark.hpp)
+        utils.hpp)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")
 add_executable(perma-bench perma.cpp ${SOURCES})
 add_dependencies(perma-bench PMDK YAML JSON)
 target_link_libraries(perma-bench pmem yaml-cpp)

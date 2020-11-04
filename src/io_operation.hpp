@@ -11,7 +11,7 @@ namespace internal {
 static const char WRITE_DATA[] __attribute__((aligned(64))) =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-";
 
-static const uint32_t NUMBER_IO_OPERATIONS = 1000;
+static constexpr uint32_t NUM_IO_OPS_PER_CHUNK = 1000;
 
 static constexpr size_t CACHE_LINE_SIZE = 64;
 
@@ -26,18 +26,16 @@ class IoOperation {
 };
 
 class ActiveIoOperation : public IoOperation {
+  friend class Benchmark;
+
  public:
-  ActiveIoOperation(char* start_addr, char* end_addr, uint32_t num_ops, uint32_t access_size, internal::Mode mode);
-  bool is_active() const override;
-  uint64_t get_io_size() const { return number_ops_ * access_size_; };
+  explicit ActiveIoOperation(uint32_t access_size) : access_size_(access_size){};
+  bool is_active() const override { return true; }
+  uint64_t get_io_size() const { return internal::NUM_IO_OPS_PER_CHUNK * access_size_; };
 
  protected:
-  char* start_addr_;
-  char* end_addr_;
-  std::vector<char*> op_addresses_;
-  const uint32_t number_ops_;
+  std::array<char*, internal::NUM_IO_OPS_PER_CHUNK> op_addresses_;
   const uint32_t access_size_;
-  const internal::Mode mode_;
 };
 
 class Pause : public IoOperation {
