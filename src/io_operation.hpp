@@ -7,13 +7,7 @@ namespace perma {
 
 namespace internal {
 
-// Exactly 64 characters to write in one cache line.
-static const char WRITE_DATA[] __attribute__((aligned(64))) =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-";
-
 static constexpr uint32_t NUM_IO_OPS_PER_CHUNK = 1000;
-
-static constexpr size_t CACHE_LINE_SIZE = 64;
 
 enum Mode { Sequential, Random };
 
@@ -29,12 +23,14 @@ class ActiveIoOperation : public IoOperation {
   friend class Benchmark;
 
  public:
-  explicit ActiveIoOperation(uint32_t access_size) : access_size_(access_size){};
+  explicit ActiveIoOperation(uint32_t access_size)
+      : access_size_(access_size), op_addresses_(internal::NUM_IO_OPS_PER_CHUNK) {};
+
   bool is_active() const override { return true; }
   uint64_t get_io_size() const { return internal::NUM_IO_OPS_PER_CHUNK * access_size_; };
 
  protected:
-  std::array<char*, internal::NUM_IO_OPS_PER_CHUNK> op_addresses_;
+  std::vector<char*> op_addresses_;
   const uint32_t access_size_;
 };
 
@@ -60,7 +56,5 @@ class Write : public ActiveIoOperation {
   using ActiveIoOperation::ActiveIoOperation;
   void run() override;
 };
-
-void write_data(char* from, const char* to);
 
 }  // namespace perma

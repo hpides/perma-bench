@@ -5,6 +5,7 @@
 #include <thread>
 
 #include "utils.hpp"
+#include "read_write_ops.hpp"
 
 namespace perma {
 
@@ -33,7 +34,7 @@ void Benchmark::run() {
 void Benchmark::generate_data() {
   const size_t length = get_length_in_bytes();
   pmem_file_ = create_pmem_file("/mnt/nvram-nvmbm/read_benchmark.file", length);
-  write_data(pmem_file_, pmem_file_ + length);
+  rw_ops::simd_write_data(pmem_file_, pmem_file_ + length);
 }
 
 nlohmann::json Benchmark::get_result() {
@@ -117,8 +118,7 @@ void Benchmark::set_up() {
           io_ops.push_back(std::make_unique<Write>(config_.access_size_));
         }
 
-        std::array<char*, internal::NUM_IO_OPS_PER_CHUNK>& op_addresses =
-            dynamic_cast<ActiveIoOperation*>(io_ops.back().get())->op_addresses_;
+        std::vector<char*>& op_addresses = dynamic_cast<ActiveIoOperation*>(io_ops.back().get())->op_addresses_;
 
         switch (config_.exec_mode_) {
           case internal::Mode::Random: {
