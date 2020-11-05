@@ -1,9 +1,9 @@
 #pragma once
 
 #include <immintrin.h>
-#include <vector>
-
 #include <libpmem.h>
+
+#include <vector>
 
 namespace perma::rw_ops {
 
@@ -40,17 +40,16 @@ inline void mov_write(const std::vector<char*>& op_addresses, const size_t acces
     for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
       // Read 512 Bit (64 Byte)
       asm volatile(
-        "mov    0*8(%[write_data]), 0*8(%[addr]) \n\t"
-        "mov    1*8(%[write_data]), 1*8(%[addr]) \n\t"
-        "mov    2*8(%[write_data]), 2*8(%[addr]) \n\t"
-        "mov    3*8(%[write_data]), 3*8(%[addr]) \n\t"
-        "mov    4*8(%[write_data]), 4*8(%[addr]) \n\t"
-        "mov    5*8(%[write_data]), 5*8(%[addr]) \n\t"
-        "mov    6*8(%[write_data]), 6*8(%[addr]) \n\t"
-        "mov    7*8(%[write_data]), 7*8(%[addr]) \n\t"
-        :
-        : [addr] "r" (mem_addr), [write_data] "r" (WRITE_DATA)
-      );
+          "mov    0*8(%[write_data]), 0*8(%[addr]) \n\t"
+          "mov    1*8(%[write_data]), 1*8(%[addr]) \n\t"
+          "mov    2*8(%[write_data]), 2*8(%[addr]) \n\t"
+          "mov    3*8(%[write_data]), 3*8(%[addr]) \n\t"
+          "mov    4*8(%[write_data]), 4*8(%[addr]) \n\t"
+          "mov    5*8(%[write_data]), 5*8(%[addr]) \n\t"
+          "mov    6*8(%[write_data]), 6*8(%[addr]) \n\t"
+          "mov    7*8(%[write_data]), 7*8(%[addr]) \n\t"
+          :
+          : [ addr ] "r"(mem_addr), [ write_data ] "r"(WRITE_DATA));
     }
   }
 }
@@ -79,17 +78,16 @@ inline void mov_read(const std::vector<char*>& op_addresses, const size_t access
     for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
       // Read 512 Bit (64 Byte)
       asm volatile(
-        "mov    0*8(%[addr]), %%r8  \n\t"
-        "mov    1*8(%[addr]), %%r8  \n\t"
-        "mov    2*8(%[addr]), %%r8  \n\t"
-        "mov    3*8(%[addr]), %%r8  \n\t"
-        "mov    4*8(%[addr]), %%r8  \n\t"
-        "mov    5*8(%[addr]), %%r8  \n\t"
-        "mov    6*8(%[addr]), %%r8  \n\t"
-        "mov    7*8(%[addr]), %%r8  \n\t"
-        :
-        : [addr] "r" (mem_addr)
-      );
+          "mov    0*8(%[addr]), %%r8  \n\t"
+          "mov    1*8(%[addr]), %%r8  \n\t"
+          "mov    2*8(%[addr]), %%r8  \n\t"
+          "mov    3*8(%[addr]), %%r8  \n\t"
+          "mov    4*8(%[addr]), %%r8  \n\t"
+          "mov    5*8(%[addr]), %%r8  \n\t"
+          "mov    6*8(%[addr]), %%r8  \n\t"
+          "mov    7*8(%[addr]), %%r8  \n\t"
+          :
+          : [ addr ] "r"(mem_addr));
     }
   }
 }

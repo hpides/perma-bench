@@ -1,6 +1,7 @@
 #pragma once
 
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 namespace perma {
@@ -10,6 +11,8 @@ namespace internal {
 static constexpr uint32_t NUM_IO_OPS_PER_CHUNK = 1000;
 
 enum Mode { Sequential, Random };
+enum DataInstruction { MOV, SIMD };
+enum PersistInstruction { CLWB, NTSTORE, CLFLUSH };
 
 }  // namespace internal
 
@@ -24,7 +27,7 @@ class ActiveIoOperation : public IoOperation {
 
  public:
   explicit ActiveIoOperation(uint32_t access_size)
-      : access_size_(access_size), op_addresses_(internal::NUM_IO_OPS_PER_CHUNK) {};
+      : access_size_(access_size), op_addresses_(internal::NUM_IO_OPS_PER_CHUNK){};
 
   bool is_active() const override { return true; }
   uint64_t get_io_size() const { return internal::NUM_IO_OPS_PER_CHUNK * access_size_; };
