@@ -3,7 +3,7 @@ project(perma-bench)
 
 include(ExternalProject)
 set(CMAKE_CXX_STANDARD 17)
-set(COMPILE_FLAGS "-march=native")
+set(COMPILE_FLAGS "-march=cascadelake")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
@@ -55,20 +55,14 @@ include_directories(${YAML_PREFIX}/src/YAML/include)
 link_directories(${YAML_PREFIX}/src/YAML)
 
 ##################### JSON ####################
-set(JSON_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/json")
-ExternalProject_Add(
-        JSON
+set(JSON_VERSION v3.9.1)
+set(JSON_DOWNLOAD_PATH https://github.com/nlohmann/json/releases/download/${JSON_VERSION}/json.hpp)
+set(JSON_DIR ${CMAKE_CURRENT_BINARY_DIR}/json)
+set(JSON_INCLUDE_PATH ${JSON_DIR}/json.hpp)
+file(DOWNLOAD ${JSON_DOWNLOAD_PATH} ${JSON_INCLUDE_PATH})
+include_directories(${JSON_DIR})
 
-        GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG v3.9.1
-        BUILD_IN_SOURCE 1
-        PREFIX ${JSON_PREFIX}
-        INSTALL_COMMAND ""
-        LOG_DOWNLOAD ON
-        LOG_BUILD ON
-        UPDATE_DISCONNECTED 1
-)
 
-include_directories(${JSON_PREFIX}/src/JSON/single_include/nlohmann)
-
+##################### PerMA ####################
+file(COPY configs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 add_subdirectory(src)
