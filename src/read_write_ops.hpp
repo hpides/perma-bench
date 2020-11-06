@@ -18,12 +18,15 @@ static const char WRITE_DATA[] __attribute__((aligned(64))) =
 
 static constexpr size_t CACHE_LINE_SIZE = 64;
 
+template <bool PERSIST = true>
 inline void simd_write_data(char* from, const char* to) {
   __m512i* data = (__m512i*)(WRITE_DATA);
   for (char* mem_addr = from; mem_addr < to; mem_addr += CACHE_LINE_SIZE) {
     // Write 512 Bit (64 Byte) and persist it.
     _mm512_stream_si512(reinterpret_cast<__m512i*>(mem_addr), *data);
-    pmem_persist(mem_addr, CACHE_LINE_SIZE);
+    if constexpr (PERSIST) {
+      pmem_persist(mem_addr, CACHE_LINE_SIZE);
+    }
   }
 }
 

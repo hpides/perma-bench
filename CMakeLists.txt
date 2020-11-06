@@ -26,6 +26,7 @@ ExternalProject_Add(
         LOG_DOWNLOAD ON
         LOG_CONFIGURE ON
         LOG_BUILD ON
+        UPDATE_DISCONNECTED 1
 )
 
 include_directories(${PMDK_PREFIX}/src/PMDK/src/include)
@@ -47,6 +48,7 @@ ExternalProject_Add(
         INSTALL_COMMAND ""
         LOG_DOWNLOAD ON
         LOG_BUILD ON
+        UPDATE_DISCONNECTED 1
 )
 
 include_directories(${YAML_PREFIX}/src/YAML/include)
@@ -64,6 +66,7 @@ ExternalProject_Add(
         INSTALL_COMMAND ""
         LOG_DOWNLOAD ON
         LOG_BUILD ON
+        UPDATE_DISCONNECTED 1
 )
 
 include_directories(${JSON_PREFIX}/src/JSON/single_include/nlohmann)

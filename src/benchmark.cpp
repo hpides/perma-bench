@@ -7,6 +7,52 @@
 #include "read_write_ops.hpp"
 #include "utils.hpp"
 
+namespace {
+
+constexpr auto VISITED_TAG = "visited";
+
+void ensure_unique_key(const YAML::Node& entry, const std::string& name) {
+  if (entry.Tag() == VISITED_TAG) {
+    const YAML::Mark& mark = entry.Mark();
+    throw std::invalid_argument("Duplicate entry: '" + name + "' (in line: " + std::to_string(mark.line) + ")");
+  }
+}
+
+template <typename T>
+bool get_if_present(YAML::Node& data, const std::string& name, T* attribute) {
+  YAML::Node entry = data[name];
+  if (!entry) {
+    return false;
+  }
+  ensure_unique_key(entry, name);
+
+  *attribute = entry.as<T>();
+  entry.SetTag(VISITED_TAG);
+  return true;
+}
+
+template <typename T>
+bool get_enum_if_present(YAML::Node& data, const std::string& name, const std::unordered_map<std::string, T>& enum_map,
+                         T* attribute) {
+  YAML::Node entry = data[name];
+  if (!entry) {
+    return false;
+  }
+  ensure_unique_key(entry, name);
+
+  const auto enum_key = entry.as<std::string>();
+  auto it = enum_map.find(enum_key);
+  if (it == enum_map.end()) {
+    throw std::invalid_argument("Unknown '" + name + "': " + enum_key);
+  }
+
+  *attribute = it->second;
+  entry.SetTag(VISITED_TAG);
+  return true;
+}
+
+}  // namespace
+
 namespace perma {
 
 struct ConfigEnums {
@@ -25,32 +71,6 @@ const std::unordered_map<std::string, internal::PersistInstruction> ConfigEnums:
     {"ntstore", internal::PersistInstruction::NTSTORE},
     {"clwb", internal::PersistInstruction::CLWB},
     {"clflush", internal::PersistInstruction::CLFLUSH}};
-
-template <typename T>
-bool get_if_present(const YAML::Node& data, const std::string& name, T* attribute) {
-  if (data[name] != nullptr) {
-    *attribute = data[name].as<T>();
-    return true;
-  }
-  return false;
-}
-
-template <typename T>
-bool get_enum_if_present(const YAML::Node& data, const std::string& name,
-                         const std::unordered_map<std::string, T>& enum_map, T* attribute) {
-  if (data[name] == nullptr) {
-    return false;
-  }
-
-  const auto enum_key = data[name].as<std::string>();
-  auto it = enum_map.find(enum_key);
-  if (it == enum_map.end()) {
-    throw std::invalid_argument("Unknown '" + name + "': " + enum_key);
-  }
-
-  *attribute = it->second;
-  return true;
-}
 
 void run_in_thread(Benchmark* benchmark, const uint16_t thread_id) {
   for (const std::unique_ptr<IoOperation>& io_op : benchmark->io_operations_[thread_id]) {
@@ -77,7 +97,7 @@ void Benchmark::run() {
 void Benchmark::generate_data() {
   const size_t length = get_length_in_bytes();
   pmem_file_ = create_pmem_file("/mnt/nvram-nvmbm/read_benchmark.file", length);
-  rw_ops::simd_write_data(pmem_file_, pmem_file_ + length);
+  rw_ops::simd_write_data<false>(pmem_file_, pmem_file_ + length);
 }
 
 nlohmann::json Benchmark::get_result() {
@@ -86,9 +106,12 @@ nlohmann::json Benchmark::get_result() {
   result["config"] = get_config();
   nlohmann::json result_points = nlohmann::json::array();
   for (uint16_t thread_num = 0; thread_num < config_.number_threads; thread_num++) {
-    for (int io_op_num = 0; io_op_num < io_operations_.size(); io_op_num++) {
-      const internal::Measurement measurement = measurements_[thread_num].at(io_op_num);
-      const IoOperation* io_op = io_operations_[thread_num].at(io_op_num).get();
+    const std::vector<std::unique_ptr<IoOperation>>& thread_io_ops = io_operations_[thread_num];
+    const std::vector<internal::Measurement>& thread_measurements = measurements_[thread_num];
+
+    for (size_t io_op_num = 0; io_op_num < thread_io_ops.size(); io_op_num++) {
+      const internal::Measurement measurement = thread_measurements[io_op_num];
+      const IoOperation* io_op = thread_io_ops[io_op_num].get();
 
       if (io_op->is_active()) {
         uint64_t latency = duration_to_nanoseconds(measurement.end_ts_ - measurement.start_ts_);
@@ -121,7 +144,6 @@ nlohmann::json Benchmark::get_result() {
 }
 
 void Benchmark::set_up() {
-  const char* end_addr = pmem_file_ + get_length_in_bytes();
   const uint64_t num_io_chunks = config_.number_operations / internal::NUM_IO_OPS_PER_CHUNK;
 
   io_operations_.reserve(config_.number_threads);
@@ -209,33 +231,38 @@ nlohmann::json Benchmark::get_config() {
           {"number_threads", config_.number_threads}};
 }
 
-BenchmarkConfig BenchmarkConfig::decode(const YAML::Node& raw_config_data) {
+BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
   BenchmarkConfig bm_config{};
   try {
-    for (const YAML::Node& node : raw_config_data) {
-      bool found = false;
-      found |= get_if_present(node, "total_memory_range", &bm_config.total_memory_range);
-      found |= get_if_present(node, "access_size", &bm_config.access_size);
-      found |= get_if_present(node, "number_operations", &bm_config.number_operations);
-      found |= get_if_present(node, "write_ratio", &bm_config.write_ratio);
-      found |= get_if_present(node, "read_ratio", &bm_config.read_ratio);
-      found |= get_if_present(node, "pause_frequency", &bm_config.pause_frequency);
-      found |= get_if_present(node, "pause_length_micros", &bm_config.pause_length_micros);
-      found |= get_if_present(node, "number_partitions", &bm_config.number_partitions);
-      found |= get_if_present(node, "number_threads", &bm_config.number_threads);
-      found |= get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_mode, &bm_config.exec_mode);
-      found |= get_enum_if_present(node, "data_instruction", ConfigEnums::str_to_data_instruction,
-                                   &bm_config.data_instruction);
-      found |= get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_persist_instruction,
-                                   &bm_config.persist_instruction);
+    size_t num_found = 0;
+    num_found += get_if_present(node, "total_memory_range", &bm_config.total_memory_range);
+    num_found += get_if_present(node, "access_size", &bm_config.access_size);
+    num_found += get_if_present(node, "number_operations", &bm_config.number_operations);
+    num_found += get_if_present(node, "write_ratio", &bm_config.write_ratio);
+    num_found += get_if_present(node, "read_ratio", &bm_config.read_ratio);
+    num_found += get_if_present(node, "pause_frequency", &bm_config.pause_frequency);
+    num_found += get_if_present(node, "pause_length_micros", &bm_config.pause_length_micros);
+    num_found += get_if_present(node, "number_partitions", &bm_config.number_partitions);
+    num_found += get_if_present(node, "number_threads", &bm_config.number_threads);
+    num_found += get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_mode, &bm_config.exec_mode);
+    num_found += get_enum_if_present(node, "data_instruction", ConfigEnums::str_to_data_instruction,
+                                     &bm_config.data_instruction);
+    num_found += get_enum_if_present(node, "persist_instruction", ConfigEnums::str_to_persist_instruction,
+                                     &bm_config.persist_instruction);
 
-      if (!found) {
-        throw std::invalid_argument("Unknown config entry '" + node.Tag() + "'");
+    if (num_found != node.size()) {
+      for (YAML::const_iterator entry = node.begin(); entry != node.end(); ++entry) {
+        if (entry->second.Tag() != VISITED_TAG) {
+          throw std::invalid_argument("Unknown config entry '" + entry->first.as<std::string>() +
+                                      "' in line: " + std::to_string(entry->second.Mark().line));
+        }
       }
     }
   } catch (const YAML::InvalidNode& e) {
     throw std::invalid_argument("Exception during config parsing: " + e.msg);
   }
+
+  // TODO: validate config object
   return bm_config;
 }
 }  // namespace perma
