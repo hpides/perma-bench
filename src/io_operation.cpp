@@ -1,7 +1,6 @@
 #include "io_operation.hpp"
 
 #include <iostream>
-#include <vector>
 
 #include "read_write_ops.hpp"
 
