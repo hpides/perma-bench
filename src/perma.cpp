@@ -1,6 +1,5 @@
 #include "benchmark_suite.hpp"
 
-#include <iostream>
 
 using namespace perma;
 
