@@ -26,32 +26,28 @@ struct Measurement {
   const std::chrono::high_resolution_clock::time_point end_ts_;
 };
 
-template <typename T>
-static void get_if_present(const YAML::Node& data, const std::string& name, T* attribute) {
-  if (data[name] != nullptr) {
-    *attribute = data[name].as<T>();
-  }
-}
-
 }  // namespace internal
 
 struct BenchmarkConfig {
-  uint64_t total_memory_range_ = 10240;  // 10 GiB
-  uint32_t access_size_ = 256;
-  uint64_t number_operations_ = 10'000'000;
-  internal::Mode exec_mode_{internal::Mode::Sequential};
+  uint64_t total_memory_range = 10240;  // 10 GiB
+  uint32_t access_size = 256;
+  uint64_t number_operations = 10'000'000;
+  internal::Mode exec_mode{internal::Mode::Sequential};
 
-  double write_ratio_ = 0.5;
-  double read_ratio_ = 0.5;
+  internal::DataInstruction data_instruction{internal::DataInstruction::SIMD};
+  internal::PersistInstruction persist_instruction{internal::PersistInstruction::NTSTORE};
 
-  uint64_t pause_frequency_ = 0;
-  uint64_t pause_length_micros_ = 1000;  // 1 ms
+  double write_ratio = 0.5;
+  double read_ratio = 0.5;
 
-  uint16_t number_partitions_ = 1;
+  uint64_t pause_frequency = 0;
+  uint64_t pause_length_micros = 1000;  // 1 ms
 
-  uint16_t number_threads_ = 1;
+  uint16_t number_partitions = 1;
 
-  static BenchmarkConfig decode(const YAML::Node& raw_config_data);
+  uint16_t number_threads = 1;
+
+  static BenchmarkConfig decode(YAML::Node& raw_config_data);
 };
 
 class Benchmark {
