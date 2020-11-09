@@ -51,6 +51,8 @@ struct BenchmarkConfig {
 };
 
 class Benchmark {
+  friend void run_in_thread(Benchmark* benchmark, uint16_t thread_id);
+
  public:
   Benchmark(std::string benchmark_name, BenchmarkConfig config)
       : benchmark_name_(std::move(benchmark_name)), config_(config){};
@@ -65,16 +67,15 @@ class Benchmark {
     std::filesystem::remove("/mnt/nvram-nvmbm/read_benchmark.file");
   }
 
-  std::vector<std::vector<std::unique_ptr<IoOperation>>> io_operations_;
-  std::vector<std::vector<internal::Measurement>> measurements_;
-
- protected:
+ private:
   size_t get_length_in_bytes() const;
   nlohmann::json get_config();
 
   const BenchmarkConfig config_;
   const std::string benchmark_name_;
   char* pmem_file_{nullptr};
+  std::vector<std::vector<std::unique_ptr<IoOperation>>> io_operations_;
+  std::vector<std::vector<internal::Measurement>> measurements_;
   std::vector<std::thread> pool_;
 };
 
