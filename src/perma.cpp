@@ -1,6 +1,5 @@
 #include "benchmark_suite.hpp"
 
-
 using namespace perma;
 
 constexpr auto DEFAULT_CONFIG_PATH = "configs/dev-config.yaml";
