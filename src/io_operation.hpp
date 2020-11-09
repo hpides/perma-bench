@@ -25,8 +25,12 @@ class ActiveIoOperation : public IoOperation {
   friend class Benchmark;
 
  public:
-  explicit ActiveIoOperation(uint32_t access_size)
-      : access_size_(access_size), op_addresses_(internal::NUM_IO_OPS_PER_CHUNK){};
+  explicit ActiveIoOperation(uint32_t access_size, internal::DataInstruction data_instruction,
+                             internal::PersistInstruction persist_instruction)
+      : access_size_(access_size),
+        op_addresses_(internal::NUM_IO_OPS_PER_CHUNK),
+        data_instruction_{data_instruction},
+        persist_instruction_{persist_instruction} {};
 
   bool is_active() const override { return true; }
   uint64_t get_io_size() const { return internal::NUM_IO_OPS_PER_CHUNK * access_size_; };
@@ -34,6 +38,8 @@ class ActiveIoOperation : public IoOperation {
  protected:
   std::vector<char*> op_addresses_;
   const uint32_t access_size_;
+  const internal::DataInstruction data_instruction_;
+  const internal::PersistInstruction persist_instruction_;
 };
 
 class Pause : public IoOperation {
