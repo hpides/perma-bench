@@ -2,7 +2,9 @@
 
 #include <libpmem.h>
 
+#include <algorithm>
 #include <iostream>
+#include <random>
 
 namespace perma {
 
@@ -37,6 +39,21 @@ char* create_pmem_file(const std::filesystem::path& file, size_t length) {
   }
 
   return static_cast<char*>(pmem_addr);
+}
+
+std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir) {
+  if (!std::filesystem::exists(base_dir)) {
+    if (!std::filesystem::create_directories(base_dir)) {
+      throw std::runtime_error{"Could not create dir: " + base_dir.string()};
+    }
+  }
+  std::string str("abcdefghijklmnopqrstuvwxyz");
+  std::random_device rd;
+  std::mt19937 generator(rd());
+  std::shuffle(str.begin(), str.end(), generator);
+  const std::string file_name = str + ".file";
+  const std::filesystem::path file{file_name};
+  return base_dir / file;
 }
 
 uint64_t duration_to_nanoseconds(const std::chrono::high_resolution_clock::duration duration) {

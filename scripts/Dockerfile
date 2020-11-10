@@ -2,12 +2,7 @@
 # Taken and modified from: https://blog.jetbrains.com/clion/2020/01/using-docker-with-clion
 #
 # Build and run:
-#   docker build -t clion/remote-pmem scripts
-#   docker run -d --cap-add sys_ptrace -p127.0.0.1:2222:22 --name clion_remote_pmem clion/remote-pmem
-#   ssh-keygen -f "$HOME/.ssh/known_hosts" -R "[localhost]:2222"
-#
-# stop:
-#   docker stop clion_remote_pmem
+#   Check out the run_docker.sh file or the link above for details.
 #
 # ssh credentials (test user):
 #   user@password
@@ -26,10 +21,10 @@ RUN ( \
     echo 'PermitRootLogin yes'; \
     echo 'PasswordAuthentication yes'; \
     echo 'Subsystem sftp /usr/lib/openssh/sftp-server'; \
-  ) > /etc/ssh/sshd_config_test_clion \
+  ) > /etc/ssh/sshd_config_remote_pmem \
   && mkdir /run/sshd
 
 RUN useradd -m user \
   && yes password | passwd user
 
-CMD ["/usr/sbin/sshd", "-D", "-e", "-f", "/etc/ssh/sshd_config_test_clion"]
+CMD ["/usr/sbin/sshd", "-D", "-e", "-f", "/etc/ssh/sshd_config_remote_pmem"]

@@ -1,21 +1,6 @@
 bm_0:
-  access_size: 512
-  total_memory_range: 10240
-  number_operations: 3000
+  access_size: 256
+  total_memory_range: 100
+  number_operations: 100
   exec_mode: sequential
-  number_threads: 2
-
-bm_1:
-  access_size: 512
-  total_memory_range: 10240
-  number_operations: 3000
-  exec_mode: sequential_desc
-  number_threads: 2
-
-bm_2:
-  access_size: 512
-  number_operations: 3000
-  exec_mode: random
-  pause_frequency: 0
-
-bm_seq_read:
+  number_threads: 1
