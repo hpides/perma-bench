@@ -9,6 +9,9 @@
 
 namespace {
 
+#define CHECK_ARGUMENT(exp, txt) \
+  if (!exp) throw std::invalid_argument(txt)
+
 constexpr auto VISITED_TAG = "visited";
 
 void ensure_unique_key(const YAML::Node& entry, const std::string& name) {
@@ -285,7 +288,7 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
         }
       }
     }
-    bm_config.check_config();
+    bm_config.validate();
   } catch (const YAML::InvalidNode& e) {
     throw std::invalid_argument("Exception during config parsing: " + e.msg);
   }
@@ -294,38 +297,44 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
   return bm_config;
 }
 
-void BenchmarkConfig::check_config() const {
+void BenchmarkConfig::validate() const {
   // Check if access size is at least 512-bit, i.e., 64byte (cache line)
-  // and if it is a power of two
-  bool is_access_size_power_of_two_and_greater_512_bit = access_size >= 512 && (access_size % 2) == 0;
-  assert(is_access_size_power_of_two_and_greater_512_bit);
+  const bool is_access_size_greater_512_bit = access_size >= 512;
+  CHECK_ARGUMENT(is_access_size_greater_512_bit, "Access size must be at least 512-bit");
+
+  // Check if access size is a power of two
+  const bool is_access_size_power_of_two = (access_size % 2) == 0;
+  CHECK_ARGUMENT(is_access_size_power_of_two, "Access size must be a multiple of 2");
 
   // Check if memory range is multiple of access size
-  bool is_memory_range_multiple_of_access_size = (total_memory_range % access_size) == 0;
-  assert(is_memory_range_multiple_of_access_size);
+  const bool is_memory_range_multiple_of_access_size = (total_memory_range % access_size) == 0;
+  CHECK_ARGUMENT(is_memory_range_multiple_of_access_size, "Total memory range must be a multiple of twos");
 
   // Check if ratio is equal to one
-  bool is_ratio_equal_one = (read_ratio + write_ratio) == 1.0;
-  assert(is_ratio_equal_one);
+  const bool is_ratio_equal_one = (read_ratio + write_ratio) == 1.0;
+  CHECK_ARGUMENT(is_ratio_equal_one, "Read and write ratio must add up to 1");
 
   // Assumption: num_ops is multiple of internal::number_ios(1000)
-  bool is_number_operations_chunk_multiple = (number_operations % internal::NUM_IO_OPS_PER_CHUNK) == 0;
-  assert(is_number_operations_chunk_multiple);
+  const bool is_number_operations_chunk_multiple = (number_operations % internal::NUM_IO_OPS_PER_CHUNK) == 0;
+  CHECK_ARGUMENT(is_number_operations_chunk_multiple,
+                 "Number operations must be a multiple of " + std::to_string(internal::NUM_IO_OPS_PER_CHUNK));
 
   // Assumption: pause_frequency is multiple of internal:: number_ios (1000)
-  bool is_pause_frequency_chunk_multiple = (pause_frequency % internal::NUM_IO_OPS_PER_CHUNK) == 0;
-  assert(is_pause_frequency_chunk_multiple);
+  const bool is_pause_frequency_chunk_multiple = (pause_frequency % internal::NUM_IO_OPS_PER_CHUNK) == 0;
+  CHECK_ARGUMENT(is_pause_frequency_chunk_multiple,
+                 "Pause frequency must be a multiple of " + std::to_string(internal::NUM_IO_OPS_PER_CHUNK));
 
   // Check if at least one thread
-  bool is_at_least_one_thread = number_threads > 0;
-  assert(is_at_least_one_thread);
+  const bool is_at_least_one_thread = number_threads > 0;
+  CHECK_ARGUMENT(is_at_least_one_thread, "Number threads must be at least 1");
 
   // Check if at least one partition
-  bool is_at_least_one_partition = number_partitions > 0;
-  assert(is_at_least_one_partition);
+  const bool is_at_least_one_partition = number_partitions > 0;
+  CHECK_ARGUMENT(is_at_least_one_partition, "Number partitions must be at least 1");
 
   // Assumption: number_threads is multiple of number_partitions
-  bool is_number_threads_multiple_of_number_partitions = (number_threads % number_partitions) == 0;
-  assert(is_number_threads_multiple_of_number_partitions);
+  const bool is_number_threads_multiple_of_number_partitions = (number_threads % number_partitions) == 0;
+  CHECK_ARGUMENT(is_number_threads_multiple_of_number_partitions,
+                 "Number threads must be a multiple of number partitions");
 }
 }  // namespace perma

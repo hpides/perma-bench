@@ -35,7 +35,7 @@ struct BenchmarkConfig {
   std::string pmem_directory{};
 
   uint64_t total_memory_range = 1342177280;  // 10 GiB
-  uint32_t access_size = 512; // 64 byte
+  uint32_t access_size = 512;                // 64 byte
   uint64_t number_operations = 10'000'000;
   internal::Mode exec_mode{internal::Mode::Sequential};
 
@@ -53,7 +53,7 @@ struct BenchmarkConfig {
   uint16_t number_threads = 1;
 
   static BenchmarkConfig decode(YAML::Node& raw_config_data);
-  void check_config() const;
+  void validate() const;
 };
 
 class Benchmark {
