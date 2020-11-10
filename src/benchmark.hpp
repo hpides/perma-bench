@@ -34,8 +34,8 @@ struct BenchmarkConfig {
   // i.e., it must be set as a command line argument.
   std::string pmem_directory{};
 
-  uint64_t total_memory_range = 1342177280;  // 10 GiB
-  uint32_t access_size = 512;                // 64 byte
+  uint64_t total_memory_range = 10'737'418'240;  // 10 GiB
+  uint32_t access_size = 256;
   uint64_t number_operations = 10'000'000;
   internal::Mode exec_mode{internal::Mode::Sequential};
 
