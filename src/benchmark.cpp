@@ -75,21 +75,21 @@ const std::unordered_map<std::string, internal::PersistInstruction> ConfigEnums:
     {"clwb", internal::PersistInstruction::CLWB},
     {"clflush", internal::PersistInstruction::CLFLUSH}};
 
-void run_in_thread(Benchmark* benchmark, const uint16_t thread_id) {
-  for (const std::unique_ptr<IoOperation>& io_op : benchmark->io_operations_[thread_id]) {
+void Benchmark::run_in_thread(const uint16_t thread_id) {
+  for (const std::unique_ptr<IoOperation>& io_op : io_operations_[thread_id]) {
     const auto start_ts = std::chrono::high_resolution_clock::now();
     io_op->run();
     const auto end_ts = std::chrono::high_resolution_clock::now();
-    benchmark->measurements_[thread_id].emplace_back(start_ts, end_ts);
+    measurements_[thread_id].emplace_back(start_ts, end_ts);
   }
 }
 
 void Benchmark::run() {
   for (size_t thread_index = 1; thread_index < config_.number_threads; thread_index++) {
-    pool_.emplace_back(&run_in_thread, this, thread_index);
+    pool_.emplace_back(&Benchmark::run_in_thread, this, thread_index);
   }
 
-  run_in_thread(this, 0);
+  run_in_thread(0);
 
   // wait for all threads
   for (std::thread& thread : pool_) {
@@ -165,7 +165,7 @@ void Benchmark::set_up() {
     if (config_.exec_mode == internal::Sequential_Desc) {
       partition_start =
           pmem_file_ + ((config_.number_partitions - partition_num) * partition_size) - config_.access_size;
-      partition_end = partition_start - partition_size;
+      partition_end = partition_start - partition_size + config_.access_size;
     } else {
       partition_start = pmem_file_ + (partition_num * partition_size);
       partition_end = partition_start + partition_size;

@@ -51,8 +51,6 @@ struct BenchmarkConfig {
 };
 
 class Benchmark {
-  friend void run_in_thread(Benchmark* benchmark, uint16_t thread_id);
-
  public:
   Benchmark(std::string benchmark_name, BenchmarkConfig config)
       : benchmark_name_(std::move(benchmark_name)), config_(config){};
@@ -70,6 +68,7 @@ class Benchmark {
  private:
   size_t get_length_in_bytes() const;
   nlohmann::json get_config();
+  void run_in_thread(uint16_t thread_id);
 
   const BenchmarkConfig config_;
   const std::string benchmark_name_;
