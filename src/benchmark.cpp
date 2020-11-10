@@ -97,7 +97,7 @@ void Benchmark::run() {
 void Benchmark::generate_data() {
   const size_t length = get_length_in_bytes();
   pmem_file_ = create_pmem_file("/mnt/nvram-nvmbm/read_benchmark.file", length);
-  rw_ops::simd_write_data<false>(pmem_file_, pmem_file_ + length);
+  rw_ops::write_data(pmem_file_, pmem_file_ + length);
 }
 
 nlohmann::json Benchmark::get_result() {
@@ -178,9 +178,11 @@ void Benchmark::set_up() {
       for (uint32_t io_op = 1; io_op <= config_.number_operations; io_op += internal::NUM_IO_OPS_PER_CHUNK) {
         const double random_num = io_mode_distribution(rnd_generator);
         if (random_num < config_.read_ratio) {
-          io_ops.push_back(std::make_unique<Read>(config_.access_size));
+          io_ops.push_back(
+              std::make_unique<Read>(config_.access_size, config_.data_instruction, config_.persist_instruction));
         } else {
-          io_ops.push_back(std::make_unique<Write>(config_.access_size));
+          io_ops.push_back(
+              std::make_unique<Write>(config_.access_size, config_.data_instruction, config_.persist_instruction));
         }
 
         std::vector<char*>& op_addresses = dynamic_cast<ActiveIoOperation*>(io_ops.back().get())->op_addresses_;

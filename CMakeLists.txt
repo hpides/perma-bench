@@ -3,12 +3,27 @@ project(perma-bench)
 
 include(ExternalProject)
 set(CMAKE_CXX_STANDARD 17)
-set(COMPILE_FLAGS "-march=cascadelake")
+set(COMPILE_FLAGS "-march=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
     message("-- Release mode, all optimizations enabled")
     set(COMPILE_FLAGS "${COMPILE_FLAGS} -O3 -DNDEBUG")
+endif ()
+
+##################### AVX ####################
+# Use this short program to check if AVX-512 is supported. For now, we only use AVX-512 or not.
+# This might need to be adapted in the future to support different SSE/AVX instructions.
+include(CheckCSourceRuns)
+set(avx512_prog "int main() { asm volatile(\"vmovdqu64 %zmm0, %zmm1\"); return 0; }")
+set(CMAKE_REQUIRED_FLAGS "-mavx512f")
+check_c_source_runs("${avx512_prog}" HAS_AVX)
+if (HAS_AVX)
+    # Set HAS_AVX so we can use it to enable all explicit AVX instructions.
+    add_definitions("-DHAS_AVX")
+    message(STATUS "System supports AVX-512.")
+else ()
+    message(STATUS "System does not support AVX-512.")
 endif ()
 
 ##################### PMDK ####################

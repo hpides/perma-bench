@@ -18,15 +18,12 @@ static const char WRITE_DATA[] __attribute__((aligned(64))) =
 
 static constexpr size_t CACHE_LINE_SIZE = 64;
 
-template <bool PERSIST = true>
+#ifdef HAS_AVX
 inline void simd_write_data(char* from, const char* to) {
   __m512i* data = (__m512i*)(WRITE_DATA);
   for (char* mem_addr = from; mem_addr < to; mem_addr += CACHE_LINE_SIZE) {
     // Write 512 Bit (64 Byte) and persist it.
     _mm512_stream_si512(reinterpret_cast<__m512i*>(mem_addr), *data);
-    if constexpr (PERSIST) {
-      pmem_persist(mem_addr, CACHE_LINE_SIZE);
-    }
   }
 }
 
@@ -34,26 +31,7 @@ inline void simd_write(const std::vector<char*>& op_addresses, const size_t acce
   for (char* addr : op_addresses) {
     const char* access_end_addr = addr + access_size;
     simd_write_data(addr, access_end_addr);
-  }
-}
-
-inline void mov_write(const std::vector<char*>& op_addresses, const size_t access_size) {
-  for (char* addr : op_addresses) {
-    const char* access_end_addr = addr + access_size;
-    for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
-      // Read 512 Bit (64 Byte)
-      asm volatile(
-          "mov    0*8(%[write_data]), 0*8(%[addr]) \n\t"
-          "mov    1*8(%[write_data]), 1*8(%[addr]) \n\t"
-          "mov    2*8(%[write_data]), 2*8(%[addr]) \n\t"
-          "mov    3*8(%[write_data]), 3*8(%[addr]) \n\t"
-          "mov    4*8(%[write_data]), 4*8(%[addr]) \n\t"
-          "mov    5*8(%[write_data]), 5*8(%[addr]) \n\t"
-          "mov    6*8(%[write_data]), 6*8(%[addr]) \n\t"
-          "mov    7*8(%[write_data]), 7*8(%[addr]) \n\t"
-          :
-          : [ addr ] "r"(mem_addr), [ write_data ] "r"(WRITE_DATA));
-    }
+    pmem_persist(addr, access_size);
   }
 }
 
@@ -74,6 +52,45 @@ inline void simd_read(const std::vector<char*>& op_addresses, const size_t acces
   __m512i x = simd_fn();
   KEEP(&x);
 }
+#endif
+
+inline void mov_write_data(char* from, const char* to) {
+  asm volatile(
+      "movq 0*8(%[write_data]), %%r8  \n\t"
+      "movq 1*8(%[write_data]), %%r9  \n\t"
+      "movq 2*8(%[write_data]), %%r10 \n\t"
+      "movq 3*8(%[write_data]), %%r11 \n\t"
+      "movq 4*8(%[write_data]), %%r12 \n\t"
+      "movq 5*8(%[write_data]), %%r13 \n\t"
+      "movq 6*8(%[write_data]), %%r14 \n\t"
+      "movq 7*8(%[write_data]), %%r15 \n\t"
+      :
+      : [ write_data ] "r"(WRITE_DATA)
+      : "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15");
+
+  for (char* mem_addr = from; mem_addr < to; mem_addr += CACHE_LINE_SIZE) {
+    // Read 512 Bit (64 Byte)
+    asm volatile(
+        "movq  %%r8, 0*8(%[addr]) \n\t"
+        "movq  %%r9, 1*8(%[addr]) \n\t"
+        "movq %%r10, 2*8(%[addr]) \n\t"
+        "movq %%r11, 3*8(%[addr]) \n\t"
+        "movq %%r12, 4*8(%[addr]) \n\t"
+        "movq %%r13, 5*8(%[addr]) \n\t"
+        "movq %%r14, 6*8(%[addr]) \n\t"
+        "movq %%r15, 7*8(%[addr]) \n\t"
+        :
+        : [ addr ] "r"(mem_addr), [ write_data ] "r"(WRITE_DATA));
+  }
+}
+
+inline void mov_write(const std::vector<char*>& op_addresses, const size_t access_size) {
+  for (char* addr : op_addresses) {
+    const char* access_end_addr = addr + access_size;
+    mov_write_data(addr, access_end_addr);
+    pmem_persist(addr, access_size);
+  }
+}
 
 inline void mov_read(const std::vector<char*>& op_addresses, const size_t access_size) {
   for (char* addr : op_addresses) {
@@ -81,18 +98,26 @@ inline void mov_read(const std::vector<char*>& op_addresses, const size_t access
     for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
       // Read 512 Bit (64 Byte)
       asm volatile(
-          "mov    0*8(%[addr]), %%r8  \n\t"
-          "mov    1*8(%[addr]), %%r8  \n\t"
-          "mov    2*8(%[addr]), %%r8  \n\t"
-          "mov    3*8(%[addr]), %%r8  \n\t"
-          "mov    4*8(%[addr]), %%r8  \n\t"
-          "mov    5*8(%[addr]), %%r8  \n\t"
-          "mov    6*8(%[addr]), %%r8  \n\t"
-          "mov    7*8(%[addr]), %%r8  \n\t"
+          "movq 0*8(%[addr]), %%r8  \n\t"
+          "movq 1*8(%[addr]), %%r8  \n\t"
+          "movq 2*8(%[addr]), %%r8  \n\t"
+          "movq 3*8(%[addr]), %%r8  \n\t"
+          "movq 4*8(%[addr]), %%r8  \n\t"
+          "movq 5*8(%[addr]), %%r8  \n\t"
+          "movq 6*8(%[addr]), %%r8  \n\t"
+          "movq 7*8(%[addr]), %%r8  \n\t"
           :
           : [ addr ] "r"(mem_addr));
     }
   }
+}
+
+inline void write_data(char* from, const char* to) {
+#ifdef HAS_AVX
+  return simd_write_data(from, to);
+#else
+  return mov_write_data(from, to);
+#endif
 }
 
 }  // namespace perma::rw_ops
