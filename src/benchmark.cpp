@@ -62,7 +62,10 @@ struct ConfigEnums {
 };
 
 const std::unordered_map<std::string, internal::Mode> ConfigEnums::str_to_mode{
-    {"sequential", internal::Mode::Sequential}, {"random", internal::Mode::Random}};
+    {"sequential", internal::Mode::Sequential},
+    {"sequential_asc", internal::Mode::Sequential},
+    {"sequential_desc", internal::Mode::Sequential_Desc},
+    {"random", internal::Mode::Random}};
 
 const std::unordered_map<std::string, internal::DataInstruction> ConfigEnums::str_to_data_instruction{
     {"simd", internal::DataInstruction::SIMD}, {"mov", internal::DataInstruction::MOV}};
@@ -72,21 +75,21 @@ const std::unordered_map<std::string, internal::PersistInstruction> ConfigEnums:
     {"clwb", internal::PersistInstruction::CLWB},
     {"clflush", internal::PersistInstruction::CLFLUSH}};
 
-void run_in_thread(Benchmark* benchmark, const uint16_t thread_id) {
-  for (const std::unique_ptr<IoOperation>& io_op : benchmark->io_operations_[thread_id]) {
+void Benchmark::run_in_thread(const uint16_t thread_id) {
+  for (const std::unique_ptr<IoOperation>& io_op : io_operations_[thread_id]) {
     const auto start_ts = std::chrono::high_resolution_clock::now();
     io_op->run();
     const auto end_ts = std::chrono::high_resolution_clock::now();
-    benchmark->measurements_[thread_id].emplace_back(start_ts, end_ts);
+    measurements_[thread_id].emplace_back(start_ts, end_ts);
   }
 }
 
 void Benchmark::run() {
   for (size_t thread_index = 1; thread_index < config_.number_threads; thread_index++) {
-    pool_.emplace_back(&run_in_thread, this, thread_index);
+    pool_.emplace_back(&Benchmark::run_in_thread, this, thread_index);
   }
 
-  run_in_thread(this, 0);
+  run_in_thread(0);
 
   // wait for all threads
   for (std::thread& thread : pool_) {
@@ -157,8 +160,16 @@ void Benchmark::set_up() {
   std::mt19937_64 rnd_generator{rnd_device()};
 
   for (uint16_t partition_num = 0; partition_num < config_.number_partitions; partition_num++) {
-    char* partition_start = pmem_file_ + (partition_num * partition_size);
-    const char* partition_end = partition_start + partition_size;
+    char* partition_start;
+    const char* partition_end;
+    if (config_.exec_mode == internal::Sequential_Desc) {
+      partition_start =
+          pmem_file_ + ((config_.number_partitions - partition_num) * partition_size) - config_.access_size;
+      partition_end = partition_start - partition_size + config_.access_size;
+    } else {
+      partition_start = pmem_file_ + (partition_num * partition_size);
+      partition_end = partition_start + partition_size;
+    }
 
     for (uint16_t thread_num = 0; thread_num < num_threads_per_partition; thread_num++) {
       const uint32_t index = thread_num + (partition_num * num_threads_per_partition);
@@ -204,6 +215,13 @@ void Benchmark::set_up() {
               op_addresses[op] = next_op_position + (op * config_.access_size);
             }
             next_op_position += internal::NUM_IO_OPS_PER_CHUNK * config_.access_size;
+            break;
+          }
+          case internal::Mode::Sequential_Desc: {
+            for (uint32_t op = 0; op < internal::NUM_IO_OPS_PER_CHUNK; ++op) {
+              op_addresses[op] = next_op_position - (op * config_.access_size);
+            }
+            next_op_position -= internal::NUM_IO_OPS_PER_CHUNK * config_.access_size;
             break;
           }
         }
