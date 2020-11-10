@@ -6,9 +6,11 @@
 #include <filesystem>
 #include <json.hpp>
 #include <map>
+#include <utility>
 #include <vector>
 
 #include "io_operation.hpp"
+#include "utils.hpp"
 
 namespace perma {
 
@@ -29,6 +31,10 @@ struct Measurement {
 }  // namespace internal
 
 struct BenchmarkConfig {
+  // This field is required and has no default value,
+  // i.e., it must be set as a command line argument.
+  std::string pmem_directory{};
+
   uint64_t total_memory_range = 10240;  // 10 GiB
   uint32_t access_size = 256;
   uint64_t number_operations = 10'000'000;
@@ -53,17 +59,16 @@ struct BenchmarkConfig {
 class Benchmark {
  public:
   Benchmark(std::string benchmark_name, BenchmarkConfig config)
-      : benchmark_name_(std::move(benchmark_name)), config_(config){};
+      : benchmark_name_(std::move(benchmark_name)),
+        config_(std::move(config)),
+        pmem_file_{generate_random_file_name(config_.pmem_directory)} {};
   void run();
   void generate_data();
   nlohmann::json get_result();
   void set_up();
-  void tear_down() {
-    if (pmem_file_ != nullptr) {
-      pmem_unmap(pmem_file_, get_length_in_bytes());
-    }
-    std::filesystem::remove("/mnt/nvram-nvmbm/read_benchmark.file");
-  }
+  void tear_down();
+
+  ~Benchmark() { tear_down(); }
 
  private:
   size_t get_length_in_bytes() const;
@@ -72,7 +77,8 @@ class Benchmark {
 
   const BenchmarkConfig config_;
   const std::string benchmark_name_;
-  char* pmem_file_{nullptr};
+  const std::filesystem::path pmem_file_;
+  char* pmem_data_{nullptr};
   std::vector<std::vector<std::unique_ptr<IoOperation>>> io_operations_;
   std::vector<std::vector<internal::Measurement>> measurements_;
   std::vector<std::thread> pool_;

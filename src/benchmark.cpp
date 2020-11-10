@@ -98,9 +98,13 @@ void Benchmark::run() {
 }
 
 void Benchmark::generate_data() {
+  if (config_.read_ratio == 0) {
+    // If we never read data in this benchmark, we do not need to generate any.
+    return;
+  }
   const size_t length = get_length_in_bytes();
-  pmem_file_ = create_pmem_file("/mnt/nvram-nvmbm/read_benchmark.file", length);
-  rw_ops::write_data(pmem_file_, pmem_file_ + length);
+  pmem_data_ = create_pmem_file(pmem_file_, length);
+  rw_ops::write_data(pmem_data_, pmem_data_ + length);
 }
 
 nlohmann::json Benchmark::get_result() {
@@ -164,10 +168,10 @@ void Benchmark::set_up() {
     const char* partition_end;
     if (config_.exec_mode == internal::Sequential_Desc) {
       partition_start =
-          pmem_file_ + ((config_.number_partitions - partition_num) * partition_size) - config_.access_size;
+          pmem_data_ + ((config_.number_partitions - partition_num) * partition_size) - config_.access_size;
       partition_end = partition_start - partition_size + config_.access_size;
     } else {
-      partition_start = pmem_file_ + (partition_num * partition_size);
+      partition_start = pmem_data_ + (partition_num * partition_size);
       partition_end = partition_start + partition_size;
     }
 
@@ -234,6 +238,14 @@ void Benchmark::set_up() {
       io_operations_.push_back(std::move(io_ops));
     }
   }
+}
+
+void Benchmark::tear_down() {
+  if (pmem_data_ != nullptr) {
+    pmem_unmap(pmem_data_, get_length_in_bytes());
+    pmem_data_ = nullptr;
+  }
+  std::filesystem::remove(pmem_file_);
 }
 
 size_t Benchmark::get_length_in_bytes() const { return config_.total_memory_range * internal::BYTE_IN_MEBIBYTE; }

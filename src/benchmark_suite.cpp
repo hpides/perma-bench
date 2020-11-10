@@ -7,8 +7,9 @@
 
 namespace perma {
 
-void BenchmarkSuite::run_benchmarks(const std::string& file_name) {
-  benchmarks_ = BenchmarkFactory::create_benchmarks(file_name);
+void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
+                                    const std::filesystem::path& config_file) {
+  benchmarks_ = BenchmarkFactory::create_benchmarks(pmem_directory, config_file);
   for (std::unique_ptr<Benchmark>& benchmark : benchmarks_) {
     benchmark->generate_data();
     benchmark->set_up();
