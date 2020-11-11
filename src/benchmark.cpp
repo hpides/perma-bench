@@ -299,8 +299,8 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
 
 void BenchmarkConfig::validate() const {
   // Check if access size is at least 512-bit, i.e., 64byte (cache line)
-  const bool is_access_size_greater_512_bit = access_size >= 64;
-  CHECK_ARGUMENT(is_access_size_greater_512_bit, "Access size must be at least 512-bit, i.e., a cache line");
+  const bool is_access_size_greater_64_byte = access_size >= 64;
+  CHECK_ARGUMENT(is_access_size_greater_64_byte, "Access size must be at least 64-byte, i.e., a cache line");
 
   // Check if access size is a power of two
   const bool is_access_size_power_of_two = (access_size % 2) == 0;
