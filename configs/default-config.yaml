@@ -1,5 +1,5 @@
 bm_0:
-  access_size: 512
+  access_size: 256
   total_memory_range: 10737418240
   number_operations: 3000
   exec_mode: sequential
