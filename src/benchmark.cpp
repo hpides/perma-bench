@@ -9,6 +9,9 @@
 
 namespace {
 
+#define CHECK_ARGUMENT(exp, txt) \
+  if (!exp) throw std::invalid_argument(txt)
+
 constexpr auto VISITED_TAG = "visited";
 
 void ensure_unique_key(const YAML::Node& entry, const std::string& name) {
@@ -102,9 +105,8 @@ void Benchmark::generate_data() {
     // If we never read data in this benchmark, we do not need to generate any.
     return;
   }
-  const size_t length = get_length_in_bytes();
-  pmem_data_ = create_pmem_file(pmem_file_, length);
-  rw_ops::write_data(pmem_data_, pmem_data_ + length);
+  pmem_data_ = create_pmem_file(pmem_file_, config_.total_memory_range);
+  rw_ops::write_data(pmem_data_, pmem_data_ + config_.total_memory_range);
 }
 
 nlohmann::json Benchmark::get_result() {
@@ -158,7 +160,7 @@ void Benchmark::set_up() {
   measurements_.resize(config_.number_threads);
 
   const uint16_t num_threads_per_partition = config_.number_threads / config_.number_partitions;
-  const uint64_t partition_size = get_length_in_bytes() / config_.number_partitions;
+  const uint64_t partition_size = config_.total_memory_range / config_.number_partitions;
 
   std::random_device rnd_device;
   std::mt19937_64 rnd_generator{rnd_device()};
@@ -189,7 +191,6 @@ void Benchmark::set_up() {
 
       std::uniform_real_distribution<double> io_mode_distribution(0, 1);
 
-      // Assumption: num_ops is multiple of internal::number_ios(1000)
       for (uint32_t io_op = 1; io_op <= config_.number_operations; io_op += internal::NUM_IO_OPS_PER_CHUNK) {
         const double random_num = io_mode_distribution(rnd_generator);
         if (random_num < config_.read_ratio) {
@@ -231,7 +232,6 @@ void Benchmark::set_up() {
         }
 
         if (config_.pause_frequency != 0 && io_op % config_.pause_frequency == 0 && io_op < config_.number_operations) {
-          // Assumption: pause_frequency is multiple of internal:: number_ios (1000)
           io_ops.push_back(std::make_unique<Pause>(config_.pause_length_micros));
         }
       }
@@ -242,13 +242,11 @@ void Benchmark::set_up() {
 
 void Benchmark::tear_down() {
   if (pmem_data_ != nullptr) {
-    pmem_unmap(pmem_data_, get_length_in_bytes());
+    pmem_unmap(pmem_data_, config_.total_memory_range);
     pmem_data_ = nullptr;
   }
   std::filesystem::remove(pmem_file_);
 }
-
-size_t Benchmark::get_length_in_bytes() const { return config_.total_memory_range * internal::BYTE_IN_MEBIBYTE; }
 
 nlohmann::json Benchmark::get_config() {
   return {{"total_memory_range", config_.total_memory_range},
@@ -290,11 +288,53 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
         }
       }
     }
+    bm_config.validate();
   } catch (const YAML::InvalidNode& e) {
     throw std::invalid_argument("Exception during config parsing: " + e.msg);
   }
 
   // TODO: validate config object
   return bm_config;
+}
+
+void BenchmarkConfig::validate() const {
+  // Check if access size is at least 512-bit, i.e., 64byte (cache line)
+  const bool is_access_size_greater_64_byte = access_size >= 64;
+  CHECK_ARGUMENT(is_access_size_greater_64_byte, "Access size must be at least 64-byte, i.e., a cache line");
+
+  // Check if access size is a power of two
+  const bool is_access_size_power_of_two = (access_size % 2) == 0;
+  CHECK_ARGUMENT(is_access_size_power_of_two, "Access size must be a multiple of 2");
+
+  // Check if memory range is multiple of access size
+  const bool is_memory_range_multiple_of_access_size = (total_memory_range % access_size) == 0;
+  CHECK_ARGUMENT(is_memory_range_multiple_of_access_size, "Total memory range must be a multiple of twos");
+
+  // Check if ratio is equal to one
+  const bool is_ratio_equal_one = (read_ratio + write_ratio) == 1.0;
+  CHECK_ARGUMENT(is_ratio_equal_one, "Read and write ratio must add up to 1");
+
+  // Assumption: num_ops is multiple of internal::number_ios(1000)
+  const bool is_number_operations_chunk_multiple = (number_operations % internal::NUM_IO_OPS_PER_CHUNK) == 0;
+  CHECK_ARGUMENT(is_number_operations_chunk_multiple,
+                 "Number operations must be a multiple of " + std::to_string(internal::NUM_IO_OPS_PER_CHUNK));
+
+  // Assumption: pause_frequency is multiple of internal:: number_ios (1000)
+  const bool is_pause_frequency_chunk_multiple = (pause_frequency % internal::NUM_IO_OPS_PER_CHUNK) == 0;
+  CHECK_ARGUMENT(is_pause_frequency_chunk_multiple,
+                 "Pause frequency must be a multiple of " + std::to_string(internal::NUM_IO_OPS_PER_CHUNK));
+
+  // Check if at least one thread
+  const bool is_at_least_one_thread = number_threads > 0;
+  CHECK_ARGUMENT(is_at_least_one_thread, "Number threads must be at least 1");
+
+  // Check if at least one partition
+  const bool is_at_least_one_partition = number_partitions > 0;
+  CHECK_ARGUMENT(is_at_least_one_partition, "Number partitions must be at least 1");
+
+  // Assumption: number_threads is multiple of number_partitions
+  const bool is_number_threads_multiple_of_number_partitions = (number_threads % number_partitions) == 0;
+  CHECK_ARGUMENT(is_number_threads_multiple_of_number_partitions,
+                 "Number threads must be a multiple of number partitions");
 }
 }  // namespace perma

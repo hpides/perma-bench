@@ -16,7 +16,6 @@ namespace perma {
 
 namespace internal {
 
-static const size_t BYTE_IN_MEBIBYTE = 1024ul * 1024;
 static const size_t BYTE_IN_GIGABYTE = 1e9;
 static const size_t NANOSECONDS_IN_SECONDS = 1e9;
 
@@ -35,7 +34,7 @@ struct BenchmarkConfig {
   // i.e., it must be set as a command line argument.
   std::string pmem_directory{};
 
-  uint64_t total_memory_range = 10240;  // 10 GiB
+  uint64_t total_memory_range = 10'737'418'240;  // 10 GiB
   uint32_t access_size = 256;
   uint64_t number_operations = 10'000'000;
   internal::Mode exec_mode{internal::Mode::Sequential};
@@ -54,6 +53,7 @@ struct BenchmarkConfig {
   uint16_t number_threads = 1;
 
   static BenchmarkConfig decode(YAML::Node& raw_config_data);
+  void validate() const;
 };
 
 class Benchmark {
@@ -71,7 +71,6 @@ class Benchmark {
   ~Benchmark() { tear_down(); }
 
  private:
-  size_t get_length_in_bytes() const;
   nlohmann::json get_config();
   void run_in_thread(uint16_t thread_id);
 
