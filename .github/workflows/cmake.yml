@@ -7,7 +7,9 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs:
+      using: 'docker'
+      image: '../../scripts/Dockerfile'
 
     steps:
     - uses: actions/checkout@v2
