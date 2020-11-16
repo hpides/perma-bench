@@ -189,11 +189,11 @@ void Benchmark::set_up() {
       // Create IOOperations
       char* next_op_position = partition_start;
 
-      std::uniform_real_distribution<double> io_mode_distribution(0, 1);
+      std::bernoulli_distribution io_mode_distribution(config_.read_ratio);
 
       for (uint32_t io_op = 1; io_op <= config_.number_operations; io_op += internal::NUM_IO_OPS_PER_CHUNK) {
-        const double random_num = io_mode_distribution(rnd_generator);
-        if (random_num < config_.read_ratio) {
+        const bool is_read = io_mode_distribution(rnd_generator);
+        if (is_read) {
           io_ops.push_back(
               std::make_unique<Read>(config_.access_size, config_.data_instruction, config_.persist_instruction));
         } else {
