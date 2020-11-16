@@ -7,7 +7,7 @@ env:
 
 jobs:
   build:
-    runs-on: pmem/pmdk:1.10-ubuntu-19.10-x86_64
+    container: pmem/pmdk:1.10-ubuntu-19.10-x86_64
 
     steps:
     - uses: actions/checkout@v2
