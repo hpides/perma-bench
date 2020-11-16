@@ -8,10 +8,16 @@ env:
 jobs:
   build:
     runs-on: ubuntu-20.04
-    container: pmem/pmdk:1.10-ubuntu-19.10-x86_64
 
     steps:
     - uses: actions/checkout@v2
+
+    - name: Download Dependencies
+      # Install PMDK's dependencies
+      run: |
+       sudo apt-get update
+       sudo apt-get install -y autoconf automake pkg-config libglib2.0-dev libfabric-dev pandoc libncurses5-dev libndctl-dev libdaxctl-devz
+       sudo apt-get install -y libpmem1
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build
