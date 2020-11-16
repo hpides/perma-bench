@@ -16,6 +16,11 @@ RUN apt-get update \
       autoconf pkg-config libndctl-dev libdaxctl-dev pandoc \
   && apt-get clean
 
+RUN git clone https://github.com/pmem/pmdk && \
+    cd pmdk && \
+    git checkout tags/1.10 && \
+    make install
+
 RUN ( \
     echo 'LogLevel DEBUG2'; \
     echo 'PermitRootLogin yes'; \

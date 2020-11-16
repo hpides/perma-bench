@@ -18,7 +18,7 @@ include(CheckCSourceRuns)
 set(avx512_prog "int main() { asm volatile(\"vmovdqu64 %zmm0, %zmm1\"); return 0; }")
 set(CMAKE_REQUIRED_FLAGS "-mavx512f")
 check_c_source_runs("${avx512_prog}" HAS_AVX)
-if (HAS_AVX)
+if (${HAS_AVX})
     # Set HAS_AVX so we can use it to enable all explicit AVX instructions.
     add_definitions("-DHAS_AVX")
     message(STATUS "System supports AVX-512.")
@@ -27,28 +27,51 @@ else ()
 endif ()
 
 ##################### PMDK ####################
-set(PMDK_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/pmdk")
-ExternalProject_Add(
-        PMDK
+option(BUILD_PMDK "Set true if PMDK should be downloaded and built from source.")
+option(PMDK_INCLUDE_PATH "Path to custom PMDK include files" "")
+option(PMDK_LIBRARY_PATH "Path to custom PMDK library" "")
 
-        GIT_REPOSITORY https://github.com/pmem/pmdk.git
-        GIT_TAG 1.9
-        BUILD_IN_SOURCE 1
-        BUILD_COMMAND $(MAKE)
-        PREFIX ${PMDK_PREFIX}
-        CONFIGURE_COMMAND ""
-        INSTALL_COMMAND ""
-        LOG_DOWNLOAD ON
-        LOG_CONFIGURE ON
-        LOG_BUILD ON
-        UPDATE_DISCONNECTED 1
-)
+if (${BUILD_PMDK})
+    message(STATUS "PMDK not provided. Downloading and building from source.")
+    set(PMDK_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/pmdk")
+    ExternalProject_Add(
+            PMDK
 
-include_directories(${PMDK_PREFIX}/src/PMDK/src/include)
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    link_directories(${PMDK_PREFIX}/src/PMDK/src/debug)
+            GIT_REPOSITORY https://github.com/pmem/pmdk.git
+            GIT_TAG 1.10
+            BUILD_IN_SOURCE 1
+            BUILD_COMMAND $(MAKE)
+            PREFIX ${PMDK_PREFIX}
+            CONFIGURE_COMMAND ""
+            INSTALL_COMMAND ""
+            LOG_DOWNLOAD ON
+            LOG_CONFIGURE ON
+            LOG_BUILD ON
+            UPDATE_DISCONNECTED 1
+    )
+
+    include_directories(${PMDK_PREFIX}/src/PMDK/src/include)
+    if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        link_directories(${PMDK_PREFIX}/src/PMDK/src/debug)
+    else ()
+        link_directories(${PMDK_PREFIX}/src/PMDK/src/nondebug)
+    endif ()
 else ()
-    link_directories(${PMDK_PREFIX}/src/PMDK/src/nondebug)
+    set(CMAKE_INCLUDE_PATH ${PMDK_INCLUDE_PATH} /usr/local/include)
+    set(PMDK_HINTS ${PMDK_LIBRARY_PATH} /usr/local/lib64 /usr/local/lib)
+
+    find_path(PMEM_INCLUDE_DIRS libpmem.h REQUIRED)
+    find_library(PMEM_LIBRARIES NAMES pmem libpmem REQUIRED HINTS ${PMDK_HINTS})
+
+    if(NOT PMEM_INCLUDE_DIRS OR "${PMEM_INCLUDE_DIRS}" STREQUAL "")
+        message(FATAL_ERROR "ERROR: libpmem include directory not found.")
+    endif()
+    if(NOT PMEM_LIBRARIES OR "${PMEM_LIBRARIES}" STREQUAL "")
+        message(FATAL_ERROR "ERROR: libpmem library not found.")
+    endif()
+
+    include_directories(${LIBPMEM_INCLUDE_DIRS})
+    message(STATUS "PMDK provided. Including ${PMEM_INCLUDE_DIRS} and linking ${PMEM_LIBRARIES}.")
 endif ()
 
 ##################### YAML ####################
