@@ -109,8 +109,17 @@ void Benchmark::generate_data() {
     // If we never read data in this benchmark, we do not need to generate any.
     return;
   }
-  pmem_data_ = create_pmem_file(pmem_file_, config_.total_memory_range);
-  rw_ops::write_data(pmem_data_, pmem_data_ + config_.total_memory_range);
+  if (std::filesystem::exists(pmem_file_)) {
+    // Data was already generated. Only re-map it.
+    size_t mapped_size;
+    pmem_data_ = map_pmem_file(pmem_file_, &mapped_size);
+    if (mapped_size != config_.total_memory_range) {
+      throw std::runtime_error("Existing pmem data file has wrong size.");
+    }
+  } else {
+    pmem_data_ = create_pmem_file(pmem_file_, config_.total_memory_range);
+    rw_ops::write_data(pmem_data_, pmem_data_ + config_.total_memory_range);
+  }
 }
 
 nlohmann::json Benchmark::get_result() {
@@ -257,12 +266,14 @@ void Benchmark::set_up() {
   }
 }
 
-void Benchmark::tear_down() {
+void Benchmark::tear_down(const bool force) {
   if (pmem_data_ != nullptr) {
     pmem_unmap(pmem_data_, config_.total_memory_range);
     pmem_data_ = nullptr;
   }
-  std::filesystem::remove(pmem_file_);
+  if (owns_pmem_file_ || force) {
+    std::filesystem::remove(pmem_file_);
+  }
 }
 
 nlohmann::json Benchmark::get_config() {
@@ -290,6 +301,8 @@ nlohmann::json Benchmark::get_config() {
 
   return config;
 }
+
+const std::string& Benchmark::benchmark_name() const { return benchmark_name_; }
 
 BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
   BenchmarkConfig bm_config{};

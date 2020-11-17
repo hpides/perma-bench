@@ -65,12 +65,35 @@ class Benchmark {
   Benchmark(std::string benchmark_name, BenchmarkConfig config)
       : benchmark_name_(std::move(benchmark_name)),
         config_(std::move(config)),
-        pmem_file_{generate_random_file_name(config_.pmem_directory)} {};
+        pmem_file_{generate_random_file_name(config_.pmem_directory)},
+        owns_pmem_file_{true} {};
+
+  Benchmark(std::string benchmark_name, BenchmarkConfig config, std::filesystem::path pmem_file)
+      : benchmark_name_(std::move(benchmark_name)),
+        config_(std::move(config)),
+        pmem_file_{std::move(pmem_file)},
+        owns_pmem_file_{false} {};
+
+  /** Main run method which executes the benchmark. `setup()` should be called before this. */
   void run();
+
+  /**
+   * Generates the data needed for the benchmark.
+   * This is probably the first method to be called so that a virtual
+   * address space is available to generate the IO addresses.
+   */
   void generate_data();
-  nlohmann::json get_result();
+
+  /** Create all the IO addresses ahead of time to avoid unnecessary ops during the actual benchmark. */
   void set_up();
-  void tear_down();
+
+  /** Clean up after te benchmark */
+  void tear_down(bool force = false);
+
+  /** Return the results as a JSON to be exported to the user and visualization. */
+  nlohmann::json get_result();
+
+  const std::string& benchmark_name() const;
 
   ~Benchmark() { tear_down(); }
 
@@ -81,6 +104,7 @@ class Benchmark {
   const BenchmarkConfig config_;
   const std::string benchmark_name_;
   const std::filesystem::path pmem_file_;
+  const bool owns_pmem_file_;
   char* pmem_data_{nullptr};
   std::vector<std::vector<std::unique_ptr<IoOperation>>> io_operations_;
   std::vector<std::vector<internal::Measurement>> measurements_;
