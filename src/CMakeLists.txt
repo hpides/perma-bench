@@ -13,10 +13,14 @@ set(
         utils.hpp)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")
+
+add_library(libperma STATIC ${SOURCES})
+add_dependencies(libperma YAML)
+target_link_libraries(libperma yaml-cpp)
+
 add_executable(perma-bench perma.cpp ${SOURCES})
 
-add_dependencies(perma-bench YAML)
-target_link_libraries(perma-bench yaml-cpp)
+target_link_libraries(perma-bench libperma)
 
 if (${BUILD_PMDK})
     add_dependencies(perma-bench PMDK)

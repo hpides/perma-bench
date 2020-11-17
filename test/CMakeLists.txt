@@ -8,16 +8,15 @@ FetchContent_Declare(
         GIT_TAG release-1.10.0
 )
 
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
 set(BUILD_GTEST ON CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(googletest)
 
-set(TESTS)
+set(PERMA_TEST_SOURCES file_test.cpp)
 
-add_executable(perma-test perma_test.cpp)
+add_executable(perma-test perma_test.cpp ${PERMA_TEST_SOURCES})
 
-target_link_libraries(perma-test gtest gtest_main)
+target_link_libraries(perma-test gtest gtest_main libperma)
 
 add_test(perma-test perma-test)
