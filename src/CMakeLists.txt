@@ -15,8 +15,11 @@ set(
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")
 
 add_library(libperma STATIC ${SOURCES})
+
 add_dependencies(libperma YAML)
+
 target_link_libraries(libperma yaml-cpp)
+target_include_directories(libperma PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(perma-bench perma.cpp ${SOURCES})
 
