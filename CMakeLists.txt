@@ -100,7 +100,12 @@ set(JSON_INCLUDE_PATH ${JSON_DIR}/json.hpp)
 file(DOWNLOAD ${JSON_DOWNLOAD_PATH} ${JSON_INCLUDE_PATH})
 include_directories(${JSON_DIR})
 
-
 ##################### PerMA ####################
 file(COPY configs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 add_subdirectory(src)
+
+##################### Test ####################
+project(perma-test)
+
+add_subdirectory(test)
+enable_testing()
