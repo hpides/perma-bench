@@ -76,7 +76,6 @@ uint64_t zipf(const double alpha, const uint64_t n) {
 
   // Compute normalization constant on first call only
   if (first) {
-    rand_val(1);
     for (uint64_t i = 1; i <= n; i++) {
       c = c + (1.0 / pow((double)i, alpha));
     }
@@ -92,7 +91,7 @@ uint64_t zipf(const double alpha, const uint64_t n) {
 
   // Pull a uniform random number (0 < z < 1)
   do {
-    z = rand_val(0);
+    z = rand_val();
   } while ((z == 0) || (z == 1));
 
   // Map z to the value
@@ -119,21 +118,15 @@ uint64_t zipf(const double alpha, const uint64_t n) {
 //=   - From R. Jain, "The Art of Computer Systems Performance Analysis," =
 //=     John Wiley & Sons, 1991. (Page 443, Figure 26.2)                  =
 //=========================================================================
-double rand_val(int seed) {
+double rand_val() {
   const long a = 16807;       // Multiplier
   const long m = 2147483647;  // Modulus
   const long q = 127773;      // m div a
   const long r = 2836;        // m mod a
-  static long x;              // Random int value
+  static long x = 1687248;    // Random int value
   long x_div_q;               // x divided by q
   long x_mod_q;               // x modulo q
   long x_new;                 // New x value
-
-  // Set the seed if argument is non-zero and then return zero
-  if (seed > 0) {
-    x = seed;
-    return (0.0);
-  }
 
   // RNG using integer arithmetic
   x_div_q = x / q;

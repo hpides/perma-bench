@@ -12,6 +12,7 @@ static constexpr uint32_t NUM_IO_OPS_PER_CHUNK = 1000;
 enum Mode { Sequential, Sequential_Desc, Random };
 enum DataInstruction { MOV, SIMD };
 enum PersistInstruction { CLWB, NTSTORE, CLFLUSH };
+enum RandomDistribution { Uniform, Zipf };
 
 }  // namespace internal
 

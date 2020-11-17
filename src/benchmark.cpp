@@ -219,7 +219,7 @@ void Benchmark::set_up() {
               if (config_.random_distribution == internal::RandomDistribution::Uniform) {
                 random_value = access_distribution(rnd_generator);
               } else {
-                random_value = zipf(config_.alpha, num_accesses_in_range);
+                random_value = zipf(config_.zipf_alpha, num_accesses_in_range);
               }
               op_addresses[op] = partition_start + (random_value * config_.access_size);
             }
@@ -272,7 +272,7 @@ nlohmann::json Benchmark::get_config() {
   config["number_threads"] = config_.number_threads;
   if (config_.exec_mode == internal::Mode::Random) {
     config["random_distribution"] = config_.random_distribution;
-    config["alpha"] = config_.alpha;
+    config["zipf_alpha"] = config_.zipf_alpha;
   }
   return config;
 }
@@ -290,7 +290,7 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_if_present(node, "pause_length_micros", &bm_config.pause_length_micros);
     num_found += get_if_present(node, "number_partitions", &bm_config.number_partitions);
     num_found += get_if_present(node, "number_threads", &bm_config.number_threads);
-    num_found += get_if_present(node, "alpha", &bm_config.alpha);
+    num_found += get_if_present(node, "zipf_alpha", &bm_config.zipf_alpha);
     num_found += get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_mode, &bm_config.exec_mode);
     num_found += get_enum_if_present(node, "random_distribution", ConfigEnums::str_to_random_distribution,
                                      &bm_config.random_distribution);
