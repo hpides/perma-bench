@@ -19,6 +19,8 @@ namespace internal {
 static const size_t BYTE_IN_GIGABYTE = 1e9;
 static const size_t NANOSECONDS_IN_SECONDS = 1e9;
 
+enum RandomDistribution { Uniform, Zipf };
+
 struct Measurement {
   Measurement(const std::chrono::high_resolution_clock::time_point start_ts,
               const std::chrono::high_resolution_clock::time_point end_ts)
@@ -38,6 +40,9 @@ struct BenchmarkConfig {
   uint32_t access_size = 256;
   uint64_t number_operations = 10'000'000;
   internal::Mode exec_mode{internal::Mode::Sequential};
+
+  internal::RandomDistribution random_distribution{internal::RandomDistribution::Uniform};
+  double alpha = 0.99;
 
   internal::DataInstruction data_instruction{internal::DataInstruction::SIMD};
   internal::PersistInstruction persist_instruction{internal::PersistInstruction::NTSTORE};

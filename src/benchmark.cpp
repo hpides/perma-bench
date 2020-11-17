@@ -62,6 +62,7 @@ struct ConfigEnums {
   static const std::unordered_map<std::string, internal::Mode> str_to_mode;
   static const std::unordered_map<std::string, internal::DataInstruction> str_to_data_instruction;
   static const std::unordered_map<std::string, internal::PersistInstruction> str_to_persist_instruction;
+  static const std::unordered_map<std::string, internal::RandomDistribution> str_to_random_distribution;
 };
 
 const std::unordered_map<std::string, internal::Mode> ConfigEnums::str_to_mode{
@@ -77,6 +78,9 @@ const std::unordered_map<std::string, internal::PersistInstruction> ConfigEnums:
     {"ntstore", internal::PersistInstruction::NTSTORE},
     {"clwb", internal::PersistInstruction::CLWB},
     {"clflush", internal::PersistInstruction::CLFLUSH}};
+
+const std::unordered_map<std::string, internal::RandomDistribution> ConfigEnums::str_to_random_distribution{
+    {"uniform", internal::RandomDistribution::Uniform}, {"zipf", internal::RandomDistribution::Zipf}};
 
 void Benchmark::run_in_thread(const uint16_t thread_id) {
   for (const std::unique_ptr<IoOperation>& io_op : io_operations_[thread_id]) {
@@ -211,7 +215,13 @@ void Benchmark::set_up() {
             std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
 
             for (uint32_t op = 0; op < internal::NUM_IO_OPS_PER_CHUNK; ++op) {
-              op_addresses[op] = partition_start + (access_distribution(rnd_generator) * config_.access_size);
+              uint64_t random_value;
+              if (config_.random_distribution == internal::RandomDistribution::Uniform) {
+                random_value = access_distribution(rnd_generator);
+              } else {
+                random_value = zipf(config_.alpha, num_accesses_in_range);
+              }
+              op_addresses[op] = partition_start + (random_value * config_.access_size);
             }
             break;
           }
@@ -249,16 +259,22 @@ void Benchmark::tear_down() {
 }
 
 nlohmann::json Benchmark::get_config() {
-  return {{"total_memory_range", config_.total_memory_range},
-          {"access_size", config_.access_size},
-          {"number_operations", config_.number_operations},
-          {"exec_mode", config_.exec_mode},
-          {"write_ratio", config_.write_ratio},
-          {"read_ratio", config_.read_ratio},
-          {"pause_frequency", config_.pause_frequency},
-          {"pause_length_micros", config_.pause_length_micros},
-          {"number_threads", config_.number_threads},
-          {"number_threads", config_.number_threads}};
+  nlohmann::json config;
+  config["total_memory_range"] = config_.total_memory_range;
+  config["access_size"] = config_.access_size;
+  config["number_operations"] = config_.number_operations;
+  config["exec_mode"] = config_.exec_mode;
+  config["write_ratio"] = config_.write_ratio;
+  config["read_ratio"] = config_.read_ratio;
+  config["pause_frequency"] = config_.pause_frequency;
+  config["pause_length_micros"] = config_.pause_length_micros;
+  config["number_partitions"] = config_.number_partitions;
+  config["number_threads"] = config_.number_threads;
+  if (config_.exec_mode == internal::Mode::Random) {
+    config["random_distribution"] = config_.random_distribution;
+    config["alpha"] = config_.alpha;
+  }
+  return config;
 }
 
 BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
@@ -274,7 +290,10 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_if_present(node, "pause_length_micros", &bm_config.pause_length_micros);
     num_found += get_if_present(node, "number_partitions", &bm_config.number_partitions);
     num_found += get_if_present(node, "number_threads", &bm_config.number_threads);
+    num_found += get_if_present(node, "alpha", &bm_config.alpha);
     num_found += get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_mode, &bm_config.exec_mode);
+    num_found += get_enum_if_present(node, "random_distribution", ConfigEnums::str_to_random_distribution,
+                                     &bm_config.random_distribution);
     num_found += get_enum_if_present(node, "data_instruction", ConfigEnums::str_to_data_instruction,
                                      &bm_config.data_instruction);
     num_found += get_enum_if_present(node, "persist_instruction", ConfigEnums::str_to_persist_instruction,
