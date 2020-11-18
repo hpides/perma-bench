@@ -102,10 +102,9 @@ include_directories(${JSON_DIR})
 
 ##################### PerMA ####################
 file(COPY configs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+include_directories(src)
 add_subdirectory(src)
 
 ##################### Test ####################
-project(perma-test)
-
 add_subdirectory(test)
 enable_testing()

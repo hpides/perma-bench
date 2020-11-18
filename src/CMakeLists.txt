@@ -14,20 +14,16 @@ set(
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")
 
-add_library(libperma STATIC ${SOURCES})
-
-add_dependencies(libperma YAML)
-
-target_link_libraries(libperma yaml-cpp)
-target_include_directories(libperma PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-add_executable(perma-bench perma.cpp ${SOURCES})
-
-target_link_libraries(perma-bench libperma)
+add_library(perma STATIC ${SOURCES})
+add_dependencies(perma YAML)
+target_link_libraries(perma yaml-cpp)
 
 if (${BUILD_PMDK})
-    add_dependencies(perma-bench PMDK)
-    target_link_libraries(perma-bench pmem)
+    add_dependencies(perma PMDK)
+    target_link_libraries(perma pmem)
 else ()
-    target_link_libraries(perma-bench ${PMEM_LIBRARIES})
+    target_link_libraries(perma ${PMEM_LIBRARIES})
 endif ()
+
+add_executable(perma-bench perma.cpp)
+target_link_libraries(perma-bench perma)
