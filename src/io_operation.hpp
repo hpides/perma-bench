@@ -7,7 +7,9 @@ namespace perma {
 
 namespace internal {
 
-static constexpr uint32_t NUM_IO_OPS_PER_CHUNK = 1000;
+// Ensure that we group io operations so that they are at least 100 KiB
+// in order to avoid expensive timing operations on tiny access sizes.
+static constexpr uint32_t MIN_IO_OP_SIZE_KiB = 100;
 
 enum Mode { Sequential, Sequential_Desc, Random };
 enum DataInstruction { MOV, SIMD };
@@ -26,21 +28,23 @@ class ActiveIoOperation : public IoOperation {
   friend class Benchmark;
 
  public:
-  explicit ActiveIoOperation(uint32_t access_size, internal::DataInstruction data_instruction,
+  explicit ActiveIoOperation(uint32_t access_size, uint32_t num_ops, internal::DataInstruction data_instruction,
                              internal::PersistInstruction persist_instruction)
-      : access_size_(access_size),
-        op_addresses_(internal::NUM_IO_OPS_PER_CHUNK),
+      : num_ops_{num_ops},
+        access_size_(access_size),
         data_instruction_{data_instruction},
-        persist_instruction_{persist_instruction} {};
+        persist_instruction_{persist_instruction},
+        op_addresses_{num_ops} {};
 
   bool is_active() const override { return true; }
-  uint64_t get_io_size() const { return internal::NUM_IO_OPS_PER_CHUNK * access_size_; };
+  uint64_t get_io_size() const { return num_ops_ * access_size_; };
 
  protected:
-  std::vector<char*> op_addresses_;
+  const uint32_t num_ops_;
   const uint32_t access_size_;
   const internal::DataInstruction data_instruction_;
   const internal::PersistInstruction persist_instruction_;
+  std::vector<char*> op_addresses_;
 };
 
 class Pause : public IoOperation {
