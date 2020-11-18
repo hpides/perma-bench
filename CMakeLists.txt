@@ -106,5 +106,5 @@ include_directories(src)
 add_subdirectory(src)
 
 ##################### Test ####################
-add_subdirectory(test)
 enable_testing()
+add_subdirectory(test)
