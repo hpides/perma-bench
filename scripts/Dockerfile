@@ -12,14 +12,15 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
   && apt-get install -y \
-      ssh build-essential gcc g++ gdb clang cmake rsync tar python git \
+      ssh build-essential gcc g++ gdb clang cmake rsync tar python git bash-completion \
       autoconf pkg-config libndctl-dev libdaxctl-dev pandoc \
   && apt-get clean
 
 RUN git clone https://github.com/pmem/pmdk && \
     cd pmdk && \
     git checkout tags/1.10 && \
-    make install
+    make install && \
+    ldconfig
 
 RUN ( \
     echo 'LogLevel DEBUG2'; \
