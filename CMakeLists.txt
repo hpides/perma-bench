@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 project(perma-bench)
 
 include(ExternalProject)
+include(FetchContent)
+
 set(CMAKE_CXX_STANDARD 17)
 set(COMPILE_FLAGS "-march=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
@@ -99,6 +101,14 @@ set(JSON_DIR ${CMAKE_CURRENT_BINARY_DIR}/json)
 set(JSON_INCLUDE_PATH ${JSON_DIR}/json.hpp)
 file(DOWNLOAD ${JSON_DOWNLOAD_PATH} ${JSON_INCLUDE_PATH})
 include_directories(${JSON_DIR})
+
+################### Hdr Histogram ####################
+FetchContent_Declare(
+        hdr_histogram
+        GIT_REPOSITORY https://github.com/HdrHistogram/HdrHistogram_c.git
+        GIT_TAG 0.11.2
+)
+FetchContent_MakeAvailable(hdr_histogram)
 
 ##################### PerMA ####################
 add_custom_target(copy_configs

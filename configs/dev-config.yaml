@@ -3,4 +3,6 @@ bm_0:
     access_size: 256
     total_memory_range: 67108864
     exec_mode: sequential
-    number_threads: 2
+    number_threads: 1
+    read_ratio: 1
+    write_ratio: 0

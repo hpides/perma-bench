@@ -29,6 +29,8 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
     nlohmann::json result = benchmark->get_result();
     //        std::cout << result.dump() << std::endl;
     std::cout << result["results"].size() << std::endl;
+    std::cout << "Bandwidth:\n" << result["bandwidth"].dump(2) << std::endl;
+    std::cout << "Latency:\n" << result["latency"].dump(2) << std::endl;
 
     benchmark->tear_down();
     previous_bm = benchmark;
