@@ -3,7 +3,5 @@ bm_0:
   total_memory_range: 67108864
   exec_mode: sequential
   number_threads: 2
-  read_ratio: 1.0
-  write_ratio: 0
   pause_frequency: 1
   pause_length_micros: 10
