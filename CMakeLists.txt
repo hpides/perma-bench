@@ -101,7 +101,7 @@ file(DOWNLOAD ${JSON_DOWNLOAD_PATH} ${JSON_INCLUDE_PATH})
 include_directories(${JSON_DIR})
 
 ##################### PerMA ####################
-file(COPY configs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 include_directories(src)
 add_subdirectory(src)
 
