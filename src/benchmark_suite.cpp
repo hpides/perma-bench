@@ -21,13 +21,13 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
       previous_bm->tear_down(/*force=*/true);
     }
 
-    benchmark->generate_data();
+    benchmark->create_data_file();
     benchmark->set_up();
     benchmark->run();
 
     // TODO: Handle get_result
     nlohmann::json result = benchmark->get_result();
-//        std::cout << result.dump() << std::endl;
+    //        std::cout << result.dump() << std::endl;
     std::cout << result["results"].size() << std::endl;
 
     benchmark->tear_down();

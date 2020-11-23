@@ -82,7 +82,7 @@ class Benchmark {
    * This is probably the first method to be called so that a virtual
    * address space is available to generate the IO addresses.
    */
-  void generate_data();
+  void create_data_file();
 
   /** Create all the IO addresses ahead of time to avoid unnecessary ops during the actual benchmark. */
   void set_up();

@@ -64,8 +64,14 @@ std::vector<std::unique_ptr<Benchmark>> BenchmarkFactory::create_benchmark_matri
 
       BenchmarkConfig final_config = BenchmarkConfig::decode(clean_config);
       final_config.pmem_directory = pmem_directory;
-      // Explicitly pass data file to avoid generating same data in each benchmark
-      matrix.push_back(std::make_unique<Benchmark>(bm_name, std::move(final_config), pmem_data_file));
+
+      // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
+      if (final_config.write_ratio > 0) {
+        matrix.push_back(std::make_unique<Benchmark>(bm_name, std::move(final_config)));
+      } else {
+        matrix.push_back(std::make_unique<Benchmark>(bm_name, std::move(final_config), pmem_data_file));
+      }
+
       return;
     }
 
