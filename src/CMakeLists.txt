@@ -15,6 +15,7 @@ set(
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")
 
 add_library(perma STATIC ${SOURCES})
+add_dependencies(perma copy_configs)
 target_link_libraries(perma yaml-cpp)
 
 if (${BUILD_PMDK})

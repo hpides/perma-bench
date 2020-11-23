@@ -104,13 +104,18 @@ void Benchmark::run() {
   }
 }
 
-void Benchmark::generate_data() {
-  if (config_.read_ratio == 0) {
-    // If we never read data in this benchmark, we do not need to generate any.
+void Benchmark::create_data_file() {
+  if (std::filesystem::exists(pmem_file_)) {
+    // Data was already generated. Only re-map it.
+    pmem_data_ = map_pmem_file(pmem_file_, config_.total_memory_range);
     return;
   }
+
   pmem_data_ = create_pmem_file(pmem_file_, config_.total_memory_range);
-  rw_ops::write_data(pmem_data_, pmem_data_ + config_.total_memory_range);
+  if (config_.read_ratio > 0) {
+    // If we read data in this benchmark, we need to generate it first.
+    rw_ops::write_data(pmem_data_, pmem_data_ + config_.total_memory_range);
+  }
 }
 
 nlohmann::json Benchmark::get_result() {
@@ -157,7 +162,12 @@ nlohmann::json Benchmark::get_result() {
 }
 
 void Benchmark::set_up() {
-  const uint64_t num_io_chunks = config_.number_operations / internal::NUM_IO_OPS_PER_CHUNK;
+  const size_t num_total_range_ops = config_.total_memory_range / config_.access_size;
+  const size_t num_operations =
+      (config_.exec_mode == internal::Random) ? config_.number_operations : num_total_range_ops;
+  const size_t num_ops_per_chunk = std::ceil((double)internal::MIN_IO_OP_SIZE / config_.access_size);
+  const size_t num_ops_per_thread = num_operations / config_.number_threads;
+  const size_t num_io_chunks_per_thread = num_ops_per_thread / num_ops_per_chunk;
 
   io_operations_.reserve(config_.number_threads);
   pool_.reserve(config_.number_threads - 1);
@@ -175,46 +185,42 @@ void Benchmark::set_up() {
     if (config_.exec_mode == internal::Sequential_Desc) {
       partition_start =
           pmem_data_ + ((config_.number_partitions - partition_num) * partition_size) - config_.access_size;
-      partition_end = partition_start - partition_size + config_.access_size;
     } else {
       partition_start = pmem_data_ + (partition_num * partition_size);
-      partition_end = partition_start + partition_size;
     }
 
     for (uint16_t thread_num = 0; thread_num < num_threads_per_partition; thread_num++) {
       const uint32_t index = thread_num + (partition_num * num_threads_per_partition);
-      measurements_[index].reserve(num_io_chunks);
+      measurements_[index].reserve(num_io_chunks_per_thread);
 
       std::vector<std::unique_ptr<IoOperation>> io_ops{};
-      const uint64_t num_pauses =
-          config_.pause_frequency == 0 ? 0 : config_.number_operations / config_.pause_frequency - 1;
-      io_ops.reserve(num_io_chunks + num_pauses);
+      const uint64_t num_pauses = config_.pause_frequency == 0 ? 0 : num_ops_per_thread / config_.pause_frequency - 1;
+      size_t current_pause_frequency_count = 0;
+      io_ops.reserve(num_io_chunks_per_thread + num_pauses);
 
       // Create IOOperations
       char* next_op_position = partition_start;
-
       std::bernoulli_distribution io_mode_distribution(config_.read_ratio);
 
-      for (uint32_t io_op = 1; io_op <= config_.number_operations; io_op += internal::NUM_IO_OPS_PER_CHUNK) {
+      for (uint32_t io_op = 1; io_op <= num_io_chunks_per_thread; ++io_op) {
         const bool is_read = io_mode_distribution(rnd_generator);
         if (is_read) {
-          io_ops.push_back(
-              std::make_unique<Read>(config_.access_size, config_.data_instruction, config_.persist_instruction));
+          io_ops.push_back(std::make_unique<Read>(config_.access_size, num_ops_per_chunk, config_.data_instruction,
+                                                  config_.persist_instruction));
         } else {
-          io_ops.push_back(
-              std::make_unique<Write>(config_.access_size, config_.data_instruction, config_.persist_instruction));
+          io_ops.push_back(std::make_unique<Write>(config_.access_size, num_ops_per_chunk, config_.data_instruction,
+                                                   config_.persist_instruction));
         }
 
         std::vector<char*>& op_addresses = dynamic_cast<ActiveIoOperation*>(io_ops.back().get())->op_addresses_;
 
         switch (config_.exec_mode) {
           case internal::Mode::Random: {
-            const ptrdiff_t range = partition_end - partition_start;
-            const uint32_t num_accesses_in_range = range / config_.access_size;
+            const uint32_t num_accesses_in_range = partition_size / config_.access_size;
 
             std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
 
-            for (uint32_t op = 0; op < internal::NUM_IO_OPS_PER_CHUNK; ++op) {
+            for (uint32_t op = 0; op < num_ops_per_chunk; ++op) {
               uint64_t random_value;
               if (config_.random_distribution == internal::RandomDistribution::Uniform) {
                 random_value = access_distribution(rnd_generator);
@@ -226,23 +232,26 @@ void Benchmark::set_up() {
             break;
           }
           case internal::Mode::Sequential: {
-            for (uint32_t op = 0; op < internal::NUM_IO_OPS_PER_CHUNK; ++op) {
+            for (uint32_t op = 0; op < num_ops_per_chunk; ++op) {
               op_addresses[op] = next_op_position + (op * config_.access_size);
             }
-            next_op_position += internal::NUM_IO_OPS_PER_CHUNK * config_.access_size;
+            next_op_position += num_ops_per_chunk * config_.access_size;
             break;
           }
           case internal::Mode::Sequential_Desc: {
-            for (uint32_t op = 0; op < internal::NUM_IO_OPS_PER_CHUNK; ++op) {
+            for (uint32_t op = 0; op < num_ops_per_chunk; ++op) {
               op_addresses[op] = next_op_position - (op * config_.access_size);
             }
-            next_op_position -= internal::NUM_IO_OPS_PER_CHUNK * config_.access_size;
+            next_op_position -= num_ops_per_chunk * config_.access_size;
             break;
           }
         }
 
-        if (config_.pause_frequency != 0 && io_op % config_.pause_frequency == 0 && io_op < config_.number_operations) {
+        current_pause_frequency_count += num_ops_per_chunk;
+        if (num_pauses > 0 && current_pause_frequency_count >= config_.pause_frequency &&
+            io_op < num_io_chunks_per_thread) {
           io_ops.push_back(std::make_unique<Pause>(config_.pause_length_micros));
+          current_pause_frequency_count = 0;
         }
       }
       io_operations_.push_back(std::move(io_ops));
@@ -250,32 +259,43 @@ void Benchmark::set_up() {
   }
 }
 
-void Benchmark::tear_down() {
+void Benchmark::tear_down(const bool force) {
   if (pmem_data_ != nullptr) {
     pmem_unmap(pmem_data_, config_.total_memory_range);
     pmem_data_ = nullptr;
   }
-  std::filesystem::remove(pmem_file_);
+  if (owns_pmem_file_ || force) {
+    std::filesystem::remove(pmem_file_);
+  }
 }
 
 nlohmann::json Benchmark::get_config() {
   nlohmann::json config;
   config["total_memory_range"] = config_.total_memory_range;
   config["access_size"] = config_.access_size;
-  config["number_operations"] = config_.number_operations;
   config["exec_mode"] = config_.exec_mode;
   config["write_ratio"] = config_.write_ratio;
   config["read_ratio"] = config_.read_ratio;
   config["pause_frequency"] = config_.pause_frequency;
-  config["pause_length_micros"] = config_.pause_length_micros;
   config["number_partitions"] = config_.number_partitions;
   config["number_threads"] = config_.number_threads;
-  if (config_.exec_mode == internal::Mode::Random) {
-    config["random_distribution"] = config_.random_distribution;
-    config["zipf_alpha"] = config_.zipf_alpha;
+
+  if (config_.pause_frequency > 0) {
+    config["pause_length_micros"] = config_.pause_length_micros;
   }
+
+  if (config_.exec_mode == internal::Mode::Random) {
+    config["number_operations"] = config_.number_operations;
+    config["random_distribution"] = config_.random_distribution;
+    if (config_.random_distribution == internal::Zipf) {
+      config["zipf_alpha"] = config_.zipf_alpha;
+    }
+  }
+
   return config;
 }
+
+const std::string& Benchmark::benchmark_name() const { return benchmark_name_; }
 
 BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
   BenchmarkConfig bm_config{};
@@ -307,12 +327,11 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
         }
       }
     }
-    bm_config.validate();
   } catch (const YAML::InvalidNode& e) {
     throw std::invalid_argument("Exception during config parsing: " + e.msg);
   }
 
-  // TODO: validate config object
+  bm_config.validate();
   return bm_config;
 }
 
@@ -322,8 +341,8 @@ void BenchmarkConfig::validate() const {
   CHECK_ARGUMENT(is_access_size_greater_64_byte, "Access size must be at least 64-byte, i.e., a cache line");
 
   // Check if access size is a power of two
-  const bool is_access_size_power_of_two = (access_size % 2) == 0;
-  CHECK_ARGUMENT(is_access_size_power_of_two, "Access size must be a multiple of 2");
+  const bool is_access_size_power_of_two = (access_size & (access_size - 1)) == 0;
+  CHECK_ARGUMENT(is_access_size_power_of_two, "Access size must be a power of 2");
 
   // Check if memory range is multiple of access size
   const bool is_memory_range_multiple_of_access_size = (total_memory_range % access_size) == 0;
@@ -332,16 +351,6 @@ void BenchmarkConfig::validate() const {
   // Check if ratio is equal to one
   const bool is_ratio_equal_one = (read_ratio + write_ratio) == 1.0;
   CHECK_ARGUMENT(is_ratio_equal_one, "Read and write ratio must add up to 1");
-
-  // Assumption: num_ops is multiple of internal::number_ios(1000)
-  const bool is_number_operations_chunk_multiple = (number_operations % internal::NUM_IO_OPS_PER_CHUNK) == 0;
-  CHECK_ARGUMENT(is_number_operations_chunk_multiple,
-                 "Number operations must be a multiple of " + std::to_string(internal::NUM_IO_OPS_PER_CHUNK));
-
-  // Assumption: pause_frequency is multiple of internal:: number_ios (1000)
-  const bool is_pause_frequency_chunk_multiple = (pause_frequency % internal::NUM_IO_OPS_PER_CHUNK) == 0;
-  CHECK_ARGUMENT(is_pause_frequency_chunk_multiple,
-                 "Pause frequency must be a multiple of " + std::to_string(internal::NUM_IO_OPS_PER_CHUNK));
 
   // Check if at least one thread
   const bool is_at_least_one_thread = number_threads > 0;
@@ -355,5 +364,17 @@ void BenchmarkConfig::validate() const {
   const bool is_number_threads_multiple_of_number_partitions = (number_threads % number_partitions) == 0;
   CHECK_ARGUMENT(is_number_threads_multiple_of_number_partitions,
                  "Number threads must be a multiple of number partitions");
+
+  // Assumption: number_operations should only be set for random access. It is ignored in sequential IO.
+  const bool is_number_operations_set_random =
+      number_operations == BenchmarkConfig{}.number_operations || exec_mode == internal::Random;
+  CHECK_ARGUMENT(is_number_operations_set_random, "Number of operations should only be set for random access");
+
+  // Assumption: cannot insert a pause within a chunk. the frequency match be at least one chunks.
+  const bool is_pause_frequency_chunkable =
+      pause_frequency == 0 || (pause_frequency * access_size) > internal::MIN_IO_OP_SIZE;
+  CHECK_ARGUMENT(is_pause_frequency_chunkable, "Cannot insert pause in <" +
+                                                   std::to_string(internal::MIN_IO_OP_SIZE / access_size) +
+                                                   " frequency for " + std::to_string(access_size) + " byte access.");
 }
 }  // namespace perma

@@ -8,11 +8,16 @@
 
 namespace perma {
 
-char* map_pmem_file(const std::filesystem::path& file, size_t* mapped_length) {
+char* map_pmem_file(const std::filesystem::path& file, const size_t expected_length) {
   int is_pmem;
-  void* pmem_addr = pmem_map_file(file.c_str(), 0, 0, 0, mapped_length, &is_pmem);
+  size_t mapped_length;
+  void* pmem_addr = pmem_map_file(file.c_str(), 0, 0, 0, &mapped_length, &is_pmem);
   if (pmem_addr == nullptr || (unsigned long)pmem_addr == 0xFFFFFFFFFFFFFFFF) {
     throw std::runtime_error{"Could not map file: " + file.string()};
+  }
+
+  if (mapped_length != expected_length) {
+    throw std::runtime_error("Existing pmem data file has wrong size.");
   }
 
   if (!is_pmem) {
@@ -22,7 +27,7 @@ char* map_pmem_file(const std::filesystem::path& file, size_t* mapped_length) {
   return static_cast<char*>(pmem_addr);
 }
 
-char* create_pmem_file(const std::filesystem::path& file, size_t length) {
+char* create_pmem_file(const std::filesystem::path& file, const size_t length) {
   int is_pmem;
   size_t mapped_length;
   void* pmem_addr = pmem_map_file(file.c_str(), length, PMEM_FILE_CREATE, 0644, &mapped_length, &is_pmem);

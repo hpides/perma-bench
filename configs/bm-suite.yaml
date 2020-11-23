@@ -1,0 +1,58 @@
+# Do sequential read on a large memory region (50 GiB)
+# for various thread and access size configurations.
+large_seq_read:
+  matrix:
+    # Run with these thread counts
+    number_threads: [1, 2, 4, 8, 16, 24, 32, 36]
+    # Run with 64 Byte access to 16/256 KiB and 1 MiB.
+    access_size: [64, 256, 1024, 4096, 16384, 262144, 1048576]
+  args:
+    total_memory_range: 53687091200  # 50 GiB
+    exec_mode: sequential
+    read_ratio: 1
+    write_ratio: 0
+
+# Do sequential writes on a large memory region (50 GiB)
+# for various thread and access size configurations.
+large_seq_write:
+  matrix:
+    # Run with these thread counts
+    number_threads: [1, 2, 4, 8, 16, 24, 32, 36]
+    # Run with 64 Byte access to 16/256 KiB and 1 MiB.
+    access_size: [64, 256, 1024, 4096, 16384, 262144, 1048576]
+  args:
+    total_memory_range: 53687091200  # 50 GiB
+    exec_mode: sequential
+    read_ratio: 0
+    write_ratio: 1
+
+# Do random reads on a smaller memory region (5 GiB)
+# that could represent a data structure, e.g., a hash table or tree index,
+# for various thread and access size configurations.
+small_random_read:
+  matrix:
+    # Run with these thread counts
+    number_threads: [1, 2, 4, 8, 16, 24, 32, 36]
+    # Run with 64 Byte access to 4 KiB.
+    access_size: [64, 256, 512, 1024, 4096]
+  args:
+    total_memory_range: 5368709120  # 5 GiB
+    number_operations
+    exec_mode: random
+    read_ratio: 1
+    write_ratio: 0
+
+# Do random writes on a smaller memory region (5 GiB)
+# that could represent a data structure, e.g., a hash table or tree index,
+# for various thread and access size configurations.
+small_random_write:
+  matrix:
+    # Run with these thread counts
+    number_threads: [1, 2, 4, 8, 16, 24, 32, 36]
+    # Run with 64 Byte access to 4 KiB.
+    access_size: [64, 256, 512, 1024, 4096]
+  args:
+    total_memory_range: 5368709120  # 5 GiB
+    exec_mode: random
+    read_ratio: 0
+    write_ratio: 1
