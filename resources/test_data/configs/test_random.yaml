@@ -1,0 +1,4 @@
+test_random:
+  exec_mode: random
+  random_distribution: zipf
+  zipf_alpha: 0.9

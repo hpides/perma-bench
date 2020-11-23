@@ -1,0 +1,7 @@
+test_seq:
+  access_size: 256
+  total_memory_range: 67108864
+  exec_mode: sequential
+  number_threads: 2
+  pause_frequency: 1
+  pause_length_micros: 10
