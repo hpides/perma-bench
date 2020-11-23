@@ -3,5 +3,5 @@ test_seq:
   total_memory_range: 67108864
   exec_mode: sequential
   number_threads: 2
-  pause_frequency: 1
+  pause_frequency: 1024
   pause_length_micros: 10

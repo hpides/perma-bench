@@ -12,8 +12,7 @@ constexpr auto TEST_CONFIG_FILE_RANDOM = "test_random.yaml";
 class ConfigTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    const std::filesystem::path test_config_path =
-        std::filesystem::current_path().parent_path() / "resources/test_data/configs";
+    const std::filesystem::path test_config_path = std::filesystem::current_path() / "resources/configs";
     config_file_seq = test_config_path / TEST_CONFIG_FILE_SEQ;
     config_file_random = test_config_path / TEST_CONFIG_FILE_RANDOM;
   }
@@ -39,7 +38,7 @@ TEST_F(ConfigTest, DecodeSequential) {
   EXPECT_EQ(bm_config.write_ratio, 0.5);
   EXPECT_EQ(bm_config.read_ratio, 0.5);
 
-  EXPECT_EQ(bm_config.pause_frequency, 1);
+  EXPECT_EQ(bm_config.pause_frequency, 1024);
   EXPECT_EQ(bm_config.pause_length_micros, 10);
 
   EXPECT_EQ(bm_config.number_partitions, 1);
