@@ -372,7 +372,7 @@ void BenchmarkConfig::validate() const {
 
   // Assumption: cannot insert a pause within a chunk. the frequency match be at least one chunks.
   const bool is_pause_frequency_chunkable =
-      pause_frequency == 0 || (pause_frequency * access_size) > internal::MIN_IO_OP_SIZE;
+      pause_frequency == 0 || (pause_frequency * access_size) >= internal::MIN_IO_OP_SIZE;
   CHECK_ARGUMENT(is_pause_frequency_chunkable, "Cannot insert pause in <" +
                                                    std::to_string(internal::MIN_IO_OP_SIZE / access_size) +
                                                    " frequency for " + std::to_string(access_size) + " byte access.");
