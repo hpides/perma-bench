@@ -63,12 +63,12 @@ else ()
     find_path(PMEM_INCLUDE_DIRS libpmem.h REQUIRED)
     find_library(PMEM_LIBRARIES NAMES pmem libpmem REQUIRED HINTS ${PMDK_HINTS})
 
-    if(NOT PMEM_INCLUDE_DIRS OR "${PMEM_INCLUDE_DIRS}" STREQUAL "")
+    if (NOT PMEM_INCLUDE_DIRS OR "${PMEM_INCLUDE_DIRS}" STREQUAL "")
         message(FATAL_ERROR "ERROR: libpmem include directory not found.")
-    endif()
-    if(NOT PMEM_LIBRARIES OR "${PMEM_LIBRARIES}" STREQUAL "")
+    endif ()
+    if (NOT PMEM_LIBRARIES OR "${PMEM_LIBRARIES}" STREQUAL "")
         message(FATAL_ERROR "ERROR: libpmem library not found.")
-    endif()
+    endif ()
 
     include_directories(${LIBPMEM_INCLUDE_DIRS})
     message(STATUS "PMDK provided. Including ${PMEM_INCLUDE_DIRS} and linking ${PMEM_LIBRARIES}.")
@@ -100,7 +100,13 @@ set(JSON_INCLUDE_PATH ${JSON_DIR}/json.hpp)
 file(DOWNLOAD ${JSON_DOWNLOAD_PATH} ${JSON_INCLUDE_PATH})
 include_directories(${JSON_DIR})
 
-
 ##################### PerMA ####################
-file(COPY configs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+add_custom_target(copy_configs
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/configs ${CMAKE_CURRENT_BINARY_DIR}/configs)
+
+include_directories(src)
 add_subdirectory(src)
+
+##################### Test ####################
+enable_testing()
+add_subdirectory(test)
