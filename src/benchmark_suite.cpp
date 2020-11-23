@@ -27,13 +27,13 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
 
     // TODO: Handle get_result
     nlohmann::json result = benchmark->get_result();
-    //    std::cout << result.dump() << std::endl;
-//    std::cout << result.size() << std::endl;
+//        std::cout << result.dump() << std::endl;
+    std::cout << result["results"].size() << std::endl;
 
     benchmark->tear_down();
     previous_bm = benchmark;
 
-    std::cout << "\rCompleted " << (i + 1) << "/" << benchmarks.size();
+    std::cout << "Completed " << (i + 1) << "/" << benchmarks.size() << " benchmark(s).\n";
   }
 
   // Final clean up

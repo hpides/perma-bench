@@ -169,7 +169,7 @@ void Benchmark::set_up() {
   const size_t num_total_range_ops = config_.total_memory_range / config_.access_size;
   const size_t num_operations =
       (config_.exec_mode == internal::Random) ? config_.number_operations : num_total_range_ops;
-  const size_t num_ops_per_chunk = std::ceil((double)internal::MIN_IO_OP_SIZE_KiB / config_.access_size);
+  const size_t num_ops_per_chunk = std::ceil((double)internal::MIN_IO_OP_SIZE / config_.access_size);
   const size_t num_ops_per_thread = num_operations / config_.number_threads;
   const size_t num_io_chunks_per_thread = num_ops_per_thread / num_ops_per_chunk;
 
@@ -379,8 +379,8 @@ void BenchmarkConfig::validate() const {
 
   // Assumption: cannot insert a pause within a chunk. the frequency match be at least one chunks.
   const bool is_pause_frequency_chunkable =
-      pause_frequency == 0 || (pause_frequency * access_size) > internal::MIN_IO_OP_SIZE_KiB;
+      pause_frequency == 0 || (pause_frequency * access_size) > internal::MIN_IO_OP_SIZE;
   CHECK_ARGUMENT(is_pause_frequency_chunkable,
-                 "Cannot insert pause in < " + std::to_string(internal::MIN_IO_OP_SIZE_KiB) + " frequency");
+                 "Cannot insert pause in <" + std::to_string(internal::MIN_IO_OP_SIZE / access_size) + " frequency for " + std::to_string(access_size) + " byte access.");
 }
 }  // namespace perma
