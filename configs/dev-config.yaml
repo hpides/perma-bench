@@ -1,6 +1,7 @@
 bm_0:
-  access_size: 512
-  total_memory_range: 134217728
-  number_operations: 1000
+  access_size: 256
+  total_memory_range: 67108864
   exec_mode: sequential
-  number_threads: 1
+  number_threads: 2
+  pause_frequency: 1
+  pause_length_micros: 10
