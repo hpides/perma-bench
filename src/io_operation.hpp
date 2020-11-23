@@ -7,9 +7,9 @@ namespace perma {
 
 namespace internal {
 
-// Ensure that we group io operations so that they are at least 100 KiB
+// Ensure that we group io operations so that they are at least 128 KiB
 // in order to avoid expensive timing operations on tiny access sizes.
-static constexpr uint32_t MIN_IO_OP_SIZE_KiB = 100;
+static constexpr uint32_t MIN_IO_OP_SIZE = 128 * 1024u;
 
 enum Mode { Sequential, Sequential_Desc, Random };
 enum DataInstruction { MOV, SIMD };
@@ -61,13 +61,13 @@ class Pause : public IoOperation {
 class Read : public ActiveIoOperation {
  public:
   using ActiveIoOperation::ActiveIoOperation;
-  void run() override;
+  void run() final;
 };
 
 class Write : public ActiveIoOperation {
  public:
   using ActiveIoOperation::ActiveIoOperation;
-  void run() override;
+  void run() final;
 };
 
 }  // namespace perma

@@ -104,13 +104,18 @@ void Benchmark::run() {
   }
 }
 
-void Benchmark::generate_data() {
-  if (config_.read_ratio == 0) {
-    // If we never read data in this benchmark, we do not need to generate any.
+void Benchmark::create_data_file() {
+  if (std::filesystem::exists(pmem_file_)) {
+    // Data was already generated. Only re-map it.
+    pmem_data_ = map_pmem_file(pmem_file_, config_.total_memory_range);
     return;
   }
+
   pmem_data_ = create_pmem_file(pmem_file_, config_.total_memory_range);
-  rw_ops::write_data(pmem_data_, pmem_data_ + config_.total_memory_range);
+  if (config_.read_ratio > 0) {
+    // If we read data in this benchmark, we need to generate it first.
+    rw_ops::write_data(pmem_data_, pmem_data_ + config_.total_memory_range);
+  }
 }
 
 nlohmann::json Benchmark::get_result() {
@@ -160,7 +165,7 @@ void Benchmark::set_up() {
   const size_t num_total_range_ops = config_.total_memory_range / config_.access_size;
   const size_t num_operations =
       (config_.exec_mode == internal::Random) ? config_.number_operations : num_total_range_ops;
-  const size_t num_ops_per_chunk = std::ceil((double)internal::MIN_IO_OP_SIZE_KiB / config_.access_size);
+  const size_t num_ops_per_chunk = std::ceil((double)internal::MIN_IO_OP_SIZE / config_.access_size);
   const size_t num_ops_per_thread = num_operations / config_.number_threads;
   const size_t num_io_chunks_per_thread = num_ops_per_thread / num_ops_per_chunk;
 
@@ -180,10 +185,8 @@ void Benchmark::set_up() {
     if (config_.exec_mode == internal::Sequential_Desc) {
       partition_start =
           pmem_data_ + ((config_.number_partitions - partition_num) * partition_size) - config_.access_size;
-      partition_end = partition_start - partition_size + config_.access_size;
     } else {
       partition_start = pmem_data_ + (partition_num * partition_size);
-      partition_end = partition_start + partition_size;
     }
 
     for (uint16_t thread_num = 0; thread_num < num_threads_per_partition; thread_num++) {
@@ -213,8 +216,7 @@ void Benchmark::set_up() {
 
         switch (config_.exec_mode) {
           case internal::Mode::Random: {
-            const ptrdiff_t range = partition_end - partition_start;
-            const uint32_t num_accesses_in_range = range / config_.access_size;
+            const uint32_t num_accesses_in_range = partition_size / config_.access_size;
 
             std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
 
@@ -257,12 +259,14 @@ void Benchmark::set_up() {
   }
 }
 
-void Benchmark::tear_down() {
+void Benchmark::tear_down(const bool force) {
   if (pmem_data_ != nullptr) {
     pmem_unmap(pmem_data_, config_.total_memory_range);
     pmem_data_ = nullptr;
   }
-  std::filesystem::remove(pmem_file_);
+  if (owns_pmem_file_ || force) {
+    std::filesystem::remove(pmem_file_);
+  }
 }
 
 nlohmann::json Benchmark::get_config() {
@@ -290,6 +294,8 @@ nlohmann::json Benchmark::get_config() {
 
   return config;
 }
+
+const std::string& Benchmark::benchmark_name() const { return benchmark_name_; }
 
 BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
   BenchmarkConfig bm_config{};
@@ -366,8 +372,9 @@ void BenchmarkConfig::validate() const {
 
   // Assumption: cannot insert a pause within a chunk. the frequency match be at least one chunks.
   const bool is_pause_frequency_chunkable =
-      pause_frequency == 0 || (pause_frequency * access_size) > internal::MIN_IO_OP_SIZE_KiB;
-  CHECK_ARGUMENT(is_pause_frequency_chunkable,
-                 "Cannot insert pause in < " + std::to_string(internal::MIN_IO_OP_SIZE_KiB) + " frequency");
+      pause_frequency == 0 || (pause_frequency * access_size) > internal::MIN_IO_OP_SIZE;
+  CHECK_ARGUMENT(is_pause_frequency_chunkable, "Cannot insert pause in <" +
+                                                   std::to_string(internal::MIN_IO_OP_SIZE / access_size) +
+                                                   " frequency for " + std::to_string(access_size) + " byte access.");
 }
 }  // namespace perma
