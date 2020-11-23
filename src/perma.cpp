@@ -4,7 +4,7 @@
 
 using namespace perma;
 
-constexpr auto DEFAULT_CONFIG_PATH = "configs/default-config.yaml";
+constexpr auto DEFAULT_CONFIG_PATH = "configs/bm-suite.yaml";
 
 int main(int argc, char** argv) {
   std::filesystem::path config_file = std::filesystem::current_path() / ".." / DEFAULT_CONFIG_PATH;
@@ -23,8 +23,9 @@ int main(int argc, char** argv) {
     // Use config file specified by user.
     config_file = argv[2];
   }
-  BenchmarkSuite bm_suite{};
-  bm_suite.run_benchmarks(pmem_directory, config_file);
+
+  // Run the actual benchmarks after parsing and validating them.
+  BenchmarkSuite::run_benchmarks(pmem_directory, config_file);
 
   if (!pmem_dir_exists) {
     // We created the directory, so we should remove it again.
