@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 project(perma-bench)
 
 include(ExternalProject)
+include(FetchContent)
+
 set(CMAKE_CXX_STANDARD 17)
 set(COMPILE_FLAGS "-march=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
@@ -75,22 +77,16 @@ else ()
 endif ()
 
 ##################### YAML ####################
-set(YAML_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/yaml")
-ExternalProject_Add(
-        YAML
+set(YAML_CPP_BUILD_TESTS OFF CACHE INTERNAL "")
+set(YAML_CPP_INSTALL OFF CACHE INTERNAL "")
+set(YAML_CPP_BUILD_TOOLS OFF CACHE INTERNAL "")
 
+FetchContent_Declare(
+        yaml_cpp
         GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
         GIT_TAG yaml-cpp-0.6.3
-        BUILD_IN_SOURCE 1
-        PREFIX ${YAML_PREFIX}
-        INSTALL_COMMAND ""
-        LOG_DOWNLOAD ON
-        LOG_BUILD ON
-        UPDATE_DISCONNECTED 1
 )
-
-include_directories(${YAML_PREFIX}/src/YAML/include)
-link_directories(${YAML_PREFIX}/src/YAML)
+FetchContent_MakeAvailable(yaml_cpp)
 
 ##################### JSON ####################
 set(JSON_VERSION v3.9.1)
