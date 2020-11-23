@@ -1,6 +1,6 @@
 cmake-build-*
 .idea/
 venv/
-visualization/html/*.html
-visualization/img/
-visualization/__pycache__/
+viz/html/*.html
+viz/img/
+viz/__pycache__/
