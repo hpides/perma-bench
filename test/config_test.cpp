@@ -29,14 +29,7 @@ TEST_F(ConfigTest, DecodeSequential) {
 
   EXPECT_EQ(bm_config.total_memory_range, 67108864);
   EXPECT_EQ(bm_config.access_size, 256);
-  EXPECT_EQ(bm_config.number_operations, 10'000'000);
   EXPECT_EQ(bm_config.exec_mode, internal::Mode::Sequential);
-
-  EXPECT_EQ(bm_config.random_distribution, internal::RandomDistribution::Uniform);
-  EXPECT_EQ(bm_config.zipf_alpha, 0.99);
-
-  EXPECT_EQ(bm_config.data_instruction, internal::DataInstruction::SIMD);
-  EXPECT_EQ(bm_config.persist_instruction, internal::PersistInstruction::NTSTORE);
 
   EXPECT_EQ(bm_config.write_ratio, 0.5);
   EXPECT_EQ(bm_config.read_ratio, 0.5);
@@ -44,7 +37,6 @@ TEST_F(ConfigTest, DecodeSequential) {
   EXPECT_EQ(bm_config.pause_frequency, 1024);
   EXPECT_EQ(bm_config.pause_length_micros, 10);
 
-  EXPECT_EQ(bm_config.number_partitions, 1);
   EXPECT_EQ(bm_config.number_threads, 2);
 }
 
@@ -54,25 +46,13 @@ TEST_F(ConfigTest, DecodeRandom) {
   ASSERT_EQ(benchmarks.size(), 1);
   bm_config = benchmarks.at(0)->get_benchmark_config();
 
-  EXPECT_EQ(bm_config.total_memory_range, 10'737'418'240);
-  EXPECT_EQ(bm_config.access_size, 256);
-  EXPECT_EQ(bm_config.number_operations, 10'000'000);
   EXPECT_EQ(bm_config.exec_mode, internal::Mode::Random);
 
   EXPECT_EQ(bm_config.random_distribution, internal::RandomDistribution::Zipf);
   EXPECT_EQ(bm_config.zipf_alpha, 0.9);
 
-  EXPECT_EQ(bm_config.data_instruction, internal::DataInstruction::SIMD);
-  EXPECT_EQ(bm_config.persist_instruction, internal::PersistInstruction::NTSTORE);
-
-  EXPECT_EQ(bm_config.write_ratio, 0.5);
-  EXPECT_EQ(bm_config.read_ratio, 0.5);
-
-  EXPECT_EQ(bm_config.pause_frequency, 0);
-  EXPECT_EQ(bm_config.pause_length_micros, 1000);
-
-  EXPECT_EQ(bm_config.number_partitions, 1);
-  EXPECT_EQ(bm_config.number_threads, 1);
+  EXPECT_EQ(bm_config.write_ratio, 1);
+  EXPECT_EQ(bm_config.read_ratio, 0);
 }
 
 TEST_F(ConfigTest, CheckDefaultConfig) { EXPECT_NO_THROW(bm_config.validate()); }

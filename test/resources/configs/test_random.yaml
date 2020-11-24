@@ -3,3 +3,5 @@ test_random:
     exec_mode: random
     random_distribution: zipf
     zipf_alpha: 0.9
+    read_ratio: 0.0
+    write_ratio: 1.0
