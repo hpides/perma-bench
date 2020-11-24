@@ -96,10 +96,12 @@ class Benchmark {
 
   const std::string& benchmark_name() const;
 
+  const BenchmarkConfig& get_benchmark_config() const;
+
   ~Benchmark() { tear_down(); }
 
  private:
-  nlohmann::json get_config();
+  nlohmann::json get_json_config();
   void run_in_thread(uint16_t thread_id);
 
   const BenchmarkConfig config_;
