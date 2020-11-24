@@ -13,7 +13,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
   && apt-get install -y \
       ssh build-essential gcc g++ gdb clang cmake rsync tar python git bash-completion \
-      autoconf pkg-config libndctl-dev libdaxctl-dev pandoc \
+      autoconf pkg-config libndctl-dev libdaxctl-dev pandoc zlib1g-dev \
   && apt-get clean
 
 RUN git clone https://github.com/pmem/pmdk && \

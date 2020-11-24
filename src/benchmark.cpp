@@ -54,6 +54,23 @@ bool get_enum_if_present(YAML::Node& data, const std::string& name, const std::u
   return true;
 }
 
+nlohmann::json hdr_histogram_to_json(hdr_histogram* hdr, const bool include_percentiles = false) {
+  nlohmann::json result;
+  result["max"] = hdr_max(hdr);
+  result["avg"] = hdr_mean(hdr);
+  result["min"] = hdr_min(hdr);
+  result["std"] = hdr_stddev(hdr);
+  result["median"] = hdr_value_at_percentile(hdr, 50.0);
+  if (include_percentiles) {
+    result["percentile_90"] = hdr_value_at_percentile(hdr, 90.0);
+    result["percentile_95"] = hdr_value_at_percentile(hdr, 95.0);
+    result["percentile_99"] = hdr_value_at_percentile(hdr, 99.0);
+    result["percentile_999"] = hdr_value_at_percentile(hdr, 99.9);
+    result["percentile_9999"] = hdr_value_at_percentile(hdr, 99.99);
+  }
+  return result;
+}
+
 }  // namespace
 
 namespace perma {
@@ -132,12 +149,20 @@ nlohmann::json Benchmark::get_result() {
       const IoOperation* io_op = thread_io_ops[io_op_num].get();
 
       if (io_op->is_active()) {
-        uint64_t latency = duration_to_nanoseconds(measurement.end_ts_ - measurement.start_ts_);
-        uint64_t start_ts = duration_to_nanoseconds(measurement.start_ts_.time_since_epoch());
-        uint64_t end_ts = duration_to_nanoseconds(measurement.end_ts_.time_since_epoch());
-        double data_size = dynamic_cast<const ActiveIoOperation*>(io_op)->get_io_size() /
-                           static_cast<double>(internal::BYTE_IN_GIGABYTE);
-        double bandwidth = data_size / (latency / static_cast<double>(internal::NANOSECONDS_IN_SECONDS));
+        const auto* active_io_op = dynamic_cast<const ActiveIoOperation*>(io_op);
+        const uint64_t latency = duration_to_nanoseconds(measurement.end_ts_ - measurement.start_ts_);
+        const uint64_t start_ts = duration_to_nanoseconds(measurement.start_ts_.time_since_epoch());
+        const uint64_t end_ts = duration_to_nanoseconds(measurement.end_ts_.time_since_epoch());
+        const uint64_t data_size = active_io_op->get_io_size();
+        const uint64_t bandwidth = data_size / (latency / static_cast<double>(internal::NANOSECONDS_IN_SECONDS));
+        const double data_size_gib = data_size / static_cast<double>(internal::BYTE_IN_GIGABYTE);
+        const double bandwidth_gib = bandwidth / static_cast<double>(internal::BYTE_IN_GIGABYTE);
+
+        // Increase number of entries in histograms to get more accurate results for smaller benchmarks.
+        const uint32_t num_ops = active_io_op->num_ops_;
+        const uint64_t avg_latency = latency / num_ops;
+        hdr_record_values(latency_hdr_, avg_latency, num_ops);
+        hdr_record_value(bandwidth_hdr_, bandwidth);
 
         std::string type;
         if (typeid(*io_op) == typeid(Read)) {
@@ -148,8 +173,12 @@ nlohmann::json Benchmark::get_result() {
           throw std::runtime_error{"Unknown IO operation in results"};
         }
 
-        result_points += {{"type", type},           {"latency", latency},          {"bandwidth", bandwidth},
-                          {"data_size", data_size}, {"start_timestamp", start_ts}, {"end_timestamp", end_ts},
+        result_points += {{"type", type},
+                          {"latency", latency},
+                          {"bandwidth", bandwidth_gib},
+                          {"data_size", data_size_gib},
+                          {"start_timestamp", start_ts},
+                          {"end_timestamp", end_ts},
                           {"thread_id", thread_num}};
       } else {
         result_points +=
@@ -158,6 +187,8 @@ nlohmann::json Benchmark::get_result() {
     }
   }
   result["results"] = result_points;
+  result["bandwidth"] = hdr_histogram_to_json(bandwidth_hdr_);
+  result["latency"] = hdr_histogram_to_json(latency_hdr_, true);
   return result;
 }
 
@@ -257,6 +288,12 @@ void Benchmark::set_up() {
       io_operations_.push_back(std::move(io_ops));
     }
   }
+
+  // Initialize HdrHistrograms
+  // 200 GiB in Byte as max value.
+  hdr_init(1, 26843545600, 3, &bandwidth_hdr_);
+  // 100 seconds in nanoseconds as max value.
+  hdr_init(1, 100000000000, 3, &latency_hdr_);
 }
 
 void Benchmark::tear_down(const bool force) {
@@ -266,6 +303,15 @@ void Benchmark::tear_down(const bool force) {
   }
   if (owns_pmem_file_ || force) {
     std::filesystem::remove(pmem_file_);
+  }
+
+  if (bandwidth_hdr_ != nullptr) {
+    hdr_close(bandwidth_hdr_);
+    bandwidth_hdr_ = nullptr;
+  }
+  if (latency_hdr_ != nullptr) {
+    hdr_close(latency_hdr_);
+    latency_hdr_ = nullptr;
   }
 }
 
