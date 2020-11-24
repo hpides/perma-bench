@@ -114,11 +114,15 @@ FetchContent_MakeAvailable(spdlog)
 
 ##################### PerMA ####################
 add_custom_target(copy_configs
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/configs ${CMAKE_CURRENT_BINARY_DIR}/configs)
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/configs ${CMAKE_CURRENT_BINARY_DIR}/configs)
 
 include_directories(src)
 add_subdirectory(src)
 
 ##################### Test ####################
-enable_testing()
-add_subdirectory(test)
+option(BUILD_TEST "Set true if tests should be built and run.")
+
+if (${BUILD_TEST})
+    enable_testing()
+    add_subdirectory(test)
+endif ()
