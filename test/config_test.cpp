@@ -76,6 +76,8 @@ TEST_F(ConfigTest, DecodeRandom) {
   EXPECT_EQ(bm_config.number_threads, 1);
 }
 
+TEST_F(ConfigTest, CheckDefaultConfig) { EXPECT_NO_THROW(bm_config.validate()); }
+
 TEST_F(ConfigTest, InvalidHighReadWriteRatio) {
   bm_config.write_ratio = 1.0;
   bm_config.read_ratio = 1.0;
