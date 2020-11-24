@@ -1,8 +1,7 @@
 #include <yaml-cpp/yaml.h>
 
-#include "benchmark.hpp"
+#include "benchmark_factory.hpp"
 #include "gtest/gtest.h"
-#include "io_operation.hpp"
 
 namespace perma {
 
@@ -12,7 +11,7 @@ constexpr auto TEST_CONFIG_FILE_RANDOM = "test_random.yaml";
 class ConfigTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    const std::filesystem::path test_config_path = std::filesystem::current_path() / "resources/configs";
+    const std::filesystem::path test_config_path = std::filesystem::current_path() / "resources" / "configs";
     config_file_seq = test_config_path / TEST_CONFIG_FILE_SEQ;
     config_file_random = test_config_path / TEST_CONFIG_FILE_RANDOM;
   }
@@ -23,10 +22,10 @@ class ConfigTest : public ::testing::Test {
 };
 
 TEST_F(ConfigTest, DecodeSequential) {
-  ASSERT_NO_THROW({
-    YAML::Node config = YAML::LoadFile(config_file_seq);
-    bm_config = BenchmarkConfig::decode(config.begin()->second);
-  });
+  std::vector<std::unique_ptr<Benchmark>> benchmarks;
+  ASSERT_NO_THROW({ benchmarks = BenchmarkFactory::create_benchmarks("/tmp/foo", config_file_seq); });
+  ASSERT_EQ(benchmarks.size(), 1);
+  bm_config = benchmarks.at(0)->get_benchmark_config();
 
   EXPECT_EQ(bm_config.total_memory_range, 67108864);
   EXPECT_EQ(bm_config.access_size, 256);
@@ -50,10 +49,10 @@ TEST_F(ConfigTest, DecodeSequential) {
 }
 
 TEST_F(ConfigTest, DecodeRandom) {
-  ASSERT_NO_THROW({
-    YAML::Node config = YAML::LoadFile(config_file_random);
-    bm_config = BenchmarkConfig::decode(config.begin()->second);
-  });
+  std::vector<std::unique_ptr<Benchmark>> benchmarks;
+  ASSERT_NO_THROW({ benchmarks = BenchmarkFactory::create_benchmarks("/tmp/foo", config_file_random); });
+  ASSERT_EQ(benchmarks.size(), 1);
+  bm_config = benchmarks.at(0)->get_benchmark_config();
 
   EXPECT_EQ(bm_config.total_memory_range, 10'737'418'240);
   EXPECT_EQ(bm_config.access_size, 256);

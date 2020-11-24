@@ -138,7 +138,7 @@ void Benchmark::create_data_file() {
 nlohmann::json Benchmark::get_result() {
   nlohmann::json result;
   result["benchmark_name"] = benchmark_name_;
-  result["config"] = get_config();
+  result["config"] = get_json_config();
   nlohmann::json result_points = nlohmann::json::array();
   for (uint16_t thread_num = 0; thread_num < config_.number_threads; thread_num++) {
     const std::vector<std::unique_ptr<IoOperation>>& thread_io_ops = io_operations_[thread_num];
@@ -315,7 +315,7 @@ void Benchmark::tear_down(const bool force) {
   }
 }
 
-nlohmann::json Benchmark::get_config() {
+nlohmann::json Benchmark::get_json_config() {
   nlohmann::json config;
   config["total_memory_range"] = config_.total_memory_range;
   config["access_size"] = config_.access_size;
@@ -342,6 +342,8 @@ nlohmann::json Benchmark::get_config() {
 }
 
 const std::string& Benchmark::benchmark_name() const { return benchmark_name_; }
+
+const BenchmarkConfig& Benchmark::get_benchmark_config() const { return config_; }
 
 BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
   BenchmarkConfig bm_config{};
