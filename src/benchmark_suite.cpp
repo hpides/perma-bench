@@ -1,10 +1,11 @@
 #include "benchmark_suite.hpp"
 
+#include <spdlog/spdlog.h>
+
 #include <iostream>
 #include <json.hpp>
 
 #include "benchmark_factory.hpp"
-#include <spdlog/spdlog.h>
 
 namespace perma {
 
@@ -28,7 +29,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
 
     // TODO: Handle get_result
     nlohmann::json result = benchmark->get_result();
-//    spdlog::info("Number io results: {}", result.dump(2).size());
+    //    spdlog::info("Number io results: {}", result.dump(2).size());
     spdlog::info("Number io results: {}", result["results"].size());
     spdlog::info("Bandwidth:\n{}", result["bandwidth"].dump(2));
     spdlog::info("Latency:\n{}", result["latency"].dump(2));
@@ -36,7 +37,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
     benchmark->tear_down();
     previous_bm = benchmark;
 
-    spdlog::debug("Completed {0}/{1} benchmark(s).",  i + 1, benchmarks.size());
+    spdlog::debug("Completed {0}/{1} benchmark(s).", i + 1, benchmarks.size());
   }
 
   // Final clean up
