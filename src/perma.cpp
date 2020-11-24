@@ -1,7 +1,5 @@
 #include <spdlog/spdlog.h>
 
-#include <iostream>
-
 #include "benchmark_suite.hpp"
 
 using namespace perma;

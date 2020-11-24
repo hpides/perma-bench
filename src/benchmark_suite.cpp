@@ -2,7 +2,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include <iostream>
 #include <json.hpp>
 
 #include "benchmark_factory.hpp"
