@@ -96,6 +96,14 @@ set(JSON_INCLUDE_PATH ${JSON_DIR}/json.hpp)
 file(DOWNLOAD ${JSON_DOWNLOAD_PATH} ${JSON_INCLUDE_PATH})
 include_directories(${JSON_DIR})
 
+################### Hdr Histogram ####################
+FetchContent_Declare(
+        hdr_histogram
+        GIT_REPOSITORY https://github.com/HdrHistogram/HdrHistogram_c.git
+        GIT_TAG 0.11.2
+)
+FetchContent_MakeAvailable(hdr_histogram)
+
 ##################### PerMA ####################
 add_custom_target(copy_configs
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/configs ${CMAKE_CURRENT_BINARY_DIR}/configs)
