@@ -19,11 +19,15 @@ class ConfigTest : public ::testing::Test {
 
   std::filesystem::path config_file_seq;
   std::filesystem::path config_file_random;
+  BenchmarkConfig bm_config;
 };
 
 TEST_F(ConfigTest, DecodeSequential) {
-  YAML::Node config = YAML::LoadFile(config_file_seq);
-  BenchmarkConfig bm_config = BenchmarkConfig::decode(config.begin()->second);
+  ASSERT_NO_THROW({
+    YAML::Node config = YAML::LoadFile(config_file_seq);
+    bm_config = BenchmarkConfig::decode(config.begin()->second);
+  });
+
   EXPECT_EQ(bm_config.total_memory_range, 67108864);
   EXPECT_EQ(bm_config.access_size, 256);
   EXPECT_EQ(bm_config.number_operations, 10'000'000);
@@ -46,8 +50,11 @@ TEST_F(ConfigTest, DecodeSequential) {
 }
 
 TEST_F(ConfigTest, DecodeRandom) {
-  YAML::Node config = YAML::LoadFile(config_file_random);
-  BenchmarkConfig bm_config = BenchmarkConfig::decode(config.begin()->second);
+  ASSERT_NO_THROW({
+    YAML::Node config = YAML::LoadFile(config_file_random);
+    bm_config = BenchmarkConfig::decode(config.begin()->second);
+  });
+
   EXPECT_EQ(bm_config.total_memory_range, 10'737'418'240);
   EXPECT_EQ(bm_config.access_size, 256);
   EXPECT_EQ(bm_config.number_operations, 10'000'000);
@@ -67,6 +74,61 @@ TEST_F(ConfigTest, DecodeRandom) {
 
   EXPECT_EQ(bm_config.number_partitions, 1);
   EXPECT_EQ(bm_config.number_threads, 1);
+}
+
+TEST_F(ConfigTest, InvalidHighReadWriteRatio) {
+  bm_config.write_ratio = 1.0;
+  bm_config.read_ratio = 1.0;
+  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+}
+
+TEST_F(ConfigTest, InvalidLowReadWriteRatio) {
+  bm_config.write_ratio = 0.0;
+  bm_config.read_ratio = 0.0;
+  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+}
+
+TEST_F(ConfigTest, InvalidReadWriteRatio) {
+  bm_config.write_ratio = 1.0;
+  bm_config.read_ratio = 1.0;
+  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+}
+
+TEST_F(ConfigTest, InvalidSmallAccessSize) {
+  bm_config.access_size = 32;
+  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+}
+
+TEST_F(ConfigTest, InvalidPowerAccessSize) {
+  bm_config.access_size = 100;
+  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+}
+
+TEST_F(ConfigTest, InvalidMemoryRangeAccessSizeMultiple) {
+  bm_config.total_memory_range = 100000;
+  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+}
+
+TEST_F(ConfigTest, InvalidNumberThreads) {
+  bm_config.number_threads = 0;
+  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+}
+
+TEST_F(ConfigTest, InvalidNumberPartitions) {
+  bm_config.number_partitions = 0;
+  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+}
+
+TEST_F(ConfigTest, InvalidThreadPartitionRatio) {
+  bm_config.number_partitions = 2;
+  bm_config.number_threads = 1;
+  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+}
+
+TEST_F(ConfigTest, InvalidPauseFrequency) {
+  bm_config.pause_frequency = 256;
+  bm_config.access_size = internal::MIN_IO_OP_SIZE / bm_config.pause_frequency / 2;
+  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
 }
 
 }  // namespace perma
