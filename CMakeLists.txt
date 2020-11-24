@@ -125,4 +125,7 @@ option(BUILD_TEST "Set true if tests should be built and run.")
 if (${BUILD_TEST})
     enable_testing()
     add_subdirectory(test)
+    # Set TEST so we can use it to exclude specific persistent memory directory warnings.
+    add_definitions("-DTEST")
+    message(STATUS "System builds tests.")
 endif ()
