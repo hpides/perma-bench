@@ -27,16 +27,26 @@ TEST_F(ConfigTest, DecodeSequential) {
   ASSERT_EQ(benchmarks.size(), 1);
   bm_config = benchmarks.at(0)->get_benchmark_config();
 
+  BenchmarkConfig bm_config_default{};
+
   EXPECT_EQ(bm_config.total_memory_range, 67108864);
   EXPECT_EQ(bm_config.access_size, 256);
+  EXPECT_EQ(bm_config.number_operations, bm_config_default.number_operations);
   EXPECT_EQ(bm_config.exec_mode, internal::Mode::Sequential);
 
-  EXPECT_EQ(bm_config.write_ratio, 0.5);
-  EXPECT_EQ(bm_config.read_ratio, 0.5);
+  EXPECT_EQ(bm_config.random_distribution, bm_config_default.random_distribution);
+  EXPECT_EQ(bm_config.zipf_alpha, bm_config_default.zipf_alpha);
+
+  EXPECT_EQ(bm_config.data_instruction, bm_config_default.data_instruction);
+  EXPECT_EQ(bm_config.persist_instruction, bm_config_default.persist_instruction);
+
+  EXPECT_EQ(bm_config.write_ratio, bm_config_default.write_ratio);
+  EXPECT_EQ(bm_config.read_ratio, bm_config_default.read_ratio);
 
   EXPECT_EQ(bm_config.pause_frequency, 1024);
   EXPECT_EQ(bm_config.pause_length_micros, 10);
 
+  EXPECT_EQ(bm_config.number_partitions, bm_config_default.number_partitions);
   EXPECT_EQ(bm_config.number_threads, 2);
 }
 
@@ -46,13 +56,27 @@ TEST_F(ConfigTest, DecodeRandom) {
   ASSERT_EQ(benchmarks.size(), 1);
   bm_config = benchmarks.at(0)->get_benchmark_config();
 
+  BenchmarkConfig bm_config_default{};
+
+  EXPECT_EQ(bm_config.total_memory_range, bm_config_default.total_memory_range);
+  EXPECT_EQ(bm_config.access_size, bm_config_default.access_size);
+  EXPECT_EQ(bm_config.number_operations, bm_config_default.number_operations);
   EXPECT_EQ(bm_config.exec_mode, internal::Mode::Random);
 
   EXPECT_EQ(bm_config.random_distribution, internal::RandomDistribution::Zipf);
   EXPECT_EQ(bm_config.zipf_alpha, 0.9);
 
+  EXPECT_EQ(bm_config.data_instruction, bm_config_default.data_instruction);
+  EXPECT_EQ(bm_config.persist_instruction, bm_config_default.persist_instruction);
+
   EXPECT_EQ(bm_config.write_ratio, 1);
   EXPECT_EQ(bm_config.read_ratio, 0);
+
+  EXPECT_EQ(bm_config.pause_frequency, bm_config_default.pause_frequency);
+  EXPECT_EQ(bm_config.pause_length_micros, bm_config_default.pause_length_micros);
+
+  EXPECT_EQ(bm_config.number_partitions, bm_config_default.number_partitions);
+  EXPECT_EQ(bm_config.number_threads, bm_config_default.number_threads);
 }
 
 TEST_F(ConfigTest, CheckDefaultConfig) { EXPECT_NO_THROW(bm_config.validate()); }
