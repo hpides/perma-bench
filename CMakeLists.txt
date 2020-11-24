@@ -104,6 +104,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(hdr_histogram)
 
+################### Hdr Histogram ####################
+FetchContent_Declare(
+        spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG v1.8.1
+)
+FetchContent_MakeAvailable(spdlog)
+
 ##################### PerMA ####################
 add_custom_target(copy_configs
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/configs ${CMAKE_CURRENT_BINARY_DIR}/configs)

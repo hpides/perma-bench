@@ -1,6 +1,7 @@
 #include "utils.hpp"
 
 #include <libpmem.h>
+#include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <iostream>
@@ -21,7 +22,7 @@ char* map_pmem_file(const std::filesystem::path& file, const size_t expected_len
   }
 
   if (!is_pmem) {
-    std::cout << "File " + file.string() + " is not in persistent memory!" << std::endl;
+    spdlog::warn("File {} is not in persistent memory!", file.string());
   }
 
   return static_cast<char*>(pmem_addr);
@@ -36,7 +37,7 @@ char* create_pmem_file(const std::filesystem::path& file, const size_t length) {
   }
 
   if (!is_pmem) {
-    std::cout << "File " + file.string() + " is not in persistent memory!" << std::endl;
+    spdlog::warn("File {} is not in persistent memory!", file.string());
   }
 
   if (length != mapped_length) {
