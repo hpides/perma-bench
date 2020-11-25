@@ -1,6 +1,7 @@
 #pragma once
+
+#include <hdr_histogram.h>
 #include <libpmem.h>
-#include <search.h>
 #include <yaml-cpp/yaml.h>
 
 #include <filesystem>
@@ -95,10 +96,12 @@ class Benchmark {
 
   const std::string& benchmark_name() const;
 
+  const BenchmarkConfig& get_benchmark_config() const;
+
   ~Benchmark() { tear_down(); }
 
  private:
-  nlohmann::json get_config();
+  nlohmann::json get_json_config();
   void run_in_thread(uint16_t thread_id);
 
   const BenchmarkConfig config_;
@@ -106,9 +109,13 @@ class Benchmark {
   const std::filesystem::path pmem_file_;
   const bool owns_pmem_file_;
   char* pmem_data_{nullptr};
+
   std::vector<std::vector<std::unique_ptr<IoOperation>>> io_operations_;
   std::vector<std::vector<internal::Measurement>> measurements_;
   std::vector<std::thread> pool_;
+
+  hdr_histogram* bandwidth_hdr_ = nullptr;
+  hdr_histogram* latency_hdr_ = nullptr;
 };
 
 }  // namespace perma

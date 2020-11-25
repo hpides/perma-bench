@@ -1,7 +1,5 @@
 #include "io_operation.hpp"
 
-#include <iostream>
-
 #include "read_write_ops.hpp"
 
 namespace perma {

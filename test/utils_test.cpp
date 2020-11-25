@@ -2,8 +2,11 @@
 
 #include "gtest/gtest.h"
 
-TEST(sample_test_case, sample_test) {
+/**
+ * Verifies whether a zipfian generated value is in between the given boundaries.
+ */
+TEST(UtilsTest, ZipfBound) {
   const uint64_t value = perma::zipf(0.99, 1000);
-  const bool is_between = 0 <= value && value < 1000;
-  EXPECT_TRUE(is_between);
+  EXPECT_GE(value, 0);
+  EXPECT_LT(value, 1000);
 }

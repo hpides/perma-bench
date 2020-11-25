@@ -1,6 +1,7 @@
 #include "benchmark_suite.hpp"
 
-#include <iostream>
+#include <spdlog/spdlog.h>
+
 #include <json.hpp>
 
 #include "benchmark_factory.hpp"
@@ -12,7 +13,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
   Benchmark* previous_bm = nullptr;
   std::vector<std::unique_ptr<Benchmark>> benchmarks = BenchmarkFactory::create_benchmarks(pmem_directory, config_file);
 
-  std::cout << "Running benchmarks..." << std::endl;
+  spdlog::info("Running benchmarks...");
   for (size_t i = 0; i < benchmarks.size(); ++i) {
     Benchmark* benchmark = benchmarks[i].get();
     if (previous_bm && previous_bm->benchmark_name() != benchmark->benchmark_name()) {
@@ -27,13 +28,15 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
 
     // TODO: Handle get_result
     nlohmann::json result = benchmark->get_result();
-    //        std::cout << result.dump() << std::endl;
-    std::cout << result["results"].size() << std::endl;
+    //    spdlog::info("Number io results: {}", result.dump(2).size());
+    spdlog::info("Number io results: {}", result["results"].size());
+    spdlog::info("Bandwidth:\n{}", result["bandwidth"].dump(2));
+    spdlog::info("Latency:\n{}", result["latency"].dump(2));
 
     benchmark->tear_down();
     previous_bm = benchmark;
 
-    std::cout << "Completed " << (i + 1) << "/" << benchmarks.size() << " benchmark(s).\n";
+    spdlog::debug("Completed {0}/{1} benchmark(s).", i + 1, benchmarks.size());
   }
 
   // Final clean up

@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 project(perma-bench)
 
 include(ExternalProject)
+include(FetchContent)
+
 set(CMAKE_CXX_STANDARD 17)
 set(COMPILE_FLAGS "-march=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
@@ -75,22 +77,16 @@ else ()
 endif ()
 
 ##################### YAML ####################
-set(YAML_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/yaml")
-ExternalProject_Add(
-        YAML
+set(YAML_CPP_BUILD_TESTS OFF CACHE INTERNAL "")
+set(YAML_CPP_INSTALL OFF CACHE INTERNAL "")
+set(YAML_CPP_BUILD_TOOLS OFF CACHE INTERNAL "")
 
+FetchContent_Declare(
+        yaml_cpp
         GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
         GIT_TAG yaml-cpp-0.6.3
-        BUILD_IN_SOURCE 1
-        PREFIX ${YAML_PREFIX}
-        INSTALL_COMMAND ""
-        LOG_DOWNLOAD ON
-        LOG_BUILD ON
-        UPDATE_DISCONNECTED 1
 )
-
-include_directories(${YAML_PREFIX}/src/YAML/include)
-link_directories(${YAML_PREFIX}/src/YAML)
+FetchContent_MakeAvailable(yaml_cpp)
 
 ##################### JSON ####################
 set(JSON_VERSION v3.9.1)
@@ -100,13 +96,33 @@ set(JSON_INCLUDE_PATH ${JSON_DIR}/json.hpp)
 file(DOWNLOAD ${JSON_DOWNLOAD_PATH} ${JSON_INCLUDE_PATH})
 include_directories(${JSON_DIR})
 
+################### Hdr Histogram ####################
+FetchContent_Declare(
+        hdr_histogram
+        GIT_REPOSITORY https://github.com/HdrHistogram/HdrHistogram_c.git
+        GIT_TAG 0.11.2
+)
+FetchContent_MakeAvailable(hdr_histogram)
+
+################### spdlog ####################
+FetchContent_Declare(
+        spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG v1.8.1
+)
+FetchContent_MakeAvailable(spdlog)
+
 ##################### PerMA ####################
 add_custom_target(copy_configs
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/configs ${CMAKE_CURRENT_BINARY_DIR}/configs)
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/configs ${CMAKE_CURRENT_BINARY_DIR}/configs)
 
 include_directories(src)
 add_subdirectory(src)
 
 ##################### Test ####################
-enable_testing()
-add_subdirectory(test)
+option(BUILD_TEST "Set true if tests should be built and run.")
+
+if (${BUILD_TEST})
+    enable_testing()
+    add_subdirectory(test)
+endif ()
