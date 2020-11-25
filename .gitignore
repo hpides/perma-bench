@@ -2,5 +2,5 @@ cmake-build-*
 .idea/
 venv/
 viz/html/*.html
-viz/img/
+results/
 viz/__pycache__/

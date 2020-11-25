@@ -1,12 +1,12 @@
 #! ../venv/bin/python
 import matplotlib.pyplot as plt
 import os
+import sys
 
 
 def main():
     # create img folder
-    viz_dir = os.path.dirname(__file__)
-    img_dir = os.path.join(viz_dir, "img/")
+    img_dir = os.path.join(str(sys.argv[1]), "img/")
 
     if not os.path.isdir(img_dir):
         os.makedirs(img_dir)
