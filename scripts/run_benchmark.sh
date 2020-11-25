@@ -37,17 +37,17 @@ do
         --config*)
           # shellcheck disable=SC2155
           export CONFIG_PATH=`echo $1 | sed -e 's/^[^=]*=//g'`
-          shift
+          shift # Remove --config from processing
           ;;
     esac
 done
 
 ############################################# BUILD AND RUN CMAKE PROJECT ##############################################
 if [ "$DEBUG" == 1 ]; then
-  cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/opt/rh/devtoolset-9/root/usr/bin/make -DCMAKE_C_COMPILER=/opt/rh/devtoolset-9/root/usr/bin/gcc -DCMAKE_CXX_COMPILER=/opt/rh/devtoolset-9/root/usr/bin/g++ -G "CodeBlocks - Unix Makefiles"
+  cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles"
   "$DIR/../cmake-build-debug/src/perma-bench" PMEM_DIR CONFIG_PATH
 else
-  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_MAKE_PROGRAM=/opt/rh/devtoolset-9/root/usr/bin/make -DCMAKE_C_COMPILER=/opt/rh/devtoolset-9/root/usr/bin/gcc -DCMAKE_CXX_COMPILER=/opt/rh/devtoolset-9/root/usr/bin/g++ -G "CodeBlocks - Unix Makefiles"
+  cmake -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - Unix Makefiles"
   "$DIR/../cmake-build-release/src/perma-bench" PMEM_DIR CONFIG_PATH
 fi
 
