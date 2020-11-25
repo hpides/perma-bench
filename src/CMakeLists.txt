@@ -16,13 +16,17 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")
 
 add_library(perma STATIC ${SOURCES})
 add_dependencies(perma copy_configs)
-target_link_libraries(perma yaml-cpp hdr_histogram_static spdlog)
+target_link_libraries(perma yaml-cpp hdr_histogram_static spdlog ndctl pmem2)
 
 if (${BUILD_PMDK})
     add_dependencies(perma PMDK)
     target_link_libraries(perma pmem)
 else ()
     target_link_libraries(perma ${PMEM_LIBRARIES})
+endif ()
+
+if (${NUMA_FOUND})
+    target_link_libraries(perma numa)
 endif ()
 
 add_executable(perma-bench perma.cpp)
