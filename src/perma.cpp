@@ -1,15 +1,19 @@
 #include <spdlog/spdlog.h>
 
-#include "utils.hpp"
 #include "benchmark_suite.hpp"
+#include "utils.hpp"
 
 using namespace perma;
 
 constexpr auto DEFAULT_CONFIG_PATH = "configs/bm-suite.yaml";
 
-
-
 int main(int argc, char** argv) {
+#ifdef NDEBUG
+  spdlog::set_level(spdlog::level::info);
+#else
+  spdlog::set_level(spdlog::level::debug);
+#endif
+
   std::filesystem::path config_file = std::filesystem::current_path() / ".." / DEFAULT_CONFIG_PATH;
   if (argc < 2) {
     spdlog::error("Usage: ./perma-bench /path/to/pmem/dir [/path/to/config]");
@@ -27,10 +31,8 @@ int main(int argc, char** argv) {
     config_file = argv[2];
   }
 
-
   // Make sure that the benchmarks are NUMA-aware. Setting this in the main thread will inherit to all child threads.
   init_numa(pmem_directory);
-  return 0;
 
   // Run the actual benchmarks after parsing and validating them.
   BenchmarkSuite::run_benchmarks(pmem_directory, config_file);

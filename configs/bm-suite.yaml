@@ -37,7 +37,6 @@ small_random_read:
     access_size: [64, 256, 512, 1024, 4096]
   args:
     total_memory_range: 5368709120  # 5 GiB
-    number_operations
     exec_mode: random
     read_ratio: 1
     write_ratio: 0

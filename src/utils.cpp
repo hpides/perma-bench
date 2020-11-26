@@ -3,7 +3,6 @@
 #include <libpmem.h>
 #include <ndctl/libndctl.h>
 #include <spdlog/spdlog.h>
-#include <mntent.h>
 
 #include <algorithm>
 #include <random>
@@ -13,7 +12,6 @@
 #ifdef HAS_NUMA
 #include <numa.h>
 #include <numaif.h>
-#include <sched.h>
 #endif
 
 namespace perma {
@@ -157,42 +155,6 @@ double rand_val() {
   return ((double)x / m);
 }
 
-std::optional<std::string> get_device_of_mount_point(const std::filesystem::path& pmem_dir)
-{
-  const std::string pmem_dir_str = pmem_dir.string();
-  FILE* mount_file = fopen("/proc/mounts", "r");
-
-  size_t max_mount_match_size = 0;
-  std::string best_device;
-  mntent* mount_entry = getmntent(mount_file);
-
-  while (mount_entry != nullptr) {
-    const std::string_view mount_dir = mount_entry->mnt_dir;
-    const std::string_view mount_fsname = mount_entry->mnt_fsname;
-    const std::string_view mount_type = mount_entry->mnt_type;
-    spdlog::info("Checking mount entry: {} -> {} (type: {})", mount_fsname, mount_dir, mount_type);
-
-    if (pmem_dir_str.find(mount_dir) != std::string::npos) {
-      // Current entry matches the user's PMem directory
-      spdlog::info("Found matching mount entry: {} with device: {}", mount_dir, mount_fsname);
-      if (mount_dir.size() > max_mount_match_size) {
-        best_device = mount_entry->mnt_fsname;
-        max_mount_match_size = mount_dir.size();
-      }
-    }
-
-    mount_entry = getmntent(mount_file);
-  }
-
-  fclose(mount_file);
-  if (best_device.empty()) {
-    return {};
-  }
-
-  spdlog::info("Running on device {}", best_device);
-  return best_device;
-}
-
 void init_numa(const std::filesystem::path& pmem_dir) {
 #ifndef HAS_NUMA
   // Don't do anything, as we don't have NUMA support.
@@ -207,132 +169,51 @@ void init_numa(const std::filesystem::path& pmem_dir) {
   spdlog::debug("Number of NUMA nodes in system: {}", num_numa_nodes);
   if (num_numa_nodes < 2) {
     // Do nothing, as there isn't any affinity to be set.
+    spdlog::info("Not setting NUMA-awareness with {} nodes", num_numa_nodes);
     return;
   }
 
   const std::filesystem::path temp_file = generate_random_file_name(pmem_dir);
-  // Create random 16 MiB file
-//  const size_t temp_size = 16u * (1024u * 1024u);
-//  char* pmem_data = create_pmem_file(temp_file, temp_size);
-//  rw_ops::write_data(pmem_data, pmem_data + temp_size);
-//  pmem_unmap(pmem_data, temp_size);
-//  pmem_data = map_pmem_file(temp_file, temp_size);
+  // Create random 2 MiB file
+  const size_t temp_size = 2u * (1024u * 1024u);
+  char* pmem_data = create_pmem_file(temp_file, temp_size);
+  rw_ops::write_data(pmem_data, pmem_data + temp_size);
 
+  int numa_node = -1;
+  get_mempolicy(&numa_node, NULL, 0, (void*)pmem_data, MPOL_F_NODE | MPOL_F_ADDR);
+  pmem_unmap(pmem_data, temp_size);
+  std::filesystem::remove(temp_file);
 
-//  const size_t num_pages = 10;
-//  std::vector<int> nodes(num_pages);
-//  std::vector<char*> pages(num_pages);
-//  std::vector<int> statuses(num_pages);
-//  std::vector<char> dummy(num_pages);
-//  for (int i = 0; i < num_pages; ++i) {
-//    char* raw_data = pmem_data + (4096 * i);
-//    dummy[i] = *raw_data;
-//    pages[i] = raw_data;
-//  }
-//
-//  spdlog::info("max nodes: {}", numa_max_node());
-//  auto x = move_pages(0, num_pages, (void**) pages.data(), nullptr, statuses.data(), MPOL_MF_MOVE);
-//  if (x != 0) {
-//    spdlog::info("ret: {}", std::strerror(errno));
-//  }
+  if (numa_node < 0 || numa_node > num_numa_nodes) {
+    spdlog::warn("Could not determine NUMA node. Running without NUMA-awareness.");
+    return;
+  }
+  spdlog::info("Detected memory on NUMA node: {}", numa_node);
 
-  std::optional<std::string> opt_mount_device = get_device_of_mount_point(pmem_dir);
-  if (!opt_mount_device) {
-    spdlog::info("Did not find the mounted device!");
+  bitmask* numa_nodes = numa_bitmask_alloc(num_numa_nodes);
+  std::vector<uint16_t> allowed_numa_nodes{};
+  for (int other_node = 0; other_node < num_numa_nodes; ++other_node) {
+    const size_t numa_dist = numa_distance(numa_node, other_node);
+    spdlog::trace("NUMA-Distance: {} -> {} = {}", numa_node, other_node, numa_dist);
+    if (numa_dist < 20) {
+      // This should cover all NUMA nodes that are close, i.e. self = 10, close = 11.
+      numa_bitmask_setbit(numa_nodes, other_node);
+      allowed_numa_nodes.push_back(other_node);
+    }
   }
 
-  const std::string& mount_device = opt_mount_device.value();
-
-  auto get_numa_info_from_dir = [](const std::string& mount_dev, ndctl_bus** dir_bus, ndctl_region** dir_region, ndctl_namespace** dir_namespace) {
-    struct ndctl_ctx* ndctx;
-    if (ndctl_new(&ndctx) != 0) {
-      throw std::runtime_error("Could not create ndctl context.");
-    }
-
-    *dir_bus = nullptr;
-    *dir_region = nullptr;
-    *dir_namespace = nullptr;
-
-    struct ndctl_bus* bus;
-    struct ndctl_region* region;
-    struct ndctl_namespace* ndns;
-
-    ndctl_bus_foreach(ndctx, bus) {
-      ndctl_region_foreach(bus, region) {
-        ndctl_namespace_foreach(region, ndns) {
-          struct ndctl_btt* btt;
-          struct ndctl_pfn* pfn;
-          std::string dev_name;
-
-          if ((btt = ndctl_namespace_get_btt(ndns))) {
-            dev_name = ndctl_btt_get_block_device(btt);
-          } else if ((pfn = ndctl_namespace_get_pfn(ndns))) {
-            dev_name = ndctl_pfn_get_block_device(pfn);
-          } else {
-            dev_name = ndctl_namespace_get_block_device(ndns);
-          }
-
-          if (dev_name.empty()) {
-            continue;
-          }
-
-          spdlog::info("Checking region for device name: {}", dev_name);
-
-          if (mount_dev.size() > dev_name.size() && std::equal(dev_name.rbegin(), dev_name.rend(), mount_dev.rbegin())) {
-            // Device matches the mount device
-            spdlog::info("Found matching region for: {}", dev_name);
-            *dir_bus = bus;
-            *dir_region = region;
-            *dir_namespace = ndns;
-            ndctl_unref(ndctx);
-            return;
-          }
-        }
-      }
-    }
-
-    ndctl_unref(ndctx);
-  };
-
-  ndctl_bus* dir_bus;
-  ndctl_region* dir_region;
-  ndctl_namespace* dir_namespace;
-  get_numa_info_from_dir(mount_device, &dir_bus, &dir_region, &dir_namespace);
-//  ndctl_namespace_get_region(dir_namespace);
-
-  if (dir_bus == nullptr) {
-    spdlog::info("no region found");
+  if (allowed_numa_nodes.empty()) {
+    // Distance info did not work
+    numa_bitmask_setbit(numa_nodes, numa_node);
+    allowed_numa_nodes.push_back(numa_node);
   }
 
-  uint32_t region_id = ndctl_region_get_id(dir_region);
-  uint32_t bus_id = ndctl_bus_get_id(dir_bus);
-  spdlog::info("dev bus: {}, {}", ndctl_bus_get_devname(dir_bus), ndctl_bus_get_provider(dir_bus));
-  spdlog::info("Region id: {}, bus id: {}", region_id, bus_id);
-  int x = 10;
-
-  ndctl_region* pRegion = ndctl_namespace_get_region(dir_namespace);
-  spdlog::info("numa ns: {}, {}", ndctl_namespace_get_numa_node(dir_namespace), ndctl_region_get_numa_node(dir_region));
-
-
-//  ndctl_btt* btt;
-//  ndctl_namespace_get_btt(ndns);
-
-
-
-
-//  for (int status : statuses) {
-//    spdlog::info("{}", std::strerror(std::abs(status)));
-//  }
-
-//  int numa_node = -1;
-//  get_mempolicy(&numa_node, NULL, 0, (void*) pmem_data, MPOL_F_NODE | MPOL_F_ADDR);
-
-//  pmem_unmap(pmem_data, temp_size);
-//  std::filesystem::remove(temp_file);
-
-
-//  spdlog::info("Setting benchmark NUMA-affinity to node: {}", numa_node);
-//  numa_run_on_node(numa_node);
+  const std::string used_noes_str = std::accumulate(
+      allowed_numa_nodes.begin(), allowed_numa_nodes.end(), std::string(),
+      [](const auto& a, const auto b) -> std::string { return a + (a.length() > 0 ? ", " : "") + std::to_string(b); });
+  spdlog::info("Setting NUMA-affinity to node{}: {}", allowed_numa_nodes.size() > 1 ? "s" : "", used_noes_str);
+  numa_bind(numa_nodes);
+  numa_free_nodemask(numa_nodes);
 #endif
 }
 
