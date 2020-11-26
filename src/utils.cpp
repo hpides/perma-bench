@@ -1,7 +1,6 @@
 #include "utils.hpp"
 
 #include <libpmem.h>
-#include <ndctl/libndctl.h>
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
