@@ -4,7 +4,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 if [ $# -lt 1 ]; then
     >&2 echo "The path to the results directory is missing."
-    >&2 echo "Usage: ./visualize.sh ./path/to/results/dir"
+    >&2 echo "Usage: ./visualize.sh /path/to/results/dir"
     exit 1
 fi
 
