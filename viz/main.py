@@ -5,13 +5,11 @@ import sys
 
 
 def main():
-    # assert if first program argument exists
-    try:
-        results_dir = str(sys.argv[1])
-    except IndexError:
+    if len(sys.argv) < 2:
         sys.exit("The path to the results directory is missing.\nUsage: python main.py ./path/to/results/dir")
 
     # create img folder
+    results_dir = str(sys.argv[1])
     img_dir = os.path.join(results_dir, "img/")
     if not os.path.isdir(img_dir):
         os.makedirs(img_dir)
