@@ -20,11 +20,9 @@ char* map_pmem_file(const std::filesystem::path& file, const size_t expected_len
     throw std::runtime_error("Existing pmem data file has wrong size.");
   }
 
-#ifdef TEST
   if (!is_pmem) {
     spdlog::warn("File {} is not in persistent memory!", file.string());
   }
-#endif
 
   return static_cast<char*>(pmem_addr);
 }
@@ -37,11 +35,9 @@ char* create_pmem_file(const std::filesystem::path& file, const size_t length) {
     throw std::runtime_error{"Could not create file: " + file.string()};
   }
 
-#ifdef TEST
   if (!is_pmem) {
     spdlog::warn("File {} is not in persistent memory!", file.string());
   }
-#endif
 
   if (length != mapped_length) {
     throw std::runtime_error{"Mapped size different than specified size!"};
