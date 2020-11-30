@@ -1,1 +1,5 @@
 cmake-build-*
+.idea/
+venv/
+results/
+viz/__pycache__/
