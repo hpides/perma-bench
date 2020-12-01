@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
   CLI::App app{"PerMA-Bench: Benchmark your Persistent Memory"};
 
   // Define command line args
-  std::filesystem::path config_file = std::filesystem::current_path() / ".." / DEFAULT_CONFIG_PATH;
+  std::filesystem::path config_file = std::filesystem::current_path() / DEFAULT_CONFIG_PATH;
   app.add_option("-c,--config", config_file,
                  "Path to the benchmark config YAML file (default: " + std::string{DEFAULT_CONFIG_PATH} + ")")
       ->check(check_path_exists);
