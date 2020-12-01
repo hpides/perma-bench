@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
 #else
   spdlog::set_level(spdlog::level::debug);
 #endif
-  
+
   CLI::App app{"PerMA-Bench: Benchmark your Persistent Memory"};
 
   // Define command line args
