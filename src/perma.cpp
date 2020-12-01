@@ -3,6 +3,7 @@
 #include <CLI11.hpp>
 
 #include "benchmark_suite.hpp"
+#include "utils.hpp"
 
 using namespace perma;
 
@@ -19,6 +20,12 @@ auto check_is_dir = [](const std::string& pmem_dir) {
 constexpr auto DEFAULT_CONFIG_PATH = "configs/bm-suite.yaml";
 
 int main(int argc, char** argv) {
+#ifdef NDEBUG
+  spdlog::set_level(spdlog::level::info);
+#else
+  spdlog::set_level(spdlog::level::debug);
+#endif
+  
   CLI::App app{"PerMA-Bench: Benchmark your Persistent Memory"};
 
   // Define command line args
@@ -50,6 +57,9 @@ int main(int argc, char** argv) {
     app.failure_message(CLI::FailureMessage::help);
     return app.exit(e);
   }
+
+  // Make sure that the benchmarks are NUMA-aware. Setting this in the main thread will inherit to all child threads.
+  init_numa(pmem_directory);
 
   // Run the actual benchmarks after parsing and validating them.
   BenchmarkSuite::run_benchmarks(pmem_directory, config_file);

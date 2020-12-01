@@ -25,5 +25,10 @@ else ()
     target_link_libraries(perma ${PMEM_LIBRARIES})
 endif ()
 
+if (${NUMA_FOUND})
+    target_link_libraries(perma ${NUMA_LIBRARIES})
+endif ()
+
 add_executable(perma-bench perma.cpp)
 target_link_libraries(perma-bench perma)
+set_target_properties(perma-bench PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
