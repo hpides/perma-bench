@@ -6,6 +6,13 @@
 #include <algorithm>
 #include <random>
 
+#include "read_write_ops.hpp"
+
+#ifdef HAS_NUMA
+#include <numa.h>
+#include <numaif.h>
+#endif
+
 namespace perma {
 
 char* map_pmem_file(const std::filesystem::path& file, const size_t expected_length) {
@@ -145,6 +152,68 @@ double rand_val() {
 
   // Return a random value between 0.0 and 1.0
   return ((double)x / m);
+}
+
+void init_numa(const std::filesystem::path& pmem_dir) {
+#ifndef HAS_NUMA
+  // Don't do anything, as we don't have NUMA support.
+  spdlog::warn("Running without NUMA-awareness.");
+  return;
+#else
+  if (numa_available() < 0) {
+    throw std::runtime_error("NUMA supported but could not be found!");
+  }
+
+  const size_t num_numa_nodes = numa_num_configured_nodes();
+  spdlog::debug("Number of NUMA nodes in system: {}", num_numa_nodes);
+  if (num_numa_nodes < 2) {
+    // Do nothing, as there isn't any affinity to be set.
+    spdlog::info("Not setting NUMA-awareness with {} nodes", num_numa_nodes);
+    return;
+  }
+
+  const std::filesystem::path temp_file = generate_random_file_name(pmem_dir);
+  // Create random 2 MiB file
+  const size_t temp_size = 2u * (1024u * 1024u);
+  char* pmem_data = create_pmem_file(temp_file, temp_size);
+  rw_ops::write_data(pmem_data, pmem_data + temp_size);
+
+  int numa_node = -1;
+  get_mempolicy(&numa_node, NULL, 0, (void*)pmem_data, MPOL_F_NODE | MPOL_F_ADDR);
+  pmem_unmap(pmem_data, temp_size);
+  std::filesystem::remove(temp_file);
+
+  if (numa_node < 0 || numa_node > num_numa_nodes) {
+    spdlog::warn("Could not determine NUMA node. Running without NUMA-awareness.");
+    return;
+  }
+  spdlog::info("Detected memory on NUMA node: {}", numa_node);
+
+  bitmask* numa_nodes = numa_bitmask_alloc(num_numa_nodes);
+  std::vector<uint16_t> allowed_numa_nodes{};
+  for (int other_node = 0; other_node < num_numa_nodes; ++other_node) {
+    const size_t numa_dist = numa_distance(numa_node, other_node);
+    spdlog::trace("NUMA-Distance: {} -> {} = {}", numa_node, other_node, numa_dist);
+    if (numa_dist < 20) {
+      // This should cover all NUMA nodes that are close, i.e. self = 10, close = 11.
+      numa_bitmask_setbit(numa_nodes, other_node);
+      allowed_numa_nodes.push_back(other_node);
+    }
+  }
+
+  if (allowed_numa_nodes.empty()) {
+    // Distance info did not work
+    numa_bitmask_setbit(numa_nodes, numa_node);
+    allowed_numa_nodes.push_back(numa_node);
+  }
+
+  const std::string used_noes_str = std::accumulate(
+      allowed_numa_nodes.begin(), allowed_numa_nodes.end(), std::string(),
+      [](const auto& a, const auto b) -> std::string { return a + (a.length() > 0 ? ", " : "") + std::to_string(b); });
+  spdlog::info("Setting NUMA-affinity to node{}: {}", allowed_numa_nodes.size() > 1 ? "s" : "", used_noes_str);
+  numa_bind(numa_nodes);
+  numa_free_nodemask(numa_nodes);
+#endif
 }
 
 }  // namespace perma
