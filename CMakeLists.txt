@@ -8,6 +8,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(COMPILE_FLAGS "-march=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release")
+endif()
+
 if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
     message("-- Release mode, all optimizations enabled")
     set(COMPILE_FLAGS "${COMPILE_FLAGS} -O3 -DNDEBUG")

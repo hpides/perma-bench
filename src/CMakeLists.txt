@@ -27,3 +27,4 @@ endif ()
 
 add_executable(perma-bench perma.cpp)
 target_link_libraries(perma-bench perma)
+set_target_properties(perma-bench PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")

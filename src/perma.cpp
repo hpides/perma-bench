@@ -7,7 +7,7 @@ using namespace perma;
 constexpr auto DEFAULT_CONFIG_PATH = "configs/bm-suite.yaml";
 
 int main(int argc, char** argv) {
-  std::filesystem::path config_file = std::filesystem::current_path() / ".." / DEFAULT_CONFIG_PATH;
+  std::filesystem::path config_file = std::filesystem::current_path() / DEFAULT_CONFIG_PATH;
   if (argc < 2) {
     spdlog::error("Usage: ./perma-bench /path/to/pmem/dir [/path/to/config]");
     throw std::invalid_argument{"Need to specify pmem directory."};
