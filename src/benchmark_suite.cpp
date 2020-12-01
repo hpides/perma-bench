@@ -37,7 +37,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
 
     benchmark->tear_down();
     previous_bm = benchmark;
-    spdlog::debug("Completed {0}/{1} benchmark(s).", i + 1, benchmarks.size());
+    spdlog::info("Completed {0}/{1} benchmark{2}.", i + 1, benchmarks.size(), benchmarks.size() > 1 ? "s" : "");
   }
   // Add last matrix benchmark to final results
   results += {{"bm_name", benchmarks.back()->benchmark_name()}, {"benchmarks", matrix_bm_results}};

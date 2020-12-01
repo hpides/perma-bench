@@ -1,5 +1,6 @@
 #include "benchmark.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <random>
 #include <thread>
@@ -54,7 +55,7 @@ bool get_enum_if_present(YAML::Node& data, const std::string& name, const std::u
   return true;
 }
 
-nlohmann::json hdr_histogram_to_json(hdr_histogram* hdr, const bool include_percentiles = false) {
+nlohmann::json hdr_histogram_to_json(hdr_histogram* hdr) {
   nlohmann::json result;
   result["max"] = hdr_max(hdr);
   result["avg"] = hdr_mean(hdr);
@@ -63,14 +64,18 @@ nlohmann::json hdr_histogram_to_json(hdr_histogram* hdr, const bool include_perc
   result["median"] = hdr_value_at_percentile(hdr, 50.0);
   result["lower_quartile"] = hdr_value_at_percentile(hdr, 25.0);
   result["upper_quartile"] = hdr_value_at_percentile(hdr, 75.0);
-  if (include_percentiles) {
-    result["percentile_90"] = hdr_value_at_percentile(hdr, 90.0);
-    result["percentile_95"] = hdr_value_at_percentile(hdr, 95.0);
-    result["percentile_99"] = hdr_value_at_percentile(hdr, 99.0);
-    result["percentile_999"] = hdr_value_at_percentile(hdr, 99.9);
-    result["percentile_9999"] = hdr_value_at_percentile(hdr, 99.99);
-  }
+  result["percentile_90"] = hdr_value_at_percentile(hdr, 90.0);
+  result["percentile_95"] = hdr_value_at_percentile(hdr, 95.0);
+  result["percentile_99"] = hdr_value_at_percentile(hdr, 99.0);
+  result["percentile_999"] = hdr_value_at_percentile(hdr, 99.9);
+  result["percentile_9999"] = hdr_value_at_percentile(hdr, 99.99);
   return result;
+}
+
+inline double get_bandwidth(const uint64_t total_data_size, const uint64_t total_duration) {
+  const double duration_in_s = total_duration / static_cast<double>(perma::internal::NANOSECONDS_IN_SECONDS);
+  const double data_in_gib = total_data_size / static_cast<double>(perma::internal::BYTE_IN_GIGABYTE);
+  return data_in_gib / duration_in_s;
 }
 
 }  // namespace
@@ -102,9 +107,9 @@ const std::unordered_map<std::string, internal::RandomDistribution> ConfigEnums:
     {"uniform", internal::RandomDistribution::Uniform}, {"zipf", internal::RandomDistribution::Zipf}};
 
 void Benchmark::run_in_thread(const uint16_t thread_id) {
-  for (const std::unique_ptr<IoOperation>& io_op : io_operations_[thread_id]) {
+  for (IoOperation io_op : io_operations_[thread_id]) {
     const auto start_ts = std::chrono::high_resolution_clock::now();
-    io_op->run();
+    io_op.run();
     const auto end_ts = std::chrono::high_resolution_clock::now();
     measurements_[thread_id].emplace_back(start_ts, end_ts);
   }
@@ -139,60 +144,76 @@ void Benchmark::create_data_file() {
 
 nlohmann::json Benchmark::get_result() {
   nlohmann::json result;
-  result["benchmark_name"] = benchmark_name_;
   result["config"] = get_json_config();
   nlohmann::json result_points = nlohmann::json::array();
+
+  uint64_t total_read_size = 0;
+  uint64_t total_write_size = 0;
+  uint64_t total_read_duration = 0;
+  uint64_t total_write_duration = 0;
+
   for (uint16_t thread_num = 0; thread_num < config_.number_threads; thread_num++) {
-    const std::vector<std::unique_ptr<IoOperation>>& thread_io_ops = io_operations_[thread_num];
+    const std::vector<IoOperation>& thread_io_ops = io_operations_[thread_num];
     const std::vector<internal::Measurement>& thread_measurements = measurements_[thread_num];
 
     for (size_t io_op_num = 0; io_op_num < thread_io_ops.size(); io_op_num++) {
       const internal::Measurement measurement = thread_measurements[io_op_num];
-      const IoOperation* io_op = thread_io_ops[io_op_num].get();
+      const IoOperation io_op = thread_io_ops[io_op_num];
 
-      if (io_op->is_active()) {
-        const auto* active_io_op = dynamic_cast<const ActiveIoOperation*>(io_op);
-        const uint64_t latency = duration_to_nanoseconds(measurement.end_ts_ - measurement.start_ts_);
+      if (!io_op.is_active() && config_.raw_results) {
+        result_points += {{"type", "pause"}, {"length", io_op.duration_}, {"thread_id", thread_num}};
+        continue;
+      }
+
+      const uint64_t latency = duration_to_nanoseconds(measurement.end_ts_ - measurement.start_ts_);
+      const uint64_t data_size = io_op.access_size_;
+
+      hdr_record_value(latency_hdr_, latency);
+
+      if (io_op.is_read()) {
+        total_read_size += data_size;
+        total_read_duration += latency;
+      } else if (io_op.is_write()) {
+        total_write_size += data_size;
+        total_write_duration += latency;
+      } else {
+        throw std::runtime_error{"Unknown IO operation in results"};
+      }
+
+      if (config_.raw_results) {
         const uint64_t start_ts = duration_to_nanoseconds(measurement.start_ts_.time_since_epoch());
         const uint64_t end_ts = duration_to_nanoseconds(measurement.end_ts_.time_since_epoch());
-        const uint64_t data_size = active_io_op->get_io_size();
         const uint64_t bandwidth = data_size / (latency / static_cast<double>(internal::NANOSECONDS_IN_SECONDS));
-        const double data_size_gib = data_size / static_cast<double>(internal::BYTE_IN_GIGABYTE);
         const double bandwidth_gib = bandwidth / static_cast<double>(internal::BYTE_IN_GIGABYTE);
 
-        // Increase number of entries in histograms to get more accurate results for smaller benchmarks.
-        const uint32_t num_ops = active_io_op->num_ops_;
-        const uint64_t avg_latency = latency / num_ops;
-        hdr_record_values(latency_hdr_, avg_latency, num_ops);
-        hdr_record_value(bandwidth_hdr_, bandwidth);
-
-        std::string type;
-        if (typeid(*io_op) == typeid(Read)) {
-          type = "read";
-        } else if (typeid(*io_op) == typeid(Write)) {
-          type = "write";
-        } else {
-          throw std::runtime_error{"Unknown IO operation in results"};
-        }
-
-        result_points += {{"type", type},
+        result_points += {{"type", io_op.is_write() ? "write" : "read"},
                           {"latency", latency},
                           {"bandwidth", bandwidth_gib},
-                          {"data_size", data_size_gib},
+                          {"data_size", data_size},
                           {"start_timestamp", start_ts},
                           {"end_timestamp", end_ts},
                           {"thread_id", thread_num}};
-      } else {
-        result_points +=
-            {{"type", "pause"}, {"length", dynamic_cast<const Pause*>(io_op)->get_length()}, {"thread_id", thread_num}};
       }
     }
   }
+
   if (config_.raw_results) {
     result["raw_results"] = result_points;
   }
-  result["bandwidth"] = hdr_histogram_to_json(bandwidth_hdr_);
-  result["latency"] = hdr_histogram_to_json(latency_hdr_, true);
+
+  nlohmann::json bandwidth_results;
+  if (total_read_duration > 0) {
+    const uint64_t read_execution_time = total_read_duration / config_.number_threads;
+    bandwidth_results["read"] = get_bandwidth(total_read_size, read_execution_time);
+  }
+  if (total_write_duration > 0) {
+    const uint64_t write_execution_time = total_write_duration / config_.number_threads;
+    bandwidth_results["write"] = get_bandwidth(total_write_size, write_execution_time);
+  }
+
+  result["bandwidth"] = bandwidth_results;
+  result["latency"] = hdr_histogram_to_json(latency_hdr_);
+
   return result;
 }
 
@@ -200,9 +221,8 @@ void Benchmark::set_up() {
   const size_t num_total_range_ops = config_.total_memory_range / config_.access_size;
   const size_t num_operations =
       (config_.exec_mode == internal::Random) ? config_.number_operations : num_total_range_ops;
-  const size_t num_ops_per_chunk = std::ceil((double)internal::MIN_IO_OP_SIZE / config_.access_size);
   const size_t num_ops_per_thread = num_operations / config_.number_threads;
-  const size_t num_io_chunks_per_thread = num_ops_per_thread / num_ops_per_chunk;
+  const char* max_addr = pmem_data_ + config_.total_memory_range;
 
   io_operations_.reserve(config_.number_threads);
   pool_.reserve(config_.number_threads - 1);
@@ -226,28 +246,19 @@ void Benchmark::set_up() {
 
     for (uint16_t thread_num = 0; thread_num < num_threads_per_partition; thread_num++) {
       const uint32_t index = thread_num + (partition_num * num_threads_per_partition);
-      measurements_[index].reserve(num_io_chunks_per_thread);
+      measurements_[index].reserve(num_ops_per_thread);
 
-      std::vector<std::unique_ptr<IoOperation>> io_ops{};
       const uint64_t num_pauses = config_.pause_frequency == 0 ? 0 : num_ops_per_thread / config_.pause_frequency - 1;
+      std::vector<IoOperation> io_ops{};
+      io_ops.reserve(num_ops_per_thread + num_pauses);
       size_t current_pause_frequency_count = 0;
-      io_ops.reserve(num_io_chunks_per_thread + num_pauses);
 
       // Create IOOperations
       char* next_op_position = partition_start;
       std::bernoulli_distribution io_mode_distribution(config_.read_ratio);
 
-      for (uint32_t io_op = 1; io_op <= num_io_chunks_per_thread; ++io_op) {
-        const bool is_read = io_mode_distribution(rnd_generator);
-        if (is_read) {
-          io_ops.push_back(std::make_unique<Read>(config_.access_size, num_ops_per_chunk, config_.data_instruction,
-                                                  config_.persist_instruction));
-        } else {
-          io_ops.push_back(std::make_unique<Write>(config_.access_size, num_ops_per_chunk, config_.data_instruction,
-                                                   config_.persist_instruction));
-        }
-
-        std::vector<char*>& op_addresses = dynamic_cast<ActiveIoOperation*>(io_ops.back().get())->op_addresses_;
+      for (uint32_t io_op = 1; io_op <= num_ops_per_thread; ++io_op) {
+        char* op_addr = nullptr;
 
         switch (config_.exec_mode) {
           case internal::Mode::Random: {
@@ -255,37 +266,35 @@ void Benchmark::set_up() {
 
             std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
 
-            for (uint32_t op = 0; op < num_ops_per_chunk; ++op) {
-              uint64_t random_value;
-              if (config_.random_distribution == internal::RandomDistribution::Uniform) {
-                random_value = access_distribution(rnd_generator);
-              } else {
-                random_value = zipf(config_.zipf_alpha, num_accesses_in_range);
-              }
-              op_addresses[op] = partition_start + (random_value * config_.access_size);
+            uint64_t random_value;
+            if (config_.random_distribution == internal::RandomDistribution::Uniform) {
+              random_value = access_distribution(rnd_generator);
+            } else {
+              random_value = zipf(config_.zipf_alpha, num_accesses_in_range);
             }
+            op_addr = partition_start + (random_value * config_.access_size);
             break;
           }
           case internal::Mode::Sequential: {
-            for (uint32_t op = 0; op < num_ops_per_chunk; ++op) {
-              op_addresses[op] = next_op_position + (op * config_.access_size);
-            }
-            next_op_position += num_ops_per_chunk * config_.access_size;
+            op_addr = next_op_position;
+            next_op_position += config_.access_size;
             break;
           }
           case internal::Mode::Sequential_Desc: {
-            for (uint32_t op = 0; op < num_ops_per_chunk; ++op) {
-              op_addresses[op] = next_op_position - (op * config_.access_size);
-            }
-            next_op_position -= num_ops_per_chunk * config_.access_size;
+            op_addr = next_op_position;
+            next_op_position -= config_.access_size;
             break;
           }
         }
 
-        current_pause_frequency_count += num_ops_per_chunk;
-        if (num_pauses > 0 && current_pause_frequency_count >= config_.pause_frequency &&
-            io_op < num_io_chunks_per_thread) {
-          io_ops.push_back(std::make_unique<Pause>(config_.pause_length_micros));
+        assert(op_addr < max_addr);
+        const bool is_read = io_mode_distribution(rnd_generator);
+        IoOperation operation = is_read ? IoOperation::ReadOp(op_addr, config_.access_size, config_.data_instruction) : IoOperation::WriteOp(op_addr, config_.access_size, config_.data_instruction, config_.persist_instruction);
+        io_ops.push_back(operation);
+
+        current_pause_frequency_count++;
+        if (num_pauses > 0 && current_pause_frequency_count == config_.pause_frequency && io_op < num_ops_per_thread) {
+          io_ops.push_back(IoOperation::PauseOp(config_.pause_length_micros));
           current_pause_frequency_count = 0;
         }
       }
@@ -293,9 +302,7 @@ void Benchmark::set_up() {
     }
   }
 
-  // Initialize HdrHistrograms
-  // 200 GiB in Byte as max value.
-  hdr_init(1, 26843545600, 3, &bandwidth_hdr_);
+  // Initialize HdrHistrogram
   // 100 seconds in nanoseconds as max value.
   hdr_init(1, 100000000000, 3, &latency_hdr_);
 }
@@ -309,10 +316,6 @@ void Benchmark::tear_down(const bool force) {
     std::filesystem::remove(pmem_file_);
   }
 
-  if (bandwidth_hdr_ != nullptr) {
-    hdr_close(bandwidth_hdr_);
-    bandwidth_hdr_ = nullptr;
-  }
   if (latency_hdr_ != nullptr) {
     hdr_close(latency_hdr_);
     latency_hdr_ = nullptr;
@@ -423,11 +426,8 @@ void BenchmarkConfig::validate() const {
       number_operations == BenchmarkConfig{}.number_operations || exec_mode == internal::Random;
   CHECK_ARGUMENT(is_number_operations_set_random, "Number of operations should only be set for random access");
 
-  // Assumption: cannot insert a pause within a chunk. the frequency match be at least one chunks.
-  const bool is_pause_frequency_chunkable =
-      pause_frequency == 0 || (pause_frequency * access_size) >= internal::MIN_IO_OP_SIZE;
-  CHECK_ARGUMENT(is_pause_frequency_chunkable, "Cannot insert pause in <" +
-                                                   std::to_string(internal::MIN_IO_OP_SIZE / access_size) +
-                                                   " frequency for " + std::to_string(access_size) + " byte access.");
+  // Assumption: sequential access does not make sense if we mix reads and writes
+  const bool is_mixed_workload_random = (read_ratio == 1 || read_ratio == 0) || exec_mode == internal::Random;
+  CHECK_ARGUMENT(is_mixed_workload_random, "Mixed read/write workloads only supported for random execution.");
 }
 }  // namespace perma

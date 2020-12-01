@@ -27,23 +27,19 @@ inline void simd_write_data(char* from, const char* to) {
   }
 }
 
-inline void simd_write(const std::vector<char*>& op_addresses, const size_t access_size) {
-  for (char* addr : op_addresses) {
-    const char* access_end_addr = addr + access_size;
-    simd_write_data(addr, access_end_addr);
-    pmem_persist(addr, access_size);
-  }
+inline void simd_write(char* addr, const size_t access_size) {
+  const char* access_end_addr = addr + access_size;
+  simd_write_data(addr, access_end_addr);
+  pmem_persist(addr, access_size);
 }
 
-inline void simd_read(const std::vector<char*>& op_addresses, const size_t access_size) {
+inline void simd_read(const char* addr, const size_t access_size) {
   auto simd_fn = [&]() {
     __m512i res;
-    for (char* addr : op_addresses) {
-      const char* access_end_addr = addr + access_size;
-      for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
-        // Read 512 Bit (64 Byte)
-        res = _mm512_stream_load_si512(mem_addr);
-      }
+    const char* access_end_addr = addr + access_size;
+    for (const char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
+      // Read 512 Bit (64 Byte)
+      res = _mm512_stream_load_si512((void*) mem_addr);
     }
     return res;
   };
@@ -84,31 +80,27 @@ inline void mov_write_data(char* from, const char* to) {
   }
 }
 
-inline void mov_write(const std::vector<char*>& op_addresses, const size_t access_size) {
-  for (char* addr : op_addresses) {
-    const char* access_end_addr = addr + access_size;
-    mov_write_data(addr, access_end_addr);
-    pmem_persist(addr, access_size);
-  }
+inline void mov_write(char* addr, const size_t access_size) {
+  const char* access_end_addr = addr + access_size;
+  mov_write_data(addr, access_end_addr);
+  pmem_persist(addr, access_size);
 }
 
-inline void mov_read(const std::vector<char*>& op_addresses, const size_t access_size) {
-  for (char* addr : op_addresses) {
-    const char* access_end_addr = addr + access_size;
-    for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
-      // Read 512 Bit (64 Byte)
-      asm volatile(
-          "movq 0*8(%[addr]), %%r8  \n\t"
-          "movq 1*8(%[addr]), %%r8  \n\t"
-          "movq 2*8(%[addr]), %%r8  \n\t"
-          "movq 3*8(%[addr]), %%r8  \n\t"
-          "movq 4*8(%[addr]), %%r8  \n\t"
-          "movq 5*8(%[addr]), %%r8  \n\t"
-          "movq 6*8(%[addr]), %%r8  \n\t"
-          "movq 7*8(%[addr]), %%r8  \n\t"
-          :
-          : [ addr ] "r"(mem_addr));
-    }
+inline void mov_read(const char* addr, const size_t access_size) {
+  const char* access_end_addr = addr + access_size;
+  for (const char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
+    // Read 512 Bit (64 Byte)
+    asm volatile(
+        "movq 0*8(%[addr]), %%r8  \n\t"
+        "movq 1*8(%[addr]), %%r9  \n\t"
+        "movq 2*8(%[addr]), %%r10 \n\t"
+        "movq 3*8(%[addr]), %%r11 \n\t"
+        "movq 4*8(%[addr]), %%r12 \n\t"
+        "movq 5*8(%[addr]), %%r13 \n\t"
+        "movq 6*8(%[addr]), %%r14 \n\t"
+        "movq 7*8(%[addr]), %%r15 \n\t"
+        :
+        : [ addr ] "r"(mem_addr));
   }
 }
 
