@@ -1,8 +1,18 @@
 bm_0:
+  matrix:
+    # Run with these thread counts
+    number_threads: [ 1, 2 ]
+    # Run with 256 Byte access to 512.
+    access_size: [ 256, 512]
   args:
-    access_size: 256
     total_memory_range: 67108864
     exec_mode: sequential
-    number_threads: 1
+    read_ratio: 1
+    write_ratio: 0
+
+bm_1:
+  args:
+    total_memory_range: 67108864
+    exec_mode: random
     read_ratio: 1
     write_ratio: 0

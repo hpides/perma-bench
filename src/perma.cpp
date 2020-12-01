@@ -34,6 +34,13 @@ int main(int argc, char** argv) {
                  "Path to the benchmark config YAML file (default: " + std::string{DEFAULT_CONFIG_PATH} + ")")
       ->check(check_path_exists);
 
+  // Define result directory
+  std::filesystem::path result_path = std::filesystem::current_path();
+  app.add_option("-r,--result-dir", result_path,
+                 "Path to the result directory (default: " + std::string{result_path} + ")")
+      ->check(check_path_exists)
+      ->check(check_is_dir);
+
   // Define NUMA nodes to pin to.
   // This takes a list of nodes, e.g., --numa=0,1
   std::vector<uint16_t> numa_nodes;
@@ -62,7 +69,7 @@ int main(int argc, char** argv) {
   init_numa(pmem_directory);
 
   // Run the actual benchmarks after parsing and validating them.
-  BenchmarkSuite::run_benchmarks(pmem_directory, config_file);
+  BenchmarkSuite::run_benchmarks(pmem_directory, config_file, result_path);
 
   return 0;
 }
