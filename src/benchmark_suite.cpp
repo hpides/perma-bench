@@ -18,6 +18,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
   spdlog::info("Running benchmarks...");
   nlohmann::json results = nlohmann::json::array();
   nlohmann::json matrix_bm_results = nlohmann::json::array();
+
   for (size_t i = 0; i < benchmarks.size(); ++i) {
     Benchmark* benchmark = benchmarks[i].get();
     if (previous_bm && previous_bm->benchmark_name() != benchmark->benchmark_name()) {
@@ -36,11 +37,10 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
 
     benchmark->tear_down();
     previous_bm = benchmark;
-    if ((i + 1) == benchmarks.size()) {
-      results += {{"bm_name", benchmark->benchmark_name()}, {"benchmarks", matrix_bm_results}};
-    }
     spdlog::debug("Completed {0}/{1} benchmark(s).", i + 1, benchmarks.size());
   }
+  // Add last matrix benchmark to final results
+  results += {{"bm_name", benchmarks.back()->benchmark_name()}, {"benchmarks", matrix_bm_results}};
 
   const std::filesystem::path result_file = result_directory / config_file.stem().concat("-results.json");
   std::ofstream output(result_file);
