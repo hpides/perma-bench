@@ -17,6 +17,9 @@ if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
     set(COMPILE_FLAGS "${COMPILE_FLAGS} -O3 -DNDEBUG")
 endif ()
 
+set(INCLUDE_HINTS ${CMAKE_INCLUDE_PATH} "/usr/include" "/usr/local/include")
+set(LIB_HINTS "/usr/local/lib64" "/usr/local/lib" "/usr/lib" "/usr/lib64")
+
 ##################### AVX ####################
 # Use this short program to check if AVX-512 is supported. For now, we only use AVX-512 or not.
 # This might need to be adapted in the future to support different SSE/AVX instructions.
@@ -63,10 +66,10 @@ if (${BUILD_PMDK})
         link_directories(${PMDK_PREFIX}/src/PMDK/src/nondebug)
     endif ()
 else ()
-    set(CMAKE_INCLUDE_PATH ${PMDK_INCLUDE_PATH} /usr/local/include)
-    set(PMDK_HINTS ${PMDK_LIBRARY_PATH} /usr/local/lib64 /usr/local/lib)
+    set(PMDK_INCLUDE_HINTS ${PMDK_INCLUDE_PATH} ${INCLUDE_HINTS})
+    set(PMDK_HINTS ${PMDK_LIBRARY_PATH} ${LIB_HINTS})
 
-    find_path(PMEM_INCLUDE_DIRS libpmem.h REQUIRED)
+    find_path(PMEM_INCLUDE_DIRS libpmem.h REQUIRED HINTS ${PMDK_INCLUDE_HINTS})
     find_library(PMEM_LIBRARIES NAMES pmem libpmem REQUIRED HINTS ${PMDK_HINTS})
 
     if (NOT PMEM_INCLUDE_DIRS OR "${PMEM_INCLUDE_DIRS}" STREQUAL "")
@@ -79,6 +82,33 @@ else ()
     include_directories(${LIBPMEM_INCLUDE_DIRS})
     message(STATUS "PMDK provided. Including ${PMEM_INCLUDE_DIRS} and linking ${PMEM_LIBRARIES}.")
 endif ()
+
+################### NUMA ####################
+option(NUMA_INCLUDE_PATH "Path to custom NUMA include files" "")
+option(NUMA_LIBRARY_PATH "Path to custom NUMA library" "")
+
+set(NUMA_INCLUDE_HINTS ${NUMA_INCLUDE_PATH} ${INCLUDE_HINTS})
+set(NUMA_LIB_HINTS ${NUMA_LIBRARY_PATH} ${PMDK_LIBRARY_PATH})
+
+find_path(NUMA_INCLUDE_DIRS numa.h HINTS ${NUMA_INCLUDE_HINTS})
+find_library(NUMA_LIBRARIES NAMES numa libnuma HINTS ${NUMA_LIB_HINTS})
+
+set(NUMA_FOUND true)
+if (NOT NUMA_INCLUDE_DIRS OR "${NUMA_INCLUDE_DIRS}" STREQUAL "")
+    message(STATUS "WARNING: numa include directory not found. Not using NUMA in this build.")
+    set(NUMA_FOUND false)
+endif ()
+if (NOT NUMA_LIBRARIES OR "${NUMA_LIBRARIES}" STREQUAL "")
+    message(STATUS "WARNING: libnuma not found. Not using NUMA in this build.")
+    set(NUMA_FOUND false)
+endif ()
+
+if (${NUMA_FOUND})
+    include_directories(${NUMA_INCLUDE_DIRS})
+    message(STATUS "NUMA provided. Including ${NUMA_INCLUDE_DIRS} and linking ${NUMA_LIBRARIES}.")
+    add_definitions("-DHAS_NUMA")
+    message(STATUS "Using libnuma in this build.")
+endif()
 
 ##################### YAML ####################
 set(YAML_CPP_BUILD_TESTS OFF CACHE INTERNAL "")
