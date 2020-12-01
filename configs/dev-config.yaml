@@ -16,3 +16,4 @@ bm_1:
     exec_mode: random
     read_ratio: 1
     write_ratio: 0
+    
