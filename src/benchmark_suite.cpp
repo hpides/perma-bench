@@ -42,7 +42,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
     spdlog::debug("Completed {0}/{1} benchmark(s).", i + 1, benchmarks.size());
   }
 
-  const std::filesystem::path result_file = result_directory / config_file.stem().concat(".json");
+  const std::filesystem::path result_file = result_directory / config_file.stem().concat("-results.json");
   std::ofstream output(result_file);
   output << results.dump() << std::endl;
   output.close();
