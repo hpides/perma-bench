@@ -188,7 +188,9 @@ nlohmann::json Benchmark::get_result() {
       }
     }
   }
-  result["results"] = result_points;
+  if (config_.raw) {
+    result["results"] = result_points;
+  }
   result["bandwidth"] = hdr_histogram_to_json(bandwidth_hdr_);
   result["latency"] = hdr_histogram_to_json(latency_hdr_, true);
   return result;
@@ -361,6 +363,7 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_if_present(node, "number_partitions", &bm_config.number_partitions);
     num_found += get_if_present(node, "number_threads", &bm_config.number_threads);
     num_found += get_if_present(node, "zipf_alpha", &bm_config.zipf_alpha);
+    num_found += get_if_present(node, "raw", &bm_config.raw);
     num_found += get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_mode, &bm_config.exec_mode);
     num_found += get_enum_if_present(node, "random_distribution", ConfigEnums::str_to_random_distribution,
                                      &bm_config.random_distribution);

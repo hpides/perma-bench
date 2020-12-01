@@ -57,6 +57,8 @@ struct BenchmarkConfig {
 
   uint16_t number_threads = 1;
 
+  bool raw = false;
+
   static BenchmarkConfig decode(YAML::Node& raw_config_data);
   void validate() const;
 };
