@@ -14,7 +14,8 @@ int main(int argc, char** argv) {
   spdlog::set_level(spdlog::level::debug);
 #endif
 
-  std::filesystem::path config_file = std::filesystem::current_path() / ".." / DEFAULT_CONFIG_PATH;
+  std::filesystem::path config_file = std::filesystem::current_path() / DEFAULT_CONFIG_PATH;
+
   if (argc < 2) {
     spdlog::error("Usage: ./perma-bench /path/to/pmem/dir [/path/to/config]");
     throw std::invalid_argument{"Need to specify pmem directory."};
