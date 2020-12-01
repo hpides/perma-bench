@@ -61,6 +61,8 @@ nlohmann::json hdr_histogram_to_json(hdr_histogram* hdr, const bool include_perc
   result["min"] = hdr_min(hdr);
   result["std"] = hdr_stddev(hdr);
   result["median"] = hdr_value_at_percentile(hdr, 50.0);
+  result["lower_quartile"] = hdr_value_at_percentile(hdr, 25.0);
+  result["upper_quartile"] = hdr_value_at_percentile(hdr, 75.0);
   if (include_percentiles) {
     result["percentile_90"] = hdr_value_at_percentile(hdr, 90.0);
     result["percentile_95"] = hdr_value_at_percentile(hdr, 95.0);
