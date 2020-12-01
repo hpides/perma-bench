@@ -146,6 +146,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(spdlog)
 
+################### CLI11 ####################
+set(CLI11_VERSION v1.9.1)
+set(CLI11_DOWNLOAD_PATH https://github.com/CLIUtils/CLI11/releases/download/${CLI11_VERSION}/CLI11.hpp)
+set(CLI11_DIR ${CMAKE_CURRENT_BINARY_DIR}/cli11)
+set(CLI11_INCLUDE_PATH ${CLI11_DIR}/CLI11.hpp)
+file(DOWNLOAD ${CLI11_DOWNLOAD_PATH} ${CLI11_INCLUDE_PATH})
+include_directories(${CLI11_DIR})
+
 ##################### PerMA ####################
 add_custom_target(copy_configs
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/configs ${CMAKE_CURRENT_BINARY_DIR}/configs)
