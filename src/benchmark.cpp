@@ -329,6 +329,8 @@ nlohmann::json Benchmark::get_json_config() {
   config["pause_frequency"] = config_.pause_frequency;
   config["number_partitions"] = config_.number_partitions;
   config["number_threads"] = config_.number_threads;
+  config["data_instruction"] = config_.data_instruction;
+  config["persist_instruction"] = config_.persist_instruction;
 
   if (config_.pause_frequency > 0) {
     config["pause_length_micros"] = config_.pause_length_micros;
