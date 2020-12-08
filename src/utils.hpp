@@ -4,10 +4,18 @@
 
 namespace perma {
 
+namespace internal {
+
+static const size_t NUM_UTIL_THREADS = 4;  // Should be a power of two
+
+}  // namespace internal
+
 char* map_pmem_file(const std::filesystem::path& file, size_t expected_length);
 char* create_pmem_file(const std::filesystem::path& file, size_t length);
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir);
+
+void generate_read_data(char* from, uint64_t total_memory_range);
 
 uint64_t duration_to_nanoseconds(std::chrono::high_resolution_clock::duration duration);
 

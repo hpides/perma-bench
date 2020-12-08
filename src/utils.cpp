@@ -5,12 +5,14 @@
 
 #include <algorithm>
 #include <random>
+#include <thread>
 
 #include "read_write_ops.hpp"
 
 #ifdef HAS_NUMA
 #include <numa.h>
 #include <numaif.h>
+
 #endif
 
 namespace perma {
@@ -66,6 +68,25 @@ std::filesystem::path generate_random_file_name(const std::filesystem::path& bas
   const std::string file_name = str + ".file";
   const std::filesystem::path file{file_name};
   return base_dir / file;
+}
+
+void generate_read_data(char* pmem_data, const uint64_t total_memory_range) {
+  std::vector<std::thread> thread_pool;
+  thread_pool.reserve(internal::NUM_UTIL_THREADS - 1);
+  uint64_t thread_memory_range = total_memory_range / internal::NUM_UTIL_THREADS;
+  for (uint8_t thread_count = 0; thread_count < internal::NUM_UTIL_THREADS - 1; thread_count++) {
+    char* from = pmem_data + thread_count * thread_memory_range;
+    const char* to = pmem_data + (thread_count + 1) * thread_memory_range;
+    thread_pool.emplace_back(rw_ops::write_data, from, to);
+  }
+
+  rw_ops::write_data(pmem_data + (internal::NUM_UTIL_THREADS - 1) * thread_memory_range,
+                     pmem_data + total_memory_range);
+
+  // wait for all threads
+  for (std::thread& thread : thread_pool) {
+    thread.join();
+  }
 }
 
 uint64_t duration_to_nanoseconds(const std::chrono::high_resolution_clock::duration duration) {
