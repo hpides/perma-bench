@@ -134,7 +134,7 @@ void Benchmark::create_data_file() {
   pmem_data_ = create_pmem_file(pmem_file_, config_.total_memory_range);
   if (config_.read_ratio > 0) {
     // If we read data in this benchmark, we need to generate it first.
-    rw_ops::write_data(pmem_data_, pmem_data_ + config_.total_memory_range);
+    generate_read_data(pmem_data_, config_.total_memory_range);
   }
 }
 
