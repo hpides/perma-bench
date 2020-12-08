@@ -17,6 +17,8 @@ FetchContent_MakeAvailable(googletest)
 set(PERMA_TEST_SOURCES
         benchmark_test.cpp
         config_test.cpp
+        test_utils.cpp
+        test_utils.hpp
         utils_test.cpp)
 
 add_executable(perma-test perma_test.cpp ${PERMA_TEST_SOURCES})

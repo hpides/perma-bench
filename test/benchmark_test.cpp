@@ -2,7 +2,7 @@
 #include <fstream>
 
 #include "gtest/gtest.h"
-#include "gmock/gmock.h"
+#include "test_utils.hpp"
 
 namespace perma {
 
@@ -114,7 +114,7 @@ TEST_F(BenchmarkTest, SetUpSingleThread) {
   EXPECT_EQ(thread_config.num_ops, PMEM_FILE_SIZE / 256);
   EXPECT_EQ(thread_config.partition_start_addr, bm.get_pmem_data());
 
-  const std::vector<std::vector<internal::Latency>>& latencies = bm.get_latencies();
+  const std::vector<std::vector<internal::Latency>>& latencies = bm.get_benchmark_result().latencies;
   ASSERT_EQ(latencies.size(), 1);
   EXPECT_EQ(thread_config.latencies.data(), latencies[0].data());
 }
@@ -146,7 +146,7 @@ TEST_F(BenchmarkTest, SetUpMultiThread) {
   EXPECT_EQ(thread_config2.partition_start_addr, bm.get_pmem_data() + partition_size);
   EXPECT_EQ(thread_config3.partition_start_addr, bm.get_pmem_data() + partition_size);
 
-  const std::vector<std::vector<internal::Latency>>& latencies = bm.get_latencies();
+  const std::vector<std::vector<internal::Latency>>& latencies = bm.get_benchmark_result().latencies;
   ASSERT_EQ(latencies.size(), num_threads);
   EXPECT_EQ(thread_config0.latencies.data(), latencies[0].data());
   EXPECT_EQ(thread_config1.latencies.data(), latencies[1].data());
@@ -161,7 +161,7 @@ TEST_F(BenchmarkTest, SetUpMultiThread) {
   }
 }
 
-TEST_F(BenchmarkTest, RunSingeThread) {
+TEST_F(BenchmarkTest, RunSingeThreadRead) {
   const size_t num_ops = 8;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
@@ -173,21 +173,469 @@ TEST_F(BenchmarkTest, RunSingeThread) {
   bm.set_up();
   bm.run();
 
-  const std::vector<std::vector<internal::Latency>>& all_latencies = bm.get_latencies();
+  const BenchmarkResult& result = bm.get_benchmark_result();
+
+  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), 1);
   const std::vector<internal::Latency>& latencies = all_latencies[0];
 
   ASSERT_EQ(latencies.size(), num_ops);
-  uint64_t total_duration = 0;
   for (const internal::Latency latency : latencies) {
     EXPECT_EQ(latency.op_type, internal::Read);
     EXPECT_GT(latency.duration, 0);
-    total_duration += latency.duration;
   }
-
-
+  ASSERT_EQ(result.raw_measurements.size(), 0);
 }
 
-TEST_F(BenchmarkTest, RunMultiThread) {}
+TEST_F(BenchmarkTest, RunSingeThreadWrite) {
+  const size_t num_ops = 8;
+  const size_t total_size = 256 * num_ops;
+  base_config_.number_threads = 1;
+  base_config_.access_size = 256;
+  base_config_.read_ratio = 0;
+  base_config_.write_ratio = 1;
+  base_config_.total_memory_range = total_size;
+  Benchmark bm{bm_name_, base_config_};
+  bm.create_data_file();
+  bm.set_up();
+  bm.run();
+
+  const BenchmarkResult& result = bm.get_benchmark_result();
+
+  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  ASSERT_EQ(all_latencies.size(), 1);
+  const std::vector<internal::Latency>& latencies = all_latencies[0];
+
+  ASSERT_EQ(latencies.size(), num_ops);
+  for (const internal::Latency latency : latencies) {
+    EXPECT_EQ(latency.op_type, internal::Write);
+    EXPECT_GT(latency.duration, 0);
+  }
+  ASSERT_EQ(result.raw_measurements.size(), 0);
+
+  check_file_written(bm.get_pmem_file(), total_size);
+}
+
+TEST_F(BenchmarkTest, RunSingeThreadMixed) {
+  const size_t num_ops = 8;
+  base_config_.number_threads = 1;
+  base_config_.access_size = 256;
+  base_config_.read_ratio = 0.5;
+  base_config_.write_ratio = 0.5;
+  base_config_.number_operations = num_ops;
+  base_config_.exec_mode = internal::Random;
+  base_config_.total_memory_range = 256 * num_ops;
+  Benchmark bm{bm_name_, base_config_};
+  bm.create_data_file();
+  bm.set_up();
+  bm.run();
+
+  const BenchmarkResult& result = bm.get_benchmark_result();
+
+  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  ASSERT_EQ(all_latencies.size(), 1);
+  const std::vector<internal::Latency>& latencies = all_latencies[0];
+
+  ASSERT_EQ(latencies.size(), num_ops);
+  for (const internal::Latency latency : latencies) {
+    EXPECT_TRUE(latency.op_type == internal::Write || latency.op_type == internal::Read);
+    EXPECT_GT(latency.duration, 0);
+  }
+  ASSERT_EQ(result.raw_measurements.size(), 0);
+}
+
+TEST_F(BenchmarkTest, RunMultiThreadRead) {
+  const size_t num_ops = 32;
+  const size_t num_threads = 4;
+  base_config_.number_threads = num_threads;
+  base_config_.access_size = 1024;
+  base_config_.read_ratio = 1;
+  base_config_.write_ratio = 0;
+  base_config_.total_memory_range = 1024 * num_ops;
+  Benchmark bm{bm_name_, base_config_};
+  bm.create_data_file();
+  bm.set_up();
+  bm.run();
+
+  const BenchmarkResult& result = bm.get_benchmark_result();
+
+  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  ASSERT_EQ(all_latencies.size(), num_threads);
+  for (const std::vector<internal::Latency>& latencies : all_latencies) {
+    ASSERT_EQ(latencies.size(), num_ops / num_threads);
+    for (const internal::Latency latency : latencies) {
+      EXPECT_EQ(latency.op_type, internal::Read);
+      EXPECT_GT(latency.duration, 0);
+    }
+  }
+  ASSERT_EQ(result.raw_measurements.size(), 0);
+}
+
+TEST_F(BenchmarkTest, RunMultiThreadWrite) {
+  const size_t num_ops = 128;
+  const size_t num_threads = 16;
+  const size_t total_size = 512 * num_ops;
+  base_config_.number_threads = num_threads;
+  base_config_.access_size = 512;
+  base_config_.read_ratio = 1;
+  base_config_.write_ratio = 0;
+  base_config_.total_memory_range = total_size;
+  Benchmark bm{bm_name_, base_config_};
+  bm.create_data_file();
+  bm.set_up();
+  bm.run();
+
+  const BenchmarkResult& result = bm.get_benchmark_result();
+
+  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  ASSERT_EQ(all_latencies.size(), num_threads);
+  for (const std::vector<internal::Latency>& latencies : all_latencies) {
+    ASSERT_EQ(latencies.size(), num_ops / num_threads);
+    for (const internal::Latency latency : latencies) {
+      EXPECT_EQ(latency.op_type, internal::Read);
+      EXPECT_GT(latency.duration, 0);
+    }
+  }
+  ASSERT_EQ(result.raw_measurements.size(), 0);
+
+  check_file_written(bm.get_pmem_file(), total_size);
+}
+
+TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
+  const size_t num_ops = 32;
+  const size_t num_threads = 4;
+  base_config_.number_threads = num_threads;
+  base_config_.access_size = 1024;
+  base_config_.read_ratio = 1;
+  base_config_.write_ratio = 0;
+  base_config_.total_memory_range = 1024 * num_ops;
+  base_config_.exec_mode = internal::Sequential_Desc;
+  Benchmark bm{bm_name_, base_config_};
+  bm.create_data_file();
+  bm.set_up();
+  bm.run();
+
+  const BenchmarkResult& result = bm.get_benchmark_result();
+
+  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  ASSERT_EQ(all_latencies.size(), num_threads);
+  for (const std::vector<internal::Latency>& latencies : all_latencies) {
+    ASSERT_EQ(latencies.size(), num_ops / num_threads);
+    for (const internal::Latency latency : latencies) {
+      EXPECT_EQ(latency.op_type, internal::Read);
+      EXPECT_GT(latency.duration, 0);
+    }
+  }
+  ASSERT_EQ(result.raw_measurements.size(), 0);
+}
+
+TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
+  const size_t num_ops = 128;
+  const size_t num_threads = 16;
+  const size_t total_size = 512 * num_ops;
+  base_config_.number_threads = num_threads;
+  base_config_.access_size = 512;
+  base_config_.read_ratio = 1;
+  base_config_.write_ratio = 0;
+  base_config_.total_memory_range = total_size;
+  base_config_.exec_mode = internal::Sequential_Desc;
+  Benchmark bm{bm_name_, base_config_};
+  bm.create_data_file();
+  bm.set_up();
+  bm.run();
+
+  const BenchmarkResult& result = bm.get_benchmark_result();
+
+  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  ASSERT_EQ(all_latencies.size(), num_threads);
+  for (const std::vector<internal::Latency>& latencies : all_latencies) {
+    ASSERT_EQ(latencies.size(), num_ops / num_threads);
+    for (const internal::Latency latency : latencies) {
+      EXPECT_EQ(latency.op_type, internal::Read);
+      EXPECT_GT(latency.duration, 0);
+    }
+  }
+  ASSERT_EQ(result.raw_measurements.size(), 0);
+
+  check_file_written(bm.get_pmem_file(), total_size);
+}
+
+TEST_F(BenchmarkTest, RunMultiThreadWriteRaw) {
+  const size_t num_ops = 128;
+  const size_t num_threads = 16;
+  const size_t total_size = 512 * num_ops;
+  base_config_.number_threads = num_threads;
+  base_config_.raw_results = true;
+  base_config_.access_size = 512;
+  base_config_.read_ratio = 1;
+  base_config_.write_ratio = 0;
+  base_config_.total_memory_range = total_size;
+  Benchmark bm{bm_name_, base_config_};
+  bm.create_data_file();
+  bm.set_up();
+  bm.run();
+
+  const BenchmarkResult& result = bm.get_benchmark_result();
+
+  const std::vector<std::vector<internal::Measurement>>& all_measurements = result.raw_measurements;
+  ASSERT_EQ(all_measurements.size(), num_threads);
+  for (const std::vector<internal::Measurement>& measurements : all_measurements) {
+    ASSERT_EQ(measurements.size(), num_ops / num_threads);
+    for (const internal::Measurement measurement : measurements) {
+      EXPECT_EQ(measurement.latency.op_type, internal::Read);
+      EXPECT_GT(measurement.latency.duration, 0);
+    }
+  }
+  ASSERT_EQ(result.latencies.size(), 0);
+
+  check_file_written(bm.get_pmem_file(), total_size);
+}
+
+TEST_F(BenchmarkTest, ResultsSingleThreadRead) {
+  const size_t num_ops = 8;
+  const size_t total_size = 256 * num_ops;
+  base_config_.number_threads = 1;
+  base_config_.access_size = 256;
+  base_config_.read_ratio = 1;
+  base_config_.write_ratio = 0;
+  base_config_.total_memory_range = total_size;
+
+  BenchmarkResult bm_result{base_config_};
+  std::vector<internal::Latency> latencies{};
+  latencies.reserve(num_ops);
+  for (size_t i = 0; i < num_ops; ++i) {
+    latencies.emplace_back(100, internal::OpType::Read);
+  }
+  bm_result.latencies.emplace_back(latencies);
+
+  const nlohmann::json& result_json = bm_result.get_result_as_json();
+  ASSERT_JSON_EQ(result_json, size(), 2);
+  ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
+  ASSERT_JSON_TRUE(result_json, contains("duration"));
+
+  const nlohmann::json& bandwidth_json = result_json["bandwidth"];
+  ASSERT_JSON_EQ(bandwidth_json, size(), 1);
+  ASSERT_JSON_TRUE(bandwidth_json, contains("read"));
+  ASSERT_JSON_TRUE(bandwidth_json, at("read").is_number());
+  EXPECT_EQ(bandwidth_json.at("read").get<double>(), 2.56);
+
+  const nlohmann::json& duration_json = result_json["duration"];
+  ASSERT_JSON_EQ(duration_json, size(), 12);
+  ASSERT_JSON_TRUE(duration_json, contains("avg"));
+  ASSERT_JSON_TRUE(duration_json, contains("median"));
+  EXPECT_EQ(duration_json.at("avg").get<double>(), 100.0);
+  EXPECT_EQ(duration_json.at("median").get<double>(), 100.0);
+}
+
+TEST_F(BenchmarkTest, ResultsSingleThreadWrite) {
+  const size_t num_ops = 8;
+  const size_t total_size = 256 * num_ops;
+  base_config_.number_threads = 1;
+  base_config_.access_size = 256;
+  base_config_.read_ratio = 0;
+  base_config_.write_ratio = 1;
+  base_config_.total_memory_range = total_size;
+
+  BenchmarkResult bm_result{base_config_};
+  std::vector<internal::Latency> latencies{};
+  latencies.reserve(num_ops);
+  for (size_t i = 0; i < num_ops; ++i) {
+    latencies.emplace_back(100, internal::OpType::Write);
+  }
+  bm_result.latencies.emplace_back(latencies);
+
+  const nlohmann::json& result_json = bm_result.get_result_as_json();
+  ASSERT_JSON_EQ(result_json, size(), 2);
+  ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
+  ASSERT_JSON_TRUE(result_json, contains("duration"));
+
+  const nlohmann::json& bandwidth_json = result_json["bandwidth"];
+  ASSERT_JSON_EQ(bandwidth_json, size(), 1);
+  ASSERT_JSON_TRUE(bandwidth_json, contains("write"));
+  ASSERT_JSON_TRUE(bandwidth_json, at("write").is_number());
+  EXPECT_EQ(bandwidth_json.at("write").get<double>(), 2.56);
+
+  const nlohmann::json& duration_json = result_json["duration"];
+  ASSERT_JSON_EQ(duration_json, size(), 12);
+  ASSERT_JSON_TRUE(duration_json, contains("avg"));
+  ASSERT_JSON_TRUE(duration_json, contains("median"));
+  EXPECT_EQ(duration_json.at("avg").get<double>(), 100.0);
+  EXPECT_EQ(duration_json.at("median").get<double>(), 100.0);
+}
+
+TEST_F(BenchmarkTest, ResultsSingleThreadMixed) {
+  const size_t num_ops = 8;
+  const size_t total_size = 512 * num_ops;
+  base_config_.number_operations = num_ops;
+  base_config_.number_threads = 1;
+  base_config_.access_size = 512;
+  base_config_.read_ratio = 0.5;
+  base_config_.write_ratio = 0.5;
+  base_config_.total_memory_range = total_size;
+  base_config_.exec_mode = internal::Random;
+
+  BenchmarkResult bm_result{base_config_};
+  std::vector<internal::Latency> latencies{};
+  latencies.reserve(num_ops);
+  for (size_t i = 0; i < num_ops; ++i) {
+    if (i % 2 == 0) {
+      latencies.emplace_back(200, internal::OpType::Write);
+    } else {
+      latencies.emplace_back(100, internal::OpType::Read);
+    }
+  }
+  bm_result.latencies.emplace_back(latencies);
+
+  const nlohmann::json& result_json = bm_result.get_result_as_json();
+  ASSERT_JSON_EQ(result_json, size(), 2);
+  ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
+  ASSERT_JSON_TRUE(result_json, contains("duration"));
+
+  const nlohmann::json& bandwidth_json = result_json["bandwidth"];
+  ASSERT_JSON_EQ(bandwidth_json, size(), 2);
+  ASSERT_JSON_TRUE(bandwidth_json, contains("read"));
+  ASSERT_JSON_TRUE(bandwidth_json, contains("write"));
+  ASSERT_JSON_TRUE(bandwidth_json, at("read").is_number());
+  ASSERT_JSON_TRUE(bandwidth_json, at("write").is_number());
+  EXPECT_EQ(bandwidth_json.at("read").get<double>(), 5.12);
+  EXPECT_EQ(bandwidth_json.at("write").get<double>(), 2.56);
+
+  const nlohmann::json& duration_json = result_json["duration"];
+  ASSERT_JSON_EQ(duration_json, size(), 12);
+  ASSERT_JSON_TRUE(duration_json, contains("avg"));
+  ASSERT_JSON_TRUE(duration_json, contains("median"));
+  ASSERT_JSON_TRUE(duration_json, contains("std_dev"));
+  EXPECT_EQ(duration_json.at("avg").get<double>(), 150.0);
+  EXPECT_EQ(duration_json.at("median").get<double>(), 100.0);
+  EXPECT_EQ(duration_json.at("std_dev").get<double>(), 50.0);
+}
+
+TEST_F(BenchmarkTest, ResultsMultiThreadRead) {
+  const size_t num_ops = 64;
+  const size_t num_threads = 4;
+  const size_t num_ops_per_thread = num_ops / num_threads;
+  const size_t total_size = 1024 * num_ops;
+  base_config_.number_threads = num_threads;
+  base_config_.access_size = 1024;
+  base_config_.read_ratio = 1;
+  base_config_.write_ratio = 0;
+  base_config_.total_memory_range = total_size;
+
+  BenchmarkResult bm_result{base_config_};
+  for (size_t thread = 0; thread < num_threads; ++thread) {
+    std::vector<internal::Latency> latencies{};
+    for (size_t i = 0; i < num_ops_per_thread; ++i) {
+      latencies.emplace_back(100 + (thread * 10), internal::OpType::Read);
+    }
+    bm_result.latencies.emplace_back(latencies);
+  }
+
+  const nlohmann::json& result_json = bm_result.get_result_as_json();
+  ASSERT_JSON_EQ(result_json, size(), 2);
+  ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
+  ASSERT_JSON_TRUE(result_json, contains("duration"));
+
+  const nlohmann::json& bandwidth_json = result_json["bandwidth"];
+  ASSERT_JSON_EQ(bandwidth_json, size(), 1);
+  ASSERT_JSON_TRUE(bandwidth_json, contains("read"));
+  ASSERT_JSON_TRUE(bandwidth_json, at("read").is_number());
+  EXPECT_NEAR(bandwidth_json.at("read").get<double>(), 35.6173, 0.01);
+
+  const nlohmann::json& duration_json = result_json["duration"];
+  ASSERT_JSON_EQ(duration_json, size(), 12);
+  ASSERT_JSON_TRUE(duration_json, contains("avg"));
+  ASSERT_JSON_TRUE(duration_json, contains("median"));
+  EXPECT_EQ(duration_json.at("avg").get<double>(), 115.0);
+  EXPECT_EQ(duration_json.at("median").get<double>(), 110.0);
+}
+
+TEST_F(BenchmarkTest, ResultsMultiThreadWrite) {
+  const size_t num_ops = 64;
+  const size_t num_threads = 8;
+  const size_t num_ops_per_thread = num_ops / num_threads;
+  const size_t total_size = 512 * num_ops;
+  base_config_.number_threads = num_threads;
+  base_config_.access_size = 512;
+  base_config_.read_ratio = 0;
+  base_config_.write_ratio = 1;
+  base_config_.total_memory_range = total_size;
+
+  BenchmarkResult bm_result{base_config_};
+  for (size_t thread = 0; thread < num_threads; ++thread) {
+    std::vector<internal::Latency> latencies{};
+    for (size_t i = 0; i < num_ops_per_thread; ++i) {
+      latencies.emplace_back(100 + (thread * 10), internal::OpType::Write);
+    }
+    bm_result.latencies.emplace_back(latencies);
+  }
+
+  const nlohmann::json& result_json = bm_result.get_result_as_json();
+  ASSERT_JSON_EQ(result_json, size(), 2);
+  ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
+  ASSERT_JSON_TRUE(result_json, contains("duration"));
+
+  const nlohmann::json& bandwidth_json = result_json["bandwidth"];
+  ASSERT_JSON_EQ(bandwidth_json, size(), 1);
+  ASSERT_JSON_TRUE(bandwidth_json, contains("write"));
+  ASSERT_JSON_TRUE(bandwidth_json, at("write").is_number());
+  EXPECT_NEAR(bandwidth_json.at("write").get<double>(), 30.3407, 0.01);
+
+  const nlohmann::json& duration_json = result_json["duration"];
+  ASSERT_JSON_EQ(duration_json, size(), 12);
+  ASSERT_JSON_TRUE(duration_json, contains("avg"));
+  ASSERT_JSON_TRUE(duration_json, contains("median"));
+  EXPECT_EQ(duration_json.at("avg").get<double>(), 135.0);
+  EXPECT_EQ(duration_json.at("median").get<double>(), 130.0);
+}
+
+TEST_F(BenchmarkTest, ResultsMultiThreadMixed) {
+  const size_t num_ops = 64;
+  const size_t num_threads = 16;
+  const size_t num_ops_per_thread = num_ops / num_threads;
+  const size_t total_size = 512 * num_ops;
+  base_config_.number_threads = num_threads;
+  base_config_.number_operations = num_ops;
+  base_config_.access_size = 512;
+  base_config_.read_ratio = 0.5;
+  base_config_.write_ratio = 0.5;
+  base_config_.total_memory_range = total_size;
+  base_config_.exec_mode = internal::Random;
+
+  BenchmarkResult bm_result{base_config_};
+  for (size_t thread = 0; thread < num_threads; ++thread) {
+    std::vector<internal::Latency> latencies{};
+    for (size_t i = 0; i < num_ops_per_thread; ++i) {
+      if (i % 2 == 0) {
+        latencies.emplace_back(400, internal::OpType::Write);
+      } else {
+        latencies.emplace_back(500, internal::OpType::Read);
+      }
+    }
+    bm_result.latencies.emplace_back(latencies);
+  }
+
+  const nlohmann::json& result_json = bm_result.get_result_as_json();
+  ASSERT_JSON_EQ(result_json, size(), 2);
+  ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
+  ASSERT_JSON_TRUE(result_json, contains("duration"));
+
+  const nlohmann::json& bandwidth_json = result_json["bandwidth"];
+  ASSERT_JSON_EQ(bandwidth_json, size(), 2);
+  ASSERT_JSON_TRUE(bandwidth_json, contains("read"));
+  ASSERT_JSON_TRUE(bandwidth_json, contains("write"));
+  ASSERT_JSON_TRUE(bandwidth_json, at("read").is_number());
+  ASSERT_JSON_TRUE(bandwidth_json, at("write").is_number());
+  EXPECT_NEAR(bandwidth_json.at("read").get<double>(), 20.48, 0.01);
+  EXPECT_NEAR(bandwidth_json.at("write").get<double>(), 16.384, 0.01);
+
+  const nlohmann::json& duration_json = result_json["duration"];
+  ASSERT_JSON_EQ(duration_json, size(), 12);
+  ASSERT_JSON_TRUE(duration_json, contains("avg"));
+  ASSERT_JSON_TRUE(duration_json, contains("median"));
+  ASSERT_JSON_TRUE(duration_json, contains("std_dev"));
+  EXPECT_EQ(duration_json.at("avg").get<double>(), 450.0);
+  EXPECT_EQ(duration_json.at("median").get<double>(), 400.0);
+  EXPECT_EQ(duration_json.at("std_dev").get<double>(), 50.0);
+}
 
 }  // namespace perma

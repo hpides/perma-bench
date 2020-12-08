@@ -35,25 +35,18 @@ inline void simd_write(char* addr, const size_t access_size) {
 
 inline void simd_read(const char* addr, const size_t access_size) {
   auto simd_fn = [&]() {
-    //    __m512i res;
+    __m512i res;
     const char* access_end_addr = addr + access_size;
     for (const char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
       // Read 512 Bit (64 Byte)
-      //      res = _mm512_stream_load_si512((void*) mem_addr);
-      asm volatile(
-          "mov       %[m_addr],     %%rsi  \n"
-          "vmovntdqa 0*64(%%rsi), %%zmm0 \n"
-          :
-          : [m_addr] "r"(mem_addr));
+      res = _mm512_stream_load_si512((void*)mem_addr);
     }
-    asm volatile("mfence \n");
-    //    return res;
+    return res;
   };
   // Do a single copy of the last read value to the stack from a zmm register. Otherwise, KEEP copies on each
   // invocation if we have KEEP in the loop because it cannot be sure how KEEP modifies the current zmm register.
-  //  __m512i x = simd_fn();
-  //  KEEP(&x);
-  simd_fn();
+  __m512i x = simd_fn();
+  KEEP(&x);
 }
 #endif
 

@@ -33,7 +33,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
     benchmark.set_up();
     benchmark.run();
 
-    matrix_bm_results += benchmark.get_result();
+    matrix_bm_results += benchmark.get_result_as_json();
 
     benchmark.tear_down();
     previous_bm = &benchmark;
