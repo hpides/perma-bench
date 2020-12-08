@@ -19,6 +19,8 @@ static const char WRITE_DATA[] __attribute__((aligned(64))) =
 
 static constexpr size_t CACHE_LINE_SIZE = 64;
 
+// FLush and barrier operations are from https://github.com/pmem/pmdk/tree/master/src/libpmem2
+
 typedef void flush_fn(const void*, const size_t);
 
 /*
