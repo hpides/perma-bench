@@ -12,7 +12,6 @@
 #ifdef HAS_NUMA
 #include <numa.h>
 #include <numaif.h>
-
 #endif
 
 namespace perma {
