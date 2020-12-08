@@ -19,7 +19,7 @@ namespace internal {
 
 static const size_t BYTE_IN_GIGABYTE = 1e9;
 static const size_t NANOSECONDS_IN_SECONDS = 1e9;
-static const size_t NUM_UTIL_THREADS = 4; // Should be a power of two
+static const size_t NUM_UTIL_THREADS = 4;  // Should be a power of two
 
 struct Measurement {
   Measurement(const std::chrono::high_resolution_clock::time_point start_ts,
