@@ -23,23 +23,13 @@ class IoOperation {
   friend class Benchmark;
 
  public:
-  void run() {
+  inline void run() {
     switch (op_type_) {
       case (internal::Read): {
-#ifdef HAS_AVX
-        if (data_instruction_ == internal::SIMD) {
-          return rw_ops::simd_read(op_addr_, access_size_);
-        }
-#endif
-        return rw_ops::mov_read(op_addr_, access_size_);
+        return run_read();
       }
       case (internal::Write): {
-#ifdef HAS_AVX
-        if (data_instruction_ == internal::SIMD) {
-          return rw_ops::simd_write(op_addr_, access_size_);
-        }
-#endif
-        return rw_ops::mov_write(op_addr_, access_size_);
+        return run_write();
       }
       case (internal::Pause): {
         return std::this_thread::sleep_for(std::chrono::microseconds(duration_));
@@ -75,6 +65,24 @@ class IoOperation {
         data_instruction_{dataInstruction},
         persist_instruction_{persistInstruction} {
     static_assert(sizeof(*this) <= 16, "IoOperation too big.");
+  }
+
+  void run_read() {
+#ifdef HAS_AVX
+    if (data_instruction_ == internal::SIMD) {
+      return rw_ops::simd_read(op_addr_, access_size_);
+    }
+#endif
+    return rw_ops::mov_read(op_addr_, access_size_);
+  }
+
+  void run_write() {
+#ifdef HAS_AVX
+    if (data_instruction_ == internal::SIMD) {
+      return rw_ops::simd_write(op_addr_, access_size_);
+    }
+#endif
+    return rw_ops::mov_write(op_addr_, access_size_);
   }
 
   // The order here is important. At the moment, we can fit this into 16 Byte. Reorder with care.

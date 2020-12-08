@@ -39,7 +39,7 @@ char* create_pmem_file(const std::filesystem::path& file, const size_t length) {
   size_t mapped_length;
   void* pmem_addr = pmem_map_file(file.c_str(), length, PMEM_FILE_CREATE, 0644, &mapped_length, &is_pmem);
   if (pmem_addr == nullptr || (unsigned long)pmem_addr == 0xFFFFFFFFFFFFFFFF) {
-    throw std::runtime_error{"Could not create file: " + file.string()};
+    throw std::runtime_error{"Could not create file: " + file.string() + " (error: " + std::strerror(errno) + ")"};
   }
 
   if (!is_pmem) {
@@ -54,18 +54,19 @@ char* create_pmem_file(const std::filesystem::path& file, const size_t length) {
 }
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir) {
-  if (!std::filesystem::exists(base_dir)) {
-    if (!std::filesystem::create_directories(base_dir)) {
-      throw std::runtime_error{"Could not create dir: " + base_dir.string()};
-    }
-  }
+//  if (!std::filesystem::exists(base_dir)) {
+//    if (!std::filesystem::create_directories(base_dir)) {
+//      throw std::runtime_error{"Could not create dir: " + base_dir.string()};
+//    }
+//  }
   std::string str("abcdefghijklmnopqrstuvwxyz");
   std::random_device rd;
   std::mt19937 generator(rd());
   std::shuffle(str.begin(), str.end(), generator);
   const std::string file_name = str + ".file";
   const std::filesystem::path file{file_name};
-  return base_dir / file;
+  auto x = base_dir / file;
+  return x;
 }
 
 uint64_t duration_to_nanoseconds(const std::chrono::high_resolution_clock::duration duration) {

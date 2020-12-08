@@ -158,6 +158,10 @@ include_directories(${CLI11_DIR})
 add_custom_target(copy_configs
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/configs ${CMAKE_CURRENT_BINARY_DIR}/configs)
 
+if (${BUILD_TEST})
+    add_definitions("-DIS_TEST")
+endif()
+
 include_directories(src)
 add_subdirectory(src)
 

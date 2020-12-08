@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <json.hpp>
 #include <map>
+#include <random>
 #include <utility>
 #include <vector>
 
@@ -20,12 +21,24 @@ namespace internal {
 static const size_t BYTE_IN_GIGABYTE = 1e9;
 static const size_t NANOSECONDS_IN_SECONDS = 1e9;
 
-struct Measurement {
-  Measurement(const std::chrono::high_resolution_clock::time_point start_ts,
-              const std::chrono::high_resolution_clock::time_point end_ts)
-      : start_ts_(start_ts), end_ts_(end_ts){};
-  const std::chrono::high_resolution_clock::time_point start_ts_;
-  const std::chrono::high_resolution_clock::time_point end_ts_;
+struct Latency {
+  Latency() : data{-1u} {}
+  Latency(const uint64_t latency, const internal::OpType op_type) : duration{latency}, op_type{op_type} {};
+
+  union {
+    const uint64_t data;
+    struct {
+      const uint64_t duration : 62;
+      const internal::OpType op_type : 2;
+    };
+  };
+};
+
+struct alignas(16) Measurement {
+  Measurement(const std::chrono::high_resolution_clock::time_point start_ts, const Latency latency)
+      : start_ts(start_ts), latency(latency){};
+  const std::chrono::high_resolution_clock::time_point start_ts;
+  const Latency latency;
 };
 
 }  // namespace internal
@@ -47,8 +60,8 @@ struct BenchmarkConfig {
   internal::DataInstruction data_instruction{internal::DataInstruction::SIMD};
   internal::PersistInstruction persist_instruction{internal::PersistInstruction::NTSTORE};
 
-  double write_ratio = 0.5;
-  double read_ratio = 0.5;
+  double write_ratio = 0.0;
+  double read_ratio = 1.0;
 
   uint64_t pause_frequency = 0;
   uint64_t pause_length_micros = 1000;  // 1 ms
@@ -63,19 +76,55 @@ struct BenchmarkConfig {
   void validate() const;
 };
 
+struct ThreadRunConfig {
+  char* partition_start_addr;
+  const size_t partition_size;
+  const size_t num_threads_per_partition;
+  const size_t thread_num;
+  const size_t num_ops;
+  std::vector<internal::Measurement>& raw_measurements;
+  std::vector<internal::Latency>& latencies;
+  const BenchmarkConfig& config;
+
+
+  ThreadRunConfig(char* partition_start_addr, const size_t partition_size, const size_t num_threads_per_partition,
+                  const size_t thread_num, const size_t num_ops, std::vector<internal::Measurement>& raw_measurements,
+                  std::vector<internal::Latency>& latencies, const BenchmarkConfig& config)
+      : partition_start_addr(partition_start_addr),
+        partition_size(partition_size),
+        num_threads_per_partition(num_threads_per_partition),
+        thread_num(thread_num),
+        num_ops(num_ops),
+        raw_measurements(raw_measurements),
+        latencies(latencies),
+        config(config) {}
+};
+
 class Benchmark {
+#ifdef IS_TEST
+  // This is a nasty hack to test that get_results() does the right thing. To not expose all the internal data or create
+  // extra methods that take in all result calculation data, we define the corresponding tests as friend classes.
+  friend class BenchmarkTest_RunSingleThread_Test;
+  friend class BenchmarkTest_RunMultiThread_Test;
+#endif
+
  public:
-  Benchmark(std::string benchmark_name, BenchmarkConfig config)
-      : benchmark_name_(std::move(benchmark_name)),
-        config_(std::move(config)),
-        pmem_file_{generate_random_file_name(config_.pmem_directory)},
+  Benchmark(std::string benchmark_name, const BenchmarkConfig& config)
+      : benchmark_name_{std::move(benchmark_name)},
+        config_{config},
+        pmem_file_{generate_random_file_name(config.pmem_directory)},
         owns_pmem_file_{true} {};
 
   Benchmark(std::string benchmark_name, BenchmarkConfig config, std::filesystem::path pmem_file)
-      : benchmark_name_(std::move(benchmark_name)),
-        config_(std::move(config)),
+      : benchmark_name_{std::move(benchmark_name)},
+        config_{std::move(config)},
         pmem_file_{std::move(pmem_file)},
         owns_pmem_file_{false} {};
+
+  Benchmark(Benchmark&& other) = default;
+  Benchmark(const Benchmark& other) = delete;
+  Benchmark& operator=(const Benchmark& other) = delete;
+  Benchmark& operator=(Benchmark&& other) = delete;
 
   /** Main run method which executes the benchmark. `setup()` should be called before this. */
   void run();
@@ -97,25 +146,32 @@ class Benchmark {
   nlohmann::json get_result();
 
   const std::string& benchmark_name() const;
-
   const BenchmarkConfig& get_benchmark_config() const;
+  const std::filesystem::path& get_pmem_file() const;
+  const bool owns_pmem_file() const;
+  const char* get_pmem_data() const;
+  const std::vector<ThreadRunConfig>& get_thread_configs() const;
+  const std::vector<std::vector<internal::Measurement>>& get_raw_measurements() const;
+  const std::vector<std::vector<internal::Latency>>& get_latencies() const;
+  const hdr_histogram* get_latency_hdr() const;
 
   ~Benchmark() { tear_down(); }
 
  private:
   nlohmann::json get_json_config();
-  void run_in_thread(uint16_t thread_id);
+  void run_in_thread(ThreadRunConfig& thread_config);
 
-  const BenchmarkConfig config_;
   const std::string benchmark_name_;
   const std::filesystem::path pmem_file_;
   const bool owns_pmem_file_;
   char* pmem_data_{nullptr};
 
-  std::vector<std::vector<IoOperation>> io_operations_;
-  std::vector<std::vector<internal::Measurement>> measurements_;
+  const BenchmarkConfig config_;
+  std::vector<ThreadRunConfig> thread_configs_;
   std::vector<std::thread> pool_;
 
+  std::vector<std::vector<internal::Measurement>> raw_measurements_;
+  std::vector<std::vector<internal::Latency>> latencies_;
   hdr_histogram* latency_hdr_ = nullptr;
 };
 

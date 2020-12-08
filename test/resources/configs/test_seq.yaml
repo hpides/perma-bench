@@ -6,3 +6,5 @@ test_seq:
     number_threads: 2
     pause_frequency: 1024
     pause_length_micros: 10
+    read_ratio: 1
+    write_ratio: 0

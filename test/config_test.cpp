@@ -22,10 +22,10 @@ class ConfigTest : public ::testing::Test {
 };
 
 TEST_F(ConfigTest, DecodeSequential) {
-  std::vector<std::unique_ptr<Benchmark>> benchmarks;
+  std::vector<Benchmark> benchmarks;
   ASSERT_NO_THROW({ benchmarks = BenchmarkFactory::create_benchmarks("/tmp/foo", config_file_seq); });
   ASSERT_EQ(benchmarks.size(), 1);
-  bm_config = benchmarks.at(0)->get_benchmark_config();
+  bm_config = benchmarks.at(0).get_benchmark_config();
 
   BenchmarkConfig bm_config_default{};
 
@@ -38,21 +38,22 @@ TEST_F(ConfigTest, DecodeSequential) {
 
   EXPECT_EQ(bm_config.number_threads, 2);
 
+  EXPECT_EQ(bm_config.read_ratio, 1);
+  EXPECT_EQ(bm_config.write_ratio, 0);
+
   EXPECT_EQ(bm_config.number_operations, bm_config_default.number_operations);
   EXPECT_EQ(bm_config.random_distribution, bm_config_default.random_distribution);
   EXPECT_EQ(bm_config.zipf_alpha, bm_config_default.zipf_alpha);
   EXPECT_EQ(bm_config.data_instruction, bm_config_default.data_instruction);
   EXPECT_EQ(bm_config.persist_instruction, bm_config_default.persist_instruction);
-  EXPECT_EQ(bm_config.write_ratio, bm_config_default.write_ratio);
-  EXPECT_EQ(bm_config.read_ratio, bm_config_default.read_ratio);
   EXPECT_EQ(bm_config.number_partitions, bm_config_default.number_partitions);
 }
 
 TEST_F(ConfigTest, DecodeRandom) {
-  std::vector<std::unique_ptr<Benchmark>> benchmarks;
+  std::vector<Benchmark> benchmarks;
   ASSERT_NO_THROW({ benchmarks = BenchmarkFactory::create_benchmarks("/tmp/foo", config_file_random); });
   ASSERT_EQ(benchmarks.size(), 1);
-  bm_config = benchmarks.at(0)->get_benchmark_config();
+  bm_config = benchmarks.at(0).get_benchmark_config();
 
   BenchmarkConfig bm_config_default{};
 
@@ -61,8 +62,8 @@ TEST_F(ConfigTest, DecodeRandom) {
   EXPECT_EQ(bm_config.random_distribution, internal::RandomDistribution::Zipf);
   EXPECT_EQ(bm_config.zipf_alpha, 0.9);
 
-  EXPECT_EQ(bm_config.write_ratio, 1);
-  EXPECT_EQ(bm_config.read_ratio, 0);
+  EXPECT_EQ(bm_config.write_ratio, 0.3);
+  EXPECT_EQ(bm_config.read_ratio, 0.7);
 
   EXPECT_EQ(bm_config.total_memory_range, bm_config_default.total_memory_range);
   EXPECT_EQ(bm_config.access_size, bm_config_default.access_size);
@@ -123,12 +124,6 @@ TEST_F(ConfigTest, InvalidNumberPartitions) {
 TEST_F(ConfigTest, InvalidThreadPartitionRatio) {
   bm_config.number_partitions = 2;
   bm_config.number_threads = 1;
-  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
-}
-
-TEST_F(ConfigTest, InvalidPauseFrequency) {
-  bm_config.pause_frequency = 256;
-  bm_config.access_size = internal::MIN_IO_OP_SIZE / bm_config.pause_frequency / 2;
   EXPECT_THROW(bm_config.validate(), std::invalid_argument);
 }
 

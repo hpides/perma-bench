@@ -14,7 +14,10 @@ set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
 set(BUILD_GTEST ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-set(PERMA_TEST_SOURCES utils_test.cpp config_test.cpp)
+set(PERMA_TEST_SOURCES
+        benchmark_test.cpp
+        config_test.cpp
+        utils_test.cpp)
 
 add_executable(perma-test perma_test.cpp ${PERMA_TEST_SOURCES})
 add_dependencies(perma-test copy_test_resources)

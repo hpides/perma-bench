@@ -4,6 +4,7 @@
 #include <memory>
 #include <random>
 #include <thread>
+#include <atomic>
 
 #include "read_write_ops.hpp"
 #include "utils.hpp"
@@ -60,7 +61,7 @@ nlohmann::json hdr_histogram_to_json(hdr_histogram* hdr) {
   result["max"] = hdr_max(hdr);
   result["avg"] = hdr_mean(hdr);
   result["min"] = hdr_min(hdr);
-  result["std"] = hdr_stddev(hdr);
+  result["std_dev"] = hdr_stddev(hdr);
   result["median"] = hdr_value_at_percentile(hdr, 50.0);
   result["lower_quartile"] = hdr_value_at_percentile(hdr, 25.0);
   result["upper_quartile"] = hdr_value_at_percentile(hdr, 75.0);
@@ -77,6 +78,23 @@ inline double get_bandwidth(const uint64_t total_data_size, const uint64_t total
   const double data_in_gib = total_data_size / static_cast<double>(perma::internal::BYTE_IN_GIGABYTE);
   return data_in_gib / duration_in_s;
 }
+
+// This is a bit hacky but less complicated than templating the entire Benchmark class.
+// This gives us a fixed duration in tests to check that we calculate the correct latency/bandwidth results.
+#ifdef IS_TEST
+struct TestTimer {
+  static std::atomic<uint64_t> time_;
+  using time_point = std::chrono::high_resolution_clock::time_point;
+  using duration = std::chrono::high_resolution_clock::duration;
+  static time_point now() { static_assert<false>; return time_point(duration(time_.fetch_add(100))); }
+
+};
+std::atomic<uint64_t> TestTimer::time_ = 0;
+using Timer = TestTimer;
+#else
+using Timer = std::chrono::high_resolution_clock;
+#endif
+
 
 }  // namespace
 
@@ -106,21 +124,74 @@ const std::unordered_map<std::string, internal::PersistInstruction> ConfigEnums:
 const std::unordered_map<std::string, internal::RandomDistribution> ConfigEnums::str_to_random_distribution{
     {"uniform", internal::RandomDistribution::Uniform}, {"zipf", internal::RandomDistribution::Zipf}};
 
-void Benchmark::run_in_thread(const uint16_t thread_id) {
-  for (IoOperation io_op : io_operations_[thread_id]) {
-    const auto start_ts = std::chrono::high_resolution_clock::now();
-    io_op.run();
-    const auto end_ts = std::chrono::high_resolution_clock::now();
-    measurements_[thread_id].emplace_back(start_ts, end_ts);
+void Benchmark::run_in_thread(ThreadRunConfig& thread_config) {
+  char* next_op_position = thread_config.partition_start_addr + (thread_config.thread_num * config_.access_size);
+  const size_t ops_per_iteration = thread_config.num_threads_per_partition *  config_.access_size;
+  const uint32_t num_accesses_in_range = thread_config.partition_size / config_.access_size;
+  const bool is_read_only = config_.read_ratio == 1;
+  const bool is_write_only = config_.write_ratio == 1;
+  const bool has_pause = config_.pause_frequency > 0;
+  size_t current_pause_frequency_count = 0;
+  bool is_read = is_read_only;
+
+  std::random_device rnd_device;
+  std::mt19937_64 rnd_generator{rnd_device()};
+  std::bernoulli_distribution io_mode_distribution(config_.read_ratio);
+  std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
+
+  for (uint32_t io_op = 0; io_op < thread_config.num_ops; ++io_op) {
+    char* op_addr = nullptr;
+
+    switch (config_.exec_mode) {
+      case internal::Mode::Random: {
+        uint64_t random_value;
+        if (config_.random_distribution == internal::RandomDistribution::Uniform) {
+          random_value = access_distribution(rnd_generator);
+        } else {
+          random_value = zipf(config_.zipf_alpha, num_accesses_in_range);
+        }
+        op_addr = thread_config.partition_start_addr + (random_value * config_.access_size);
+        is_read = !is_write_only && io_mode_distribution(rnd_generator);
+        break;
+      }
+      case internal::Mode::Sequential: {
+        op_addr = next_op_position;
+        next_op_position += ops_per_iteration;
+        break;
+      }
+      case internal::Mode::Sequential_Desc: {
+        op_addr = next_op_position;
+        next_op_position -= ops_per_iteration;
+        break;
+      }
+    }
+
+    IoOperation operation = is_read ? IoOperation::ReadOp(op_addr, config_.access_size, config_.data_instruction) : IoOperation::WriteOp(op_addr, config_.access_size, config_.data_instruction, config_.persist_instruction);
+
+    const auto start_ts = Timer::now();
+    operation.run();
+    const auto end_ts = Timer::now();
+    internal::Latency latency{static_cast<uint64_t>((end_ts - start_ts).count()), operation.op_type_};
+
+    if (config_.raw_results) {
+      thread_config.raw_measurements.emplace_back(start_ts, latency);
+    } else {
+      thread_config.latencies.emplace_back(latency);
+    }
+
+    if (has_pause && ++current_pause_frequency_count == config_.pause_frequency && io_op < thread_config.num_ops - 1) {
+      IoOperation::PauseOp(config_.pause_length_micros).run();
+      current_pause_frequency_count = 0;
+    }
   }
 }
 
 void Benchmark::run() {
   for (size_t thread_index = 1; thread_index < config_.number_threads; thread_index++) {
-    pool_.emplace_back(&Benchmark::run_in_thread, this, thread_index);
+    pool_.emplace_back(&Benchmark::run_in_thread, this, std::ref(thread_configs_[thread_index]));
   }
 
-  run_in_thread(0);
+  run_in_thread(std::ref(thread_configs_[0]));
 
   // wait for all threads
   for (std::thread& thread : pool_) {
@@ -142,6 +213,65 @@ void Benchmark::create_data_file() {
   }
 }
 
+void Benchmark::set_up() {
+  const size_t num_total_range_ops = config_.total_memory_range / config_.access_size;
+  const size_t num_operations =
+      (config_.exec_mode == internal::Random) ? config_.number_operations : num_total_range_ops;
+  const size_t num_ops_per_thread = num_operations / config_.number_threads;
+
+  pool_.reserve(config_.number_threads - 1);
+  thread_configs_.reserve(config_.number_threads);
+
+  if (config_.raw_results) {
+    raw_measurements_.resize(config_.number_threads);
+  } else {
+    latencies_.resize(config_.number_threads);
+  }
+
+  const uint16_t num_threads_per_partition = config_.number_threads / config_.number_partitions;
+  const uint64_t partition_size = config_.total_memory_range / config_.number_partitions;
+
+  for (uint16_t partition_num = 0; partition_num < config_.number_partitions; partition_num++) {
+    char* partition_start = (config_.exec_mode == internal::Sequential_Desc)
+        ? pmem_data_ + ((config_.number_partitions - partition_num) * partition_size) - config_.access_size
+        : partition_start = pmem_data_ + (partition_num * partition_size);
+
+    for (uint16_t thread_num = 0; thread_num < num_threads_per_partition; thread_num++) {
+      const uint32_t index = thread_num + (partition_num * num_threads_per_partition);
+      if (config_.raw_results) {
+        raw_measurements_[index].reserve(num_ops_per_thread);
+      } else {
+        latencies_[index].reserve(num_ops_per_thread);
+      }
+      thread_configs_.emplace_back(partition_start, partition_size, num_threads_per_partition, thread_num, num_ops_per_thread, raw_measurements_[index], latencies_[index], config_);
+    }
+  }
+
+  // Initialize HdrHistrogram
+  // 100 seconds in nanoseconds as max value.
+  hdr_init(1, 100000000000, 3, &latency_hdr_);
+}
+
+void Benchmark::tear_down(const bool force) {
+  if (pmem_data_ != nullptr) {
+    pmem_unmap(pmem_data_, config_.total_memory_range);
+    pmem_data_ = nullptr;
+  }
+  if (owns_pmem_file_ || force) {
+    std::filesystem::remove(pmem_file_);
+  }
+
+  if (latency_hdr_ != nullptr) {
+    hdr_close(latency_hdr_);
+    latency_hdr_ = nullptr;
+  }
+
+  raw_measurements_.clear();
+  raw_measurements_.shrink_to_fit();
+  latencies_.clear();
+  latencies_.shrink_to_fit();
+}
+
 nlohmann::json Benchmark::get_result() {
   nlohmann::json result;
   result["config"] = get_json_config();
@@ -153,41 +283,45 @@ nlohmann::json Benchmark::get_result() {
   uint64_t total_write_duration = 0;
 
   for (uint16_t thread_num = 0; thread_num < config_.number_threads; thread_num++) {
-    const std::vector<IoOperation>& thread_io_ops = io_operations_[thread_num];
-    const std::vector<internal::Measurement>& thread_measurements = measurements_[thread_num];
+    const std::vector<internal::Measurement>& thread_measurements = raw_measurements_[thread_num];
+    const std::vector<internal::Latency>& thread_latencies = latencies_[thread_num];
+    assert(!raw_measurements_.empty() || !latencies_.empty());
+    const size_t num_ops = std::max(raw_measurements_.size(), latencies_.size());
+    assert(num_ops > 0);
 
-    for (size_t io_op_num = 0; io_op_num < thread_io_ops.size(); io_op_num++) {
-      const internal::Measurement measurement = thread_measurements[io_op_num];
-      const IoOperation io_op = thread_io_ops[io_op_num];
+    const uint64_t data_size = config_.access_size;
 
-      if (!io_op.is_active() && config_.raw_results) {
-        result_points += {{"type", "pause"}, {"length", io_op.duration_}, {"thread_id", thread_num}};
+    for (size_t io_op_num = 0; io_op_num < num_ops; ++io_op_num) {
+      internal::Latency latency = (config_.raw_results) ? thread_measurements[io_op_num].latency : thread_latencies[io_op_num];
+      const uint64_t duration = latency.duration;
+
+      const internal::OpType op_type = latency.op_type;
+      if (op_type == internal::Pause && config_.raw_results) {
+        result_points += {{"type", "pause"}, {"length", duration}, {"thread_id", thread_num}};
         continue;
       }
 
-      const uint64_t latency = duration_to_nanoseconds(measurement.end_ts_ - measurement.start_ts_);
-      const uint64_t data_size = io_op.access_size_;
+      hdr_record_value(latency_hdr_, duration);
 
-      hdr_record_value(latency_hdr_, latency);
-
-      if (io_op.is_read()) {
+      if (op_type == internal::Read) {
         total_read_size += data_size;
-        total_read_duration += latency;
-      } else if (io_op.is_write()) {
+        total_read_duration += duration;
+      } else if (op_type == internal::Write) {
         total_write_size += data_size;
-        total_write_duration += latency;
+        total_write_duration += duration;
       } else {
         throw std::runtime_error{"Unknown IO operation in results"};
       }
 
       if (config_.raw_results) {
-        const uint64_t start_ts = duration_to_nanoseconds(measurement.start_ts_.time_since_epoch());
-        const uint64_t end_ts = duration_to_nanoseconds(measurement.end_ts_.time_since_epoch());
-        const uint64_t bandwidth = data_size / (latency / static_cast<double>(internal::NANOSECONDS_IN_SECONDS));
+        const internal::Measurement measurement = thread_measurements[io_op_num];
+        const uint64_t start_ts = duration_to_nanoseconds(measurement.start_ts.time_since_epoch());
+        const uint64_t end_ts = start_ts + duration;
+        const uint64_t bandwidth = data_size / (duration / static_cast<double>(internal::NANOSECONDS_IN_SECONDS));
         const double bandwidth_gib = bandwidth / static_cast<double>(internal::BYTE_IN_GIGABYTE);
 
-        result_points += {{"type", io_op.is_write() ? "write" : "read"},
-                          {"latency", latency},
+        result_points += {{"type", op_type == internal::Write ? "write" : "read"},
+                          {"latency", duration},
                           {"bandwidth", bandwidth_gib},
                           {"data_size", data_size},
                           {"start_timestamp", start_ts},
@@ -212,114 +346,9 @@ nlohmann::json Benchmark::get_result() {
   }
 
   result["bandwidth"] = bandwidth_results;
-  result["latency"] = hdr_histogram_to_json(latency_hdr_);
+  result["duration"] = hdr_histogram_to_json(latency_hdr_);
 
   return result;
-}
-
-void Benchmark::set_up() {
-  const size_t num_total_range_ops = config_.total_memory_range / config_.access_size;
-  const size_t num_operations =
-      (config_.exec_mode == internal::Random) ? config_.number_operations : num_total_range_ops;
-  const size_t num_ops_per_thread = num_operations / config_.number_threads;
-  const char* max_addr = pmem_data_ + config_.total_memory_range;
-
-  io_operations_.reserve(config_.number_threads);
-  pool_.reserve(config_.number_threads - 1);
-  measurements_.resize(config_.number_threads);
-
-  const uint16_t num_threads_per_partition = config_.number_threads / config_.number_partitions;
-  const uint64_t partition_size = config_.total_memory_range / config_.number_partitions;
-
-  std::random_device rnd_device;
-  std::mt19937_64 rnd_generator{rnd_device()};
-
-  for (uint16_t partition_num = 0; partition_num < config_.number_partitions; partition_num++) {
-    char* partition_start;
-    const char* partition_end;
-    if (config_.exec_mode == internal::Sequential_Desc) {
-      partition_start =
-          pmem_data_ + ((config_.number_partitions - partition_num) * partition_size) - config_.access_size;
-    } else {
-      partition_start = pmem_data_ + (partition_num * partition_size);
-    }
-
-    for (uint16_t thread_num = 0; thread_num < num_threads_per_partition; thread_num++) {
-      const uint32_t index = thread_num + (partition_num * num_threads_per_partition);
-      measurements_[index].reserve(num_ops_per_thread);
-
-      const uint64_t num_pauses = config_.pause_frequency == 0 ? 0 : num_ops_per_thread / config_.pause_frequency - 1;
-      std::vector<IoOperation> io_ops{};
-      io_ops.reserve(num_ops_per_thread + num_pauses);
-      size_t current_pause_frequency_count = 0;
-
-      // Create IOOperations
-      char* next_op_position = partition_start;
-      std::bernoulli_distribution io_mode_distribution(config_.read_ratio);
-
-      for (uint32_t io_op = 1; io_op <= num_ops_per_thread; ++io_op) {
-        char* op_addr = nullptr;
-
-        switch (config_.exec_mode) {
-          case internal::Mode::Random: {
-            const uint32_t num_accesses_in_range = partition_size / config_.access_size;
-
-            std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
-
-            uint64_t random_value;
-            if (config_.random_distribution == internal::RandomDistribution::Uniform) {
-              random_value = access_distribution(rnd_generator);
-            } else {
-              random_value = zipf(config_.zipf_alpha, num_accesses_in_range);
-            }
-            op_addr = partition_start + (random_value * config_.access_size);
-            break;
-          }
-          case internal::Mode::Sequential: {
-            op_addr = next_op_position;
-            next_op_position += config_.access_size;
-            break;
-          }
-          case internal::Mode::Sequential_Desc: {
-            op_addr = next_op_position;
-            next_op_position -= config_.access_size;
-            break;
-          }
-        }
-
-        assert(op_addr < max_addr);
-        const bool is_read = io_mode_distribution(rnd_generator);
-        IoOperation operation = is_read ? IoOperation::ReadOp(op_addr, config_.access_size, config_.data_instruction) : IoOperation::WriteOp(op_addr, config_.access_size, config_.data_instruction, config_.persist_instruction);
-        io_ops.push_back(operation);
-
-        current_pause_frequency_count++;
-        if (num_pauses > 0 && current_pause_frequency_count == config_.pause_frequency && io_op < num_ops_per_thread) {
-          io_ops.push_back(IoOperation::PauseOp(config_.pause_length_micros));
-          current_pause_frequency_count = 0;
-        }
-      }
-      io_operations_.push_back(std::move(io_ops));
-    }
-  }
-
-  // Initialize HdrHistrogram
-  // 100 seconds in nanoseconds as max value.
-  hdr_init(1, 100000000000, 3, &latency_hdr_);
-}
-
-void Benchmark::tear_down(const bool force) {
-  if (pmem_data_ != nullptr) {
-    pmem_unmap(pmem_data_, config_.total_memory_range);
-    pmem_data_ = nullptr;
-  }
-  if (owns_pmem_file_ || force) {
-    std::filesystem::remove(pmem_file_);
-  }
-
-  if (latency_hdr_ != nullptr) {
-    hdr_close(latency_hdr_);
-    latency_hdr_ = nullptr;
-  }
 }
 
 nlohmann::json Benchmark::get_json_config() {
@@ -351,6 +380,22 @@ nlohmann::json Benchmark::get_json_config() {
 const std::string& Benchmark::benchmark_name() const { return benchmark_name_; }
 
 const BenchmarkConfig& Benchmark::get_benchmark_config() const { return config_; }
+
+const std::filesystem::path& Benchmark::get_pmem_file() const { return pmem_file_; }
+
+const bool Benchmark::owns_pmem_file() const { return owns_pmem_file_; }
+
+const char* Benchmark::get_pmem_data() const { return pmem_data_; }
+
+const std::vector<ThreadRunConfig>& Benchmark::get_thread_configs() const { return thread_configs_; }
+
+const std::vector<std::vector<internal::Measurement>>& Benchmark::get_raw_measurements() const {
+  return raw_measurements_;
+}
+
+const std::vector<std::vector<internal::Latency>>& Benchmark::get_latencies() const { return latencies_; }
+
+const hdr_histogram* Benchmark::get_latency_hdr() const { return latency_hdr_; }
 
 BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
   BenchmarkConfig bm_config{};
