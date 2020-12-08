@@ -96,7 +96,8 @@ const std::unordered_map<std::string, internal::DataInstruction> ConfigEnums::st
 const std::unordered_map<std::string, internal::PersistInstruction> ConfigEnums::str_to_persist_instruction{
     {"ntstore", internal::PersistInstruction::NTSTORE},
     {"clwb", internal::PersistInstruction::CLWB},
-    {"clflush", internal::PersistInstruction::CLFLUSH}};
+    {"clflush", internal::PersistInstruction::CLFLUSH},
+    {"none", internal::PersistInstruction::None}};
 
 const std::unordered_map<std::string, internal::RandomDistribution> ConfigEnums::str_to_random_distribution{
     {"uniform", internal::RandomDistribution::Uniform}, {"zipf", internal::RandomDistribution::Zipf}};
@@ -329,6 +330,8 @@ nlohmann::json Benchmark::get_json_config() {
   config["pause_frequency"] = config_.pause_frequency;
   config["number_partitions"] = config_.number_partitions;
   config["number_threads"] = config_.number_threads;
+  config["data_instruction"] = config_.data_instruction;
+  config["persist_instruction"] = config_.persist_instruction;
 
   if (config_.pause_frequency > 0) {
     config["pause_length_micros"] = config_.pause_length_micros;
