@@ -134,7 +134,22 @@ void Benchmark::create_data_file() {
   pmem_data_ = create_pmem_file(pmem_file_, config_.total_memory_range);
   if (config_.read_ratio > 0) {
     // If we read data in this benchmark, we need to generate it first.
-    rw_ops::write_data(pmem_data_, pmem_data_ + config_.total_memory_range);
+    std::vector<std::thread> thread_pool;
+    thread_pool.reserve(internal::NUM_UTIL_THREADS - 1);
+    uint64_t thread_memory_range = config_.total_memory_range / internal::NUM_UTIL_THREADS;
+    for (uint8_t thread_count = 0; thread_count < internal::NUM_UTIL_THREADS - 1; thread_count++) {
+      char* from = pmem_data_ + thread_count * thread_memory_range;
+      const char* to = pmem_data_ + (thread_count + 1) * thread_memory_range;
+      thread_pool.emplace_back(rw_ops::write_data, from, to);
+    }
+
+    rw_ops::write_data(pmem_data_ + (internal::NUM_UTIL_THREADS - 1) * thread_memory_range,
+                       pmem_data_ + config_.total_memory_range);
+
+    // wait for all threads
+    for (std::thread& thread : thread_pool) {
+      thread.join();
+    }
   }
 }
 
