@@ -133,28 +133,24 @@ inline void simd_read(const std::vector<char*>& op_addresses, const size_t acces
 #endif
 
 inline void mov_write_data_nt(char* from, const char* to) {
-  asm volatile(
-      "movq 0*8(%[write_data]), %%r8  \n\t"
-      "movq 1*8(%[write_data]), %%r9  \n\t"
-      "movq 2*8(%[write_data]), %%r10 \n\t"
-      "movq 3*8(%[write_data]), %%r11 \n\t"
-      "movq 4*8(%[write_data]), %%r12 \n\t"
-      "movq 5*8(%[write_data]), %%r13 \n\t"
-      "movq 6*8(%[write_data]), %%r14 \n\t"
-      "movq 7*8(%[write_data]), %%r15 \n\t"
-      :
-      : [ write_data ] "r"(WRITE_DATA)
-      : "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15");
-
+  __m64* data_0 = (__m64*)&WRITE_DATA[0 * 8];
+  __m64* data_1 = (__m64*)&WRITE_DATA[1 * 8];
+  __m64* data_2 = (__m64*)&WRITE_DATA[2 * 8];
+  __m64* data_3 = (__m64*)&WRITE_DATA[3 * 8];
+  __m64* data_4 = (__m64*)&WRITE_DATA[4 * 8];
+  __m64* data_5 = (__m64*)&WRITE_DATA[5 * 8];
+  __m64* data_6 = (__m64*)&WRITE_DATA[6 * 8];
+  __m64* data_7 = (__m64*)&WRITE_DATA[7 * 8];
   for (char* mem_addr = from; mem_addr < to; mem_addr += CACHE_LINE_SIZE) {
     // Write 512 Bit (64 Byte)
-    uint8_t index = 0;
-    for (char* mem_byte_addr = mem_addr; mem_byte_addr < mem_addr + CACHE_LINE_SIZE; mem_byte_addr += 8, index += 8) {
-      // Write 64 Bit (8 Byte)
-      const char* write_data_sub_arr = &WRITE_DATA[index];
-      __m64* data = (__m64*)write_data_sub_arr;
-      _mm_stream_pi(reinterpret_cast<__m64*>(mem_byte_addr), *data);
-    }
+    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 0 * 8), *data_0);
+    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 1 * 8), *data_1);
+    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 2 * 8), *data_2);
+    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 3 * 8), *data_3);
+    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 4 * 8), *data_4);
+    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 5 * 8), *data_5);
+    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 6 * 8), *data_6);
+    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 7 * 8), *data_7);
   }
 }
 
