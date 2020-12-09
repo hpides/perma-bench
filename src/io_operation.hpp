@@ -13,7 +13,7 @@ static constexpr uint32_t MIN_IO_OP_SIZE = 128 * 1024u;
 
 enum Mode { Sequential, Sequential_Desc, Random };
 enum DataInstruction { MOV, SIMD };
-enum PersistInstruction { CLWB, NTSTORE, CLFLUSH };
+enum PersistInstruction { CLWB, NTSTORE, CLFLUSH, None };
 enum RandomDistribution { Uniform, Zipf };
 
 }  // namespace internal

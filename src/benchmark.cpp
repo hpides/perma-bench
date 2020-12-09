@@ -54,6 +54,16 @@ bool get_enum_if_present(YAML::Node& data, const std::string& name, const std::u
   return true;
 }
 
+template <typename T>
+std::string get_enum_as_string(const std::unordered_map<std::string, T>& enum_map, T value) {
+  for (auto it = enum_map.cbegin(); it != enum_map.cend(); ++it) {
+    if (it->second == value) {
+      return it->first;
+    }
+  }
+  throw std::invalid_argument("Unknown enum value for " + std::string(typeid(T).name()));
+}
+
 nlohmann::json hdr_histogram_to_json(hdr_histogram* hdr, const bool include_percentiles = false) {
   nlohmann::json result;
   result["max"] = hdr_max(hdr);
@@ -96,7 +106,8 @@ const std::unordered_map<std::string, internal::DataInstruction> ConfigEnums::st
 const std::unordered_map<std::string, internal::PersistInstruction> ConfigEnums::str_to_persist_instruction{
     {"ntstore", internal::PersistInstruction::NTSTORE},
     {"clwb", internal::PersistInstruction::CLWB},
-    {"clflush", internal::PersistInstruction::CLFLUSH}};
+    {"clflush", internal::PersistInstruction::CLFLUSH},
+    {"none", internal::PersistInstruction::None}};
 
 const std::unordered_map<std::string, internal::RandomDistribution> ConfigEnums::str_to_random_distribution{
     {"uniform", internal::RandomDistribution::Uniform}, {"zipf", internal::RandomDistribution::Zipf}};
@@ -133,7 +144,7 @@ void Benchmark::create_data_file() {
   pmem_data_ = create_pmem_file(pmem_file_, config_.total_memory_range);
   if (config_.read_ratio > 0) {
     // If we read data in this benchmark, we need to generate it first.
-    rw_ops::write_data(pmem_data_, pmem_data_ + config_.total_memory_range);
+    generate_read_data(pmem_data_, config_.total_memory_range);
   }
 }
 
@@ -323,12 +334,15 @@ nlohmann::json Benchmark::get_json_config() {
   nlohmann::json config;
   config["total_memory_range"] = config_.total_memory_range;
   config["access_size"] = config_.access_size;
-  config["exec_mode"] = config_.exec_mode;
+  config["exec_mode"] = get_enum_as_string(ConfigEnums::str_to_mode, config_.exec_mode);
   config["write_ratio"] = config_.write_ratio;
   config["read_ratio"] = config_.read_ratio;
   config["pause_frequency"] = config_.pause_frequency;
   config["number_partitions"] = config_.number_partitions;
   config["number_threads"] = config_.number_threads;
+  config["data_instruction"] = get_enum_as_string(ConfigEnums::str_to_data_instruction, config_.data_instruction);
+  config["persist_instruction"] =
+      get_enum_as_string(ConfigEnums::str_to_persist_instruction, config_.persist_instruction);
 
   if (config_.pause_frequency > 0) {
     config["pause_length_micros"] = config_.pause_length_micros;
@@ -336,7 +350,8 @@ nlohmann::json Benchmark::get_json_config() {
 
   if (config_.exec_mode == internal::Mode::Random) {
     config["number_operations"] = config_.number_operations;
-    config["random_distribution"] = config_.random_distribution;
+    config["random_distribution"] =
+        get_enum_as_string(ConfigEnums::str_to_random_distribution, config_.random_distribution);
     if (config_.random_distribution == internal::Zipf) {
       config["zipf_alpha"] = config_.zipf_alpha;
     }
