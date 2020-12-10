@@ -10,8 +10,8 @@ fi
 
 if [ ! -d "$DIR/venv" ]; then
     mkdir "$DIR/venv"
-    python -m virtualenv "$DIR/venv"
+    python3 -m virtualenv "$DIR/venv"
     source "$DIR/venv/bin/activate"
     pip3 install -r "$DIR/requirements.txt"
 fi
-python "$DIR/viz/main.py" $1
+python3 "$DIR/viz/main.py" $1
