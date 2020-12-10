@@ -28,9 +28,9 @@ def create_pngs_for_raw_jsons(results_dir):
         del raw_plotter
 
 
-def create_pngs_for_matrix_json(results_dir):
+def create_pngs_for_matrix_jsons(results_dir):
     # TODO
-    print("Insert png creation of json containing matrices here.")
+    print("Insert png creation of jsons containing matrices here.")
 
 
 if __name__ == "__main__":
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     # create pngs
     create_pngs_for_raw_jsons(results_dir)
-    create_pngs_for_matrix_json(results_dir)
+    create_pngs_for_matrix_jsons(results_dir)
 
     # create and open user interface for pngs (at the moment: only for raw result pngs)
     ui.init(img_dir)
