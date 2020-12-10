@@ -204,9 +204,7 @@ inline void mov_write_nt(char* addr, const size_t access_size) {
   mov_write_nt(addr, access_size, no_flush, sfence_barrier);
 }
 
-inline void mov_write_none(char* addr, const size_t access_size) {
-  mov_write(addr, access_size, no_flush, no_barrier);
-}
+inline void mov_write_none(char* addr, const size_t access_size) { mov_write(addr, access_size, no_flush, no_barrier); }
 
 inline void mov_read(char* addr, const size_t access_size) {
   const char* access_end_addr = addr + access_size;
