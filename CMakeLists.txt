@@ -158,10 +158,6 @@ include_directories(${CLI11_DIR})
 add_custom_target(copy_configs
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/configs ${CMAKE_CURRENT_BINARY_DIR}/configs)
 
-if (${BUILD_TEST})
-    add_definitions("-DIS_TEST")
-endif()
-
 include_directories(src)
 add_subdirectory(src)
 
@@ -169,7 +165,7 @@ add_subdirectory(src)
 option(BUILD_TEST "Set true if tests should be built and run.")
 
 if (${BUILD_TEST})
+    message(STATUS "Test are included in this build.")
     enable_testing()
     add_subdirectory(test)
-    message(STATUS "Test are included in this build.")
 endif ()

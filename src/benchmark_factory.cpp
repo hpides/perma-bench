@@ -8,7 +8,8 @@
 
 namespace perma {
 
-std::vector<Benchmark> BenchmarkFactory::create_benchmarks(const std::filesystem::path& pmem_directory, const std::filesystem::path& config_file) {
+std::vector<Benchmark> BenchmarkFactory::create_benchmarks(const std::filesystem::path& pmem_directory,
+                                                           const std::filesystem::path& config_file) {
   std::vector<Benchmark> benchmarks{};
   try {
     YAML::Node config = YAML::LoadFile(config_file);
@@ -29,7 +30,7 @@ std::vector<Benchmark> BenchmarkFactory::create_benchmarks(const std::filesystem
       } else {
         BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args);
         bm_config.pmem_directory = pmem_directory;
-        benchmarks.emplace_back(name, std::move(bm_config));
+        benchmarks.emplace_back(name, bm_config);
       }
     }
   } catch (const YAML::ParserException& e1) {
@@ -40,9 +41,9 @@ std::vector<Benchmark> BenchmarkFactory::create_benchmarks(const std::filesystem
   return benchmarks;
 }
 
-std::vector<Benchmark> BenchmarkFactory::create_benchmark_matrix(
-    const std::string& bm_name, const std::filesystem::path& pmem_directory, YAML::Node& config_args,
-    YAML::Node& matrix_args) {
+std::vector<Benchmark> BenchmarkFactory::create_benchmark_matrix(const std::string& bm_name,
+                                                                 const std::filesystem::path& pmem_directory,
+                                                                 YAML::Node& config_args, YAML::Node& matrix_args) {
   if (!matrix_args.IsMap()) {
     throw std::invalid_argument("'matrix' must be a YAML map.");
   }
@@ -64,9 +65,9 @@ std::vector<Benchmark> BenchmarkFactory::create_benchmark_matrix(
 
       // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
       if (final_config.write_ratio > 0) {
-        matrix.emplace_back(bm_name, std::move(final_config));
+        matrix.emplace_back(bm_name, final_config);
       } else {
-        matrix.emplace_back(bm_name, std::move(final_config), pmem_data_file);
+        matrix.emplace_back(bm_name, final_config, pmem_data_file);
       }
 
       return;
@@ -87,7 +88,7 @@ std::vector<Benchmark> BenchmarkFactory::create_benchmark_matrix(
 
   YAML::Node base_config = YAML::Clone(config_args);
   create_matrix(matrix_args.begin(), base_config);
-  return std::move(matrix);
+  return matrix;
 }
 
 }  // namespace perma

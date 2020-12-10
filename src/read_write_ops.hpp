@@ -61,7 +61,7 @@ inline void mov_write_data(char* from, const char* to) {
       "movq 6*8(%[write_data]), %%r14 \n\t"
       "movq 7*8(%[write_data]), %%r15 \n\t"
       :
-      : [write_data] "r"(WRITE_DATA)
+      : [ write_data ] "r"(WRITE_DATA)
       : "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15");
 
   for (char* mem_addr = from; mem_addr < to; mem_addr += CACHE_LINE_SIZE) {
@@ -76,7 +76,7 @@ inline void mov_write_data(char* from, const char* to) {
         "movq %%r14, 6*8(%[addr]) \n\t"
         "movq %%r15, 7*8(%[addr]) \n\t"
         :
-        : [addr] "r"(mem_addr), [write_data] "r"(WRITE_DATA));
+        : [ addr ] "r"(mem_addr), [ write_data ] "r"(WRITE_DATA));
   }
 }
 
@@ -100,7 +100,7 @@ inline void mov_read(const char* addr, const size_t access_size) {
         "movq 6*8(%[addr]), %%r14 \n\t"
         "movq 7*8(%[addr]), %%r15 \n\t"
         :
-        : [addr] "r"(mem_addr));
+        : [ addr ] "r"(mem_addr));
   }
 }
 

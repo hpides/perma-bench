@@ -4,7 +4,6 @@
 #include <memory>
 #include <random>
 #include <thread>
-#include <atomic>
 
 #include "read_write_ops.hpp"
 #include "utils.hpp"
@@ -108,7 +107,7 @@ const std::unordered_map<std::string, internal::RandomDistribution> ConfigEnums:
     {"uniform", internal::RandomDistribution::Uniform}, {"zipf", internal::RandomDistribution::Zipf}};
 
 void Benchmark::run_in_thread(ThreadRunConfig& thread_config) {
-  const size_t ops_per_iteration = thread_config.num_threads_per_partition *  config_.access_size;
+  const size_t ops_per_iteration = thread_config.num_threads_per_partition * config_.access_size;
   const uint32_t num_accesses_in_range = thread_config.partition_size / config_.access_size;
   const bool is_read_only = config_.read_ratio == 1;
   const bool is_write_only = config_.write_ratio == 1;
@@ -119,8 +118,8 @@ void Benchmark::run_in_thread(ThreadRunConfig& thread_config) {
 
   const size_t thread_partition_offset = thread_config.thread_num * config_.access_size;
   char* next_op_position = config_.exec_mode == internal::Sequential_Desc
-      ? thread_config.partition_start_addr - thread_partition_offset
-      : thread_config.partition_start_addr + thread_partition_offset;
+                               ? thread_config.partition_start_addr - thread_partition_offset
+                               : thread_config.partition_start_addr + thread_partition_offset;
 
   std::random_device rnd_device;
   std::mt19937_64 rnd_generator{rnd_device()};
@@ -154,7 +153,9 @@ void Benchmark::run_in_thread(ThreadRunConfig& thread_config) {
       }
     }
 
-    IoOperation operation = is_read ? IoOperation::ReadOp(op_addr, config_.access_size, config_.data_instruction) : IoOperation::WriteOp(op_addr, config_.access_size, config_.data_instruction, config_.persist_instruction);
+    IoOperation operation = is_read ? IoOperation::ReadOp(op_addr, config_.access_size, config_.data_instruction)
+                                    : IoOperation::WriteOp(op_addr, config_.access_size, config_.data_instruction,
+                                                           config_.persist_instruction);
 
     const auto start_ts = std::chrono::high_resolution_clock::now();
     operation.run();
@@ -162,9 +163,9 @@ void Benchmark::run_in_thread(ThreadRunConfig& thread_config) {
     internal::Latency latency{static_cast<uint64_t>((end_ts - start_ts).count()), operation.op_type_};
 
     if (config_.raw_results) {
-      thread_config.raw_measurements.emplace_back(start_ts, latency);
+      thread_config.raw_measurements->emplace_back(start_ts, latency);
     } else {
-      thread_config.latencies.emplace_back(latency);
+      thread_config.latencies->emplace_back(latency);
     }
 
     if (has_pause && ++current_pause_frequency_count == config_.pause_frequency && io_op < thread_config.num_ops - 1) {
@@ -211,27 +212,30 @@ void Benchmark::set_up() {
   thread_configs_.reserve(config_.number_threads);
 
   if (config_.raw_results) {
-    result_.raw_measurements.resize(config_.number_threads);
+    result_->raw_measurements.resize(config_.number_threads);
   } else {
-    result_.latencies.resize(config_.number_threads);
+    result_->latencies.resize(config_.number_threads);
   }
 
   const uint16_t num_threads_per_partition = config_.number_threads / config_.number_partitions;
   const uint64_t partition_size = config_.total_memory_range / config_.number_partitions;
 
   for (uint16_t partition_num = 0; partition_num < config_.number_partitions; partition_num++) {
-    char* partition_start = (config_.exec_mode == internal::Sequential_Desc)
-        ? pmem_data_ + ((config_.number_partitions - partition_num) * partition_size) - config_.access_size
-        : partition_start = pmem_data_ + (partition_num * partition_size);
+    char* partition_start =
+        (config_.exec_mode == internal::Sequential_Desc)
+            ? pmem_data_ + ((config_.number_partitions - partition_num) * partition_size) - config_.access_size
+            : partition_start = pmem_data_ + (partition_num * partition_size);
 
     for (uint16_t thread_num = 0; thread_num < num_threads_per_partition; thread_num++) {
       const uint32_t index = thread_num + (partition_num * num_threads_per_partition);
       if (config_.raw_results) {
-        result_.raw_measurements[index].reserve(num_ops_per_thread);
+        result_->raw_measurements[index].reserve(num_ops_per_thread);
       } else {
-        result_.latencies[index].reserve(num_ops_per_thread);
+        result_->latencies[index].reserve(num_ops_per_thread);
       }
-      thread_configs_.emplace_back(partition_start, partition_size, num_threads_per_partition, thread_num, num_ops_per_thread, result_.raw_measurements[index], result_.latencies[index], config_);
+      thread_configs_.emplace_back(partition_start, partition_size, num_threads_per_partition, thread_num,
+                                   num_ops_per_thread, &result_->raw_measurements[index], &result_->latencies[index],
+                                   config_);
     }
   }
 }
@@ -249,7 +253,7 @@ void Benchmark::tear_down(const bool force) {
 nlohmann::json Benchmark::get_result_as_json() {
   nlohmann::json result;
   result["config"] = get_json_config();
-  result.update(result_.get_result_as_json());
+  result.update(result_->get_result_as_json());
   return result;
 }
 
@@ -279,21 +283,35 @@ nlohmann::json Benchmark::get_json_config() {
   return config;
 }
 
+Benchmark::Benchmark(std::string benchmark_name, const BenchmarkConfig& config)
+    : benchmark_name_{std::move(benchmark_name)},
+      pmem_file_{generate_random_file_name(config.pmem_directory)},
+      owns_pmem_file_{true},
+      config_{config},
+      result_{std::make_unique<BenchmarkResult>(config)} {}
+
+Benchmark::Benchmark(std::string benchmark_name, const BenchmarkConfig& config, std::filesystem::path pmem_file)
+    : benchmark_name_{std::move(benchmark_name)},
+      pmem_file_{std::move(pmem_file)},
+      owns_pmem_file_{false},
+      config_{config},
+      result_{std::make_unique<BenchmarkResult>(config)} {}
+
 const std::string& Benchmark::benchmark_name() const { return benchmark_name_; }
 
 const BenchmarkConfig& Benchmark::get_benchmark_config() const { return config_; }
 
 const std::filesystem::path& Benchmark::get_pmem_file() const { return pmem_file_; }
 
-const bool Benchmark::owns_pmem_file() const { return owns_pmem_file_; }
+bool Benchmark::owns_pmem_file() const { return owns_pmem_file_; }
 
 const char* Benchmark::get_pmem_data() const { return pmem_data_; }
 
 const std::vector<ThreadRunConfig>& Benchmark::get_thread_configs() const { return thread_configs_; }
 
-const BenchmarkResult& Benchmark::get_benchmark_result() const { return result_; }
+const BenchmarkResult& Benchmark::get_benchmark_result() const { return *result_; }
 
-BenchmarkResult::BenchmarkResult(const BenchmarkConfig& config) : config{config} {
+BenchmarkResult::BenchmarkResult(const BenchmarkConfig& config) : config{config}, latency_hdr{nullptr} {
   // Initialize HdrHistrogram
   // 100 seconds in nanoseconds as max value.
   hdr_init(1, 100000000000, 3, &latency_hdr);
@@ -306,7 +324,7 @@ BenchmarkResult::~BenchmarkResult() {
 
   raw_measurements.clear();
   raw_measurements.shrink_to_fit();
-  latencies. clear();
+  latencies.clear();
   latencies.shrink_to_fit();
 }
 
@@ -328,7 +346,8 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
   const uint64_t data_size = config.access_size;
 
   for (uint16_t thread_num = 0; thread_num < config.number_threads; thread_num++) {
-    const std::vector<internal::Measurement>& thread_measurements = is_raw ? raw_measurements[thread_num] : dummy_measurements;
+    const std::vector<internal::Measurement>& thread_measurements =
+        is_raw ? raw_measurements[thread_num] : dummy_measurements;
     const std::vector<internal::Latency>& thread_latencies = is_raw ? dummy_latencies : latencies[thread_num];
 
     for (size_t io_op_num = 0; io_op_num < num_ops; ++io_op_num) {

@@ -5,6 +5,7 @@
 
 namespace perma {
 
+constexpr auto TEST_CONFIG_FILE_MATRIX = "test_matrix.yaml";
 constexpr auto TEST_CONFIG_FILE_SEQ = "test_seq.yaml";
 constexpr auto TEST_CONFIG_FILE_RANDOM = "test_random.yaml";
 
@@ -12,10 +13,12 @@ class ConfigTest : public ::testing::Test {
  protected:
   void SetUp() override {
     const std::filesystem::path test_config_path = std::filesystem::current_path() / "resources" / "configs";
+    config_file_matrix = test_config_path / TEST_CONFIG_FILE_MATRIX;
     config_file_seq = test_config_path / TEST_CONFIG_FILE_SEQ;
     config_file_random = test_config_path / TEST_CONFIG_FILE_RANDOM;
   }
 
+  std::filesystem::path config_file_matrix;
   std::filesystem::path config_file_seq;
   std::filesystem::path config_file_random;
   BenchmarkConfig bm_config;
@@ -74,6 +77,45 @@ TEST_F(ConfigTest, DecodeRandom) {
   EXPECT_EQ(bm_config.pause_length_micros, bm_config_default.pause_length_micros);
   EXPECT_EQ(bm_config.number_partitions, bm_config_default.number_partitions);
   EXPECT_EQ(bm_config.number_threads, bm_config_default.number_threads);
+}
+
+TEST_F(ConfigTest, DecodeMatrix) {
+  const size_t num_bms = 6;
+  std::vector<Benchmark> benchmarks;
+  ASSERT_NO_THROW({ benchmarks = BenchmarkFactory::create_benchmarks("/tmp/foo", config_file_matrix); });
+  ASSERT_EQ(benchmarks.size(), num_bms);
+  EXPECT_EQ(benchmarks[0].get_benchmark_config().number_threads,   1);
+  EXPECT_EQ(benchmarks[0].get_benchmark_config().access_size,    256);
+  EXPECT_EQ(benchmarks[1].get_benchmark_config().number_threads,   1);
+  EXPECT_EQ(benchmarks[1].get_benchmark_config().access_size,   4096);
+  EXPECT_EQ(benchmarks[2].get_benchmark_config().number_threads,   2);
+  EXPECT_EQ(benchmarks[2].get_benchmark_config().access_size,    256);
+  EXPECT_EQ(benchmarks[3].get_benchmark_config().number_threads,   2);
+  EXPECT_EQ(benchmarks[3].get_benchmark_config().access_size,   4096);
+  EXPECT_EQ(benchmarks[4].get_benchmark_config().number_threads,   4);
+  EXPECT_EQ(benchmarks[4].get_benchmark_config().access_size,    256);
+  EXPECT_EQ(benchmarks[5].get_benchmark_config().number_threads,   4);
+  EXPECT_EQ(benchmarks[5].get_benchmark_config().access_size,   4096);
+
+  BenchmarkConfig bm_config_default{};
+  for (size_t i = 0; i < num_bms; ++i) {
+    const Benchmark& bm = benchmarks[i];
+    const BenchmarkConfig& config = bm.get_benchmark_config();
+
+    // Other args are identical for all configs
+    EXPECT_EQ(config.total_memory_range, 67108864);
+    EXPECT_EQ(config.exec_mode, internal::Mode::Sequential);
+    EXPECT_EQ(config.read_ratio, 1);
+    EXPECT_EQ(config.write_ratio, 0);
+    EXPECT_EQ(config.number_operations, bm_config_default.number_operations);
+    EXPECT_EQ(config.random_distribution, bm_config_default.random_distribution);
+    EXPECT_EQ(config.zipf_alpha, bm_config_default.zipf_alpha);
+    EXPECT_EQ(config.data_instruction, bm_config_default.data_instruction);
+    EXPECT_EQ(config.persist_instruction, bm_config_default.persist_instruction);
+    EXPECT_EQ(config.number_partitions, bm_config_default.number_partitions);
+    EXPECT_EQ(config.pause_frequency, bm_config_default.pause_frequency);
+    EXPECT_EQ(config.pause_length_micros, bm_config_default.pause_length_micros);
+  }
 }
 
 TEST_F(ConfigTest, CheckDefaultConfig) { EXPECT_NO_THROW(bm_config.validate()); }

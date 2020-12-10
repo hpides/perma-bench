@@ -49,7 +49,8 @@ class IoOperation {
     return IoOperation{op_addr, access_size, internal::Read, data_instruction, internal::NONE};
   }
 
-  static IoOperation WriteOp(char* op_addr, uint32_t access_size, internal::DataInstruction data_instruction, internal::PersistInstruction persist_instruction) {
+  static IoOperation WriteOp(char* op_addr, uint32_t access_size, internal::DataInstruction data_instruction,
+                             internal::PersistInstruction persist_instruction) {
     return IoOperation{op_addr, access_size, internal::Write, data_instruction, persist_instruction};
   }
 
@@ -58,7 +59,8 @@ class IoOperation {
   }
 
  private:
-  IoOperation(char* opAddr, uint32_t accessSize, internal::OpType opType, internal::DataInstruction dataInstruction, internal::PersistInstruction persistInstruction)
+  IoOperation(char* opAddr, uint32_t accessSize, internal::OpType opType, internal::DataInstruction dataInstruction,
+              internal::PersistInstruction persistInstruction)
       : op_addr_{opAddr},
         access_size_{accessSize},
         op_type_{opType},

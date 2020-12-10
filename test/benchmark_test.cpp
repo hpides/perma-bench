@@ -113,10 +113,13 @@ TEST_F(BenchmarkTest, SetUpSingleThread) {
   EXPECT_EQ(thread_config.partition_size, PMEM_FILE_SIZE);
   EXPECT_EQ(thread_config.num_ops, PMEM_FILE_SIZE / 256);
   EXPECT_EQ(thread_config.partition_start_addr, bm.get_pmem_data());
+  EXPECT_EQ(&thread_config.config, &bm.get_benchmark_config());
 
   const std::vector<std::vector<internal::Latency>>& latencies = bm.get_benchmark_result().latencies;
   ASSERT_EQ(latencies.size(), 1);
-  EXPECT_EQ(thread_config.latencies.data(), latencies[0].data());
+  EXPECT_EQ(thread_config.latencies->data(), latencies[0].data());
+
+  EXPECT_NO_THROW(bm.get_benchmark_result().config.validate());
 }
 
 TEST_F(BenchmarkTest, SetUpMultiThread) {
@@ -148,17 +151,19 @@ TEST_F(BenchmarkTest, SetUpMultiThread) {
 
   const std::vector<std::vector<internal::Latency>>& latencies = bm.get_benchmark_result().latencies;
   ASSERT_EQ(latencies.size(), num_threads);
-  EXPECT_EQ(thread_config0.latencies.data(), latencies[0].data());
-  EXPECT_EQ(thread_config1.latencies.data(), latencies[1].data());
-  EXPECT_EQ(thread_config2.latencies.data(), latencies[2].data());
-  EXPECT_EQ(thread_config3.latencies.data(), latencies[3].data());
+  EXPECT_EQ(thread_config0.latencies->data(), latencies[0].data());
+  EXPECT_EQ(thread_config1.latencies->data(), latencies[1].data());
+  EXPECT_EQ(thread_config2.latencies->data(), latencies[2].data());
+  EXPECT_EQ(thread_config3.latencies->data(), latencies[3].data());
 
   // These values are the same for all threads
   for (const ThreadRunConfig& tc : thread_configs) {
     EXPECT_EQ(tc.num_threads_per_partition, 2);
     EXPECT_EQ(tc.partition_size, partition_size);
     EXPECT_EQ(tc.num_ops, PMEM_FILE_SIZE / num_threads / 512);
+    EXPECT_EQ(&tc.config, &bm.get_benchmark_config());
   }
+  EXPECT_NO_THROW(bm.get_benchmark_result().config.validate());
 }
 
 TEST_F(BenchmarkTest, RunSingeThreadRead) {
@@ -606,9 +611,9 @@ TEST_F(BenchmarkTest, ResultsMultiThreadMixed) {
     std::vector<internal::Latency> latencies{};
     for (size_t i = 0; i < num_ops_per_thread; ++i) {
       if (i % 2 == 0) {
-        latencies.emplace_back(400, internal::OpType::Write);
+        latencies.emplace_back(500, internal::OpType::Write);
       } else {
-        latencies.emplace_back(500, internal::OpType::Read);
+        latencies.emplace_back(400, internal::OpType::Read);
       }
     }
     bm_result.latencies.emplace_back(latencies);

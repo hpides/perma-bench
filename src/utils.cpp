@@ -54,11 +54,11 @@ char* create_pmem_file(const std::filesystem::path& file, const size_t length) {
 }
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir) {
-//  if (!std::filesystem::exists(base_dir)) {
-//    if (!std::filesystem::create_directories(base_dir)) {
-//      throw std::runtime_error{"Could not create dir: " + base_dir.string()};
-//    }
-//  }
+  //  if (!std::filesystem::exists(base_dir)) {
+  //    if (!std::filesystem::create_directories(base_dir)) {
+  //      throw std::runtime_error{"Could not create dir: " + base_dir.string()};
+  //    }
+  //  }
   std::string str("abcdefghijklmnopqrstuvwxyz");
   std::random_device rd;
   std::mt19937 generator(rd());

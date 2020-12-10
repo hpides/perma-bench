@@ -1,0 +1,9 @@
+test_seq:
+  matrix:
+    number_threads: [1, 2, 4]
+    access_size: [256, 4096]
+  args:
+    total_memory_range: 67108864
+    exec_mode: sequential
+    read_ratio: 1
+    write_ratio: 0

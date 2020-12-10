@@ -82,13 +82,13 @@ struct ThreadRunConfig {
   const size_t num_threads_per_partition;
   const size_t thread_num;
   const size_t num_ops;
-  std::vector<internal::Measurement>& raw_measurements;
-  std::vector<internal::Latency>& latencies;
+  std::vector<internal::Measurement>* raw_measurements;
+  std::vector<internal::Latency>* latencies;
   const BenchmarkConfig& config;
 
   ThreadRunConfig(char* partition_start_addr, const size_t partition_size, const size_t num_threads_per_partition,
-                  const size_t thread_num, const size_t num_ops, std::vector<internal::Measurement>& raw_measurements,
-                  std::vector<internal::Latency>& latencies, const BenchmarkConfig& config)
+                  const size_t thread_num, const size_t num_ops, std::vector<internal::Measurement>* raw_measurements,
+                  std::vector<internal::Latency>* latencies, const BenchmarkConfig& config)
       : partition_start_addr(partition_start_addr),
         partition_size(partition_size),
         num_threads_per_partition(num_threads_per_partition),
@@ -101,45 +101,20 @@ struct ThreadRunConfig {
 
 struct BenchmarkResult {
   explicit BenchmarkResult(const BenchmarkConfig& config);
-
   ~BenchmarkResult();
-  BenchmarkResult& operator=(const BenchmarkResult& other) = delete;
-  BenchmarkResult(const BenchmarkResult& other) = delete;
-  BenchmarkResult& operator=(BenchmarkResult&& other) = delete;
-  BenchmarkResult(BenchmarkResult&& other) = default;
 
   nlohmann::json get_result_as_json() const;
 
   std::vector<std::vector<internal::Measurement>> raw_measurements;
   std::vector<std::vector<internal::Latency>> latencies;
   hdr_histogram* latency_hdr = nullptr;
-  const BenchmarkConfig& config;
+  const BenchmarkConfig config;
 };
 
 class Benchmark {
-#ifdef IS_TEST
-  // This is a nasty hack to test that get_results() does the right thing. To not expose all the internal data or create
-  // extra methods that take in all result calculation data, we define the corresponding tests as friend classes.
-  friend class BenchmarkTest_ResultsSingleThread_Test;
-  friend class BenchmarkTest_ResultsMultiThread_Test;
-  friend class BenchmarkTest_ResultsRawSingleThread_Test;
-  friend class BenchmarkTest_ResultsRawMultiThread_Test;
-#endif
-
  public:
-  Benchmark(std::string benchmark_name, const BenchmarkConfig& config)
-      : benchmark_name_{std::move(benchmark_name)},
-        config_{config},
-        pmem_file_{generate_random_file_name(config.pmem_directory)},
-        owns_pmem_file_{true},
-        result_{config} {};
-
-  Benchmark(std::string benchmark_name, const BenchmarkConfig& config, std::filesystem::path pmem_file)
-      : benchmark_name_{std::move(benchmark_name)},
-        config_{config},
-        pmem_file_{std::move(pmem_file)},
-        owns_pmem_file_{false},
-        result_{config} {};
+  Benchmark(std::string benchmark_name, const BenchmarkConfig& config);
+  Benchmark(std::string benchmark_name, const BenchmarkConfig& config, std::filesystem::path pmem_file);
 
   Benchmark(Benchmark&& other) = default;
   Benchmark(const Benchmark& other) = delete;
@@ -168,10 +143,10 @@ class Benchmark {
   const std::string& benchmark_name() const;
   const BenchmarkConfig& get_benchmark_config() const;
   const std::filesystem::path& get_pmem_file() const;
-  const bool owns_pmem_file() const;
   const char* get_pmem_data() const;
   const std::vector<ThreadRunConfig>& get_thread_configs() const;
   const BenchmarkResult& get_benchmark_result() const;
+  bool owns_pmem_file() const;
 
   ~Benchmark() { tear_down(); }
 
@@ -181,16 +156,13 @@ class Benchmark {
 
   const std::string benchmark_name_;
   const std::filesystem::path pmem_file_;
-  const bool owns_pmem_file_;
+  bool owns_pmem_file_;
   char* pmem_data_{nullptr};
 
   const BenchmarkConfig config_;
+  std::unique_ptr<BenchmarkResult> result_;
   std::vector<ThreadRunConfig> thread_configs_;
   std::vector<std::thread> pool_;
-  BenchmarkResult result_;
-
 };
-
-
 
 }  // namespace perma
