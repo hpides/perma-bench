@@ -81,10 +81,36 @@ class IoOperation {
   void run_write() {
 #ifdef HAS_AVX
     if (data_instruction_ == internal::SIMD) {
-      return rw_ops::simd_write(op_addr_, access_size_);
+      switch (persist_instruction_) {
+        case internal::PersistInstruction::CLWB: {
+          return rw_ops::simd_write_clwb(op_addr_, access_size_);
+        }
+        case internal::PersistInstruction::NTSTORE: {
+          return rw_ops::simd_write_nt(op_addr_, access_size_);
+        }
+        case internal::PersistInstruction::CLFLUSH: {
+          return rw_ops::simd_write_clflush(op_addr_, access_size_);
+        }
+        case internal::PersistInstruction::NONE: {
+          return rw_ops::simd_write_none(op_addr_, access_size_);
+        }
+      }
     }
 #endif
-    return rw_ops::mov_write(op_addr_, access_size_);
+    switch (persist_instruction_) {
+      case internal::PersistInstruction::CLWB: {
+        return rw_ops::mov_write_clwb(op_addr_, access_size_);
+      }
+      case internal::PersistInstruction::NTSTORE: {
+        return rw_ops::mov_write_nt(op_addr_, access_size_);
+      }
+      case internal::PersistInstruction::CLFLUSH: {
+        return rw_ops::mov_write_clflush(op_addr_, access_size_);
+      }
+      case internal::PersistInstruction::NONE: {
+        return rw_ops::mov_write_none(op_addr_, access_size_);
+      }
+    }
   }
 
   // The order here is important. At the moment, we can fit this into 16 Byte. Reorder with care.
