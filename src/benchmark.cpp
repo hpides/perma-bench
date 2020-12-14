@@ -266,6 +266,7 @@ void Benchmark::tear_down(const bool force) {
 nlohmann::json Benchmark::get_result_as_json() {
   nlohmann::json result;
   result["config"] = get_json_config();
+  result["matrix_args"] = config_.matrix_args;
   result.update(result_->get_result_as_json());
   return result;
 }
@@ -281,11 +282,14 @@ nlohmann::json Benchmark::get_json_config() {
   config["number_partitions"] = config_.number_partitions;
   config["number_threads"] = config_.number_threads;
   config["data_instruction"] = get_enum_as_string(ConfigEnums::str_to_data_instruction, config_.data_instruction);
-  config["persist_instruction"] =
-      get_enum_as_string(ConfigEnums::str_to_persist_instruction, config_.persist_instruction);
 
   if (config_.pause_frequency > 0) {
     config["pause_length_micros"] = config_.pause_length_micros;
+  }
+
+  if (config_.write_ratio > 0) {
+    config["persist_instruction"] =
+        get_enum_as_string(ConfigEnums::str_to_persist_instruction, config_.persist_instruction);
   }
 
   if (config_.exec_mode == internal::Mode::Random) {
