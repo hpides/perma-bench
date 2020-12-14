@@ -7,7 +7,6 @@ set(
         benchmark_factory.hpp
         benchmark_suite.cpp
         benchmark_suite.hpp
-        io_operation.cpp
         io_operation.hpp
         utils.cpp
         utils.hpp)
