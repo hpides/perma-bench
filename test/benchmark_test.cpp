@@ -187,7 +187,7 @@ TEST_F(BenchmarkTest, RunSingeThreadRead) {
   ASSERT_EQ(latencies.size(), num_ops);
   for (const internal::Latency latency : latencies) {
     EXPECT_EQ(latency.op_type, internal::Read);
-    EXPECT_GT(latency.duration, 0);
+    EXPECT_GE(latency.duration, 0);
   }
   ASSERT_EQ(result.raw_measurements.size(), 0);
 }
@@ -214,7 +214,7 @@ TEST_F(BenchmarkTest, RunSingeThreadWrite) {
   ASSERT_EQ(latencies.size(), num_ops);
   for (const internal::Latency latency : latencies) {
     EXPECT_EQ(latency.op_type, internal::Write);
-    EXPECT_GT(latency.duration, 0);
+    EXPECT_GE(latency.duration, 0);
   }
   ASSERT_EQ(result.raw_measurements.size(), 0);
 
@@ -244,7 +244,7 @@ TEST_F(BenchmarkTest, RunSingeThreadMixed) {
   ASSERT_EQ(latencies.size(), num_ops);
   for (const internal::Latency latency : latencies) {
     EXPECT_TRUE(latency.op_type == internal::Write || latency.op_type == internal::Read);
-    EXPECT_GT(latency.duration, 0);
+    EXPECT_GE(latency.duration, 0);
   }
   ASSERT_EQ(result.raw_measurements.size(), 0);
 }
@@ -270,7 +270,7 @@ TEST_F(BenchmarkTest, RunMultiThreadRead) {
     ASSERT_EQ(latencies.size(), num_ops / num_threads);
     for (const internal::Latency latency : latencies) {
       EXPECT_EQ(latency.op_type, internal::Read);
-      EXPECT_GT(latency.duration, 0);
+      EXPECT_GE(latency.duration, 0);
     }
   }
   ASSERT_EQ(result.raw_measurements.size(), 0);
@@ -298,7 +298,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWrite) {
     ASSERT_EQ(latencies.size(), num_ops / num_threads);
     for (const internal::Latency latency : latencies) {
       EXPECT_EQ(latency.op_type, internal::Read);
-      EXPECT_GT(latency.duration, 0);
+      EXPECT_GE(latency.duration, 0);
     }
   }
   ASSERT_EQ(result.raw_measurements.size(), 0);
@@ -328,7 +328,7 @@ TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
     ASSERT_EQ(latencies.size(), num_ops / num_threads);
     for (const internal::Latency latency : latencies) {
       EXPECT_EQ(latency.op_type, internal::Read);
-      EXPECT_GT(latency.duration, 0);
+      EXPECT_GE(latency.duration, 0);
     }
   }
   ASSERT_EQ(result.raw_measurements.size(), 0);
@@ -357,7 +357,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
     ASSERT_EQ(latencies.size(), num_ops / num_threads);
     for (const internal::Latency latency : latencies) {
       EXPECT_EQ(latency.op_type, internal::Read);
-      EXPECT_GT(latency.duration, 0);
+      EXPECT_GE(latency.duration, 0);
     }
   }
   ASSERT_EQ(result.raw_measurements.size(), 0);
@@ -388,7 +388,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteRaw) {
     ASSERT_EQ(measurements.size(), num_ops / num_threads);
     for (const internal::Measurement measurement : measurements) {
       EXPECT_EQ(measurement.latency.op_type, internal::Read);
-      EXPECT_GT(measurement.latency.duration, 0);
+      EXPECT_GE(measurement.latency.duration, 0);
     }
   }
   ASSERT_EQ(result.latencies.size(), 0);
