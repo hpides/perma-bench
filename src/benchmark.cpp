@@ -1,5 +1,7 @@
 #include "benchmark.hpp"
 
+#include <spdlog/spdlog.h>
+
 #include <cstdint>
 #include <memory>
 #include <random>
@@ -172,6 +174,8 @@ void Benchmark::run_in_thread(ThreadRunConfig& thread_config) {
     operation.run();
     const auto end_ts = std::chrono::high_resolution_clock::now();
     internal::Latency latency{static_cast<uint64_t>((end_ts - start_ts).count()), operation.op_type_};
+    spdlog::warn("Got latency: {}, start: {}, end: {}", latency.duration, start_ts.time_since_epoch().count(),
+                 end_ts.time_since_epoch().count());
 
     if (config_.raw_results) {
       thread_config.raw_measurements->emplace_back(start_ts, latency);

@@ -131,6 +131,7 @@ file(DOWNLOAD ${JSON_DOWNLOAD_PATH} ${JSON_INCLUDE_PATH})
 include_directories(${JSON_DIR})
 
 ################### Hdr Histogram ####################
+set(HDR_HISTOGRAM_BUILD_PROGRAMS OFF CACHE INTERNAL "")
 FetchContent_Declare(
         hdr_histogram
         GIT_REPOSITORY https://github.com/HdrHistogram/HdrHistogram_c.git
