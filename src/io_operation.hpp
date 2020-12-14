@@ -17,6 +17,8 @@ enum PersistInstruction : uint8_t { NTSTORE, CLWB, CLFLUSH, NONE };
 
 enum OpType : uint8_t { Read, Write, Pause };
 
+constexpr size_t MIN_IO_CHUNK_SIZE = 16 * 1024u;
+
 }  // namespace internal
 
 class IoOperation {
@@ -45,37 +47,35 @@ class IoOperation {
   inline bool is_write() const { return op_type_ == internal::Write; }
   inline bool is_pause() const { return op_type_ == internal::Pause; }
 
-  static IoOperation ReadOp(char* op_addr, uint32_t access_size, internal::DataInstruction data_instruction) {
-    return IoOperation{op_addr, access_size, internal::Read, data_instruction, internal::NONE};
+  static IoOperation ReadOp(std::vector<char*>&& op_addresses, uint32_t access_size, internal::DataInstruction data_instruction) {
+    return IoOperation{std::move(op_addresses), access_size, internal::Read, data_instruction, internal::NONE};
   }
 
-  static IoOperation WriteOp(char* op_addr, uint32_t access_size, internal::DataInstruction data_instruction,
+  static IoOperation WriteOp(std::vector<char*>&& op_addresses, uint32_t access_size, internal::DataInstruction data_instruction,
                              internal::PersistInstruction persist_instruction) {
-    return IoOperation{op_addr, access_size, internal::Write, data_instruction, persist_instruction};
+    return IoOperation{std::move(op_addresses), access_size, internal::Write, data_instruction, persist_instruction};
   }
 
   static IoOperation PauseOp(uint32_t duration) {
-    return IoOperation{nullptr, duration, internal::Pause, internal::SIMD, internal::NONE};
+    return IoOperation{{}, duration, internal::Pause, internal::SIMD, internal::NONE};
   }
 
  private:
-  IoOperation(char* opAddr, uint32_t accessSize, internal::OpType opType, internal::DataInstruction dataInstruction,
-              internal::PersistInstruction persistInstruction)
-      : op_addr_{opAddr},
-        access_size_{accessSize},
-        op_type_{opType},
-        data_instruction_{dataInstruction},
-        persist_instruction_{persistInstruction} {
-    static_assert(sizeof(*this) <= 16, "IoOperation too big.");
-  }
+  IoOperation(std::vector<char*>&& op_addresses, uint32_t access_size, internal::OpType op_type, internal::DataInstruction data_instruction,
+              internal::PersistInstruction persist_instruction)
+      : op_addresses_{std::move(op_addresses)},
+        access_size_{access_size},
+        op_type_{op_type},
+        data_instruction_{data_instruction},
+        persist_instruction_{persist_instruction} {}
 
   void run_read() {
 #ifdef HAS_AVX
     if (data_instruction_ == internal::SIMD) {
-      return rw_ops::simd_read(op_addr_, access_size_);
+      return rw_ops::simd_read(op_addresses_, access_size_);
     }
 #endif
-    return rw_ops::mov_read(op_addr_, access_size_);
+    return rw_ops::mov_read(op_addresses_, access_size_);
   }
 
   void run_write() {
@@ -83,38 +83,38 @@ class IoOperation {
     if (data_instruction_ == internal::SIMD) {
       switch (persist_instruction_) {
         case internal::PersistInstruction::CLWB: {
-          return rw_ops::simd_write_clwb(op_addr_, access_size_);
+          return rw_ops::simd_write_clwb(op_addresses_, access_size_);
         }
         case internal::PersistInstruction::NTSTORE: {
-          return rw_ops::simd_write_nt(op_addr_, access_size_);
+          return rw_ops::simd_write_nt(op_addresses_, access_size_);
         }
         case internal::PersistInstruction::CLFLUSH: {
-          return rw_ops::simd_write_clflush(op_addr_, access_size_);
+          return rw_ops::simd_write_clflush(op_addresses_, access_size_);
         }
         case internal::PersistInstruction::NONE: {
-          return rw_ops::simd_write_none(op_addr_, access_size_);
+          return rw_ops::simd_write_none(op_addresses_, access_size_);
         }
       }
     }
 #endif
     switch (persist_instruction_) {
       case internal::PersistInstruction::CLWB: {
-        return rw_ops::mov_write_clwb(op_addr_, access_size_);
+        return rw_ops::mov_write_clwb(op_addresses_, access_size_);
       }
       case internal::PersistInstruction::NTSTORE: {
-        return rw_ops::mov_write_nt(op_addr_, access_size_);
+        return rw_ops::mov_write_nt(op_addresses_, access_size_);
       }
       case internal::PersistInstruction::CLFLUSH: {
-        return rw_ops::mov_write_clflush(op_addr_, access_size_);
+        return rw_ops::mov_write_clflush(op_addresses_, access_size_);
       }
       case internal::PersistInstruction::NONE: {
-        return rw_ops::mov_write_none(op_addr_, access_size_);
+        return rw_ops::mov_write_none(op_addresses_, access_size_);
       }
     }
   }
 
   // The order here is important. At the moment, we can fit this into 16 Byte. Reorder with care.
-  char* op_addr_;
+  const std::vector<char*> op_addresses_;
   union {
     const uint32_t access_size_;
     const uint32_t duration_;

@@ -6,7 +6,10 @@
 
 namespace perma {
 
-constexpr size_t PMEM_FILE_SIZE = 131072;  // 128 KiB
+constexpr size_t PMEM_FILE_SIZE = 1048576;  // 1 MiB
+
+// Duplicate this instead of using global constant so that we notice when it is changed.
+const size_t TEST_IO_OP_CHUNK_SIZE = 16 * 1024u;
 
 class BenchmarkTest : public ::testing::Test {
  protected:
@@ -18,6 +21,7 @@ class BenchmarkTest : public ::testing::Test {
   BenchmarkConfig base_config_{};
   const std::string bm_name_ = "test_bm";
   const std::filesystem::path temp_dir_ = std::filesystem::temp_directory_path();
+
 };
 
 TEST_F(BenchmarkTest, CreateBenchmark) {
@@ -119,7 +123,7 @@ TEST_F(BenchmarkTest, SetUpSingleThread) {
   ASSERT_EQ(latencies.size(), 1);
   EXPECT_EQ(thread_config.latencies->data(), latencies[0].data());
 
-  EXPECT_NO_THROW(bm.get_benchmark_result().config.validate());
+  bm.get_benchmark_result().config.validate();
 }
 
 TEST_F(BenchmarkTest, SetUpMultiThread) {
@@ -163,11 +167,13 @@ TEST_F(BenchmarkTest, SetUpMultiThread) {
     EXPECT_EQ(tc.num_ops, PMEM_FILE_SIZE / num_threads / 512);
     EXPECT_EQ(&tc.config, &bm.get_benchmark_config());
   }
-  EXPECT_NO_THROW(bm.get_benchmark_result().config.validate());
+  bm.get_benchmark_result().config.validate();
 }
 
 TEST_F(BenchmarkTest, RunSingeThreadRead) {
-  const size_t num_ops = 8;
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
+  const size_t num_chunks = 8;
+  const size_t num_ops = num_chunks * ops_per_chunk;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
   base_config_.read_ratio = 1;
@@ -184,7 +190,7 @@ TEST_F(BenchmarkTest, RunSingeThreadRead) {
   ASSERT_EQ(all_latencies.size(), 1);
   const std::vector<internal::Latency>& latencies = all_latencies[0];
 
-  ASSERT_EQ(latencies.size(), num_ops);
+  ASSERT_EQ(latencies.size(), num_chunks);
   for (const internal::Latency latency : latencies) {
     EXPECT_EQ(latency.op_type, internal::Read);
     EXPECT_GE(latency.duration, 0);
@@ -193,7 +199,9 @@ TEST_F(BenchmarkTest, RunSingeThreadRead) {
 }
 
 TEST_F(BenchmarkTest, RunSingeThreadWrite) {
-  const size_t num_ops = 8;
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
+  const size_t num_chunks = 8;
+  const size_t num_ops = num_chunks * ops_per_chunk;
   const size_t total_size = 256 * num_ops;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
@@ -211,7 +219,7 @@ TEST_F(BenchmarkTest, RunSingeThreadWrite) {
   ASSERT_EQ(all_latencies.size(), 1);
   const std::vector<internal::Latency>& latencies = all_latencies[0];
 
-  ASSERT_EQ(latencies.size(), num_ops);
+  ASSERT_EQ(latencies.size(), num_chunks);
   for (const internal::Latency latency : latencies) {
     EXPECT_EQ(latency.op_type, internal::Write);
     EXPECT_GE(latency.duration, 0);
@@ -222,7 +230,9 @@ TEST_F(BenchmarkTest, RunSingeThreadWrite) {
 }
 
 TEST_F(BenchmarkTest, RunSingeThreadMixed) {
-  const size_t num_ops = 8;
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
+  const size_t num_chunks = 8;
+  const size_t num_ops = num_chunks * ops_per_chunk;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
   base_config_.read_ratio = 0.5;
@@ -241,7 +251,7 @@ TEST_F(BenchmarkTest, RunSingeThreadMixed) {
   ASSERT_EQ(all_latencies.size(), 1);
   const std::vector<internal::Latency>& latencies = all_latencies[0];
 
-  ASSERT_EQ(latencies.size(), num_ops);
+  ASSERT_EQ(latencies.size(), num_chunks);
   for (const internal::Latency latency : latencies) {
     EXPECT_TRUE(latency.op_type == internal::Write || latency.op_type == internal::Read);
     EXPECT_GE(latency.duration, 0);
@@ -250,7 +260,9 @@ TEST_F(BenchmarkTest, RunSingeThreadMixed) {
 }
 
 TEST_F(BenchmarkTest, RunMultiThreadRead) {
-  const size_t num_ops = 32;
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 1024;
+  const size_t num_chunks = 32;
+  const size_t num_ops = num_chunks * ops_per_chunk;
   const size_t num_threads = 4;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 1024;
@@ -267,7 +279,7 @@ TEST_F(BenchmarkTest, RunMultiThreadRead) {
   const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), num_threads);
   for (const std::vector<internal::Latency>& latencies : all_latencies) {
-    ASSERT_EQ(latencies.size(), num_ops / num_threads);
+    ASSERT_EQ(latencies.size(), num_chunks / num_threads);
     for (const internal::Latency latency : latencies) {
       EXPECT_EQ(latency.op_type, internal::Read);
       EXPECT_GE(latency.duration, 0);
@@ -277,7 +289,9 @@ TEST_F(BenchmarkTest, RunMultiThreadRead) {
 }
 
 TEST_F(BenchmarkTest, RunMultiThreadWrite) {
-  const size_t num_ops = 128;
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 512;
+  const size_t num_chunks = 128;
+  const size_t num_ops = num_chunks * ops_per_chunk;
   const size_t num_threads = 16;
   const size_t total_size = 512 * num_ops;
   base_config_.number_threads = num_threads;
@@ -295,7 +309,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWrite) {
   const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), num_threads);
   for (const std::vector<internal::Latency>& latencies : all_latencies) {
-    ASSERT_EQ(latencies.size(), num_ops / num_threads);
+    ASSERT_EQ(latencies.size(), num_chunks / num_threads);
     for (const internal::Latency latency : latencies) {
       EXPECT_EQ(latency.op_type, internal::Read);
       EXPECT_GE(latency.duration, 0);
@@ -307,7 +321,9 @@ TEST_F(BenchmarkTest, RunMultiThreadWrite) {
 }
 
 TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
-  const size_t num_ops = 32;
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 1024;
+  const size_t num_chunks = 32;
+  const size_t num_ops = num_chunks * ops_per_chunk;
   const size_t num_threads = 4;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 1024;
@@ -325,7 +341,7 @@ TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
   const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), num_threads);
   for (const std::vector<internal::Latency>& latencies : all_latencies) {
-    ASSERT_EQ(latencies.size(), num_ops / num_threads);
+    ASSERT_EQ(latencies.size(), num_chunks / num_threads);
     for (const internal::Latency latency : latencies) {
       EXPECT_EQ(latency.op_type, internal::Read);
       EXPECT_GE(latency.duration, 0);
@@ -335,7 +351,9 @@ TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
 }
 
 TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
-  const size_t num_ops = 128;
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 512;
+  const size_t num_chunks = 128;
+  const size_t num_ops = num_chunks * ops_per_chunk;
   const size_t num_threads = 16;
   const size_t total_size = 512 * num_ops;
   base_config_.number_threads = num_threads;
@@ -354,7 +372,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
   const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), num_threads);
   for (const std::vector<internal::Latency>& latencies : all_latencies) {
-    ASSERT_EQ(latencies.size(), num_ops / num_threads);
+    ASSERT_EQ(latencies.size(), num_chunks / num_threads);
     for (const internal::Latency latency : latencies) {
       EXPECT_EQ(latency.op_type, internal::Read);
       EXPECT_GE(latency.duration, 0);
@@ -366,7 +384,9 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
 }
 
 TEST_F(BenchmarkTest, RunMultiThreadWriteRaw) {
-  const size_t num_ops = 128;
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 512;
+  const size_t num_chunks = 128;
+  const size_t num_ops = num_chunks * ops_per_chunk;
   const size_t num_threads = 16;
   const size_t total_size = 512 * num_ops;
   base_config_.number_threads = num_threads;
@@ -385,7 +405,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteRaw) {
   const std::vector<std::vector<internal::Measurement>>& all_measurements = result.raw_measurements;
   ASSERT_EQ(all_measurements.size(), num_threads);
   for (const std::vector<internal::Measurement>& measurements : all_measurements) {
-    ASSERT_EQ(measurements.size(), num_ops / num_threads);
+    ASSERT_EQ(measurements.size(), num_chunks / num_threads);
     for (const internal::Measurement measurement : measurements) {
       EXPECT_EQ(measurement.latency.op_type, internal::Read);
       EXPECT_GE(measurement.latency.duration, 0);

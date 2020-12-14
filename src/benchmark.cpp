@@ -139,51 +139,58 @@ void Benchmark::run_in_thread(ThreadRunConfig& thread_config) {
   std::bernoulli_distribution io_mode_distribution(config_.read_ratio);
   std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
 
-  for (uint32_t io_op = 0; io_op < thread_config.num_ops; ++io_op) {
-    char* op_addr = nullptr;
+  const size_t ops_per_chunk = config_.access_size < internal::MIN_IO_CHUNK_SIZE ? internal::MIN_IO_CHUNK_SIZE / config_.access_size : 1;
+  const size_t num_chunks = thread_config.num_ops / ops_per_chunk;
 
-    switch (config_.exec_mode) {
-      case internal::Mode::Random: {
-        uint64_t random_value;
-        if (config_.random_distribution == internal::RandomDistribution::Uniform) {
-          random_value = access_distribution(rnd_generator);
-        } else {
-          random_value = zipf(config_.zipf_alpha, num_accesses_in_range);
+  for (uint32_t io_chunk = 0; io_chunk < num_chunks; ++io_chunk) {
+    std::vector<char*> op_addresses{ops_per_chunk};
+
+    for (size_t io_op = 0; io_op < ops_per_chunk; ++io_op) {
+      switch (config_.exec_mode) {
+        case internal::Mode::Random: {
+          uint64_t random_value;
+          if (config_.random_distribution == internal::RandomDistribution::Uniform) {
+            random_value = access_distribution(rnd_generator);
+          } else {
+            random_value = zipf(config_.zipf_alpha, num_accesses_in_range);
+          }
+          op_addresses[io_op] = thread_config.partition_start_addr + (random_value * config_.access_size);
+          is_read = !is_write_only && io_mode_distribution(rnd_generator);
+          break;
         }
-        op_addr = thread_config.partition_start_addr + (random_value * config_.access_size);
-        is_read = !is_write_only && io_mode_distribution(rnd_generator);
-        break;
-      }
-      case internal::Mode::Sequential: {
-        op_addr = next_op_position;
-        next_op_position += ops_per_iteration;
-        break;
-      }
-      case internal::Mode::Sequential_Desc: {
-        op_addr = next_op_position;
-        next_op_position -= ops_per_iteration;
-        break;
+        case internal::Mode::Sequential: {
+          op_addresses[io_op] = next_op_position;
+          next_op_position += ops_per_iteration;
+          break;
+        }
+        case internal::Mode::Sequential_Desc: {
+          op_addresses[io_op] = next_op_position;
+          next_op_position -= ops_per_iteration;
+          break;
+        }
       }
     }
 
-    IoOperation operation = is_read ? IoOperation::ReadOp(op_addr, config_.access_size, config_.data_instruction)
-                                    : IoOperation::WriteOp(op_addr, config_.access_size, config_.data_instruction,
+    IoOperation operation = is_read ? IoOperation::ReadOp(std::move(op_addresses), config_.access_size, config_.data_instruction)
+                                    : IoOperation::WriteOp(std::move(op_addresses), config_.access_size, config_.data_instruction,
                                                            config_.persist_instruction);
 
     const auto start_ts = std::chrono::high_resolution_clock::now();
     operation.run();
     const auto end_ts = std::chrono::high_resolution_clock::now();
+
+    if (has_pause && ++current_pause_frequency_count == config_.pause_frequency &&
+        io_chunk < thread_config.num_ops - 1) {
+      IoOperation::PauseOp(config_.pause_length_micros).run();
+      current_pause_frequency_count = 0;
+    }
+
     internal::Latency latency{static_cast<uint64_t>((end_ts - start_ts).count()), operation.op_type_};
 
     if (config_.raw_results) {
       thread_config.raw_measurements->emplace_back(start_ts, latency);
     } else {
       thread_config.latencies->emplace_back(latency);
-    }
-
-    if (has_pause && ++current_pause_frequency_count == config_.pause_frequency && io_op < thread_config.num_ops - 1) {
-      IoOperation::PauseOp(config_.pause_length_micros).run();
-      current_pause_frequency_count = 0;
     }
   }
 }
@@ -477,7 +484,7 @@ void BenchmarkConfig::validate() const {
 
   // Check if memory range is multiple of access size
   const bool is_memory_range_multiple_of_access_size = (total_memory_range % access_size) == 0;
-  CHECK_ARGUMENT(is_memory_range_multiple_of_access_size, "Total memory range must be a multiple of twos");
+  CHECK_ARGUMENT(is_memory_range_multiple_of_access_size, "Total memory range must be a multiple access size.");
 
   // Check if ratio is equal to one
   const bool is_ratio_equal_one = (read_ratio + write_ratio) == 1.0;
@@ -504,5 +511,20 @@ void BenchmarkConfig::validate() const {
   // Assumption: sequential access does not make sense if we mix reads and writes
   const bool is_mixed_workload_random = (read_ratio == 1 || read_ratio == 0) || exec_mode == internal::Random;
   CHECK_ARGUMENT(is_mixed_workload_random, "Mixed read/write workloads only supported for random execution.");
+
+  // Assumption: total memory needs to fit into N chunks exactly
+  const bool is_seq_total_memory_chunkable = exec_mode == internal::Random || (total_memory_range % internal::MIN_IO_CHUNK_SIZE) == 0;
+  CHECK_ARGUMENT(is_seq_total_memory_chunkable,
+                 "Total file size needs to be multiple of " + std::to_string(internal::MIN_IO_CHUNK_SIZE));
+
+  // Assumption: we chunk operations and we need enough data to fill at least one chunk
+  const bool is_total_memory_large_enough = (total_memory_range / number_threads) >= internal::MIN_IO_CHUNK_SIZE;
+  CHECK_ARGUMENT(is_total_memory_large_enough,
+                 "Each thread needs at least " + std::to_string(internal::MIN_IO_CHUNK_SIZE) + " memory.");
+
+  const bool is_pause_freq_chunkable = pause_frequency == 0 || pause_frequency >= (internal::MIN_IO_CHUNK_SIZE / access_size);
+  CHECK_ARGUMENT(is_pause_freq_chunkable,
+                 "Cannot insert pauses with single chunk of " + std::to_string(internal::MIN_IO_CHUNK_SIZE / access_size) + " ops (" +
+                 std::to_string(internal::MIN_IO_CHUNK_SIZE) + " Byte / " + std::to_string(access_size) + " Byte) in this configuration.");
 }
 }  // namespace perma
