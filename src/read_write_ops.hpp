@@ -3,6 +3,7 @@
 #include <immintrin.h>
 #include <libpmem.h>
 #include <xmmintrin.h>
+
 #include <vector>
 
 namespace perma::rw_ops {
@@ -70,7 +71,8 @@ inline void simd_write_data(char* from, const char* to) {
   }
 }
 
-inline void simd_write(const std::vector<char*>& addresses, const size_t access_size, flush_fn flush, barrier_fn barrier) {
+inline void simd_write(const std::vector<char*>& addresses, const size_t access_size, flush_fn flush,
+                       barrier_fn barrier) {
   for (char* addr : addresses) {
     const char* access_end_addr = addr + access_size;
     simd_write_data(addr, access_end_addr);
@@ -87,7 +89,8 @@ inline void simd_write_data_nt(char* from, const char* to) {
   }
 }
 
-inline void simd_write_nt(const std::vector<char*>& addresses, const size_t access_size, flush_fn flush, barrier_fn barrier) {
+inline void simd_write_nt(const std::vector<char*>& addresses, const size_t access_size, flush_fn flush,
+                          barrier_fn barrier) {
   for (char* addr : addresses) {
     const char* access_end_addr = addr + access_size;
     simd_write_data_nt(addr, access_end_addr);
@@ -101,16 +104,15 @@ inline void simd_write_clwb(const std::vector<char*>& addresses, const size_t ac
 }
 
 inline void simd_write_clflush(const std::vector<char*>& addresses, const size_t access_size) {
-    simd_write(addresses, access_size, flush_clflushopt, sfence_barrier);
+  simd_write(addresses, access_size, flush_clflushopt, sfence_barrier);
 }
 
 inline void simd_write_nt(const std::vector<char*>& addresses, const size_t access_size) {
-    simd_write_nt(addresses, access_size, no_flush, sfence_barrier);
-
+  simd_write_nt(addresses, access_size, no_flush, sfence_barrier);
 }
 
 inline void simd_write_none(const std::vector<char*>& addresses, const size_t access_size) {
-    simd_write(addresses, access_size, no_flush, no_barrier);
+  simd_write(addresses, access_size, no_flush, no_barrier);
 }
 
 inline void simd_read(const std::vector<char*>& addresses, const size_t access_size) {
@@ -154,7 +156,8 @@ inline void mov_write_data_nt(char* from, const char* to) {
   }
 }
 
-inline void mov_write_nt(const std::vector<char*>& addresses, const size_t access_size, flush_fn flush, barrier_fn barrier) {
+inline void mov_write_nt(const std::vector<char*>& addresses, const size_t access_size, flush_fn flush,
+                         barrier_fn barrier) {
   for (char* addr : addresses) {
     const char* access_end_addr = addr + access_size;
     mov_write_data_nt(addr, access_end_addr);
@@ -193,7 +196,8 @@ inline void mov_write_data(char* from, const char* to) {
   }
 }
 
-inline void mov_write(const std::vector<char*>& addresses, const size_t access_size, flush_fn flush, barrier_fn barrier) {
+inline void mov_write(const std::vector<char*>& addresses, const size_t access_size, flush_fn flush,
+                      barrier_fn barrier) {
   for (char* addr : addresses) {
     const char* access_end_addr = addr + access_size;
     mov_write_data(addr, access_end_addr);
@@ -203,19 +207,19 @@ inline void mov_write(const std::vector<char*>& addresses, const size_t access_s
 }
 
 inline void mov_write_clwb(const std::vector<char*>& addresses, const size_t access_size) {
-    mov_write(addresses, access_size, flush_clwb, sfence_barrier);
+  mov_write(addresses, access_size, flush_clwb, sfence_barrier);
 }
 
 inline void mov_write_clflush(const std::vector<char*>& addresses, const size_t access_size) {
-    mov_write(addresses, access_size, flush_clflushopt, sfence_barrier);
+  mov_write(addresses, access_size, flush_clflushopt, sfence_barrier);
 }
 
 inline void mov_write_nt(const std::vector<char*>& addresses, const size_t access_size) {
-    mov_write_nt(addresses, access_size, no_flush, sfence_barrier);
+  mov_write_nt(addresses, access_size, no_flush, sfence_barrier);
 }
 
 inline void mov_write_none(const std::vector<char*>& addresses, const size_t access_size) {
-    mov_write(addresses, access_size, no_flush, no_barrier);
+  mov_write(addresses, access_size, no_flush, no_barrier);
 }
 
 inline void mov_read(const std::vector<char*>& addresses, const size_t access_size) {
@@ -233,7 +237,7 @@ inline void mov_read(const std::vector<char*>& addresses, const size_t access_si
           "movq 6*8(%[addr]), %%r8  \n\t"
           "movq 7*8(%[addr]), %%r8  \n\t"
           :
-          : [addr] "r"(mem_addr));
+          : [ addr ] "r"(mem_addr));
     }
   }
 }

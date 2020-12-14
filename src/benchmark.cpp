@@ -139,7 +139,8 @@ void Benchmark::run_in_thread(ThreadRunConfig& thread_config) {
   std::bernoulli_distribution io_mode_distribution(config_.read_ratio);
   std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
 
-  const size_t ops_per_chunk = config_.access_size < internal::MIN_IO_CHUNK_SIZE ? internal::MIN_IO_CHUNK_SIZE / config_.access_size : 1;
+  const size_t ops_per_chunk =
+      config_.access_size < internal::MIN_IO_CHUNK_SIZE ? internal::MIN_IO_CHUNK_SIZE / config_.access_size : 1;
   const size_t num_chunks = thread_config.num_ops / ops_per_chunk;
 
   for (uint32_t io_chunk = 0; io_chunk < num_chunks; ++io_chunk) {
@@ -171,9 +172,10 @@ void Benchmark::run_in_thread(ThreadRunConfig& thread_config) {
       }
     }
 
-    IoOperation operation = is_read ? IoOperation::ReadOp(std::move(op_addresses), config_.access_size, config_.data_instruction)
-                                    : IoOperation::WriteOp(std::move(op_addresses), config_.access_size, config_.data_instruction,
-                                                           config_.persist_instruction);
+    IoOperation operation =
+        is_read ? IoOperation::ReadOp(std::move(op_addresses), config_.access_size, config_.data_instruction)
+                : IoOperation::WriteOp(std::move(op_addresses), config_.access_size, config_.data_instruction,
+                                       config_.persist_instruction);
 
     const auto start_ts = std::chrono::high_resolution_clock::now();
     operation.run();
@@ -513,7 +515,8 @@ void BenchmarkConfig::validate() const {
   CHECK_ARGUMENT(is_mixed_workload_random, "Mixed read/write workloads only supported for random execution.");
 
   // Assumption: total memory needs to fit into N chunks exactly
-  const bool is_seq_total_memory_chunkable = exec_mode == internal::Random || (total_memory_range % internal::MIN_IO_CHUNK_SIZE) == 0;
+  const bool is_seq_total_memory_chunkable =
+      exec_mode == internal::Random || (total_memory_range % internal::MIN_IO_CHUNK_SIZE) == 0;
   CHECK_ARGUMENT(is_seq_total_memory_chunkable,
                  "Total file size needs to be multiple of " + std::to_string(internal::MIN_IO_CHUNK_SIZE));
 
@@ -522,9 +525,11 @@ void BenchmarkConfig::validate() const {
   CHECK_ARGUMENT(is_total_memory_large_enough,
                  "Each thread needs at least " + std::to_string(internal::MIN_IO_CHUNK_SIZE) + " memory.");
 
-  const bool is_pause_freq_chunkable = pause_frequency == 0 || pause_frequency >= (internal::MIN_IO_CHUNK_SIZE / access_size);
-  CHECK_ARGUMENT(is_pause_freq_chunkable,
-                 "Cannot insert pauses with single chunk of " + std::to_string(internal::MIN_IO_CHUNK_SIZE / access_size) + " ops (" +
-                 std::to_string(internal::MIN_IO_CHUNK_SIZE) + " Byte / " + std::to_string(access_size) + " Byte) in this configuration.");
+  const bool is_pause_freq_chunkable =
+      pause_frequency == 0 || pause_frequency >= (internal::MIN_IO_CHUNK_SIZE / access_size);
+  CHECK_ARGUMENT(is_pause_freq_chunkable, "Cannot insert pauses with single chunk of " +
+                                              std::to_string(internal::MIN_IO_CHUNK_SIZE / access_size) + " ops (" +
+                                              std::to_string(internal::MIN_IO_CHUNK_SIZE) + " Byte / " +
+                                              std::to_string(access_size) + " Byte) in this configuration.");
 }
 }  // namespace perma

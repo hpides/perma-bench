@@ -47,11 +47,13 @@ class IoOperation {
   inline bool is_write() const { return op_type_ == internal::Write; }
   inline bool is_pause() const { return op_type_ == internal::Pause; }
 
-  static IoOperation ReadOp(std::vector<char*>&& op_addresses, uint32_t access_size, internal::DataInstruction data_instruction) {
+  static IoOperation ReadOp(std::vector<char*>&& op_addresses, uint32_t access_size,
+                            internal::DataInstruction data_instruction) {
     return IoOperation{std::move(op_addresses), access_size, internal::Read, data_instruction, internal::NONE};
   }
 
-  static IoOperation WriteOp(std::vector<char*>&& op_addresses, uint32_t access_size, internal::DataInstruction data_instruction,
+  static IoOperation WriteOp(std::vector<char*>&& op_addresses, uint32_t access_size,
+                             internal::DataInstruction data_instruction,
                              internal::PersistInstruction persist_instruction) {
     return IoOperation{std::move(op_addresses), access_size, internal::Write, data_instruction, persist_instruction};
   }
@@ -61,8 +63,8 @@ class IoOperation {
   }
 
  private:
-  IoOperation(std::vector<char*>&& op_addresses, uint32_t access_size, internal::OpType op_type, internal::DataInstruction data_instruction,
-              internal::PersistInstruction persist_instruction)
+  IoOperation(std::vector<char*>&& op_addresses, uint32_t access_size, internal::OpType op_type,
+              internal::DataInstruction data_instruction, internal::PersistInstruction persist_instruction)
       : op_addresses_{std::move(op_addresses)},
         access_size_{access_size},
         op_type_{op_type},
