@@ -417,7 +417,9 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteRaw) {
 }
 
 TEST_F(BenchmarkTest, ResultsSingleThreadRead) {
-  const size_t num_ops = 8;
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
+  const size_t num_chunks = 8;
+  const size_t num_ops = num_chunks * ops_per_chunk;
   const size_t total_size = 256 * num_ops;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
@@ -429,7 +431,7 @@ TEST_F(BenchmarkTest, ResultsSingleThreadRead) {
   std::vector<internal::Latency> latencies{};
   latencies.reserve(num_ops);
   for (size_t i = 0; i < num_ops; ++i) {
-    latencies.emplace_back(100, internal::OpType::Read);
+    latencies.emplace_back(ops_per_chunk * 100, internal::OpType::Read);
   }
   bm_result.latencies.emplace_back(latencies);
 
@@ -453,7 +455,9 @@ TEST_F(BenchmarkTest, ResultsSingleThreadRead) {
 }
 
 TEST_F(BenchmarkTest, ResultsSingleThreadWrite) {
-  const size_t num_ops = 8;
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
+  const size_t num_chunks = 8;
+  const size_t num_ops = num_chunks * ops_per_chunk;
   const size_t total_size = 256 * num_ops;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
@@ -465,7 +469,7 @@ TEST_F(BenchmarkTest, ResultsSingleThreadWrite) {
   std::vector<internal::Latency> latencies{};
   latencies.reserve(num_ops);
   for (size_t i = 0; i < num_ops; ++i) {
-    latencies.emplace_back(100, internal::OpType::Write);
+    latencies.emplace_back(ops_per_chunk * 100, internal::OpType::Write);
   }
   bm_result.latencies.emplace_back(latencies);
 
@@ -489,7 +493,9 @@ TEST_F(BenchmarkTest, ResultsSingleThreadWrite) {
 }
 
 TEST_F(BenchmarkTest, ResultsSingleThreadMixed) {
-  const size_t num_ops = 8;
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 512;
+  const size_t num_chunks = 8;
+  const size_t num_ops = num_chunks * ops_per_chunk;
   const size_t total_size = 512 * num_ops;
   base_config_.number_operations = num_ops;
   base_config_.number_threads = 1;
@@ -504,9 +510,9 @@ TEST_F(BenchmarkTest, ResultsSingleThreadMixed) {
   latencies.reserve(num_ops);
   for (size_t i = 0; i < num_ops; ++i) {
     if (i % 2 == 0) {
-      latencies.emplace_back(200, internal::OpType::Write);
+      latencies.emplace_back(200 * ops_per_chunk, internal::OpType::Write);
     } else {
-      latencies.emplace_back(100, internal::OpType::Read);
+      latencies.emplace_back(100 * ops_per_chunk, internal::OpType::Read);
     }
   }
   bm_result.latencies.emplace_back(latencies);
@@ -536,7 +542,9 @@ TEST_F(BenchmarkTest, ResultsSingleThreadMixed) {
 }
 
 TEST_F(BenchmarkTest, ResultsMultiThreadRead) {
-  const size_t num_ops = 64;
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 1024;
+  const size_t num_chunks = 64;
+  const size_t num_ops = num_chunks * ops_per_chunk;
   const size_t num_threads = 4;
   const size_t num_ops_per_thread = num_ops / num_threads;
   const size_t total_size = 1024 * num_ops;
@@ -550,7 +558,7 @@ TEST_F(BenchmarkTest, ResultsMultiThreadRead) {
   for (size_t thread = 0; thread < num_threads; ++thread) {
     std::vector<internal::Latency> latencies{};
     for (size_t i = 0; i < num_ops_per_thread; ++i) {
-      latencies.emplace_back(100 + (thread * 10), internal::OpType::Read);
+      latencies.emplace_back((100 + (thread * 10)) * ops_per_chunk, internal::OpType::Read);
     }
     bm_result.latencies.emplace_back(latencies);
   }
@@ -575,7 +583,9 @@ TEST_F(BenchmarkTest, ResultsMultiThreadRead) {
 }
 
 TEST_F(BenchmarkTest, ResultsMultiThreadWrite) {
-  const size_t num_ops = 64;
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 512;
+  const size_t num_chunks = 64;
+  const size_t num_ops = num_chunks * ops_per_chunk;
   const size_t num_threads = 8;
   const size_t num_ops_per_thread = num_ops / num_threads;
   const size_t total_size = 512 * num_ops;
@@ -589,7 +599,7 @@ TEST_F(BenchmarkTest, ResultsMultiThreadWrite) {
   for (size_t thread = 0; thread < num_threads; ++thread) {
     std::vector<internal::Latency> latencies{};
     for (size_t i = 0; i < num_ops_per_thread; ++i) {
-      latencies.emplace_back(100 + (thread * 10), internal::OpType::Write);
+      latencies.emplace_back((100 + (thread * 10)) * ops_per_chunk, internal::OpType::Write);
     }
     bm_result.latencies.emplace_back(latencies);
   }
@@ -614,7 +624,9 @@ TEST_F(BenchmarkTest, ResultsMultiThreadWrite) {
 }
 
 TEST_F(BenchmarkTest, ResultsMultiThreadMixed) {
-  const size_t num_ops = 64;
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 512;
+  const size_t num_chunks = 64;
+  const size_t num_ops = num_chunks * ops_per_chunk;
   const size_t num_threads = 16;
   const size_t num_ops_per_thread = num_ops / num_threads;
   const size_t total_size = 512 * num_ops;
@@ -631,9 +643,9 @@ TEST_F(BenchmarkTest, ResultsMultiThreadMixed) {
     std::vector<internal::Latency> latencies{};
     for (size_t i = 0; i < num_ops_per_thread; ++i) {
       if (i % 2 == 0) {
-        latencies.emplace_back(500, internal::OpType::Write);
+        latencies.emplace_back(500 * ops_per_chunk, internal::OpType::Write);
       } else {
-        latencies.emplace_back(400, internal::OpType::Read);
+        latencies.emplace_back(400 * ops_per_chunk, internal::OpType::Read);
       }
     }
     bm_result.latencies.emplace_back(latencies);
