@@ -5,7 +5,7 @@ include(ExternalProject)
 include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 17)
-set(COMPILE_FLAGS "-march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -14,7 +14,7 @@ endif()
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
     message("-- Release mode, all optimizations enabled")
-    set(COMPILE_FLAGS "${COMPILE_FLAGS} -O3 -DNDEBUG")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
 endif ()
 
 set(INCLUDE_HINTS ${CMAKE_INCLUDE_PATH} "/usr/include" "/usr/local/include")

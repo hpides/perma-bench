@@ -4,6 +4,7 @@
 #include <libpmem.h>
 #include <xmmintrin.h>
 
+#include <cstdint>
 #include <vector>
 
 namespace perma::rw_ops {
