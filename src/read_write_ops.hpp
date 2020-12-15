@@ -90,13 +90,11 @@ inline void simd_write_data_nt(char* from, const char* to) {
   }
 }
 
-inline void simd_write_nt(const std::vector<char*>& addresses, const size_t access_size, flush_fn flush,
-                          barrier_fn barrier) {
+inline void simd_write_nt(const std::vector<char*>& addresses, const size_t access_size) {
   for (char* addr : addresses) {
     const char* access_end_addr = addr + access_size;
     simd_write_data_nt(addr, access_end_addr);
-    flush(addr, access_size);
-    barrier();
+    sfence_barrier();
   }
 }
 
@@ -106,10 +104,6 @@ inline void simd_write_clwb(const std::vector<char*>& addresses, const size_t ac
 
 inline void simd_write_clflush(const std::vector<char*>& addresses, const size_t access_size) {
   simd_write(addresses, access_size, flush_clflushopt, sfence_barrier);
-}
-
-inline void simd_write_nt(const std::vector<char*>& addresses, const size_t access_size) {
-  simd_write_nt(addresses, access_size, no_flush, sfence_barrier);
 }
 
 inline void simd_write_none(const std::vector<char*>& addresses, const size_t access_size) {
@@ -157,13 +151,11 @@ inline void mov_write_data_nt(char* from, const char* to) {
   }
 }
 
-inline void mov_write_nt(const std::vector<char*>& addresses, const size_t access_size, flush_fn flush,
-                         barrier_fn barrier) {
+inline void mov_write_nt(const std::vector<char*>& addresses, const size_t access_size) {
   for (char* addr : addresses) {
     const char* access_end_addr = addr + access_size;
     mov_write_data_nt(addr, access_end_addr);
-    flush(addr, access_size);
-    barrier();
+    sfence_barrier();
   }
 }
 
@@ -213,10 +205,6 @@ inline void mov_write_clwb(const std::vector<char*>& addresses, const size_t acc
 
 inline void mov_write_clflush(const std::vector<char*>& addresses, const size_t access_size) {
   mov_write(addresses, access_size, flush_clflushopt, sfence_barrier);
-}
-
-inline void mov_write_nt(const std::vector<char*>& addresses, const size_t access_size) {
-  mov_write_nt(addresses, access_size, no_flush, sfence_barrier);
 }
 
 inline void mov_write_none(const std::vector<char*>& addresses, const size_t access_size) {

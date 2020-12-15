@@ -14,7 +14,7 @@ namespace perma {
 constexpr size_t TMP_FILE_SIZE = 131072;  // 128 KiB
 constexpr size_t ACCESS_SIZE = 512;       // 512 byte
 
-typedef void test_write_fn(char*, const size_t);
+typedef void test_write_fn(const std::vector<char*>&, const size_t);
 
 class ReadWriteTest : public ::testing::Test {
  protected:
@@ -37,11 +37,18 @@ class ReadWriteTest : public ::testing::Test {
     close(fd);
   }
 
-  void run_write_test(const test_write_fn fn) {
-    const char* to = addr + TMP_FILE_SIZE;
-    for (char* mem_addr = addr; mem_addr < to; mem_addr += ACCESS_SIZE) {
-      fn(mem_addr, ACCESS_SIZE);
+  template <class WriteFn>
+  void run_write_test(WriteFn write_fn) {
+    const size_t num_writes = TMP_FILE_SIZE / ACCESS_SIZE;
+    const char* last_op = addr + TMP_FILE_SIZE;
+    std::vector<char*> op_addresses{};
+    op_addresses.reserve(num_writes);
+
+    for (char* write_addr = addr; write_addr < last_op; write_addr += ACCESS_SIZE) {
+      op_addresses.emplace_back(write_addr);
     }
+
+    write_fn(op_addresses, ACCESS_SIZE);
     ASSERT_EQ(msync(addr, TMP_FILE_SIZE, MS_SYNC), 0);
     check_file_written(temp_file_, TMP_FILE_SIZE);
   }
