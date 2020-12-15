@@ -19,7 +19,7 @@ set(PERMA_TEST_SOURCES
         config_test.cpp
         test_utils.cpp
         test_utils.hpp
-        utils_test.cpp)
+        utils_test.cpp read_write_test.cpp)
 
 add_executable(perma-test perma_test.cpp ${PERMA_TEST_SOURCES})
 add_dependencies(perma-test copy_test_resources)
