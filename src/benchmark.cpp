@@ -266,7 +266,6 @@ void Benchmark::tear_down(const bool force) {
 nlohmann::json Benchmark::get_result_as_json() {
   nlohmann::json result;
   result["config"] = get_json_config();
-  result["matrix_args"] = config_.matrix_args;
   result.update(result_->get_result_as_json());
   return result;
 }
