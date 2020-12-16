@@ -5,7 +5,7 @@ include(ExternalProject)
 include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 17)
-set(COMPILE_FLAGS "-march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -14,7 +14,7 @@ endif()
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
     message("-- Release mode, all optimizations enabled")
-    set(COMPILE_FLAGS "${COMPILE_FLAGS} -O3 -DNDEBUG")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
 endif ()
 
 set(INCLUDE_HINTS ${CMAKE_INCLUDE_PATH} "/usr/include" "/usr/local/include")
@@ -131,6 +131,7 @@ file(DOWNLOAD ${JSON_DOWNLOAD_PATH} ${JSON_INCLUDE_PATH})
 include_directories(${JSON_DIR})
 
 ################### Hdr Histogram ####################
+set(HDR_HISTOGRAM_BUILD_PROGRAMS OFF CACHE INTERNAL "")
 FetchContent_Declare(
         hdr_histogram
         GIT_REPOSITORY https://github.com/HdrHistogram/HdrHistogram_c.git
@@ -165,7 +166,7 @@ add_subdirectory(src)
 option(BUILD_TEST "Set true if tests should be built and run.")
 
 if (${BUILD_TEST})
+    message(STATUS "Test are included in this build.")
     enable_testing()
     add_subdirectory(test)
-    message(STATUS "Test are included in this build.")
 endif ()

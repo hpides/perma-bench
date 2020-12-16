@@ -8,9 +8,9 @@
 
 namespace perma {
 
-std::vector<std::unique_ptr<Benchmark>> BenchmarkFactory::create_benchmarks(const std::filesystem::path& pmem_directory,
-                                                                            const std::filesystem::path& config_file) {
-  std::vector<std::unique_ptr<Benchmark>> benchmarks{};
+std::vector<Benchmark> BenchmarkFactory::create_benchmarks(const std::filesystem::path& pmem_directory,
+                                                           const std::filesystem::path& config_file) {
+  std::vector<Benchmark> benchmarks{};
   try {
     YAML::Node config = YAML::LoadFile(config_file);
     for (YAML::iterator it = config.begin(); it != config.end(); ++it) {
@@ -25,13 +25,12 @@ std::vector<std::unique_ptr<Benchmark>> BenchmarkFactory::create_benchmarks(cons
 
       YAML::Node bm_matrix = raw_bm_args["matrix"];
       if (bm_matrix) {
-        std::vector<std::unique_ptr<Benchmark>> matrix =
-            create_benchmark_matrix(name, pmem_directory, bm_args, bm_matrix);
+        std::vector<Benchmark> matrix = create_benchmark_matrix(name, pmem_directory, bm_args, bm_matrix);
         std::move(matrix.begin(), matrix.end(), std::back_inserter(benchmarks));
       } else {
         BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args);
         bm_config.pmem_directory = pmem_directory;
-        benchmarks.push_back(std::make_unique<Benchmark>(name, std::move(bm_config)));
+        benchmarks.emplace_back(name, bm_config);
       }
     }
   } catch (const YAML::ParserException& e1) {
@@ -42,16 +41,16 @@ std::vector<std::unique_ptr<Benchmark>> BenchmarkFactory::create_benchmarks(cons
   return benchmarks;
 }
 
-std::vector<std::unique_ptr<Benchmark>> BenchmarkFactory::create_benchmark_matrix(
-    const std::string& bm_name, const std::filesystem::path& pmem_directory, YAML::Node& config_args,
-    YAML::Node& matrix_args) {
+std::vector<Benchmark> BenchmarkFactory::create_benchmark_matrix(const std::string& bm_name,
+                                                                 const std::filesystem::path& pmem_directory,
+                                                                 YAML::Node& config_args, YAML::Node& matrix_args) {
   if (!matrix_args.IsMap()) {
     throw std::invalid_argument("'matrix' must be a YAML map.");
   }
 
   const std::filesystem::path pmem_data_file = generate_random_file_name(pmem_directory);
 
-  std::vector<std::unique_ptr<Benchmark>> matrix{};
+  std::vector<Benchmark> matrix{};
   std::function<void(const YAML::iterator&, YAML::Node&)> create_matrix = [&](const YAML::iterator& node_iterator,
                                                                               YAML::Node& current_config) {
     YAML::Node current_values = node_iterator->second;
@@ -66,9 +65,9 @@ std::vector<std::unique_ptr<Benchmark>> BenchmarkFactory::create_benchmark_matri
 
       // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
       if (final_config.write_ratio > 0) {
-        matrix.push_back(std::make_unique<Benchmark>(bm_name, std::move(final_config)));
+        matrix.emplace_back(bm_name, final_config);
       } else {
-        matrix.push_back(std::make_unique<Benchmark>(bm_name, std::move(final_config), pmem_data_file));
+        matrix.emplace_back(bm_name, final_config, pmem_data_file);
       }
 
       return;
@@ -89,7 +88,7 @@ std::vector<std::unique_ptr<Benchmark>> BenchmarkFactory::create_benchmark_matri
 
   YAML::Node base_config = YAML::Clone(config_args);
   create_matrix(matrix_args.begin(), base_config);
-  return std::move(matrix);
+  return matrix;
 }
 
 }  // namespace perma

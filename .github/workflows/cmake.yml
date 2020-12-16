@@ -2,12 +2,13 @@ name: CMake Build + Test
 
 on: [push]
 
-env:
-  BUILD_TYPE: Release
-
 jobs:
   build:
     runs-on: ubuntu-20.04
+
+    strategy:
+      matrix:
+        build-type: [Release, Debug]
 
     steps:
     - uses: actions/checkout@v2
@@ -29,10 +30,9 @@ jobs:
     - name: Build
       working-directory: ${{runner.workspace}}/build
       shell: bash
-      # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: cmake --build . --config $BUILD_TYPE
+      run: cmake --build . --config ${{ matrix.build-type }} -- -j
 
     - name: Test
       working-directory: ${{runner.workspace}}/build
       shell: bash
-      run: ctest
+      run: ctest -R perma-test -V
