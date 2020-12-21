@@ -82,9 +82,11 @@ class IoOperation {
 #ifdef HAS_AVX
     if (data_instruction_ == internal::SIMD) {
       switch (persist_instruction_) {
+#ifdef HAS_CLWB
         case internal::PersistInstruction::CLWB: {
           return rw_ops::simd_write_clwb(op_addr_, access_size_);
         }
+#endif
         case internal::PersistInstruction::NTSTORE: {
           return rw_ops::simd_write_nt(op_addr_, access_size_);
         }
@@ -98,9 +100,11 @@ class IoOperation {
     }
 #endif
     switch (persist_instruction_) {
+#ifdef HAS_CLWB
       case internal::PersistInstruction::CLWB: {
         return rw_ops::mov_write_clwb(op_addr_, access_size_);
       }
+#endif
       case internal::PersistInstruction::NTSTORE: {
         return rw_ops::mov_write_nt(op_addr_, access_size_);
       }

@@ -96,9 +96,11 @@ inline void simd_write_nt(char* addr, const size_t access_size, flush_fn flush, 
   barrier();
 }
 
+#ifdef HAS_CLWB
 inline void simd_write_clwb(char* addr, const size_t access_size) {
   simd_write(addr, access_size, flush_clwb, sfence_barrier);
 }
+#endif
 
 inline void simd_write_clflush(char* addr, const size_t access_size) {
   simd_write(addr, access_size, flush_clflushopt, sfence_barrier);
