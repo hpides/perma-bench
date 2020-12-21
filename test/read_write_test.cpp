@@ -63,7 +63,9 @@ TEST_F(ReadWriteTest, SIMDNonTemporalWrite) { run_write_test(rw_ops::simd_write_
 
 TEST_F(ReadWriteTest, MOVNoneWrite) { run_write_test(rw_ops::mov_write_none); }
 
+#ifdef HAS_CLWB
 TEST_F(ReadWriteTest, MOVCacheLineWriteBackWrite) { run_write_test(rw_ops::mov_write_clwb); }
+#endif
 
 TEST_F(ReadWriteTest, MOVCacheLineFlushOptWrite) { run_write_test(rw_ops::mov_write_clflush); }
 

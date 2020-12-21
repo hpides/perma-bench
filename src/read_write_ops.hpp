@@ -38,6 +38,7 @@ inline void flush_clflushopt(const void* addr, const size_t len) {
 /*
  * flush the CPU cache using clwb.
  */
+#ifdef HAS_CLWB
 inline void flush_clwb(const void* addr, const size_t len) {
   uintptr_t uptr;
 
@@ -45,6 +46,7 @@ inline void flush_clwb(const void* addr, const size_t len) {
     asm volatile(".byte 0x66; xsaveopt %0" : "+m"(*(volatile char*)(uptr)));
   }
 }
+#endif
 
 /*
  * non-temporal hints used by avx-512f instructions.
@@ -169,9 +171,11 @@ inline void mov_write(char* addr, const size_t access_size, flush_fn flush, barr
   barrier();
 }
 
+#ifdef HAS_CLWB
 inline void mov_write_clwb(char* addr, const size_t access_size) {
   mov_write(addr, access_size, flush_clwb, sfence_barrier);
 }
+#endif
 
 inline void mov_write_clflush(char* addr, const size_t access_size) {
   mov_write(addr, access_size, flush_clflushopt, sfence_barrier);

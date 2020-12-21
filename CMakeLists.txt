@@ -25,7 +25,7 @@ set(LIB_HINTS "/usr/local/lib64" "/usr/local/lib" "/usr/lib" "/usr/lib64")
 # This might need to be adapted in the future to support different SSE/AVX instructions.
 include(CheckCSourceRuns)
 set(avx512_prog "int main() { asm volatile(\"vmovdqu64 %zmm0, %zmm1\"); return 0; }")
-set(CMAKE_REQUIRED_FLAGS "-mavx512f")
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mavx512f")
 check_c_source_runs("${avx512_prog}" HAS_AVX)
 if (${HAS_AVX})
     # Set HAS_AVX so we can use it to enable all explicit AVX instructions.
@@ -33,6 +33,19 @@ if (${HAS_AVX})
     message(STATUS "System supports AVX-512.")
 else ()
     message(STATUS "System does not support AVX-512.")
+endif ()
+
+##################### CLWB ####################
+
+set(clwb_prog "int main() { char test = 'a'; char* test_ptr = &test; asm volatile(\".byte 0x66; xsaveopt %0\" : \"+m\"(*test_ptr)); return 0; }")
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mclwb")
+check_c_source_runs("${clwb_prog}" HAS_CLWB)
+if (${HAS_CLWB})
+#Set HAS_AVX so we can use it to enable all explicit CLWB instructions.
+    add_definitions("-DHAS_CLWB")
+    message(STATUS "System supports CLWB.")
+else ()
+    message(STATUS "System does CLWB.")
 endif ()
 
 ##################### PMDK ####################
