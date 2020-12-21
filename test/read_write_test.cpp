@@ -54,7 +54,9 @@ class ReadWriteTest : public ::testing::Test {
 #ifdef HAS_AVX
 TEST_F(ReadWriteTest, SIMDNoneWrite) { run_write_test(rw_ops::simd_write_none); }
 
+#ifdef HAS_CLWB
 TEST_F(ReadWriteTest, SIMDCacheLineWriteBackWrite) { run_write_test(rw_ops::simd_write_clwb); }
+#endif
 
 TEST_F(ReadWriteTest, SIMDCacheLineFlushOptWrite) { run_write_test(rw_ops::simd_write_clflush); }
 
