@@ -15,7 +15,7 @@ void check_file_written(const std::filesystem::path& pmem_file, const size_t tot
   char* const raw_data = data.data();
   const std::string_view expected_data{rw_ops::WRITE_DATA, rw_ops::CACHE_LINE_SIZE};
   for (size_t offset = 0; offset < total_size; offset += rw_ops::CACHE_LINE_SIZE) {
-    EXPECT_EQ(std::string_view(raw_data + offset, rw_ops::CACHE_LINE_SIZE), expected_data)
+    ASSERT_EQ(std::string_view(raw_data + offset, rw_ops::CACHE_LINE_SIZE), expected_data)
         << "Failed at position " << std::to_string(offset);
   }
 }
