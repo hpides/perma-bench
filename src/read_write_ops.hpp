@@ -102,9 +102,11 @@ inline void simd_write_clwb(char* addr, const size_t access_size) {
 }
 #endif
 
+#ifdef HAS_CLFLUSHOPT
 inline void simd_write_clflush(char* addr, const size_t access_size) {
   simd_write(addr, access_size, flush_clflushopt, sfence_barrier);
 }
+#endif
 
 inline void simd_write_nt(char* addr, const size_t access_size) {
   simd_write_nt(addr, access_size, no_flush, sfence_barrier);
@@ -179,9 +181,11 @@ inline void mov_write_clwb(char* addr, const size_t access_size) {
 }
 #endif
 
+#ifdef HAS_CLFLUSHOPT
 inline void mov_write_clflush(char* addr, const size_t access_size) {
   mov_write(addr, access_size, flush_clflushopt, sfence_barrier);
 }
+#endif
 
 inline void mov_write_nt(char* addr, const size_t access_size) {
   mov_write_nt(addr, access_size, no_flush, sfence_barrier);

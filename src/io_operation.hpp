@@ -87,9 +87,12 @@ class IoOperation {
           return rw_ops::simd_write_clwb(op_addr_, access_size_);
         }
 #endif
+
+#ifdef HAS_CLFLUSHOPT
         case internal::PersistInstruction::NTSTORE: {
           return rw_ops::simd_write_nt(op_addr_, access_size_);
         }
+#endif
         case internal::PersistInstruction::CLFLUSH: {
           return rw_ops::simd_write_clflush(op_addr_, access_size_);
         }
@@ -105,9 +108,12 @@ class IoOperation {
         return rw_ops::mov_write_clwb(op_addr_, access_size_);
       }
 #endif
+
+#ifdef HAS_CLFLUSHOPT
       case internal::PersistInstruction::NTSTORE: {
         return rw_ops::mov_write_nt(op_addr_, access_size_);
       }
+#endif
       case internal::PersistInstruction::CLFLUSH: {
         return rw_ops::mov_write_clflush(op_addr_, access_size_);
       }

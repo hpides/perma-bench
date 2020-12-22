@@ -58,7 +58,9 @@ TEST_F(ReadWriteTest, SIMDNoneWrite) { run_write_test(rw_ops::simd_write_none); 
 TEST_F(ReadWriteTest, SIMDCacheLineWriteBackWrite) { run_write_test(rw_ops::simd_write_clwb); }
 #endif
 
+#ifdef HAS_CLFLUSHOPT
 TEST_F(ReadWriteTest, SIMDCacheLineFlushOptWrite) { run_write_test(rw_ops::simd_write_clflush); }
+#endif
 
 TEST_F(ReadWriteTest, SIMDNonTemporalWrite) { run_write_test(rw_ops::simd_write_nt); }
 #endif
@@ -69,7 +71,9 @@ TEST_F(ReadWriteTest, MOVNoneWrite) { run_write_test(rw_ops::mov_write_none); }
 TEST_F(ReadWriteTest, MOVCacheLineWriteBackWrite) { run_write_test(rw_ops::mov_write_clwb); }
 #endif
 
+#ifdef HAS_CLFLUSHOPT
 TEST_F(ReadWriteTest, MOVCacheLineFlushOptWrite) { run_write_test(rw_ops::mov_write_clflush); }
+#endif
 
 TEST_F(ReadWriteTest, MOVNonTemporalWrite) { run_write_test(rw_ops::mov_write_nt); }
 
