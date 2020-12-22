@@ -27,6 +27,7 @@ typedef void flush_fn(const void*, const size_t);
 /*
  * flush the CPU cache using clflushopt.
  */
+#ifdef HAS_CLFLUSHOPT
 inline void flush_clflushopt(const void* addr, const size_t len) {
   uintptr_t uptr;
 
@@ -34,6 +35,7 @@ inline void flush_clflushopt(const void* addr, const size_t len) {
     asm volatile(".byte 0x66; clflush %0" : "+m"(*(volatile char*)(uptr)));
   }
 }
+#endif
 
 /*
  * flush the CPU cache using clwb.
