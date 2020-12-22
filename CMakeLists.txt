@@ -54,7 +54,7 @@ if (${HAS_CLWB})
     add_definitions("-DHAS_CLWB")
     message(STATUS "System supports CLWB.")
 else ()
-    message(STATUS "System does CLWB.")
+    message(STATUS "System does not support CLWB.")
 endif ()
 
 ##################### CLFLUSHOPT ####################
@@ -76,7 +76,7 @@ if (${HAS_CLFLUSHOPT})
     add_definitions("-DHAS_CLFLUSHOPT")
     message(STATUS "System supports CLFLUSHOPT.")
 else ()
-    message(STATUS "System does CLFLUSHOPT.")
+    message(STATUS "System does not support CLFLUSHOPT.")
 endif ()
 
 ##################### PMDK ####################

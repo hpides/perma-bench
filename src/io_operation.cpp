@@ -26,15 +26,14 @@ void Write::run() {
         return rw_ops::simd_write_clwb(op_addresses_, access_size_);
       }
 #endif
-
-#ifdef HAS_CLFLUSHOPT
       case internal::PersistInstruction::NTSTORE: {
         return rw_ops::simd_write_nt(op_addresses_, access_size_);
       }
-#endif
+#ifdef HAS_CLFLUSHOPT
       case internal::PersistInstruction::CLFLUSH: {
         return rw_ops::simd_write_clflush(op_addresses_, access_size_);
       }
+#endif
       case internal::PersistInstruction::None: {
         return rw_ops::simd_write_none(op_addresses_, access_size_);
       }
@@ -47,15 +46,14 @@ void Write::run() {
       return rw_ops::mov_write_clwb(op_addresses_, access_size_);
     }
 #endif
-
-#ifdef HAS_CLFLUSHOPT
     case internal::PersistInstruction::NTSTORE: {
       return rw_ops::mov_write_nt(op_addresses_, access_size_);
     }
-#endif
+#ifdef HAS_CLFLUSHOPT
     case internal::PersistInstruction::CLFLUSH: {
       return rw_ops::mov_write_clflush(op_addresses_, access_size_);
     }
+#endif
     case internal::PersistInstruction::None: {
       return rw_ops::mov_write_none(op_addresses_, access_size_);
     }
