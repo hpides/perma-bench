@@ -27,6 +27,7 @@ typedef void flush_fn(const void*, const size_t);
 /*
  * flush the CPU cache using clflushopt.
  */
+#ifdef HAS_CLFLUSHOPT
 inline void flush_clflushopt(const void* addr, const size_t len) {
   uintptr_t uptr;
 
@@ -34,10 +35,12 @@ inline void flush_clflushopt(const void* addr, const size_t len) {
     asm volatile(".byte 0x66; clflush %0" : "+m"(*(volatile char*)(uptr)));
   }
 }
+#endif
 
 /*
  * flush the CPU cache using clwb.
  */
+#ifdef HAS_CLWB
 inline void flush_clwb(const void* addr, const size_t len) {
   uintptr_t uptr;
 
@@ -45,6 +48,7 @@ inline void flush_clwb(const void* addr, const size_t len) {
     asm volatile(".byte 0x66; xsaveopt %0" : "+m"(*(volatile char*)(uptr)));
   }
 }
+#endif
 
 /*
  * non-temporal hints used by avx-512f instructions.
@@ -94,13 +98,17 @@ inline void simd_write_nt(char* addr, const size_t access_size, flush_fn flush, 
   barrier();
 }
 
+#ifdef HAS_CLWB
 inline void simd_write_clwb(char* addr, const size_t access_size) {
   simd_write(addr, access_size, flush_clwb, sfence_barrier);
 }
+#endif
 
+#ifdef HAS_CLFLUSHOPT
 inline void simd_write_clflush(char* addr, const size_t access_size) {
   simd_write(addr, access_size, flush_clflushopt, sfence_barrier);
 }
+#endif
 
 inline void simd_write_nt(char* addr, const size_t access_size) {
   simd_write_nt(addr, access_size, no_flush, sfence_barrier);
@@ -169,13 +177,17 @@ inline void mov_write(char* addr, const size_t access_size, flush_fn flush, barr
   barrier();
 }
 
+#ifdef HAS_CLWB
 inline void mov_write_clwb(char* addr, const size_t access_size) {
   mov_write(addr, access_size, flush_clwb, sfence_barrier);
 }
+#endif
 
+#ifdef HAS_CLFLUSHOPT
 inline void mov_write_clflush(char* addr, const size_t access_size) {
   mov_write(addr, access_size, flush_clflushopt, sfence_barrier);
 }
+#endif
 
 inline void mov_write_nt(char* addr, const size_t access_size) {
   mov_write_nt(addr, access_size, no_flush, sfence_barrier);
