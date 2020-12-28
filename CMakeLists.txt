@@ -25,7 +25,7 @@ set(LIB_HINTS "/usr/local/lib64" "/usr/local/lib" "/usr/lib" "/usr/lib64")
 # This might need to be adapted in the future to support different SSE/AVX instructions.
 include(CheckCSourceRuns)
 set(avx512_prog "int main() { asm volatile(\"vmovdqu64 %zmm0, %zmm1\"); return 0; }")
-set(CMAKE_REQUIRED_FLAGS "-mavx512f")
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mavx512f")
 check_c_source_runs("${avx512_prog}" HAS_AVX)
 if (${HAS_AVX})
     # Set HAS_AVX so we can use it to enable all explicit AVX instructions.
@@ -33,6 +33,50 @@ if (${HAS_AVX})
     message(STATUS "System supports AVX-512.")
 else ()
     message(STATUS "System does not support AVX-512.")
+endif ()
+
+##################### CLWB ####################
+
+set(clwb_prog "
+#include <cpuid.h>
+int main() {
+  unsigned cpuinfo[4] = {0};
+  __cpuid_count(0x0, 0x0, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
+  if (cpuinfo[0] < 0x7) {
+    return 1;
+  }
+  __cpuid_count(0x7, 0x0, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
+  return (cpuinfo[1] & (1 << 24)) == 0; }")
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mclwb")
+check_c_source_runs("${clwb_prog}" HAS_CLWB)
+if (${HAS_CLWB})
+    # Set HAS_CLWB so we can use it to enable all explicit CLWB instructions.
+    add_definitions("-DHAS_CLWB")
+    message(STATUS "System supports CLWB.")
+else ()
+    message(STATUS "System does not support CLWB.")
+endif ()
+
+##################### CLFLUSHOPT ####################
+
+set(clflushopt_prog "
+#include <cpuid.h>
+int main() {
+  unsigned cpuinfo[4] = {0};
+  __cpuid_count(0x0, 0x0, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
+  if (cpuinfo[0] < 0x7) {
+    return 1;
+  }
+  __cpuid_count(0x7, 0x0, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
+  return (cpuinfo[1] & (1 << 23)) == 0; }")
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mclflushopt")
+check_c_source_runs("${clflushopt_prog}" HAS_CLFLUSHOPT)
+if (${HAS_CLFLUSHOPT})
+    # Set HAS_CLFLUSHOPT so we can use it to enable all explicit CLFLUSHOPT instructions.
+    add_definitions("-DHAS_CLFLUSHOPT")
+    message(STATUS "System supports CLFLUSHOPT.")
+else ()
+    message(STATUS "System does not support CLFLUSHOPT.")
 endif ()
 
 ##################### PMDK ####################

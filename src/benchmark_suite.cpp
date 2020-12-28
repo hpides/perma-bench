@@ -7,6 +7,16 @@
 
 #include "benchmark_factory.hpp"
 
+namespace {
+
+nlohmann::json benchmark_results_to_json(const perma::Benchmark& bm, const nlohmann::json& bm_results) {
+  return {{"bm_name", bm.benchmark_name()},
+          {"matrix_args", bm.get_benchmark_config().matrix_args},
+          {"benchmarks", bm_results}};
+}
+
+}  // namespace
+
 namespace perma {
 
 void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
@@ -24,7 +34,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
     if (previous_bm && previous_bm->benchmark_name() != benchmark.benchmark_name()) {
       // Started new benchmark, force delete old data in case it was a matrix.
       // If it is not a matrix, this does nothing.
-      results += {{"bm_name", previous_bm->benchmark_name()}, {"benchmarks", matrix_bm_results}};
+      results += benchmark_results_to_json(*previous_bm, matrix_bm_results);
       matrix_bm_results = nlohmann::json::array();
       previous_bm->tear_down(/*force=*/true);
     }
@@ -41,7 +51,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
   }
 
   // Add last matrix benchmark to final results
-  results += {{"bm_name", benchmarks.back().benchmark_name()}, {"benchmarks", matrix_bm_results}};
+  results += benchmark_results_to_json(benchmarks.back(), matrix_bm_results);
 
   const std::filesystem::path result_file = result_directory / config_file.stem().concat("-results.json");
   std::ofstream output(result_file);
