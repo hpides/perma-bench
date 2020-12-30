@@ -1,10 +1,10 @@
 #pragma once
 
 #include <immintrin.h>
-#include <libpmem.h>
 #include <xmmintrin.h>
 
 #include <cstdint>
+#include <cstring>
 #include <vector>
 
 namespace perma::rw_ops {
@@ -27,6 +27,7 @@ typedef void flush_fn(const void*, const size_t);
 /*
  * flush the CPU cache using clflushopt.
  */
+#ifdef HAS_CLFLUSHOPT
 inline void flush_clflushopt(const void* addr, const size_t len) {
   uintptr_t uptr;
 
@@ -34,10 +35,12 @@ inline void flush_clflushopt(const void* addr, const size_t len) {
     asm volatile(".byte 0x66; clflush %0" : "+m"(*(volatile char*)(uptr)));
   }
 }
+#endif
 
 /*
  * flush the CPU cache using clwb.
  */
+#ifdef HAS_CLWB
 inline void flush_clwb(const void* addr, const size_t len) {
   uintptr_t uptr;
 
@@ -45,6 +48,7 @@ inline void flush_clwb(const void* addr, const size_t len) {
     asm volatile(".byte 0x66; xsaveopt %0" : "+m"(*(volatile char*)(uptr)));
   }
 }
+#endif
 
 /*
  * non-temporal hints used by avx-512f instructions.
@@ -94,13 +98,17 @@ inline void simd_write_nt(char* addr, const size_t access_size, flush_fn flush, 
   barrier();
 }
 
+#ifdef HAS_CLWB
 inline void simd_write_clwb(char* addr, const size_t access_size) {
   simd_write(addr, access_size, flush_clwb, sfence_barrier);
 }
+#endif
 
+#ifdef HAS_CLFLUSHOPT
 inline void simd_write_clflush(char* addr, const size_t access_size) {
   simd_write(addr, access_size, flush_clflushopt, sfence_barrier);
 }
+#endif
 
 inline void simd_write_nt(char* addr, const size_t access_size) {
   simd_write_nt(addr, access_size, no_flush, sfence_barrier);
@@ -128,24 +136,16 @@ inline void simd_read(const char* addr, const size_t access_size) {
 #endif
 
 inline void mov_write_data_nt(char* from, const char* to) {
-  __m64* data_0 = (__m64*)&WRITE_DATA[0 * 8];
-  __m64* data_1 = (__m64*)&WRITE_DATA[1 * 8];
-  __m64* data_2 = (__m64*)&WRITE_DATA[2 * 8];
-  __m64* data_3 = (__m64*)&WRITE_DATA[3 * 8];
-  __m64* data_4 = (__m64*)&WRITE_DATA[4 * 8];
-  __m64* data_5 = (__m64*)&WRITE_DATA[5 * 8];
-  __m64* data_6 = (__m64*)&WRITE_DATA[6 * 8];
-  __m64* data_7 = (__m64*)&WRITE_DATA[7 * 8];
   for (char* mem_addr = from; mem_addr < to; mem_addr += CACHE_LINE_SIZE) {
     // Write 512 Bit (64 Byte)
-    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 0 * 8), *data_0);
-    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 1 * 8), *data_1);
-    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 2 * 8), *data_2);
-    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 3 * 8), *data_3);
-    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 4 * 8), *data_4);
-    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 5 * 8), *data_5);
-    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 6 * 8), *data_6);
-    _mm_stream_pi(reinterpret_cast<__m64*>(mem_addr + 7 * 8), *data_7);
+    _mm_stream_pi((__m64*)(mem_addr + 0 * 8), *(__m64*)&WRITE_DATA[0 * 8]);
+    _mm_stream_pi((__m64*)(mem_addr + 1 * 8), *(__m64*)&WRITE_DATA[1 * 8]);
+    _mm_stream_pi((__m64*)(mem_addr + 2 * 8), *(__m64*)&WRITE_DATA[2 * 8]);
+    _mm_stream_pi((__m64*)(mem_addr + 3 * 8), *(__m64*)&WRITE_DATA[3 * 8]);
+    _mm_stream_pi((__m64*)(mem_addr + 4 * 8), *(__m64*)&WRITE_DATA[4 * 8]);
+    _mm_stream_pi((__m64*)(mem_addr + 5 * 8), *(__m64*)&WRITE_DATA[5 * 8]);
+    _mm_stream_pi((__m64*)(mem_addr + 6 * 8), *(__m64*)&WRITE_DATA[6 * 8]);
+    _mm_stream_pi((__m64*)(mem_addr + 7 * 8), *(__m64*)&WRITE_DATA[7 * 8]);
   }
 }
 
@@ -157,32 +157,16 @@ inline void mov_write_nt(char* addr, const size_t access_size, flush_fn flush, b
 }
 
 inline void mov_write_data(char* from, const char* to) {
-  asm volatile(
-      "movq 0*8(%[write_data]), %%r8  \n\t"
-      "movq 1*8(%[write_data]), %%r9  \n\t"
-      "movq 2*8(%[write_data]), %%r10 \n\t"
-      "movq 3*8(%[write_data]), %%r11 \n\t"
-      "movq 4*8(%[write_data]), %%r12 \n\t"
-      "movq 5*8(%[write_data]), %%r13 \n\t"
-      "movq 6*8(%[write_data]), %%r14 \n\t"
-      "movq 7*8(%[write_data]), %%r15 \n\t"
-      :
-      : [ write_data ] "r"(WRITE_DATA)
-      : "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15");
-
   for (char* mem_addr = from; mem_addr < to; mem_addr += CACHE_LINE_SIZE) {
     // Write 512 Bit (64 Byte)
-    asm volatile(
-        "movq  %%r8, 0*8(%[addr]) \n\t"
-        "movq  %%r9, 1*8(%[addr]) \n\t"
-        "movq %%r10, 2*8(%[addr]) \n\t"
-        "movq %%r11, 3*8(%[addr]) \n\t"
-        "movq %%r12, 4*8(%[addr]) \n\t"
-        "movq %%r13, 5*8(%[addr]) \n\t"
-        "movq %%r14, 6*8(%[addr]) \n\t"
-        "movq %%r15, 7*8(%[addr]) \n\t"
-        :
-        : [ addr ] "r"(mem_addr), [ write_data ] "r"(WRITE_DATA));
+    std::memcpy(mem_addr + (0 * 8), WRITE_DATA + (0 * 8), 8);
+    std::memcpy(mem_addr + (1 * 8), WRITE_DATA + (1 * 8), 8);
+    std::memcpy(mem_addr + (2 * 8), WRITE_DATA + (2 * 8), 8);
+    std::memcpy(mem_addr + (3 * 8), WRITE_DATA + (3 * 8), 8);
+    std::memcpy(mem_addr + (4 * 8), WRITE_DATA + (4 * 8), 8);
+    std::memcpy(mem_addr + (5 * 8), WRITE_DATA + (5 * 8), 8);
+    std::memcpy(mem_addr + (6 * 8), WRITE_DATA + (6 * 8), 8);
+    std::memcpy(mem_addr + (7 * 8), WRITE_DATA + (7 * 8), 8);
   }
 }
 
@@ -193,13 +177,17 @@ inline void mov_write(char* addr, const size_t access_size, flush_fn flush, barr
   barrier();
 }
 
+#ifdef HAS_CLWB
 inline void mov_write_clwb(char* addr, const size_t access_size) {
   mov_write(addr, access_size, flush_clwb, sfence_barrier);
 }
+#endif
 
+#ifdef HAS_CLFLUSHOPT
 inline void mov_write_clflush(char* addr, const size_t access_size) {
   mov_write(addr, access_size, flush_clflushopt, sfence_barrier);
 }
+#endif
 
 inline void mov_write_nt(char* addr, const size_t access_size) {
   mov_write_nt(addr, access_size, no_flush, sfence_barrier);

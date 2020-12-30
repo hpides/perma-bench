@@ -51,6 +51,8 @@ std::vector<Benchmark> BenchmarkFactory::create_benchmark_matrix(const std::stri
   const std::filesystem::path pmem_data_file = generate_random_file_name(pmem_directory);
 
   std::vector<Benchmark> matrix{};
+  std::set<std::string> matrix_arg_names{};
+
   std::function<void(const YAML::iterator&, YAML::Node&)> create_matrix = [&](const YAML::iterator& node_iterator,
                                                                               YAML::Node& current_config) {
     YAML::Node current_values = node_iterator->second;
@@ -62,6 +64,7 @@ std::vector<Benchmark> BenchmarkFactory::create_benchmark_matrix(const std::stri
 
       BenchmarkConfig final_config = BenchmarkConfig::decode(clean_config);
       final_config.pmem_directory = pmem_directory;
+      final_config.matrix_args = {matrix_arg_names.begin(), matrix_arg_names.end()};
 
       // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
       if (final_config.write_ratio > 0) {
@@ -78,6 +81,7 @@ std::vector<Benchmark> BenchmarkFactory::create_benchmark_matrix(const std::stri
     }
 
     const auto arg_name = node_iterator->first.as<std::string>();
+    matrix_arg_names.insert(arg_name);
     YAML::iterator next_node = node_iterator;
     next_node++;
     for (YAML::Node value : current_values) {
