@@ -5,29 +5,33 @@ from itertools import repeat
 import numpy as np
 from collections import defaultdict
 
-import utils
+from raw_json_utils import RawJsonUtils
 
 
-class RawPlotter:
-    def __init__(self, img_dir):
+class RawJsonPlotter:
+    def __init__(self, img_dir, path):
         self.img_dir = img_dir
-        self.latencies = utils.get_latencies()
-        self.timestamps = utils.get_timestamps()
-        self.types = utils.get_types()
-        self.thread_ids = utils.get_thread_ids()
+        self.utils = RawJsonUtils(path)
+
+        self.latencies = self.utils.get_latencies()
+        self.timestamps = self.utils.get_timestamps()
+        self.types = self.utils.get_types()
+        self.thread_ids = self.utils.get_thread_ids()
+
+    def __del__(self):
+        del self.utils
 
     def latency_of_same_thread(self):
         colors = list()
         latencies = self.latencies
 
         for i, t in enumerate(self.types):
-            # TODO: add legend
             if t == "read":
                 colors.extend(repeat("r", 2))
-                plt.plot(self.timestamps[i * 2: i * 2 + 2], [self.latencies[i], self.latencies[i]], color="r")
+                plt.plot(self.timestamps[i * 2: i * 2 + 2], [latencies[i], latencies[i]], color="r")
             elif t == "write":
                 colors.extend(repeat("b", 2))
-                plt.plot(self.timestamps[i * 2: i * 2 + 2], [self.latencies[i], self.latencies[i]], color="b")
+                plt.plot(self.timestamps[i * 2: i * 2 + 2], [latencies[i], latencies[i]], color="b")
             else:  # pause
                 colors.extend(repeat("w", 2))
 
@@ -50,6 +54,12 @@ class RawPlotter:
                              ha="right",
                              color="g")
 
+        # add legend
+        plt.plot(0, 0, color="r", label="read")
+        plt.plot(0, 0, color="b", label="write")
+        plt.plot(0, 0, color="g", linestyle="--", label="pause")
+        plt.legend(loc="upper left", bbox_to_anchor=(1, 1))
+
         # duplicate values in latency for following scatter plot
         latencies = [latencies[l // 2] for l in range(len(latencies) * 2)]
 
@@ -59,12 +69,12 @@ class RawPlotter:
         plt.xlabel("Timestamps")
         plt.ylabel("Latency (ns)")
 
-        plt.savefig(self.img_dir + utils.get_benchmark_name() + "_latency.png")
+        plt.savefig(self.img_dir + self.utils.get_benchmark_name() + "-latency-singlethreaded-raw.png", bbox_inches='tight')
         plt.close()
 
     def latency_of_several_threads(self):
-        if utils.contains_pauses():  # TODO: viz for several threads and pauses
-            print("Insert latency visualization for several threads and pauses here.")
+        if self.utils.contains_pauses():  # TODO: viz for several threads and pauses
+            pass
 
         else:  # TODO: second viz with lines for threads on y-axis and time on x-axis
             average_latency_per_thread = defaultdict(list)
@@ -89,5 +99,5 @@ class RawPlotter:
             plt.xlabel("Thread IDs")
             plt.ylabel("Average Latency (ns)")
 
-            plt.savefig(self.img_dir + utils.get_benchmark_name() + "_latency.png")
+            plt.savefig(self.img_dir + self.utils.get_benchmark_name() + "-latency-multithreaded-raw.png", bbox_inches='tight')
             plt.close()

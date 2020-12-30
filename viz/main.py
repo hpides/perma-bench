@@ -1,36 +1,10 @@
 #! ../venv/bin/python
 import os
 import sys
-import glob
 import webbrowser
 
-from raw_plotter import RawPlotter
 import user_interface as ui
-import utils
-
-
-def create_pngs_for_raw_jsons(results_dir):
-    # collect raw jsons of benchmarks
-    raw_jsons = list()
-    for path in glob.glob(results_dir + "raw/*.json"):
-        raw_jsons.append(os.path.basename(path))
-
-    # create pngs for raw jsons
-    for raw_json in raw_jsons:
-        utils.init(results_dir + "raw/" + raw_json)
-        raw_plotter = RawPlotter(img_dir)
-
-        if utils.is_multithreaded():
-            raw_plotter.latency_of_several_threads()
-        else:
-            raw_plotter.latency_of_same_thread()
-
-        del raw_plotter
-
-
-def create_pngs_for_matrix_jsons(results_dir):
-    # TODO
-    print("Insert png creation of jsons containing matrices here.")
+from png_creator import PngCreator
 
 
 if __name__ == "__main__":
@@ -45,9 +19,10 @@ if __name__ == "__main__":
         os.makedirs(img_dir)
 
     # create pngs
-    create_pngs_for_raw_jsons(results_dir)
-    create_pngs_for_matrix_jsons(results_dir)
+    png_creator = PngCreator(results_dir, img_dir)
+    png_creator.create_pngs_for_raw_jsons()
+    png_creator.create_pngs_for_matrix_json()
 
-    # create and open user interface for pngs (at the moment: only for raw result pngs)
+    # create and open user interface for pngs
     ui.init(img_dir)
     webbrowser.open_new_tab("viz/html/index.html")

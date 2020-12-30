@@ -42,10 +42,15 @@ h1, h2, h3, h4, h5, h6, p {
   color: black;
 }
 
+table, tr, td {
+  margin-left: 250px;
+  padding: 5px 10px;
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+
 img {
   margin-left: 250px;
-  height: 600px;
-  width: 800px;
 }
 
 a.big {
