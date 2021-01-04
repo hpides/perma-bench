@@ -14,8 +14,6 @@ namespace perma {
 constexpr size_t TMP_FILE_SIZE = 131072;  // 128 KiB
 constexpr size_t ACCESS_SIZE = 512;       // 512 byte
 
-typedef void test_write_fn(const std::vector<char*>&, const size_t);
-
 class ReadWriteTest : public ::testing::Test {
  protected:
   void SetUp() override {
