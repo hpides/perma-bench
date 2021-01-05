@@ -1,0 +1,11 @@
+# Represents the database workload table scan (sequential read) -> see Building Blocks for Persistent Memory
+table_scan:
+  matrix:
+    number_threads: [ 1, 2, 4, 8, 16, 32 ]
+    access_size: [ 64, 4096, 16384 ] # [64B, 4 KiB, 16 KiB, TODO: add 1 MiB]
+    total_memory_range: [ 10737418240, 1073741824 ] # [10 GiB, 1GiB]
+
+  args:
+    exec_mode: sequential
+    read_ratio: 1
+    write_ratio: 0

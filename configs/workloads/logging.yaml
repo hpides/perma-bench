@@ -1,0 +1,27 @@
+# Represents the database workload logging (small sequential writes) -> see Building Blocks for Persistent Memory
+logging:
+  matrix:
+    number_threads: [ 1, 2, 4, 8, 16, 32 ]
+    access_size: [ 64, 128, 256, 512, 1024 ] # ~[168 mil ops, 84 mil ops, 42 mil ops, 21 mil ops, 10 mil ops]
+    # pause_frequency: [100000, 500000, 1000000] # TODO: discuss if needed
+    persist_instruction: [ ntstore, clwb, clflush ]
+
+  args:
+    total_memory_range: 10737418240  # 10 GiB
+    # pause_length_micros: 1000 # 1 ms
+    exec_mode: sequential
+    read_ratio: 0
+    write_ratio: 1
+
+logging_partition:
+  matrix:
+    number_partitions: [ 1, 2, 4, 8 ]
+    access_size: [ 64, 128, 256, 512, 1024 ] # ~[168 mil ops, 84 mil ops, 42 mil ops, 21 mil ops, 10 mil ops]
+    persist_instruction: [ ntstore, clwb, clflush ]
+
+  args:
+    total_memory_range: 10737418240  # 10 GiB
+    number_threads: 8 # TODO: check good value here
+    exec_mode: sequential
+    read_ratio: 0
+    write_ratio: 1
