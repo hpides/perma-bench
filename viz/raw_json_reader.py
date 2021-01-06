@@ -8,7 +8,7 @@ def get_raw_configs(bm_name):
     return benchmark_configs[bm_name]
 
 
-class RawJsonUtils:
+class RawJsonReader:
     def __init__(self, path):
         with open(path) as f:
             json_obj = json.load(f)

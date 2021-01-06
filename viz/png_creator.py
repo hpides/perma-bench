@@ -22,7 +22,7 @@ class PngCreator:
             for raw_json in raw_jsons:
                 plotter = RawJsonPlotter(self.img_dir, raw_json)
 
-                if plotter.utils.is_multithreaded():
+                if plotter.reader.is_multithreaded():
                     plotter.latency_of_several_threads()
                 else:
                     plotter.latency_of_same_thread()
@@ -39,7 +39,7 @@ class PngCreator:
         plotter = MatrixJsonPlotter(self.img_dir, matrix_json[0])
 
         # iterate benchmark results
-        for bm_idx in range(plotter.utils.get_num_benchmarks()):
+        for bm_idx in range(plotter.reader.get_num_benchmarks()):
             plotter.set_values_of_current_bm(bm_idx)
             matrix_args = plotter.results["matrix_args"]
 
@@ -55,14 +55,14 @@ class PngCreator:
                 perms = list(permutations(matrix_args, 2))
 
                 for perm in perms:
-                    if perm[0] in plotter.utils.get_categorical_args():
+                    if perm[0] in plotter.reader.get_categorical_args():
                         plotter.plot_categorical_x_with_two_args(perm)
                     else:
                         plotter.plot_continuous_x_with_two_args(perm)
 
             # create pngs for matrix with one dimension
             else:
-                if matrix_args[0] in plotter.utils.get_categorical_args():
+                if matrix_args[0] in plotter.reader.get_categorical_args():
                     plotter.plot_categorical_x_with_one_arg(matrix_args[0])
                 else:
                     plotter.plot_continuous_x_with_one_arg(matrix_args[0])

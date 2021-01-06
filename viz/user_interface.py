@@ -4,7 +4,7 @@ import dominate
 from dominate.tags import *
 from collections import defaultdict
 
-import raw_json_utils as raw_utils
+import raw_json_reader as raw_reader
 
 
 def create_benchmark_sites(img_dir, benchmark_pngs):
@@ -22,24 +22,24 @@ def create_benchmark_sites(img_dir, benchmark_pngs):
                 for b in benchmark_pngs.keys():
                     a(b, href=b + ".html")
 
-            # place benchmark name as heading
+            # add benchmark name as heading
             h1(bp[0])
 
             # check if first png name of current bm ends with "raw"
-            is_raw_json = (bp[1][0][-7:-4] == "raw")
+            is_raw_json = bp[1][0].endswith("raw.png")
 
             # add table with configs (for raw jsons)
             if is_raw_json:
-                h4("Benchmark Configs:")
+                h4("Benchmark Configs")
 
                 with table().add(tbody()):
-                    for config in raw_utils.get_raw_configs(bp[0]).items():
+                    for config in raw_reader.get_raw_configs(bp[0]).items():
                         l = tr()
                         l.add(td(config[0]))
                         l.add(td(config[1]))
 
-            # place pngs
-            h4("Benchmark Results:")
+            # add pngs and matrix argument permutations (for non-raw results)
+            h4("Benchmark Results")
             last_first_arg = ""
             last_second_arg = ""
 

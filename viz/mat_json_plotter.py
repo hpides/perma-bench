@@ -2,20 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
 
-from mat_json_utils import MatrixJsonUtils
+from mat_json_reader import MatrixJsonReader
 
 
 class MatrixJsonPlotter:
     def __init__(self, img_dir, path):
         self.img_dir = img_dir
-        self.utils = MatrixJsonUtils(path)
+        self.reader = MatrixJsonReader(path)
         self.results = defaultdict(list)
 
     def __del__(self):
-        del self.utils
+        del self.reader
 
     def set_values_of_current_bm(self, bm_idx):
-        for field, values in self.utils.results.items():
+        for field, values in self.reader.results.items():
             self.results[field] = values[bm_idx]
 
     """
@@ -49,14 +49,12 @@ class MatrixJsonPlotter:
         indices_per_legend_category = self.get_indices_of_legend_categories(legend_values)
         max_num_indices = self.get_max_number_of_indices(indices_per_legend_category)
 
+        # create lexicographically ordered list of x-categories for correct y-value retrieval and x-ticks later
+        x_categories = sorted(list(set(x_values)))
+
         # collect y-values for each legend category
         y_values_per_legend_category = defaultdict(list)
-        x_categories = list()
         for i, cat in enumerate(sorted(indices_per_legend_category.keys())):
-            # create lexicographically ordered list of x-categories for correct y-value retrieval and x-ticks
-            if i == 0:
-                x_categories = sorted(list(set(x_values)))
-
             # init size of y-values dict
             y_values_per_legend_category[cat] = [0] * max_num_indices
 
@@ -71,28 +69,28 @@ class MatrixJsonPlotter:
         bar_width = 0.25
         fig, ax = plt.subplots()
         for j, cat in enumerate(y_values_per_legend_category.keys()):
-            rects = ax.bar(x_pos + j*bar_width, y_values_per_legend_category[cat], bar_width, label=cat)
+            rects = ax.bar(x_pos + j * bar_width, y_values_per_legend_category[cat], bar_width, label=cat)
 
             # draw cross if y-value is null
             for rect in rects:
                 if rect.get_height() == 0:
                     ax.annotate("X",
-                                xy=(rect.get_x() + bar_width/2, 0),
-                                xytext=(rect.get_x() + bar_width/2, 0),
+                                xy=(rect.get_x() + bar_width / 2, 0),
+                                xytext=(rect.get_x() + bar_width / 2, 0),
                                 ha="center",
                                 va="baseline",
                                 fontsize=18,
-                                fontweight='bold',
+                                fontweight="bold",
                                 color=plt.gca().containers[j].patches[0].get_facecolor())
 
         # set text of axes, x-ticks and legend title
-        ax.set_xlabel(self.utils.get_arg_label(perm[0]))
+        ax.set_xlabel(self.reader.get_arg_label(perm[0]))
         ax.set_ylabel(y_label)
         bars_per_category = len(set(legend_values))
         x_ticks_pos = [x + (((bars_per_category / 2) - 0.5) * bar_width) for x in x_pos]
         ax.set_xticks(x_ticks_pos)
         ax.set_xticklabels(x_categories)
-        ax.legend(title=(self.utils.get_arg_label(perm[1])+":"), loc="upper left", bbox_to_anchor=(1, 1))
+        ax.legend(title=(self.reader.get_arg_label(perm[1]) + ":"), loc="upper left", bbox_to_anchor=(1, 1))
         fig.tight_layout()
 
         # save png and close current figure
@@ -108,7 +106,7 @@ class MatrixJsonPlotter:
         # collect values for each legend category
         x_values_per_legend_category = defaultdict(list)
         y_values_per_legend_category = defaultdict(list)
-        for i, cat in enumerate(sorted(indices_per_legend_category.keys())):
+        for cat in sorted(indices_per_legend_category.keys()):
             for idx in indices_per_legend_category[cat]:
                 x_values_per_legend_category[cat].append(x_values[idx])
                 y_values_per_legend_category[cat].append(self.results[y_value][idx])
@@ -118,11 +116,11 @@ class MatrixJsonPlotter:
             plt.plot(x_values_per_legend_category[cat], y_values_per_legend_category[cat], "-o", label=cat)
 
         # set text of axes and legend title
-        plt.xlabel(self.utils.get_arg_label(perm[0]))
+        plt.xlabel(self.reader.get_arg_label(perm[0]))
         plt.ylabel(y_label)
-        plt.legend(title=(self.utils.get_arg_label(perm[1])+":"), loc="upper left", bbox_to_anchor=(1, 1))
+        plt.legend(title=(self.reader.get_arg_label(perm[1]) + ":"), loc="upper left", bbox_to_anchor=(1, 1))
 
-        # set layout
+        # adjust layout
         plt.xlim(left=0)
         plt.ylim(bottom=0)
         plt.tight_layout()

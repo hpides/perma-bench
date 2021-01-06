@@ -5,21 +5,21 @@ from itertools import repeat
 import numpy as np
 from collections import defaultdict
 
-from raw_json_utils import RawJsonUtils
+from raw_json_reader import RawJsonReader
 
 
 class RawJsonPlotter:
     def __init__(self, img_dir, path):
         self.img_dir = img_dir
-        self.utils = RawJsonUtils(path)
+        self.reader = RawJsonReader(path)
 
-        self.latencies = self.utils.get_latencies()
-        self.timestamps = self.utils.get_timestamps()
-        self.types = self.utils.get_types()
-        self.thread_ids = self.utils.get_thread_ids()
+        self.latencies = self.reader.get_latencies()
+        self.timestamps = self.reader.get_timestamps()
+        self.types = self.reader.get_types()
+        self.thread_ids = self.reader.get_thread_ids()
 
     def __del__(self):
-        del self.utils
+        del self.reader
 
     def latency_of_same_thread(self):
         colors = list()
@@ -69,11 +69,11 @@ class RawJsonPlotter:
         plt.xlabel("Timestamps")
         plt.ylabel("Latency (ns)")
 
-        plt.savefig(self.img_dir + self.utils.get_benchmark_name() + "-latency-singlethreaded-raw.png", bbox_inches='tight')
+        plt.savefig(self.img_dir + self.reader.get_benchmark_name() + "-latency-singlethreaded-raw.png", bbox_inches="tight")
         plt.close()
 
     def latency_of_several_threads(self):
-        if self.utils.contains_pauses():  # TODO: viz for several threads and pauses
+        if self.reader.contains_pauses():  # TODO: viz for several threads and pauses
             pass
 
         else:  # TODO: second viz with lines for threads on y-axis and time on x-axis
@@ -99,5 +99,5 @@ class RawJsonPlotter:
             plt.xlabel("Thread IDs")
             plt.ylabel("Average Latency (ns)")
 
-            plt.savefig(self.img_dir + self.utils.get_benchmark_name() + "-latency-multithreaded-raw.png", bbox_inches='tight')
+            plt.savefig(self.img_dir + self.reader.get_benchmark_name() + "-latency-multithreaded-raw.png", bbox_inches="tight")
             plt.close()
