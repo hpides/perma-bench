@@ -34,14 +34,36 @@ class MatrixJsonPlotter:
     def get_max_number_of_indices(self, indices_per_legend_category):
         return max(len(v) for v in indices_per_legend_category.values())
 
-    def save_png(self, y_label, perm):
+    def save_png(self, y_label, args):
         bm_name = self.results["bm_name"]
         y_name = y_label.lower().replace(" ", "_").split("_(")[0]
-        plt.savefig(f"{self.img_dir}{bm_name}-{perm[0]}-{perm[1]}-{y_name}.png")
+
+        if len(args) > 1:
+            plt.savefig(f"{self.img_dir}{bm_name}-{args[0]}-{args[1]}-{y_name}.png")
+        else:
+            plt.savefig(f"{self.img_dir}{bm_name}-{args[0]}-{y_name}.png")
 
     """
         internal plotting functions:
     """
+
+    def plot_categorical_x(self, arg, y_value, y_label):
+        x_values = self.results[arg]
+        y_values = self.results[y_value]
+
+        # actual plot
+        x_pos = np.arange(len(x_values))
+        plt.bar(x_pos, y_values)
+
+        # set text of axes and x-ticks
+        plt.xlabel(self.reader.get_arg_label(arg))
+        plt.ylabel(y_label)
+        plt.xticks(x_pos, x_values)
+        plt.tight_layout()
+
+        # save png and close current figure
+        self.save_png(y_label, [arg])
+        plt.close()
 
     def plot_categorical_x_and_legend(self, perm, y_value, y_label):
         x_values = self.results[perm[0]]
@@ -97,6 +119,26 @@ class MatrixJsonPlotter:
         self.save_png(y_label, perm)
         plt.close()
 
+    def plot_continuous_x(self, arg, y_value, y_label):
+        x_values = self.results[arg]
+        y_values = self.results[y_value]
+
+        # actual plot
+        plt.plot(x_values, y_values, "-o")
+
+        # set text of axes
+        plt.xlabel(self.reader.get_arg_label(arg))
+        plt.ylabel(y_label)
+
+        # adjust layout
+        plt.xlim(left=0)
+        plt.ylim(bottom=0)
+        plt.tight_layout()
+
+        # save png and close current figure
+        self.save_png(y_label, [arg])
+        plt.close()
+
     def plot_continuous_x_and_legend(self, perm, y_value, y_label):
         x_values = self.results[perm[0]]
         legend_values = self.results[perm[1]]
@@ -133,16 +175,18 @@ class MatrixJsonPlotter:
         externally called plotting functions:
     """
 
+    def plot_categorical_x_with_one_arg(self, arg):
+        self.plot_categorical_x(arg, "avg", "Average Duration (ns)")
+        self.plot_categorical_x(arg, "bandwidth_values", "Bandwidth (GB/s)")
+
     def plot_categorical_x_with_two_args(self, perm):
         self.plot_categorical_x_and_legend(perm, "avg", "Average Duration (ns)")
         self.plot_categorical_x_and_legend(perm, "bandwidth_values", "Bandwidth (GB/s)")
 
+    def plot_continuous_x_with_one_arg(self, arg):
+        self.plot_continuous_x(arg, "avg", "Average Duration (ns)")
+        self.plot_continuous_x(arg, "bandwidth_values", "Bandwidth (GB/s)")
+
     def plot_continuous_x_with_two_args(self, perm):
         self.plot_continuous_x_and_legend(perm, "avg", "Average Duration (ns)")
         self.plot_continuous_x_and_legend(perm, "bandwidth_values", "Bandwidth (GB/s)")
-
-    def plot_categorical_x_with_one_arg(self, arg):
-        pass
-
-    def plot_continuous_x_with_one_arg(self, arg):
-        pass

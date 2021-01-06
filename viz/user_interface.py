@@ -48,11 +48,16 @@ def create_benchmark_sites(img_dir, benchmark_pngs):
                     first_arg = png[:-4].split("-")[1]
                     second_arg = png[:-4].split("-")[2]
 
-                    if first_arg != last_first_arg or second_arg != last_second_arg:
-                        h5(f"({first_arg}, {second_arg})")
+                    # add single matrix argument as subheading (one dimension)
+                    if second_arg == "average_duration" or second_arg == "bandwidth":
+                        if png == bp[1][0]:
+                            h5(f"Matrix Argument: {first_arg}")
 
-                    last_first_arg = first_arg
-                    last_second_arg = second_arg
+                    # add each matrix argument permutation as subheading (multiple dimensions)
+                    elif first_arg != last_first_arg or second_arg != last_second_arg:
+                        h5(f"Current Matrix Arguments: ({first_arg}, {second_arg})")
+                        last_first_arg = first_arg
+                        last_second_arg = second_arg
 
                 div(img(src=img_dir + png))
 
