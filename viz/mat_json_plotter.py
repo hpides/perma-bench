@@ -31,9 +31,6 @@ class MatrixJsonPlotter:
                 indices_per_legend_category[legend_values[idx]] = [idx]
         return indices_per_legend_category
 
-    def get_max_number_of_indices(self, indices_per_legend_category):
-        return max(len(v) for v in indices_per_legend_category.values())
-
     def save_png(self, y_label, args):
         bm_name = self.results["bm_name"]
         y_name = y_label.lower().replace(" ", "_").split("_(")[0]
@@ -69,7 +66,7 @@ class MatrixJsonPlotter:
         x_values = self.results[perm[0]]
         legend_values = self.results[perm[1]]
         indices_per_legend_category = self.get_indices_of_legend_categories(legend_values)
-        max_num_indices = self.get_max_number_of_indices(indices_per_legend_category)
+        max_num_indices = max(len(v) for v in indices_per_legend_category.values())
 
         # create lexicographically ordered list of x-categories for correct y-value retrieval and x-ticks later
         x_categories = sorted(list(set(x_values)))
@@ -143,7 +140,6 @@ class MatrixJsonPlotter:
         x_values = self.results[perm[0]]
         legend_values = self.results[perm[1]]
         indices_per_legend_category = self.get_indices_of_legend_categories(legend_values)
-        max_num_indices = self.get_max_number_of_indices(indices_per_legend_category)
 
         # collect values for each legend category
         x_values_per_legend_category = defaultdict(list)
