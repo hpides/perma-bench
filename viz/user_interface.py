@@ -94,5 +94,8 @@ def init(img_dir):
         benchmark_name = png_name.split("-")[0]
         benchmark_pngs[benchmark_name].append(png_name)
 
+    # sort png lists in dictionary for lexicographically matrix argument extraction in create_benchmark_sites()
+    benchmark_pngs = {bm: sorted(benchmark_pngs[bm]) for bm in benchmark_pngs.keys()}
+
     create_index_site(benchmark_pngs.keys())
     create_benchmark_sites(img_dir, benchmark_pngs)
