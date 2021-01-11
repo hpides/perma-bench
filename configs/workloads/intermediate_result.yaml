@@ -1,4 +1,3 @@
-# Ref. Alexander Böhm: writing of big blocks
 intermediate_result:
   matrix:
     number_threads: [ 1, 2, 4, 8, 16, 32 ]

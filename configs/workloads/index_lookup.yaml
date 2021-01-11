@@ -1,5 +1,4 @@
-# Represents the database workload index lookup (random reads) -> see Building Blocks for Persistent Memory
-# Ref. Alexander Böhm Index-lookup
+# Represents the database workload index lookup (random reads)
 index_lookup:
   matrix:
     number_partitions: [ 1, 4, 16 ]

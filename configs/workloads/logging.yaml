@@ -1,4 +1,4 @@
-# Represents the database workload logging (small sequential writes) -> see Building Blocks for Persistent Memory
+# Represents the database workload logging (small sequential writes)
 logging:
   matrix:
     number_threads: [ 1, 2, 4, 8, 16, 32 ]

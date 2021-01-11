@@ -1,13 +1,13 @@
-# Represents the data base workload page propagation (large random writes) -> see Building Blocks for Persistent Memory
+# Represents the data base workload page propagation (large random writes)
 page_propagation_write:
   matrix:
     number_threads: [ 1, 8, 16 ]
     access_size: [ 512, 4096, 16384 ] # [512B, 4 KiB, 16 KiB]
     persist_instruction: [ ntstore, none ]
+    random_distribution: [ uniform, zipf ]
 
   args:
     total_memory_range: 107374182400  # 100 GiB
-    random_distribution: uniform
     number_operations: 10000000 # 10 million
     exec_mode: random
     read_ratio: 0
@@ -18,10 +18,10 @@ page_propagation_mixed:
     number_threads: [ 1, 8, 16 ]
     access_size: [ 512, 4096, 16384 ] # [512B, 4 KiB, 16 KiB]
     persist_instruction: [ ntstore, none ]
+    random_distribution: [ uniform, zipf ]
 
   args:
     total_memory_range: 107374182400  # 100 GiB
-    random_distribution: uniform
     number_operations: 10000000 # 10 million
     exec_mode: random
     read_ratio: 0.8
