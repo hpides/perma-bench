@@ -57,28 +57,6 @@ else ()
     message(STATUS "System does not support CLWB.")
 endif ()
 
-##################### CLFLUSHOPT ####################
-
-set(clflushopt_prog "
-#include <cpuid.h>
-int main() {
-  unsigned cpuinfo[4] = {0};
-  __cpuid_count(0x0, 0x0, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
-  if (cpuinfo[0] < 0x7) {
-    return 1;
-  }
-  __cpuid_count(0x7, 0x0, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
-  return (cpuinfo[1] & (1 << 23)) == 0; }")
-set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mclflushopt")
-check_c_source_runs("${clflushopt_prog}" HAS_CLFLUSHOPT)
-if (${HAS_CLFLUSHOPT})
-    # Set HAS_CLFLUSHOPT so we can use it to enable all explicit CLFLUSHOPT instructions.
-    add_definitions("-DHAS_CLFLUSHOPT")
-    message(STATUS "System supports CLFLUSHOPT.")
-else ()
-    message(STATUS "System does not support CLFLUSHOPT.")
-endif ()
-
 ##################### PMDK ####################
 option(BUILD_PMDK "Set true if PMDK should be downloaded and built from source.")
 option(PMDK_INCLUDE_PATH "Path to custom PMDK include files" "")

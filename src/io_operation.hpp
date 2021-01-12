@@ -13,7 +13,7 @@ enum Mode : uint8_t { Sequential, Sequential_Desc, Random };
 enum RandomDistribution : uint8_t { Uniform, Zipf };
 
 enum DataInstruction : uint8_t { MOV, SIMD };
-enum PersistInstruction : uint8_t { NTSTORE, CLWB, CLFLUSH, NONE };
+enum PersistInstruction : uint8_t { Cache, NoCache, None };
 
 enum OpType : uint8_t { Read, Write, Pause };
 
@@ -49,7 +49,7 @@ class IoOperation {
 
   static IoOperation ReadOp(std::vector<char*>&& op_addresses, uint32_t access_size,
                             internal::DataInstruction data_instruction) {
-    return IoOperation{std::move(op_addresses), access_size, internal::Read, data_instruction, internal::NONE};
+    return IoOperation{std::move(op_addresses), access_size, internal::Read, data_instruction, internal::None};
   }
 
   static IoOperation WriteOp(std::vector<char*>&& op_addresses, uint32_t access_size,
@@ -59,7 +59,7 @@ class IoOperation {
   }
 
   static IoOperation PauseOp(uint32_t duration) {
-    return IoOperation{{}, duration, internal::Pause, internal::SIMD, internal::NONE};
+    return IoOperation{{}, duration, internal::Pause, internal::SIMD, internal::None};
   }
 
  private:
@@ -103,19 +103,14 @@ class IoOperation {
     if (data_instruction_ == internal::SIMD) {
       switch (persist_instruction_) {
 #ifdef HAS_CLWB
-        case internal::PersistInstruction::CLWB: {
+        case internal::PersistInstruction::Cache: {
           return rw_ops::simd_write_clwb(op_addresses_, access_size_);
         }
 #endif
-        case internal::PersistInstruction::NTSTORE: {
+        case internal::PersistInstruction::NoCache: {
           return rw_ops::simd_write_nt(op_addresses_, access_size_);
         }
-#ifdef HAS_CLFLUSHOPT
-        case internal::PersistInstruction::CLFLUSH: {
-          return rw_ops::simd_write_clflush(op_addresses_, access_size_);
-        }
-#endif
-        case internal::PersistInstruction::NONE: {
+        case internal::PersistInstruction::None: {
           return rw_ops::simd_write_none(op_addresses_, access_size_);
         }
       }
@@ -123,19 +118,14 @@ class IoOperation {
 #endif
     switch (persist_instruction_) {
 #ifdef HAS_CLWB
-      case internal::PersistInstruction::CLWB: {
+      case internal::PersistInstruction::Cache: {
         return rw_ops::mov_write_clwb(op_addresses_, access_size_);
       }
 #endif
-      case internal::PersistInstruction::NTSTORE: {
+      case internal::PersistInstruction::NoCache: {
         return rw_ops::mov_write_nt(op_addresses_, access_size_);
       }
-#ifdef HAS_CLFLUSHOPT
-      case internal::PersistInstruction::CLFLUSH: {
-        return rw_ops::mov_write_clflush(op_addresses_, access_size_);
-      }
-#endif
-      case internal::PersistInstruction::NONE: {
+      case internal::PersistInstruction::None: {
         return rw_ops::mov_write_none(op_addresses_, access_size_);
       }
     }

@@ -39,19 +39,6 @@ static constexpr size_t CACHE_LINE_SIZE = 64;
 typedef void flush_fn(const void*, const size_t);
 
 /*
- * flush the CPU cache using clflushopt.
- */
-#ifdef HAS_CLFLUSHOPT
-inline void flush_clflushopt(const void* addr, const size_t len) {
-  uintptr_t uptr;
-
-  for (uptr = (uintptr_t)addr; uptr < (uintptr_t)addr + len; uptr += CACHE_LINE_SIZE) {
-    asm volatile(".byte 0x66; clflush %0" : "+m"(*(volatile char*)(uptr)));
-  }
-}
-#endif
-
-/*
  * flush the CPU cache using clwb.
  */
 #ifdef HAS_CLWB
@@ -119,12 +106,6 @@ inline void simd_write_nt(const std::vector<char*>& addresses, const size_t acce
 #ifdef HAS_CLWB
 inline void simd_write_clwb(const std::vector<char*>& addresses, const size_t access_size) {
   simd_write(addresses, access_size, flush_clwb, sfence_barrier);
-}
-#endif
-
-#ifdef HAS_CLFLUSHOPT
-inline void simd_write_clflush(const std::vector<char*>& addresses, const size_t access_size) {
-  simd_write(addresses, access_size, flush_clflushopt, sfence_barrier);
 }
 #endif
 
@@ -265,12 +246,6 @@ inline void mov_write(const std::vector<char*>& addresses, const size_t access_s
 #ifdef HAS_CLWB
 inline void mov_write_clwb(const std::vector<char*>& addresses, const size_t access_size) {
   mov_write(addresses, access_size, flush_clwb, sfence_barrier);
-}
-#endif
-
-#ifdef HAS_CLFLUSHOPT
-inline void mov_write_clflush(const std::vector<char*>& addresses, const size_t access_size) {
-  mov_write(addresses, access_size, flush_clflushopt, sfence_barrier);
 }
 #endif
 
