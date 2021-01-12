@@ -104,14 +104,41 @@ class IoOperation {
       switch (persist_instruction_) {
 #ifdef HAS_CLWB
         case internal::PersistInstruction::Cache: {
-          return rw_ops::simd_write_clwb(op_addresses_, access_size_);
+          switch (access_size_) {
+            case 64:
+              return rw_ops::simd_write_clwb(op_addresses_, access_size_);
+            case 128:
+              return rw_ops::simd_write_clwb_128(op_addresses_, access_size_);
+            case 256:
+              return rw_ops::simd_write_clwb_256(op_addresses_, access_size_);
+            default:
+              return rw_ops::simd_write_clwb_512(op_addresses_, access_size_);
+          }
         }
 #endif
         case internal::PersistInstruction::NoCache: {
-          return rw_ops::simd_write_nt(op_addresses_, access_size_);
+          switch (access_size_) {
+            case 64:
+              return rw_ops::simd_write_nt(op_addresses_, access_size_);
+            case 128:
+              return rw_ops::simd_write_nt_128(op_addresses_, access_size_);
+            case 256:
+              return rw_ops::simd_write_nt_256(op_addresses_, access_size_);
+            default:
+              return rw_ops::simd_write_nt_512(op_addresses_, access_size_);
+          }
         }
         case internal::PersistInstruction::None: {
-          return rw_ops::simd_write_none(op_addresses_, access_size_);
+          switch (access_size_) {
+            case 64:
+              return rw_ops::simd_write_none(op_addresses_, access_size_);
+            case 128:
+              return rw_ops::simd_write_none_128(op_addresses_, access_size_);
+            case 256:
+              return rw_ops::simd_write_none_256(op_addresses_, access_size_);
+            default:
+              return rw_ops::simd_write_none_512(op_addresses_, access_size_);
+          }
         }
       }
     }

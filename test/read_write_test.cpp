@@ -57,13 +57,31 @@ class ReadWriteTest : public ::testing::Test {
 };
 
 #ifdef HAS_AVX
-TEST_F(ReadWriteTest, SIMDNoneWrite) { run_write_test(rw_ops::simd_write_none); }
+TEST_F(ReadWriteTest, SIMDNoneWrite_64) { run_write_test(rw_ops::simd_write_none); }
+
+TEST_F(ReadWriteTest, SIMDNoneWrite_128) { run_write_test(rw_ops::simd_write_none_128); }
+
+TEST_F(ReadWriteTest, SIMDNoneWrite_256) { run_write_test(rw_ops::simd_write_none_256); }
+
+TEST_F(ReadWriteTest, SIMDNoneWrite_512) { run_write_test(rw_ops::simd_write_none_512); }
 
 #ifdef HAS_CLWB
-TEST_F(ReadWriteTest, SIMDCacheLineWriteBackWrite) { run_write_test(rw_ops::simd_write_clwb); }
+TEST_F(ReadWriteTest, SIMDCacheLineWriteBackWrite_64) { run_write_test(rw_ops::simd_write_clwb); }
+
+TEST_F(ReadWriteTest, SIMDCacheLineWriteBackWrite_128) { run_write_test(rw_ops::simd_write_clwb_128); }
+
+TEST_F(ReadWriteTest, SIMDCacheLineWriteBackWrite_256) { run_write_test(rw_ops::simd_write_clwb_256); }
+
+TEST_F(ReadWriteTest, SIMDCacheLineWriteBackWrite_512) { run_write_test(rw_ops::simd_write_clwb_512); }
 #endif
 
-TEST_F(ReadWriteTest, SIMDNonTemporalWrite) { run_write_test(rw_ops::simd_write_nt); }
+TEST_F(ReadWriteTest, SIMDNonTemporalWrite_64) { run_write_test(rw_ops::simd_write_nt); }
+
+TEST_F(ReadWriteTest, SIMDNonTemporalWrite_128) { run_write_test(rw_ops::simd_write_nt_128); }
+
+TEST_F(ReadWriteTest, SIMDNonTemporalWrite_256) { run_write_test(rw_ops::simd_write_nt_256); }
+
+TEST_F(ReadWriteTest, SIMDNonTemporalWrite_512) { run_write_test(rw_ops::simd_write_nt_512); }
 #endif
 
 TEST_F(ReadWriteTest, MOVNoneWrite) { run_write_test(rw_ops::mov_write_none); }
