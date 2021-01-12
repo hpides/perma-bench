@@ -74,10 +74,28 @@ class IoOperation {
   void run_read() {
 #ifdef HAS_AVX
     if (data_instruction_ == internal::SIMD) {
-      return rw_ops::simd_read(op_addresses_, access_size_);
+      switch (access_size_) {
+        case 64:
+          return rw_ops::simd_read(op_addresses_, access_size_);
+        case 128:
+          return rw_ops::simd_read_128(op_addresses_, access_size_);
+        case 256:
+          return rw_ops::simd_read_256(op_addresses_, access_size_);
+        default:
+          return rw_ops::simd_read_512(op_addresses_, access_size_);
+      }
     }
 #endif
-    return rw_ops::mov_read(op_addresses_, access_size_);
+    switch (access_size_) {
+      case 64:
+        return rw_ops::mov_read(op_addresses_, access_size_);
+      case 128:
+        return rw_ops::mov_read_128(op_addresses_, access_size_);
+      case 256:
+        return rw_ops::mov_read_256(op_addresses_, access_size_);
+      default:
+        return rw_ops::mov_read_512(op_addresses_, access_size_);
+    }
   }
 
   void run_write() {

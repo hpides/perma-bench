@@ -14,6 +14,20 @@ namespace perma::rw_ops {
 // https://youtu.be/nXaxk27zwlk?t=2441.
 #define KEEP(x) asm volatile("" : : "g"(x) : "memory")
 
+#define READ_SIMD_512(mem_addr, offset) _mm512_stream_load_si512((void*)(mem_addr + (offset * CACHE_LINE_SIZE)))
+#define READ_MOV_512(mem_addr, offset) \
+  asm volatile(                        \
+      "movq 0*8(%[addr]), %%r8  \n\t"  \
+      "movq 1*8(%[addr]), %%r8  \n\t"  \
+      "movq 2*8(%[addr]), %%r8  \n\t"  \
+      "movq 3*8(%[addr]), %%r8  \n\t"  \
+      "movq 4*8(%[addr]), %%r8  \n\t"  \
+      "movq 5*8(%[addr]), %%r8  \n\t"  \
+      "movq 6*8(%[addr]), %%r8  \n\t"  \
+      "movq 7*8(%[addr]), %%r8  \n\t"  \
+      :                                \
+      : [ addr ] "r"(mem_addr + (offset * CACHE_LINE_SIZE)))
+
 // Exactly 64 characters to write in one cache line.
 static const char WRITE_DATA[] __attribute__((aligned(64))) =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-";
@@ -118,6 +132,71 @@ inline void simd_write_none(const std::vector<char*>& addresses, const size_t ac
   simd_write(addresses, access_size, no_flush, no_barrier);
 }
 
+inline void simd_read_512(const std::vector<char*>& addresses, const size_t access_size) {
+  __m512i res0, res1, res2, res3, res4, res5, res6, res7;
+  auto simd_fn = [&]() {
+    for (char* addr : addresses) {
+      const char* access_end_addr = addr + access_size;
+      for (const char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += (8 * CACHE_LINE_SIZE)) {
+        // Read 512 Byte
+        res0 = READ_SIMD_512(mem_addr, 0);
+        res1 = READ_SIMD_512(mem_addr, 1);
+        res2 = READ_SIMD_512(mem_addr, 2);
+        res3 = READ_SIMD_512(mem_addr, 3);
+        res4 = READ_SIMD_512(mem_addr, 4);
+        res5 = READ_SIMD_512(mem_addr, 5);
+        res6 = READ_SIMD_512(mem_addr, 6);
+        res7 = READ_SIMD_512(mem_addr, 7);
+      }
+    }
+    return res0 + res1 + res2 + res3 + res4 + res5 + res6 + res7;
+  };
+  // Do a single copy of the last read value to the stack from a zmm register. Otherwise, KEEP copies on each
+  // invocation if we have KEEP in the loop because it cannot be sure how KEEP modifies the current zmm register.
+  __m512i x = simd_fn();
+  KEEP(&x);
+}
+
+inline void simd_read_256(const std::vector<char*>& addresses, const size_t access_size) {
+  __m512i res0, res1, res2, res3;
+  auto simd_fn = [&]() {
+    for (char* addr : addresses) {
+      const char* access_end_addr = addr + access_size;
+      for (const char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += (4 * CACHE_LINE_SIZE)) {
+        // Read 256 Byte
+        res0 = READ_SIMD_512(mem_addr, 0);
+        res1 = READ_SIMD_512(mem_addr, 1);
+        res2 = READ_SIMD_512(mem_addr, 2);
+        res3 = READ_SIMD_512(mem_addr, 3);
+      }
+    }
+    return res0 + res1 + res2 + res3;
+  };
+  // Do a single copy of the last read value to the stack from a zmm register. Otherwise, KEEP copies on each
+  // invocation if we have KEEP in the loop because it cannot be sure how KEEP modifies the current zmm register.
+  __m512i x = simd_fn();
+  KEEP(&x);
+}
+
+inline void simd_read_128(const std::vector<char*>& addresses, const size_t access_size) {
+  __m512i res0, res1;
+  auto simd_fn = [&]() {
+    for (char* addr : addresses) {
+      const char* access_end_addr = addr + access_size;
+      for (const char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += (2 * CACHE_LINE_SIZE)) {
+        // Read 128 Byte
+        res0 = READ_SIMD_512(mem_addr, 0);
+        res1 = READ_SIMD_512(mem_addr, 1);
+      }
+    }
+    return res0 + res1;
+  };
+  // Do a single copy of the last read value to the stack from a zmm register. Otherwise, KEEP copies on each
+  // invocation if we have KEEP in the loop because it cannot be sure how KEEP modifies the current zmm register.
+  __m512i x = simd_fn();
+  KEEP(&x);
+}
+
 inline void simd_read(const std::vector<char*>& addresses, const size_t access_size) {
   __m512i res;
   auto simd_fn = [&]() {
@@ -125,7 +204,7 @@ inline void simd_read(const std::vector<char*>& addresses, const size_t access_s
       const char* access_end_addr = addr + access_size;
       for (const char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
         // Read 512 Bit (64 Byte)
-        res = _mm512_stream_load_si512((void*)mem_addr);
+        res = READ_SIMD_512(mem_addr, 0);
       }
     }
     return res;
@@ -199,22 +278,53 @@ inline void mov_write_none(const std::vector<char*>& addresses, const size_t acc
   mov_write(addresses, access_size, no_flush, no_barrier);
 }
 
+inline void mov_read_512(const std::vector<char*>& addresses, const size_t access_size) {
+  for (char* addr : addresses) {
+    const char* access_end_addr = addr + access_size;
+    for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += (8 * CACHE_LINE_SIZE)) {
+      // Read 512 Byte
+      READ_MOV_512(mem_addr, 0);
+      READ_MOV_512(mem_addr, 1);
+      READ_MOV_512(mem_addr, 2);
+      READ_MOV_512(mem_addr, 3);
+      READ_MOV_512(mem_addr, 4);
+      READ_MOV_512(mem_addr, 5);
+      READ_MOV_512(mem_addr, 6);
+      READ_MOV_512(mem_addr, 7);
+    }
+  }
+}
+
+inline void mov_read_256(const std::vector<char*>& addresses, const size_t access_size) {
+  for (char* addr : addresses) {
+    const char* access_end_addr = addr + access_size;
+    for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += (4 * CACHE_LINE_SIZE)) {
+      // Read 256 Byte
+      READ_MOV_512(mem_addr, 0);
+      READ_MOV_512(mem_addr, 1);
+      READ_MOV_512(mem_addr, 2);
+      READ_MOV_512(mem_addr, 3);
+    }
+  }
+}
+
+inline void mov_read_128(const std::vector<char*>& addresses, const size_t access_size) {
+  for (char* addr : addresses) {
+    const char* access_end_addr = addr + access_size;
+    for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += (2 * CACHE_LINE_SIZE)) {
+      // Read 128 Byte
+      READ_MOV_512(mem_addr, 0);
+      READ_MOV_512(mem_addr, 1);
+    }
+  }
+}
+
 inline void mov_read(const std::vector<char*>& addresses, const size_t access_size) {
   for (char* addr : addresses) {
     const char* access_end_addr = addr + access_size;
     for (char* mem_addr = addr; mem_addr < access_end_addr; mem_addr += CACHE_LINE_SIZE) {
       // Read 512 Bit (64 Byte)
-      asm volatile(
-          "movq 0*8(%[addr]), %%r8  \n\t"
-          "movq 1*8(%[addr]), %%r8  \n\t"
-          "movq 2*8(%[addr]), %%r8  \n\t"
-          "movq 3*8(%[addr]), %%r8  \n\t"
-          "movq 4*8(%[addr]), %%r8  \n\t"
-          "movq 5*8(%[addr]), %%r8  \n\t"
-          "movq 6*8(%[addr]), %%r8  \n\t"
-          "movq 7*8(%[addr]), %%r8  \n\t"
-          :
-          : [ addr ] "r"(mem_addr));
+      READ_MOV_512(mem_addr, 0);
     }
   }
 }
