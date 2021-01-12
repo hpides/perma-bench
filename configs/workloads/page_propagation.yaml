@@ -3,7 +3,7 @@ page_propagation_write:
   matrix:
     number_threads: [ 1, 8, 16 ]
     access_size: [ 512, 4096, 16384 ] # [512B, 4 KiB, 16 KiB]
-    persist_instruction: [ ntstore, none ]
+    persist_instruction: [ nocache, none ]
     random_distribution: [ uniform, zipf ]   # TODO: get good zipf alpha value
 
   args:
@@ -17,7 +17,7 @@ page_propagation_mixed:
   matrix:
     number_threads: [ 1, 8, 16 ]
     access_size: [ 512, 4096, 16384 ] # [512B, 4 KiB, 16 KiB]
-    persist_instruction: [ ntstore, none ]
+    persist_instruction: [ nocache, none ]
     random_distribution: [ uniform, zipf ]   # TODO: get good zipf alpha value
 
   args:
