@@ -111,10 +111,9 @@ const std::unordered_map<std::string, internal::DataInstruction> ConfigEnums::st
     {"simd", internal::DataInstruction::SIMD}, {"mov", internal::DataInstruction::MOV}};
 
 const std::unordered_map<std::string, internal::PersistInstruction> ConfigEnums::str_to_persist_instruction{
-    {"ntstore", internal::PersistInstruction::NTSTORE},
-    {"clwb", internal::PersistInstruction::CLWB},
-    {"clflush", internal::PersistInstruction::CLFLUSH},
-    {"none", internal::PersistInstruction::NONE}};
+    {"nocache", internal::PersistInstruction::NoCache},
+    {"cache", internal::PersistInstruction::Cache},
+    {"none", internal::PersistInstruction::None}};
 
 const std::unordered_map<std::string, internal::RandomDistribution> ConfigEnums::str_to_random_distribution{
     {"uniform", internal::RandomDistribution::Uniform}, {"zipf", internal::RandomDistribution::Zipf}};
