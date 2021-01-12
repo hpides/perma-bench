@@ -2,7 +2,7 @@
 table_scan_large:
   matrix:
     number_threads: [ 1, 2, 4, 8, 16, 32, 36 ]
-    access_size: [ 64, 256, 4096, 16384 ] # [64B, 256B, 4 KiB, 16 KiB, TODO: add 1 MiB]
+    access_size: [ 64, 256, 4096, 16384, 1048576 ] # [64B, 256B, 4 KiB, 16 KiB, 1 MiB]
 
   args:
     exec_mode: sequential
@@ -13,7 +13,7 @@ table_scan_large:
 table_scan_small:
   matrix:
     number_threads: [ 1, 2, 4, 8, 16, 32, 36 ]
-    access_size: [ 64, 256, 4096, 16384 ] # [64B, 256B, 4 KiB, 16 KiB, TODO: add 1 MiB]
+    access_size: [ 64, 256, 4096, 16384, 1048576 ] # [64B, 256B, 4 KiB, 16 KiB, 1 MiB]
 
   args:
       exec_mode: sequential

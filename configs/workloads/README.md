@@ -2,13 +2,14 @@
 Workload configs that depict typical database access patterns.
 ## Index Look
 The [index lookup](index_lookup.yaml) benchmark depicts accesses to a tree-structured index.
-It consists of two benchmarks: the first is a pure index lookup, i.e., small random reads, and the second is a mixed workload - an update - that run small random read and write operations.  
+It consists of two benchmarks: the first is a pure index lookup, i.e., small random reads, and the second is a mixed workload - an update - that runs small random read and write operations.
 ## Intermediate Results
 The [intermediate results](intermediate_result.yaml) benchmark represents the usage of persistent memory for intermediate results of joins, aggregations, etc.
-Hereby, the accesses are similar to hash map inserts, i.e., small random writes.
+The access is similar to hash map inserts, i.e., small random writes, as hash maps are a widely used data structure for joins and aggregations.
 ## Large Persistent Copy
 The [large persistent copy](large_persistent_copy.yaml) benchmark relates to a workload for a shutdown, or similar, of a database.
 It consists of large sequential writes to persistent memory.
+This could be, e.g., persisting a volatile data structure.
 ## Logging
 The [logging](logging.yaml) workload adapts logging to persistent memory.
 Thereby, persistent memory is accessed through small sequential writes. 

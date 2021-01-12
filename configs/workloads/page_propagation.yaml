@@ -4,7 +4,7 @@ page_propagation_write:
     number_threads: [ 1, 8, 16 ]
     access_size: [ 512, 4096, 16384 ] # [512B, 4 KiB, 16 KiB]
     persist_instruction: [ ntstore, none ]
-    random_distribution: [ uniform, zipf ]
+    random_distribution: [ uniform, zipf ]   # TODO: get good zipf alpha value
 
   args:
     total_memory_range: 107374182400  # 100 GiB
@@ -18,7 +18,7 @@ page_propagation_mixed:
     number_threads: [ 1, 8, 16 ]
     access_size: [ 512, 4096, 16384 ] # [512B, 4 KiB, 16 KiB]
     persist_instruction: [ ntstore, none ]
-    random_distribution: [ uniform, zipf ]
+    random_distribution: [ uniform, zipf ]   # TODO: get good zipf alpha value
 
   args:
     total_memory_range: 107374182400  # 100 GiB
