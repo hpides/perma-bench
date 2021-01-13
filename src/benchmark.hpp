@@ -60,7 +60,7 @@ struct BenchmarkConfig {
   double zipf_alpha = 0.99;
 
   internal::DataInstruction data_instruction{internal::DataInstruction::SIMD};
-  internal::PersistInstruction persist_instruction{internal::PersistInstruction::NTSTORE};
+  internal::PersistInstruction persist_instruction{internal::PersistInstruction::NoCache};
 
   double write_ratio = 0.0;
   double read_ratio = 1.0;
