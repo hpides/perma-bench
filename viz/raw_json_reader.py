@@ -74,4 +74,4 @@ class RawJsonReader:
         return not self.get_thread_ids()[:-1] == self.get_thread_ids()[1:]
 
     def contains_pauses(self):
-        return True if "pause" in self.get_types() else False
+        return "pause" in self.get_types()

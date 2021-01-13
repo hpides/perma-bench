@@ -18,9 +18,6 @@ class RawJsonPlotter:
         self.types = self.reader.get_types()
         self.thread_ids = self.reader.get_thread_ids()
 
-    def __del__(self):
-        del self.reader
-
     def latency_of_same_thread(self):
         colors = list()
         latencies = self.latencies

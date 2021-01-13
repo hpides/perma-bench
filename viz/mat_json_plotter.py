@@ -10,9 +10,6 @@ class MatrixJsonPlotter:
         self.img_dir = img_dir
         self.reader = MatrixJsonReader(path)
 
-    def __del__(self):
-        del self.reader
-
     """
         helper functions:
     """
@@ -28,8 +25,7 @@ class MatrixJsonPlotter:
 
     def save_png(self, y_value, args, bm_idx):
         bm_name = self.reader.get_result("bm_name", bm_idx)
-        y_name = ["bandwidth", "average_duration"][y_value == "avg"]
-
+        y_name = "average_duration" if y_value == "avg" else "bandwidth"
         if isinstance(args, tuple):
             plt.savefig(f"{self.img_dir}{bm_name}-{args[0]}-{args[1]}-{y_name}.png")
         else:
@@ -49,7 +45,7 @@ class MatrixJsonPlotter:
 
         # set text of axes and x-ticks
         plt.xlabel(self.reader.get_arg_label(arg))
-        plt.ylabel(["Bandwidth (GB/s)", "Average Duration (ns)"][y_value == "avg"])
+        plt.ylabel("Average Duration (ns)" if y_value == "avg" else "Bandwidth (GB/s)")
         plt.xticks(x_pos, x_values)
         plt.tight_layout()
 
@@ -99,7 +95,7 @@ class MatrixJsonPlotter:
 
         # set text of axes, x-ticks and legend title
         ax.set_xlabel(self.reader.get_arg_label(perm[0]))
-        ax.set_ylabel(["Bandwidth (GB/s)", "Average Duration (ns)"][y_value == "avg"])
+        ax.set_ylabel("Average Duration (ns)" if y_value == "avg" else "Bandwidth (GB/s)")
         bars_per_category = len(set(legend_values))
         x_ticks_pos = [x + (((bars_per_category / 2) - 0.5) * bar_width) for x in x_pos]
         ax.set_xticks(x_ticks_pos)
@@ -120,7 +116,7 @@ class MatrixJsonPlotter:
 
         # set text of axes
         plt.xlabel(self.reader.get_arg_label(arg))
-        plt.ylabel(["Bandwidth (GB/s)", "Average Duration (ns)"][y_value == "avg"])
+        plt.ylabel("Average Duration (ns)" if y_value == "avg" else "Bandwidth (GB/s)")
 
         # adjust layout
         plt.xlim(left=0)
@@ -150,7 +146,7 @@ class MatrixJsonPlotter:
 
         # set text of axes and legend title
         plt.xlabel(self.reader.get_arg_label(perm[0]))
-        plt.ylabel(["Bandwidth (GB/s)", "Average Duration (ns)"][y_value == "avg"])
+        plt.ylabel("Average Duration (ns)" if y_value == "avg" else "Bandwidth (GB/s)")
         plt.legend(title=(self.reader.get_arg_label(perm[1]) + ":"), loc="upper left", bbox_to_anchor=(1, 1))
 
         # adjust layout

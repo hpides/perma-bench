@@ -1,7 +1,7 @@
 import os
 import glob
 import dominate
-from dominate.tags import *
+from dominate import tags
 from collections import defaultdict
 
 import raw_json_reader as raw_reader
@@ -12,33 +12,33 @@ def create_benchmark_sites(img_dir, benchmark_pngs):
         doc = dominate.document(title="PerMA-Bench Results")
 
         with doc.head:
-            link(rel="stylesheet", href="style.css")
+            tags.link(rel="stylesheet", href="style.css")
 
         with doc.body:
             # add fixed sidebar
-            with div(cls="sidenav"):
-                a("Home", href="index.html", cls="big")
+            with tags.div(cls="sidenav"):
+                tags.a("Home", href="index.html", cls="big")
                 for bm_name in benchmark_pngs.keys():
-                    a(bm_name, href=bm_name + ".html")
+                    tags.a(bm_name, href=bm_name + ".html")
 
             # add benchmark name as heading
-            h1(bp[0])
+            tags.h1(bp[0])
 
             # check if first png name of current bm ends with "raw"
             is_raw_json = bp[1][0].endswith("raw.png")
 
             # add table with configs (for raw jsons)
             if is_raw_json:
-                h4("Benchmark Configs")
+                tags.h4("Benchmark Configs")
 
-                with table().add(tbody()):
+                with tags.table().add(tags.tbody()):
                     for config in raw_reader.get_raw_configs(bp[0]).items():
-                        l = tr()
-                        l.add(td(config[0]))
-                        l.add(td(config[1]))
+                        l = tags.tr()
+                        l.add(tags.td(config[0]))
+                        l.add(tags.td(config[1]))
 
             # add pngs and matrix argument permutations (for non-raw results)
-            h4("Benchmark Results")
+            tags.h4("Benchmark Results")
             last_first_arg = ""
             last_second_arg = ""
 
@@ -50,15 +50,15 @@ def create_benchmark_sites(img_dir, benchmark_pngs):
                     # add single matrix argument as subheading (one dimension)
                     if second_arg == "average_duration" or second_arg == "bandwidth":
                         if png == bp[1][0]:
-                            h5(f"Matrix Argument: {first_arg}")
+                            tags.h5(f"Matrix Argument: {first_arg}")
 
                     # add each matrix argument permutation as subheading (multiple dimensions)
                     elif first_arg != last_first_arg or second_arg != last_second_arg:
-                        h5(f"Current Matrix Arguments: ({first_arg}, {second_arg})")
+                        tags.h5(f"Current Matrix Arguments: ({first_arg}, {second_arg})")
                         last_first_arg = first_arg
                         last_second_arg = second_arg
 
-                div(img(src=img_dir + png))
+                tags.div(tags.img(src=img_dir + png))
 
         with open("viz/html/" + bp[0] + ".html", "w") as file:
             file.write(doc.render())
@@ -68,17 +68,17 @@ def create_index_site(benchmark_names):
     doc = dominate.document(title="PerMA-Bench Results")
 
     with doc.head:
-        link(rel="stylesheet", href="style.css")
+        tags.link(rel="stylesheet", href="style.css")
 
     with doc.body:
         # add fixed sidebar
-        with div(cls="sidenav"):
-            a("Home", href="index.html", cls="big")
+        with tags.div(cls="sidenav"):
+            tags.a("Home", href="index.html", cls="big")
             for bm_name in benchmark_names:
-                a(bm_name, href=bm_name + ".html")
+                tags.a(bm_name, href=bm_name + ".html")
 
-        h1("PerMA-Bench Results")
-        p("Put description text here.")
+        tags.h1("PerMA-Bench Results")
+        tags.p("Put description text here.")
 
     with open("viz/html/index.html", "w") as file:
         file.write(doc.render())

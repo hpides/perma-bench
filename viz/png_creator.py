@@ -27,8 +27,6 @@ class PngCreator:
                 else:
                     plotter.latency_of_same_thread()
 
-                del plotter
-    
     def create_pngs_for_matrix_json(self):
         # find json containing matrix arguments
         matrix_json = glob.glob(self.results_dir + "*.json")
@@ -70,5 +68,3 @@ class PngCreator:
                     pass
                     plotter.plot_continuous_x(matrix_args[0], "avg", bm_idx)
                     plotter.plot_continuous_x(matrix_args[0], "bandwidth_values", bm_idx)
-
-        del plotter
