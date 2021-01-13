@@ -40,31 +40,35 @@ class PngCreator:
 
         # iterate benchmark results
         for bm_idx in range(plotter.reader.get_num_benchmarks()):
-            plotter.set_values_of_current_bm(bm_idx)
-            matrix_args = plotter.results["matrix_args"]
+            matrix_args = plotter.reader.get_result("matrix_args", bm_idx)
 
             # prevent visualization of more than three matrix arguments
             if len(matrix_args) > 3:
-                name = plotter.results["bm_name"]
+                name = plotter.reader.get_result("bm_name", bm_idx)
                 print(f"Results of benchmark {name} cannot be visualized, because visualization of more than three "
                       f"matrix arguments is not supported as there would be too many plots.")
                 continue
 
             # create pngs for matrix with two or three dimensions
-            elif len(matrix_args) == 2 or len(matrix_args) == 3:
+            elif 2 <= len(matrix_args) <= 3:
                 perms = list(permutations(matrix_args, 2))
 
                 for perm in perms:
                     if perm[0] in plotter.reader.get_categorical_args():
-                        plotter.plot_categorical_x_with_two_args(perm)
+                        plotter.plot_categorical_x_and_legend(perm, "avg", bm_idx)
+                        plotter.plot_categorical_x_and_legend(perm, "bandwidth_values", bm_idx)
                     else:
-                        plotter.plot_continuous_x_with_two_args(perm)
+                        plotter.plot_continuous_x_and_legend(perm, "avg", bm_idx)
+                        plotter.plot_continuous_x_and_legend(perm, "bandwidth_values", bm_idx)
 
             # create pngs for matrix with one dimension
             else:
                 if matrix_args[0] in plotter.reader.get_categorical_args():
-                    plotter.plot_categorical_x_with_one_arg(matrix_args[0])
+                    plotter.plot_categorical_x(matrix_args[0], "avg", bm_idx)
+                    plotter.plot_categorical_x(matrix_args[0], "bandwidth_values", bm_idx)
                 else:
-                    plotter.plot_continuous_x_with_one_arg(matrix_args[0])
+                    pass
+                    plotter.plot_continuous_x(matrix_args[0], "avg", bm_idx)
+                    plotter.plot_continuous_x(matrix_args[0], "bandwidth_values", bm_idx)
 
         del plotter

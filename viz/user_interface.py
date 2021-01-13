@@ -17,10 +17,9 @@ def create_benchmark_sites(img_dir, benchmark_pngs):
         with doc.body:
             # add fixed sidebar
             with div(cls="sidenav"):
-                # TODO: insert logo
                 a("Home", href="index.html", cls="big")
-                for b in benchmark_pngs.keys():
-                    a(b, href=b + ".html")
+                for bm_name in benchmark_pngs.keys():
+                    a(bm_name, href=bm_name + ".html")
 
             # add benchmark name as heading
             h1(bp[0])
@@ -74,10 +73,9 @@ def create_index_site(benchmark_names):
     with doc.body:
         # add fixed sidebar
         with div(cls="sidenav"):
-            # TODO: insert logo
             a("Home", href="index.html", cls="big")
-            for b in benchmark_names:
-                a(b, href=b + ".html")
+            for bm_name in benchmark_names:
+                a(bm_name, href=bm_name + ".html")
 
         h1("PerMA-Bench Results")
         p("Put description text here.")
@@ -88,13 +86,15 @@ def create_index_site(benchmark_names):
 
 def init(img_dir):
     # TODO: delete old png and html files?
+
+    # collect pngs of each benchmark
     benchmark_pngs = defaultdict(list)
     for path in glob.glob(img_dir + "*.png"):
         png_name = os.path.basename(path)
         benchmark_name = png_name.split("-")[0]
         benchmark_pngs[benchmark_name].append(png_name)
 
-    # sort png lists in dictionary for lexicographically matrix argument extraction in create_benchmark_sites()
+    # sort pngs of each benchmark for matrix argument extraction in create_benchmark_sites()
     benchmark_pngs = {bm: sorted(benchmark_pngs[bm]) for bm in benchmark_pngs.keys()}
 
     create_index_site(benchmark_pngs.keys())
