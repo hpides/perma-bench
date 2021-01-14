@@ -71,7 +71,7 @@ class RawJsonReader:
     """
 
     def is_multithreaded(self):
-        return not self.get_thread_ids()[:-1] == self.get_thread_ids()[1:]
+        return len(set(self.get_thread_ids())) > 1
 
     def contains_pauses(self):
         return "pause" in self.get_types()
