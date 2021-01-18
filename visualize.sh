@@ -8,10 +8,10 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-if [ ! -d "$DIR/venv" ]; then
-    mkdir "$DIR/venv"
-    python -m virtualenv "$DIR/venv"
-    source "$DIR/venv/bin/activate"
-    pip3 install -r "$DIR/requirements.txt"
+if [ ! -d "$DIR/viz/venv" ]; then
+    mkdir "$DIR/viz/venv"
+    python3 -m virtualenv "$DIR/viz/venv"
+    source "$DIR/viz/venv/bin/activate"
+    pip3 install -r "$DIR/viz/requirements.txt"
 fi
-python "$DIR/viz/main.py" $1
+python3 "$DIR/viz/main.py" $1
