@@ -85,8 +85,6 @@ def create_index_site(benchmark_names):
 
 
 def init(img_dir):
-    # TODO: delete old png and html files?
-
     # collect pngs of each benchmark
     benchmark_pngs = defaultdict(list)
     for path in glob.glob(img_dir + "*.png"):

@@ -14,7 +14,7 @@ class PngCreator:
     def create_pngs_for_raw_jsons(self):
         # collect raw jsons of benchmarks
         raw_jsons = list()
-        for path in glob.glob(self.results_dir + "raw/*.json"):
+        for path in glob.glob(self.results_dir + "/raw/*.json"):
             raw_jsons.append(path)
 
         # create pngs
@@ -30,7 +30,7 @@ class PngCreator:
     def create_pngs_for_matrix_json(self):
         # collect jsons containing matrix arguments
         matrix_jsons = list()
-        for path in glob.glob(self.results_dir + "*.json"):
+        for path in glob.glob(self.results_dir + "/*.json"):
             matrix_jsons.append(path)
 
         if len(matrix_jsons) < 1:
