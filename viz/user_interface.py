@@ -48,7 +48,7 @@ def create_benchmark_sites(img_dir, benchmark_pngs):
                     second_arg = png[:-4].split("-")[2]
 
                     # add single matrix argument as subheading (one dimension)
-                    if second_arg == "average_duration" or second_arg == "bandwidth":
+                    if second_arg in ["average_duration", "bandwidth", "duration_boxplot"]:
                         if png == bp[1][0]:
                             tags.h5(f"Matrix Argument: {first_arg}")
 

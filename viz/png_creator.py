@@ -66,6 +66,7 @@ class PngCreator:
                 else:
                     if matrix_args[0] in plotter.reader.get_categorical_args():
                         plotter.plot_categorical_x(matrix_args[0], "avg", bm_idx)
+                        plotter.plot_duration_boxes(matrix_args[0], bm_idx)
                         plotter.plot_categorical_x(matrix_args[0], "bandwidth_values", bm_idx)
                     else:
                         pass

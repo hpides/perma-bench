@@ -25,7 +25,14 @@ class MatrixJsonPlotter:
 
     def save_png(self, y_value, args, bm_idx):
         bm_name = self.reader.get_result("bm_name", bm_idx)
-        y_name = "average_duration" if y_value == "avg" else "bandwidth"
+
+        if y_value == "avg":
+            y_name = "average_duration"
+        elif y_value == "bandwidth_values":
+            y_name = "bandwidth"
+        else:
+            y_name = y_value
+
         if isinstance(args, tuple):
             plt.savefig(f"{self.img_dir}{bm_name}-{args[0]}-{args[1]}-{y_name}.png")
         else:
@@ -34,6 +41,35 @@ class MatrixJsonPlotter:
     """
         plotting functions:
     """
+
+    def plot_duration_boxes(self, arg, bm_idx):
+        x_categories = self.reader.get_result(arg, bm_idx)
+        num_boxes = len(x_categories)
+
+        # get and set statistical values
+        medians = self.reader.get_result("median", bm_idx)
+        lower_quartiles = self.reader.get_result("lower_quartile", bm_idx)
+        upper_quartiles = self.reader.get_result("upper_quartile", bm_idx)
+        mins = self.reader.get_result("min", bm_idx)
+        maxes = self.reader.get_result("max", bm_idx)
+        stats = [{'whislo': mins[i], 'q1': lower_quartiles[i], 'med': medians[i], 'q3': upper_quartiles[i],
+                          'whishi': maxes[i]} for i in range(num_boxes)]
+
+        # actual boxplot
+        fig, ax = plt.subplots()
+        ax.bxp(stats, showfliers=False)
+
+        # set properties of axes
+        ax.set_xlabel(self.reader.get_arg_label(arg))
+        ax.set_xticks(np.arange(start=1, stop=num_boxes + 1))
+        ax.set_xticklabels(x_categories, rotation=45, ha="right")
+        ax.set_ylabel("Average Duration (ns)")
+        plt.ylim(bottom=0)
+        fig.tight_layout()
+
+        # save png and close current figure
+        self.save_png("duration_boxplot", arg, bm_idx)
+        plt.close()
 
     def plot_categorical_x(self, arg, y_value, bm_idx):
         x_values = self.reader.get_result(arg, bm_idx)
