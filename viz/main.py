@@ -1,6 +1,6 @@
 #! ../viz/venv/bin/python
 import os
-import argparse as ap
+import argparse
 
 import user_interface as ui
 from png_creator import PngCreator
@@ -10,12 +10,12 @@ def dir_path(path):
     if os.path.isdir(path):
         return path
     else:
-        raise ap.ArgumentTypeError(f"The path to the results directory is not valid.")
+        raise argparse.ArgumentTypeError(f"The path to the results directory is not valid.")
 
 
 if __name__ == "__main__":
     # parse args + check for correctness and completeness of args
-    parser = ap.ArgumentParser()
+    parser = argparse.ArgumentParser()
     parser.add_argument("results_dir", type=dir_path, help="path to the results directory")
     parser.add_argument("--delete", action="store_true", help="delete already existing png and html files")
     args = parser.parse_args()
@@ -45,4 +45,4 @@ if __name__ == "__main__":
     # create user interface for pngs
     ui.init(img_dir)
     print(f"The visualization is finished. The result png files are located in {img_dir} and can be viewed "
-          f"in a browser with \"<browser-name> {html_dir}/index.html\".")
+          f"in a browser with \"<browser-name> {html_dir}/index.html\"")
