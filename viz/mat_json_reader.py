@@ -26,7 +26,7 @@ class MatrixJsonReader:
         self.categorical_args = ["exec_mode", "data_instruction", "persist_instruction", "random_distribution"]
 
         # set labels of matrix arguments
-        self.arg_labels = list()
+        self.arg_labels = dict()
         self.set_arg_labels()
 
     """ 
@@ -56,8 +56,15 @@ class MatrixJsonReader:
                             self.results[l[0]][i].append(l[1])
 
     def set_arg_labels(self):
-        # TODO: add units and filler words to continuously args for better readability
-        self.arg_labels = {arg: arg.replace("_", " ").title() for arg in self.continuous_args + self.categorical_args}
+        for arg in self.continuous_args + self.categorical_args:
+            arg_label = arg.replace("_", " ").title()
+
+            if arg in ["total_memory_range", "access_size", "pause_frequency"]:
+                arg_label += " (B)"
+            elif arg == "pause_length_micros":
+                arg_label += r" ($\mu$s)"
+
+            self.arg_labels[arg] = arg_label
 
     """ 
         getter:
