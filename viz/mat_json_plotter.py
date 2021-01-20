@@ -63,7 +63,7 @@ class MatrixJsonPlotter:
         ax.set_xlabel(self.reader.get_arg_label(arg))
         ax.set_xticks(np.arange(start=1, stop=num_boxes + 1))
         ax.set_xticklabels(x_categories, rotation=45, ha="right")
-        ax.set_ylabel("Average Duration (ns)")
+        ax.set_ylabel("Duration (ns)")
         plt.ylim(bottom=0)
         fig.tight_layout()
 
