@@ -26,7 +26,7 @@ namespace perma::rw_ops {
       "movq 6*8(%[addr]), %%r8  \n\t"  \
       "movq 7*8(%[addr]), %%r8  \n\t"  \
       :                                \
-      : [addr] "r"(mem_addr + (offset * CACHE_LINE_SIZE)))
+      : [ addr ] "r"(mem_addr + (offset * CACHE_LINE_SIZE)))
 
 #define WRITE_SIMD_NT_512(mem_addr, offset, data) \
   _mm512_stream_si512(reinterpret_cast<__m512i*>(mem_addr + (offset * CACHE_LINE_SIZE)), data)
