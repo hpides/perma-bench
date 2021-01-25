@@ -395,6 +395,13 @@ inline void mov_write_nt(const std::vector<char*>& addresses, const size_t acces
   }
 }
 
+inline void mov_write_data(char* from, const char* to) {
+  for (char* mem_addr = from; mem_addr < to; mem_addr += CACHE_LINE_SIZE) {
+    // Write 512 Bit (64 Byte)
+    WRITE_MOV_512(mem_addr, 0);
+  }
+}
+
 inline void mov_write_512(const std::vector<char*>& addresses, const size_t access_size, flush_fn flush,
                           barrier_fn barrier) {
   for (char* addr : addresses) {
