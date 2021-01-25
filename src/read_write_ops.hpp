@@ -15,6 +15,7 @@ namespace perma::rw_ops {
 #define KEEP(x) asm volatile("" : : "g"(x) : "memory")
 
 #define READ_SIMD_512(mem_addr, offset) _mm512_stream_load_si512((void*)(mem_addr + (offset * CACHE_LINE_SIZE)))
+
 #define READ_MOV_512(mem_addr, offset) \
   asm volatile(                        \
       "movq 0*8(%[addr]), %%r8  \n\t"  \
@@ -30,8 +31,10 @@ namespace perma::rw_ops {
 
 #define WRITE_SIMD_NT_512(mem_addr, offset, data) \
   _mm512_stream_si512(reinterpret_cast<__m512i*>(mem_addr + (offset * CACHE_LINE_SIZE)), data)
+
 #define WRITE_SIMD_512(mem_addr, offset, data) \
   _mm512_store_si512(reinterpret_cast<__m512i*>(mem_addr + (offset * CACHE_LINE_SIZE)), data)
+
 #define WRITE_MOV_NT_512(mem_addr, offset)                                                             \
   _mm_stream_pi((__m64*)(mem_addr + 0 * 8 + (offset * CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[0 * 8]); \
   _mm_stream_pi((__m64*)(mem_addr + 1 * 8 + (offset * CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[1 * 8]); \
@@ -41,6 +44,7 @@ namespace perma::rw_ops {
   _mm_stream_pi((__m64*)(mem_addr + 5 * 8 + (offset * CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[5 * 8]); \
   _mm_stream_pi((__m64*)(mem_addr + 6 * 8 + (offset * CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[6 * 8]); \
   _mm_stream_pi((__m64*)(mem_addr + 7 * 8 + (offset * CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[7 * 8]);
+
 #define WRITE_MOV_512(mem_addr, offset)                                                  \
   std::memcpy(mem_addr + (0 * 8) + (offset * CACHE_LINE_SIZE), WRITE_DATA + (0 * 8), 8); \
   std::memcpy(mem_addr + (1 * 8) + (offset * CACHE_LINE_SIZE), WRITE_DATA + (1 * 8), 8); \
