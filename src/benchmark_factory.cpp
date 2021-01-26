@@ -22,6 +22,11 @@ std::vector<Benchmark> BenchmarkFactory::create_benchmarks(const std::filesystem
     config_files.push_back(config_file_path);
   }
 
+  if (config_files.empty()) {
+    throw std::invalid_argument{"Benchmark config path " + std::string(config_file_path.c_str()) +
+                                " must contain at least one config file."};
+  }
+
   for (const std::filesystem::path& config_file : config_files) {
     try {
       YAML::Node config = YAML::LoadFile(config_file);
