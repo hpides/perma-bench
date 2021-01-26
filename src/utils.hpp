@@ -7,7 +7,7 @@ namespace perma {
 namespace internal {
 
 static const size_t NUM_UTIL_THREADS = 4;      // Should be a power of two
-static const size_t PMEM_PAGE_SIZE = 2097152;  // 2MiB persistent memory page size
+static const size_t PMEM_PAGE_SIZE = 2 * (1024ul * 1024);  // 2MiB persistent memory page size
 }  // namespace internal
 
 char* map_pmem_file(const std::filesystem::path& file, size_t expected_length);
