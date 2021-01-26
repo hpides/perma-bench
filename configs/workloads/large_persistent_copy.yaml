@@ -1,0 +1,11 @@
+large_persistent_copy:
+  matrix:
+    number_threads: [ 1, 2, 4, 8, 16, 32 ]
+    access_size: [ 16777216, 134217728, 1073741824 ] # [16 MiB, 128 MiB, 1 GiB]
+    persist_instruction: [ nocache, none ]
+
+  args:
+    total_memory_range: 107374182400 # 100 GiB
+    exec_mode: sequential
+    read_ratio: 0
+    write_ratio: 1
