@@ -21,7 +21,6 @@ class BenchmarkTest : public ::testing::Test {
   BenchmarkConfig base_config_{};
   const std::string bm_name_ = "test_bm";
   const std::filesystem::path temp_dir_ = std::filesystem::temp_directory_path();
-
 };
 
 TEST_F(BenchmarkTest, CreateBenchmark) {
