@@ -5,5 +5,4 @@ test_seq:
   args:
     total_memory_range: 67108864
     exec_mode: sequential
-    read_ratio: 1
     write_ratio: 0

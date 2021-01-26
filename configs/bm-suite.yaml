@@ -9,7 +9,6 @@ large_seq_read:
   args:
     total_memory_range: 53687091200  # 50 GiB
     exec_mode: sequential
-    read_ratio: 1
     write_ratio: 0
 
 # Do sequential writes on a large memory region (50 GiB)
@@ -23,7 +22,6 @@ large_seq_write:
   args:
     total_memory_range: 53687091200  # 50 GiB
     exec_mode: sequential
-    read_ratio: 0
     write_ratio: 1
 
 # Do random reads on a smaller memory region (5 GiB)
@@ -38,7 +36,6 @@ small_random_read:
   args:
     total_memory_range: 5368709120  # 5 GiB
     exec_mode: random
-    read_ratio: 1
     write_ratio: 0
 
 # Do random writes on a smaller memory region (5 GiB)
@@ -53,5 +50,4 @@ small_random_write:
   args:
     total_memory_range: 5368709120  # 5 GiB
     exec_mode: random
-    read_ratio: 0
     write_ratio: 1

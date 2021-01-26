@@ -10,7 +10,6 @@ page_propagation_write:
     total_memory_range: 107374182400  # 100 GiB
     number_operations: 10000000 # 10 million
     exec_mode: random
-    read_ratio: 0
     write_ratio: 1
 
 page_propagation_mixed:
@@ -24,5 +23,4 @@ page_propagation_mixed:
     total_memory_range: 107374182400  # 100 GiB
     number_operations: 10000000 # 10 million
     exec_mode: random
-    read_ratio: 0.8
     write_ratio: 0.2
