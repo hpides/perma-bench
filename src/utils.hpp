@@ -6,7 +6,7 @@ namespace perma {
 
 namespace internal {
 
-static const size_t NUM_UTIL_THREADS = 4;      // Should be a power of two
+static const size_t NUM_UTIL_THREADS = 4;                  // Should be a power of two
 static const size_t PMEM_PAGE_SIZE = 2 * (1024ul * 1024);  // 2MiB persistent memory page size
 }  // namespace internal
 
