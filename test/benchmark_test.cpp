@@ -130,7 +130,6 @@ TEST_F(BenchmarkTest, SetUpMultiThread) {
   base_config_.number_threads = num_threads;
   base_config_.number_partitions = 2;
   base_config_.access_size = 512;
-  base_config_.prefault_file = true;
   Benchmark bm{bm_name_, base_config_};
   bm.create_data_file();
   bm.set_up();
@@ -594,7 +593,6 @@ TEST_F(BenchmarkTest, ResultsMultiThreadWrite) {
   base_config_.read_ratio = 0;
   base_config_.write_ratio = 1;
   base_config_.total_memory_range = total_size;
-  base_config_.prefault_file = true;
 
   BenchmarkResult bm_result{base_config_};
   for (size_t thread = 0; thread < num_threads; ++thread) {
