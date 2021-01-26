@@ -26,7 +26,7 @@ auto check_is_dir = [](const std::string& pmem_dir) {
 };
 }  // namespace
 
-constexpr auto DEFAULT_CONFIG_PATH = "configs/bm-suite.yaml";
+constexpr auto DEFAULT_CONFIG_PATH = "configs/workloads";
 
 int main(int argc, char** argv) {
 #ifdef NDEBUG

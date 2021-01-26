@@ -9,34 +9,47 @@
 namespace perma {
 
 std::vector<Benchmark> BenchmarkFactory::create_benchmarks(const std::filesystem::path& pmem_directory,
-                                                           const std::filesystem::path& config_file) {
+                                                           const std::filesystem::path& config_file_path) {
   std::vector<Benchmark> benchmarks{};
-  try {
-    YAML::Node config = YAML::LoadFile(config_file);
-    for (YAML::iterator it = config.begin(); it != config.end(); ++it) {
-      const auto name = it->first.as<std::string>();
-
-      // Check if config contains a nested 'args'
-      YAML::Node raw_bm_args = it->second;
-      YAML::Node bm_args = raw_bm_args["args"];
-      if (!bm_args && raw_bm_args) {
-        throw std::invalid_argument{"Benchmark config must contain 'args' if it is not empty."};
-      }
-
-      YAML::Node bm_matrix = raw_bm_args["matrix"];
-      if (bm_matrix) {
-        std::vector<Benchmark> matrix = create_benchmark_matrix(name, pmem_directory, bm_args, bm_matrix);
-        std::move(matrix.begin(), matrix.end(), std::back_inserter(benchmarks));
-      } else {
-        BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args);
-        bm_config.pmem_directory = pmem_directory;
-        benchmarks.emplace_back(name, bm_config);
+  std::vector<std::filesystem::path> config_files{};
+  if (std::filesystem::is_directory(config_file_path)) {
+    for (const std::filesystem::path& config_file : std::filesystem::directory_iterator(config_file_path)) {
+      if (config_file.extension() == internal::CONFIG_FILE_EXTENSION) {
+        config_files.push_back(config_file);
       }
     }
-  } catch (const YAML::ParserException& e1) {
-    throw std::runtime_error{"Exception during config parsing: " + e1.msg};
-  } catch (const YAML::BadFile& e2) {
-    throw std::runtime_error{"Exception during config parsing: " + e2.msg};
+  } else {
+    config_files.push_back(config_file_path);
+  }
+
+  for (const std::filesystem::path& config_file : config_files) {
+    try {
+      YAML::Node config = YAML::LoadFile(config_file);
+      for (YAML::iterator it = config.begin(); it != config.end(); ++it) {
+        const auto name = it->first.as<std::string>();
+
+        // Check if config contains a nested 'args'
+        YAML::Node raw_bm_args = it->second;
+        YAML::Node bm_args = raw_bm_args["args"];
+        if (!bm_args && raw_bm_args) {
+          throw std::invalid_argument{"Benchmark config must contain 'args' if it is not empty."};
+        }
+
+        YAML::Node bm_matrix = raw_bm_args["matrix"];
+        if (bm_matrix) {
+          std::vector<Benchmark> matrix = create_benchmark_matrix(name, pmem_directory, bm_args, bm_matrix);
+          std::move(matrix.begin(), matrix.end(), std::back_inserter(benchmarks));
+        } else {
+          BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args);
+          bm_config.pmem_directory = pmem_directory;
+          benchmarks.emplace_back(name, bm_config);
+        }
+      }
+    } catch (const YAML::ParserException& e1) {
+      throw std::runtime_error{"Exception during config parsing: " + e1.msg};
+    } catch (const YAML::BadFile& e2) {
+      throw std::runtime_error{"Exception during config parsing: " + e2.msg};
+    }
   }
   return benchmarks;
 }
