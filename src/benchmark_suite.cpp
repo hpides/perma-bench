@@ -41,7 +41,8 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
       printed_info = false;
     }
     if (!printed_info) {
-      spdlog::info("Run benchmark {} with matrix args {}", benchmark.benchmark_name(), nlohmann::json(benchmark.get_benchmark_config().matrix_args).dump());
+      spdlog::info("Run benchmark {} with matrix args {}", benchmark.benchmark_name(),
+                   nlohmann::json(benchmark.get_benchmark_config().matrix_args).dump());
       printed_info = true;
     }
 
