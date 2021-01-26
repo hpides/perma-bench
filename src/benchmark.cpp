@@ -220,7 +220,7 @@ void Benchmark::create_data_file() {
     // If we read data in this benchmark, we need to generate it first.
     generate_read_data(pmem_data_, config_.total_memory_range);
   }
-  if (config_.prefault_file) {
+  if (config_.read_ratio == 0 && config_.prefault_file) {
     prefault_file(pmem_data_, config_.total_memory_range);
   }
 }

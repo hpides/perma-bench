@@ -92,9 +92,8 @@ void generate_read_data(char* addr, const uint64_t total_memory_range) {
 void prefault_file(char* addr, const uint64_t total_memory_range) {
   const size_t page_size = internal::MEMORY_PAGE_SIZE;
   const size_t num_prefault_pages = total_memory_range / page_size;
-  const char data = '\0';
   for (size_t prefault_offset = 0; prefault_offset < num_prefault_pages; ++prefault_offset) {
-    std::memcpy(addr + prefault_offset * page_size, &data, 1);
+    addr[prefault_offset * page_size] = '\0';
   }
 }
 
