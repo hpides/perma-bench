@@ -49,6 +49,7 @@ TEST_F(ConfigTest, DecodeSequential) {
   EXPECT_EQ(bm_config.data_instruction, bm_config_default.data_instruction);
   EXPECT_EQ(bm_config.persist_instruction, bm_config_default.persist_instruction);
   EXPECT_EQ(bm_config.number_partitions, bm_config_default.number_partitions);
+  EXPECT_EQ(bm_config.prefault_file, bm_config_default.prefault_file);
 }
 
 TEST_F(ConfigTest, DecodeRandom) {
@@ -75,24 +76,25 @@ TEST_F(ConfigTest, DecodeRandom) {
   EXPECT_EQ(bm_config.pause_length_micros, bm_config_default.pause_length_micros);
   EXPECT_EQ(bm_config.number_partitions, bm_config_default.number_partitions);
   EXPECT_EQ(bm_config.number_threads, bm_config_default.number_threads);
+  EXPECT_EQ(bm_config.prefault_file, bm_config_default.prefault_file);
 }
 
 TEST_F(ConfigTest, DecodeMatrix) {
   const size_t num_bms = 6;
   std::vector<Benchmark> benchmarks = BenchmarkFactory::create_benchmarks("/tmp/foo", config_file_matrix);
   ASSERT_EQ(benchmarks.size(), num_bms);
-  EXPECT_EQ(benchmarks[0].get_benchmark_config().number_threads,   1);
-  EXPECT_EQ(benchmarks[0].get_benchmark_config().access_size,    256);
-  EXPECT_EQ(benchmarks[1].get_benchmark_config().number_threads,   1);
-  EXPECT_EQ(benchmarks[1].get_benchmark_config().access_size,   4096);
-  EXPECT_EQ(benchmarks[2].get_benchmark_config().number_threads,   2);
-  EXPECT_EQ(benchmarks[2].get_benchmark_config().access_size,    256);
-  EXPECT_EQ(benchmarks[3].get_benchmark_config().number_threads,   2);
-  EXPECT_EQ(benchmarks[3].get_benchmark_config().access_size,   4096);
-  EXPECT_EQ(benchmarks[4].get_benchmark_config().number_threads,   4);
-  EXPECT_EQ(benchmarks[4].get_benchmark_config().access_size,    256);
-  EXPECT_EQ(benchmarks[5].get_benchmark_config().number_threads,   4);
-  EXPECT_EQ(benchmarks[5].get_benchmark_config().access_size,   4096);
+  EXPECT_EQ(benchmarks[0].get_benchmark_config().number_threads, 1);
+  EXPECT_EQ(benchmarks[0].get_benchmark_config().access_size, 256);
+  EXPECT_EQ(benchmarks[1].get_benchmark_config().number_threads, 1);
+  EXPECT_EQ(benchmarks[1].get_benchmark_config().access_size, 4096);
+  EXPECT_EQ(benchmarks[2].get_benchmark_config().number_threads, 2);
+  EXPECT_EQ(benchmarks[2].get_benchmark_config().access_size, 256);
+  EXPECT_EQ(benchmarks[3].get_benchmark_config().number_threads, 2);
+  EXPECT_EQ(benchmarks[3].get_benchmark_config().access_size, 4096);
+  EXPECT_EQ(benchmarks[4].get_benchmark_config().number_threads, 4);
+  EXPECT_EQ(benchmarks[4].get_benchmark_config().access_size, 256);
+  EXPECT_EQ(benchmarks[5].get_benchmark_config().number_threads, 4);
+  EXPECT_EQ(benchmarks[5].get_benchmark_config().access_size, 4096);
 
   BenchmarkConfig bm_config_default{};
   for (size_t i = 0; i < num_bms; ++i) {
@@ -112,6 +114,7 @@ TEST_F(ConfigTest, DecodeMatrix) {
     EXPECT_EQ(config.number_partitions, bm_config_default.number_partitions);
     EXPECT_EQ(config.pause_frequency, bm_config_default.pause_frequency);
     EXPECT_EQ(config.pause_length_micros, bm_config_default.pause_length_micros);
+    EXPECT_EQ(config.prefault_file, bm_config_default.prefault_file);
   }
 }
 
