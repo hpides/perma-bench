@@ -1,0 +1,22 @@
+# Represents the database workload table scan (sequential read)
+table_scan_large:
+  matrix:
+    number_threads: [ 1, 2, 4, 8, 16, 32, 36 ]
+    access_size: [ 64, 256, 4096, 16384, 1048576 ] # [64B, 256B, 4 KiB, 16 KiB, 1 MiB]
+
+  args:
+    exec_mode: sequential
+    total_memory_range: 10737418240 # 10 GiB
+    read_ratio: 1
+    write_ratio: 0
+
+table_scan_small:
+  matrix:
+    number_threads: [ 1, 2, 4, 8, 16, 32, 36 ]
+    access_size: [ 64, 256, 4096, 16384, 1048576 ] # [64B, 256B, 4 KiB, 16 KiB, 1 MiB]
+
+  args:
+      exec_mode: sequential
+      total_memory_range: 1073741824 # 1 GiB
+      read_ratio: 1
+      write_ratio: 0

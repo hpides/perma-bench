@@ -1,0 +1,28 @@
+# Represents the database workload index lookup (random reads)
+index_lookup:
+  matrix:
+    number_partitions: [ 1, 4, 16 ]
+    access_size: [ 64, 256, 1024 ] # TODO: check size
+    random_distribution: [ uniform, zipf ]
+
+  args:
+    number_threads: 16
+    total_memory_range: 10737418240  # 10 GiB
+    number_operations: 50000000
+    exec_mode: random
+    read_ratio: 1
+    write_ratio: 0
+
+index_update:
+  matrix:
+    number_partitions: [ 1, 4, 16 ]
+    access_size: [ 64, 256, 1024 ]
+    random_distribution: [ uniform, zipf ]
+
+  args:
+    total_memory_range: 10737418240  # 10 GiB
+    number_threads: 16
+    number_operations: 50000000
+    exec_mode: random
+    read_ratio: 0.9
+    write_ratio: 0.1
