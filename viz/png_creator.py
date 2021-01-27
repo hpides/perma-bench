@@ -41,34 +41,37 @@ class PngCreator:
 
             # iterate benchmark results
             for bm_idx in range(plotter.reader.get_num_benchmarks()):
-                matrix_args = plotter.reader.get_result("matrix_args", bm_idx)
 
-                # prevent visualization of more than three matrix arguments
-                if len(matrix_args) > 3:
-                    name = plotter.reader.get_result("bm_name", bm_idx)
-                    print(f"Results of benchmark {name} cannot be visualized, because visualization of more than three "
-                          f"matrix arguments is not supported as there would be too many plots.")
-                    continue
+                # only execute visualization for benchmark if matrix arguments exist
+                if plotter.reader.get_result("matrix_args", bm_idx):
+                    matrix_args = plotter.reader.get_result("matrix_args", bm_idx)
 
-                # create pngs for matrix with two or three dimensions
-                elif 2 <= len(matrix_args) <= 3:
-                    perms = list(permutations(matrix_args, 2))
+                    # prevent visualization of more than three matrix arguments
+                    if len(matrix_args) > 3:
+                        name = plotter.reader.get_result("bm_name", bm_idx)
+                        print(f"Results of benchmark {name} cannot be visualized, because visualization of more than "
+                              f"three matrix arguments is not supported as there would be too many plots.")
+                        continue
 
-                    for perm in perms:
-                        if perm[0] in plotter.reader.get_categorical_args():
-                            plotter.plot_categorical_x_and_legend(perm, "avg", bm_idx)
-                            plotter.plot_categorical_x_and_legend(perm, "bandwidth_values", bm_idx)
-                        else:
-                            plotter.plot_continuous_x_and_legend(perm, "avg", bm_idx)
-                            plotter.plot_continuous_x_and_legend(perm, "bandwidth_values", bm_idx)
+                    # create pngs for matrix with two or three dimensions
+                    elif 2 <= len(matrix_args) <= 3:
+                        perms = list(permutations(matrix_args, 2))
 
-                # create pngs for matrix with one dimension
-                else:
-                    if matrix_args[0] in plotter.reader.get_categorical_args():
-                        plotter.plot_categorical_x(matrix_args[0], "avg", bm_idx)
-                        plotter.plot_duration_boxes(matrix_args[0], bm_idx)
-                        plotter.plot_categorical_x(matrix_args[0], "bandwidth_values", bm_idx)
+                        for perm in perms:
+                            if perm[0] in plotter.reader.get_categorical_args():
+                                plotter.plot_categorical_x_and_legend(perm, "avg", bm_idx)
+                                plotter.plot_categorical_x_and_legend(perm, "bandwidth_values", bm_idx)
+                            else:
+                                plotter.plot_continuous_x_and_legend(perm, "avg", bm_idx)
+                                plotter.plot_continuous_x_and_legend(perm, "bandwidth_values", bm_idx)
+
+                    # create pngs for matrix with one dimension
                     else:
-                        pass
-                        plotter.plot_continuous_x(matrix_args[0], "avg", bm_idx)
-                        plotter.plot_continuous_x(matrix_args[0], "bandwidth_values", bm_idx)
+                        if matrix_args[0] in plotter.reader.get_categorical_args():
+                            plotter.plot_categorical_x(matrix_args[0], "avg", bm_idx)
+                            plotter.plot_duration_boxes(matrix_args[0], bm_idx)
+                            plotter.plot_categorical_x(matrix_args[0], "bandwidth_values", bm_idx)
+                        else:
+                            pass
+                            plotter.plot_continuous_x(matrix_args[0], "avg", bm_idx)
+                            plotter.plot_continuous_x(matrix_args[0], "bandwidth_values", bm_idx)

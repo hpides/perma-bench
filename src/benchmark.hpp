@@ -74,6 +74,8 @@ struct BenchmarkConfig {
 
   bool raw_results = false;
 
+  bool prefault_file = true;
+
   static BenchmarkConfig decode(YAML::Node& raw_config_data);
   void validate() const;
 };

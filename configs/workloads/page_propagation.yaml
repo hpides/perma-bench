@@ -1,0 +1,28 @@
+# Represents the data base workload page propagation (large random writes)
+page_propagation_write:
+  matrix:
+    number_threads: [ 1, 8, 16 ]
+    access_size: [ 512, 4096, 16384 ] # [512B, 4 KiB, 16 KiB]
+    persist_instruction: [ nocache, none ]
+    random_distribution: [ uniform, zipf ]   # TODO: get good zipf alpha value
+
+  args:
+    total_memory_range: 107374182400  # 100 GiB
+    number_operations: 10000000 # 10 million
+    exec_mode: random
+    read_ratio: 0
+    write_ratio: 1
+
+page_propagation_mixed:
+  matrix:
+    number_threads: [ 1, 8, 16 ]
+    access_size: [ 512, 4096, 16384 ] # [512B, 4 KiB, 16 KiB]
+    persist_instruction: [ nocache, none ]
+    random_distribution: [ uniform, zipf ]   # TODO: get good zipf alpha value
+
+  args:
+    total_memory_range: 107374182400  # 100 GiB
+    number_operations: 10000000 # 10 million
+    exec_mode: random
+    read_ratio: 0.8
+    write_ratio: 0.2

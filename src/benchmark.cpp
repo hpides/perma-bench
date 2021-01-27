@@ -220,6 +220,9 @@ void Benchmark::create_data_file() {
     // If we read data in this benchmark, we need to generate it first.
     generate_read_data(pmem_data_, config_.total_memory_range);
   }
+  if (config_.read_ratio == 0 && config_.prefault_file) {
+    prefault_file(pmem_data_, config_.total_memory_range);
+  }
 }
 
 void Benchmark::set_up() {
@@ -306,6 +309,8 @@ nlohmann::json Benchmark::get_json_config() {
       config["zipf_alpha"] = config_.zipf_alpha;
     }
   }
+
+  config["prefault_file"] = config_.prefault_file;
 
   return config;
 }
@@ -455,6 +460,7 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_if_present(node, "number_threads", &bm_config.number_threads);
     num_found += get_if_present(node, "zipf_alpha", &bm_config.zipf_alpha);
     num_found += get_if_present(node, "raw_results", &bm_config.raw_results);
+    num_found += get_if_present(node, "prefault_file", &bm_config.prefault_file);
     num_found += get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_mode, &bm_config.exec_mode);
     num_found += get_enum_if_present(node, "random_distribution", ConfigEnums::str_to_random_distribution,
                                      &bm_config.random_distribution);

@@ -13,7 +13,13 @@ class MatrixJsonReader:
         # set main fields of each benchmark
         for bm in range(len(json_obj)):
             self.results["bm_name"].append(json_obj[bm]["bm_name"])
-            self.results["matrix_args"].append(json_obj[bm]["matrix_args"])
+
+            # add empty list to matrix_args if benchmark has none
+            if "matrix_args" not in json_obj[bm]:
+                self.results["matrix_args"].append(list())
+            else:
+                self.results["matrix_args"].append(json_obj[bm]["matrix_args"])
+
             benchmarks.append(json_obj[bm]["benchmarks"])
 
         # set subfields of bandwidth, config and duration field
@@ -21,8 +27,8 @@ class MatrixJsonReader:
 
         # set arg lists
         self.continuous_args = ["total_memory_range", "access_size", "write_ratio", "read_ratio", "pause_frequency",
-                             "number_partitions", "number_threads", "pause_length_micros", "number_operations",
-                             "zipf_alpha"]
+                                "number_partitions", "number_threads", "pause_length_micros", "number_operations",
+                                "zipf_alpha"]
         self.categorical_args = ["exec_mode", "data_instruction", "persist_instruction", "random_distribution"]
 
         # set labels of matrix arguments
