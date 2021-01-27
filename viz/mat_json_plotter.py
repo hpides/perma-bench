@@ -80,7 +80,7 @@ class MatrixJsonPlotter:
         # set text of axes and x-ticks
         plt.xlabel(self.reader.get_arg_label(arg))
         plt.ylabel("Average Duration (ns)" if y_value == "avg" else "Bandwidth (GB/s)")
-        plt.xticks(x_pos, x_values)
+        plt.xticks(x_pos, x_values, rotation=45, ha="right")
         plt.tight_layout()
 
         # save png and close current figure
@@ -133,7 +133,7 @@ class MatrixJsonPlotter:
         bars_per_category = len(set(legend_values))
         x_ticks_pos = [x + (((bars_per_category / 2) - 0.5) * bar_width) for x in x_pos]
         ax.set_xticks(x_ticks_pos)
-        ax.set_xticklabels(x_categories)
+        ax.set_xticklabels(x_categories, rotation=45, ha="right")
         ax.legend(title=(self.reader.get_arg_label(perm[1]) + ":"), loc="upper left", bbox_to_anchor=(1, 1))
         fig.tight_layout()
 

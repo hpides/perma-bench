@@ -1,5 +1,6 @@
 #! ../viz/venv/bin/python
 import os
+import sys
 import argparse
 
 import user_interface as ui
@@ -14,6 +15,10 @@ def dir_path(path):
 
 
 if __name__ == "__main__":
+    # check if python is running inside virtualenv or inside venv
+    if not (getattr(sys, 'real_prefix', None) or (getattr(sys, 'base_prefix', sys.prefix)) != sys.prefix):
+        sys.exit("Please run ./setup_viz.sh once to setup the visualization environment.")
+
     # parse args + check for correctness and completeness of args
     parser = argparse.ArgumentParser()
     parser.add_argument("results_dir", type=dir_path, help="path to the results directory")
@@ -23,7 +28,7 @@ if __name__ == "__main__":
     # get directory paths of html and img folder
     root_dir = os.path.abspath(os.curdir)
     html_dir = os.path.join(root_dir, "viz/html")
-    img_dir = os.path.join(args.results_dir, "img/")
+    img_dir = os.path.join(os.path.abspath(args.results_dir), "img/")
 
     # delete already existing png and html files
     if args.delete:
