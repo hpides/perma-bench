@@ -11,7 +11,7 @@ class PngCreator:
         self.results_dir = results_dir
         self.img_dir = img_dir
 
-    def create_pngs_for_raw_jsons(self):
+    def process_raw_jsons(self):
         # collect raw jsons of benchmarks
         raw_jsons = list()
         for path in glob.glob(self.results_dir + "/raw/*.json"):
@@ -27,14 +27,14 @@ class PngCreator:
                 else:
                     plotter.latency_of_same_thread()
 
-    def create_pngs_for_matrix_json(self):
+    def process_matrix_jsons(self):
         # collect jsons containing matrix arguments
         matrix_jsons = list()
         for path in glob.glob(self.results_dir + "/*.json"):
             matrix_jsons.append(path)
 
         if len(matrix_jsons) < 1:
-            sys.exit(f"The visualization cannot be started until at least one JSON file is provided in {self.results_dir}.")
+            sys.exit(f"Visualization cannot be started until at least one JSON file is provided in {self.results_dir}.")
 
         for mat_json in matrix_jsons:
             plotter = MatrixJsonPlotter(self.img_dir, mat_json)
@@ -75,3 +75,7 @@ class PngCreator:
                             pass
                             plotter.plot_continuous_x(matrix_args[0], "avg", bm_idx)
                             plotter.plot_continuous_x(matrix_args[0], "bandwidth_values", bm_idx)
+
+                else:
+                    name = plotter.reader.get_result("bm_name", bm_idx)
+                    print(f"Results of benchmark {name} cannot be visualized as no matrix arguments are defined.")

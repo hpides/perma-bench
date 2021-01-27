@@ -27,16 +27,14 @@ class MatrixJsonPlotter:
         bm_name = self.reader.get_result("bm_name", bm_idx)
 
         if y_value == "avg":
-            y_name = "average_duration"
+            y_value = "average_duration"
         elif y_value == "bandwidth_values":
-            y_name = "bandwidth"
-        else:
-            y_name = y_value
+            y_value = "bandwidth"
 
         if isinstance(args, tuple):
-            plt.savefig(f"{self.img_dir}{bm_name}-{args[0]}-{args[1]}-{y_name}.png")
+            plt.savefig(f"{self.img_dir}{bm_name}-{args[0]}-{args[1]}-{y_value}.png")
         else:
-            plt.savefig(f"{self.img_dir}{bm_name}-{args}-{y_name}.png")
+            plt.savefig(f"{self.img_dir}{bm_name}-{args}-{y_value}.png")
 
     """
         plotting functions:
@@ -53,7 +51,7 @@ class MatrixJsonPlotter:
         mins = self.reader.get_result("min", bm_idx)
         maxes = self.reader.get_result("max", bm_idx)
         stats = [{'whislo': mins[i], 'q1': lower_quartiles[i], 'med': medians[i], 'q3': upper_quartiles[i],
-                          'whishi': maxes[i]} for i in range(num_boxes)]
+                  'whishi': maxes[i]} for i in range(num_boxes)]
 
         # actual boxplot
         fig, ax = plt.subplots()

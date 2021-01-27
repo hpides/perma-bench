@@ -39,10 +39,10 @@ if __name__ == "__main__":
 
     # create pngs
     png_creator = PngCreator(args.results_dir, img_dir)
-    png_creator.create_pngs_for_raw_jsons()
-    png_creator.create_pngs_for_matrix_json()
+    png_creator.process_raw_jsons()
+    png_creator.process_matrix_jsons()
 
     # create user interface for pngs
     ui.init(img_dir)
-    print(f"The visualization is finished. The result png files are located in {img_dir} and can be viewed "
-          f"in a browser with \"<browser-name> {html_dir}/index.html\"")
+    print(f"The visualization is finished. The result png files are located in {img_dir} and can be viewed in a "
+          f"browser with \"<browser-name> {html_dir}/index.html\"")
