@@ -72,6 +72,5 @@ class PngCreator:
                             plotter.plot_duration_boxes(matrix_args[0], bm_idx)
                             plotter.plot_categorical_x(matrix_args[0], "bandwidth_values", bm_idx)
                         else:
-                            pass
                             plotter.plot_continuous_x(matrix_args[0], "avg", bm_idx)
                             plotter.plot_continuous_x(matrix_args[0], "bandwidth_values", bm_idx)

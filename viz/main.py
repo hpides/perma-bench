@@ -23,7 +23,7 @@ if __name__ == "__main__":
     # get directory paths of html and img folder
     root_dir = os.path.abspath(os.curdir)
     html_dir = os.path.join(root_dir, "viz/html")
-    img_dir = os.path.join(args.results_dir, "img/")
+    img_dir = os.path.join(os.path.abspath(args.results_dir), "img/")
 
     # delete already existing png and html files
     if args.delete:
