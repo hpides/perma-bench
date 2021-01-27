@@ -1,5 +1,7 @@
 import json
+
 from collections import defaultdict
+
 
 benchmark_configs = defaultdict(dict)
 
@@ -9,6 +11,11 @@ def get_raw_configs(bm_name):
 
 
 class RawJsonReader:
+    """
+        This class reads a raw result JSON and offers several methods to get a list of all the values measured for one
+        specific value.
+    """
+
     def __init__(self, path):
         with open(path) as f:
             json_obj = json.load(f)

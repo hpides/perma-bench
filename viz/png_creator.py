@@ -1,12 +1,16 @@
 import glob
 import sys
-from itertools import permutations
 
-from raw_json_plotter import RawJsonPlotter
+from itertools import permutations
 from mat_json_plotter import MatrixJsonPlotter
+from raw_json_plotter import RawJsonPlotter
 
 
 class PngCreator:
+    """
+        This class calls the methods of the plotter classes, according go the given JSON.
+    """
+
     def __init__(self, results_dir, img_dir):
         self.results_dir = results_dir
         self.img_dir = img_dir

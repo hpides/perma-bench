@@ -1,11 +1,15 @@
-import numpy as np
 import matplotlib.pyplot as plt
-from collections import defaultdict
+import numpy as np
 
+from collections import defaultdict
 from mat_json_reader import MatrixJsonReader
 
 
 class MatrixJsonPlotter:
+    """
+        This class provides methods to create PNGs for benchmarks with non-raw result JSONs.
+    """
+
     def __init__(self, img_dir, path):
         self.img_dir = img_dir
         self.reader = MatrixJsonReader(path)
@@ -16,10 +20,10 @@ class MatrixJsonPlotter:
 
     def get_indices_of_legend_categories(self, legend_values):
         indices_per_legend_category = defaultdict(list)
-        for idx in range(len(legend_values)):
-            if not indices_per_legend_category[legend_values[idx]]:
-                indices_per_legend_category[legend_values[idx]] = list()
-            indices_per_legend_category[legend_values[idx]].append(idx)
+        for idx, val in enumerate(legend_values):
+            if not indices_per_legend_category[val]:
+                indices_per_legend_category[val] = list()
+            indices_per_legend_category[val].append(idx)
 
         return indices_per_legend_category
 
@@ -98,7 +102,7 @@ class MatrixJsonPlotter:
 
         # collect y-values for each legend category
         y_values_per_legend_category = defaultdict(list)
-        for i, cat in enumerate(sorted(indices_per_legend_category.keys())):
+        for cat in sorted(indices_per_legend_category.keys()):
             # init size of y-values dict
             y_values_per_legend_category[cat] = [0] * max_num_indices
 

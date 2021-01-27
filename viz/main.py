@@ -1,13 +1,25 @@
-#! ../viz/venv/bin/python
+"""
+This is the main module that has to be executed from the root directory, i.e. "perma-bench". It creates result PNGs and
+displays them on an user interface.
+"""
+
+# ! ../viz/venv/bin/python
+
+import argparse
 import os
 import sys
-import argparse
-
 import user_interface as ui
+
 from png_creator import PngCreator
 
 
 def dir_path(path):
+    """
+    Checks if the given directory path is valid.
+
+    :param path: directory path to the results folder
+    :return: bool representing if path was valid
+    """
     if os.path.isdir(path):
         return path
     else:
@@ -26,7 +38,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # get directory paths of html and img folder
-    root_dir = os.path.abspath(os.curdir)
+    root_dir = os.path.abspath(os.getcwd())
     html_dir = os.path.join(root_dir, "viz/html")
     img_dir = os.path.join(os.path.abspath(args.results_dir), "img/")
 
