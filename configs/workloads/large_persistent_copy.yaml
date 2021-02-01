@@ -7,5 +7,4 @@ large_persistent_copy:
   args:
     total_memory_range: 107374182400 # 100 GiB
     exec_mode: sequential
-    read_ratio: 0
     write_ratio: 1

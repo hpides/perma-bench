@@ -7,5 +7,4 @@ intermediate_result:
   args:
     exec_mode: random
     access_size: 64
-    read_ratio: 0
     write_ratio: 1

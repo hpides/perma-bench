@@ -29,7 +29,6 @@ TEST_F(BenchmarkTest, CreateBenchmark) {
 }
 
 TEST_F(BenchmarkTest, CreateNewDataFile) {
-  base_config_.read_ratio = 0;
   base_config_.write_ratio = 1;
   Benchmark bm{bm_name_, base_config_};
   const std::filesystem::path pmem_file = bm.get_pmem_file();
@@ -46,7 +45,6 @@ TEST_F(BenchmarkTest, CreateNewDataFile) {
 }
 
 TEST_F(BenchmarkTest, CreateExistingDataFile) {
-  base_config_.read_ratio = 0;
   base_config_.write_ratio = 1;
 
   const std::string test_string = "test123456789";
@@ -78,7 +76,6 @@ TEST_F(BenchmarkTest, CreateExistingDataFile) {
 }
 
 TEST_F(BenchmarkTest, CreateReadDataFile) {
-  base_config_.read_ratio = 1;
   base_config_.write_ratio = 0;
   Benchmark bm{bm_name_, base_config_};
   const std::filesystem::path pmem_file = bm.get_pmem_file();
@@ -175,7 +172,6 @@ TEST_F(BenchmarkTest, RunSingeThreadRead) {
   const size_t num_ops = num_chunks * ops_per_chunk;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  base_config_.read_ratio = 1;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = 256 * num_ops;
   Benchmark bm{bm_name_, base_config_};
@@ -204,7 +200,6 @@ TEST_F(BenchmarkTest, RunSingeThreadWrite) {
   const size_t total_size = 256 * num_ops;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  base_config_.read_ratio = 0;
   base_config_.write_ratio = 1;
   base_config_.total_memory_range = total_size;
   Benchmark bm{bm_name_, base_config_};
@@ -234,7 +229,6 @@ TEST_F(BenchmarkTest, RunSingeThreadMixed) {
   const size_t num_ops = num_chunks * ops_per_chunk;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  base_config_.read_ratio = 0.5;
   base_config_.write_ratio = 0.5;
   base_config_.number_operations = num_ops;
   base_config_.exec_mode = internal::Random;
@@ -265,7 +259,6 @@ TEST_F(BenchmarkTest, RunMultiThreadRead) {
   const size_t num_threads = 4;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 1024;
-  base_config_.read_ratio = 1;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = 1024 * num_ops;
   Benchmark bm{bm_name_, base_config_};
@@ -295,7 +288,6 @@ TEST_F(BenchmarkTest, RunMultiThreadWrite) {
   const size_t total_size = 512 * num_ops;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 512;
-  base_config_.read_ratio = 1;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = total_size;
   Benchmark bm{bm_name_, base_config_};
@@ -326,7 +318,6 @@ TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
   const size_t num_threads = 4;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 1024;
-  base_config_.read_ratio = 1;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = 1024 * num_ops;
   base_config_.exec_mode = internal::Sequential_Desc;
@@ -357,7 +348,6 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
   const size_t total_size = 512 * num_ops;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 512;
-  base_config_.read_ratio = 1;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = total_size;
   base_config_.exec_mode = internal::Sequential_Desc;
@@ -391,7 +381,6 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteRaw) {
   base_config_.number_threads = num_threads;
   base_config_.raw_results = true;
   base_config_.access_size = 512;
-  base_config_.read_ratio = 1;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = total_size;
   Benchmark bm{bm_name_, base_config_};
@@ -422,7 +411,6 @@ TEST_F(BenchmarkTest, ResultsSingleThreadRead) {
   const size_t total_size = 256 * num_ops;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  base_config_.read_ratio = 1;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = total_size;
 
@@ -460,7 +448,6 @@ TEST_F(BenchmarkTest, ResultsSingleThreadWrite) {
   const size_t total_size = 256 * num_ops;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  base_config_.read_ratio = 0;
   base_config_.write_ratio = 1;
   base_config_.total_memory_range = total_size;
 
@@ -499,7 +486,6 @@ TEST_F(BenchmarkTest, ResultsSingleThreadMixed) {
   base_config_.number_operations = num_ops;
   base_config_.number_threads = 1;
   base_config_.access_size = 512;
-  base_config_.read_ratio = 0.5;
   base_config_.write_ratio = 0.5;
   base_config_.total_memory_range = total_size;
   base_config_.exec_mode = internal::Random;
@@ -549,7 +535,6 @@ TEST_F(BenchmarkTest, ResultsMultiThreadRead) {
   const size_t total_size = 1024 * num_ops;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 1024;
-  base_config_.read_ratio = 1;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = total_size;
 
@@ -590,7 +575,6 @@ TEST_F(BenchmarkTest, ResultsMultiThreadWrite) {
   const size_t total_size = 512 * num_ops;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 512;
-  base_config_.read_ratio = 0;
   base_config_.write_ratio = 1;
   base_config_.total_memory_range = total_size;
 
@@ -632,7 +616,6 @@ TEST_F(BenchmarkTest, ResultsMultiThreadMixed) {
   base_config_.number_threads = num_threads;
   base_config_.number_operations = num_ops;
   base_config_.access_size = 512;
-  base_config_.read_ratio = 0.5;
   base_config_.write_ratio = 0.5;
   base_config_.total_memory_range = total_size;
   base_config_.exec_mode = internal::Random;
