@@ -40,7 +40,6 @@ TEST_F(ConfigTest, DecodeSequential) {
 
   EXPECT_EQ(bm_config.number_threads, 2);
 
-  EXPECT_EQ(bm_config.read_ratio, 1);
   EXPECT_EQ(bm_config.write_ratio, 0);
 
   EXPECT_EQ(bm_config.number_operations, bm_config_default.number_operations);
@@ -65,7 +64,6 @@ TEST_F(ConfigTest, DecodeRandom) {
   EXPECT_EQ(bm_config.zipf_alpha, 0.9);
 
   EXPECT_EQ(bm_config.write_ratio, 0.3);
-  EXPECT_EQ(bm_config.read_ratio, 0.7);
 
   EXPECT_EQ(bm_config.total_memory_range, bm_config_default.total_memory_range);
   EXPECT_EQ(bm_config.access_size, bm_config_default.access_size);
@@ -104,7 +102,6 @@ TEST_F(ConfigTest, DecodeMatrix) {
     // Other args are identical for all configs
     EXPECT_EQ(config.total_memory_range, 67108864);
     EXPECT_EQ(config.exec_mode, internal::Mode::Sequential);
-    EXPECT_EQ(config.read_ratio, 1);
     EXPECT_EQ(config.write_ratio, 0);
     EXPECT_EQ(config.number_operations, bm_config_default.number_operations);
     EXPECT_EQ(config.random_distribution, bm_config_default.random_distribution);
@@ -121,20 +118,12 @@ TEST_F(ConfigTest, DecodeMatrix) {
 TEST_F(ConfigTest, CheckDefaultConfig) { bm_config.validate(); }
 
 TEST_F(ConfigTest, InvalidHighReadWriteRatio) {
-  bm_config.write_ratio = 1.0;
-  bm_config.read_ratio = 1.0;
+  bm_config.write_ratio = 1.1;
   EXPECT_THROW(bm_config.validate(), std::invalid_argument);
 }
 
 TEST_F(ConfigTest, InvalidLowReadWriteRatio) {
-  bm_config.write_ratio = 0.0;
-  bm_config.read_ratio = 0.0;
-  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
-}
-
-TEST_F(ConfigTest, InvalidReadWriteRatio) {
-  bm_config.write_ratio = 1.0;
-  bm_config.read_ratio = 1.0;
+  bm_config.write_ratio = -1.0;
   EXPECT_THROW(bm_config.validate(), std::invalid_argument);
 }
 

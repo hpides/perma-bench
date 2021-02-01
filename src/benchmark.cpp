@@ -121,7 +121,7 @@ const std::unordered_map<std::string, internal::RandomDistribution> ConfigEnums:
 void Benchmark::run_in_thread(ThreadRunConfig& thread_config) {
   const size_t ops_per_iteration = thread_config.num_threads_per_partition * config_.access_size;
   const uint32_t num_accesses_in_range = thread_config.partition_size / config_.access_size;
-  const bool is_read_only = config_.read_ratio == 1;
+  const bool is_read_only = config_.write_ratio == 0;
   const bool is_write_only = config_.write_ratio == 1;
   const bool has_pause = config_.pause_frequency > 0;
   size_t current_pause_frequency_count = 0;
@@ -135,7 +135,7 @@ void Benchmark::run_in_thread(ThreadRunConfig& thread_config) {
 
   std::random_device rnd_device;
   std::mt19937_64 rnd_generator{rnd_device()};
-  std::bernoulli_distribution io_mode_distribution(config_.read_ratio);
+  std::bernoulli_distribution io_mode_distribution(1 - config_.write_ratio);
   std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
 
   const size_t ops_per_chunk =
@@ -216,11 +216,11 @@ void Benchmark::create_data_file() {
   }
 
   pmem_data_ = create_pmem_file(pmem_file_, config_.total_memory_range);
-  if (config_.read_ratio > 0) {
+  if (config_.write_ratio < 1) {
     // If we read data in this benchmark, we need to generate it first.
     generate_read_data(pmem_data_, config_.total_memory_range);
   }
-  if (config_.read_ratio == 0 && config_.prefault_file) {
+  if (config_.write_ratio == 1 && config_.prefault_file) {
     prefault_file(pmem_data_, config_.total_memory_range);
   }
 }
@@ -286,7 +286,6 @@ nlohmann::json Benchmark::get_json_config() {
   config["access_size"] = config_.access_size;
   config["exec_mode"] = get_enum_as_string(ConfigEnums::str_to_mode, config_.exec_mode);
   config["write_ratio"] = config_.write_ratio;
-  config["read_ratio"] = config_.read_ratio;
   config["pause_frequency"] = config_.pause_frequency;
   config["number_partitions"] = config_.number_partitions;
   config["number_threads"] = config_.number_threads;
@@ -453,7 +452,6 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_if_present(node, "access_size", &bm_config.access_size);
     num_found += get_if_present(node, "number_operations", &bm_config.number_operations);
     num_found += get_if_present(node, "write_ratio", &bm_config.write_ratio);
-    num_found += get_if_present(node, "read_ratio", &bm_config.read_ratio);
     num_found += get_if_present(node, "pause_frequency", &bm_config.pause_frequency);
     num_found += get_if_present(node, "pause_length_micros", &bm_config.pause_length_micros);
     num_found += get_if_present(node, "number_partitions", &bm_config.number_partitions);
@@ -498,9 +496,9 @@ void BenchmarkConfig::validate() const {
   const bool is_memory_range_multiple_of_access_size = (total_memory_range % access_size) == 0;
   CHECK_ARGUMENT(is_memory_range_multiple_of_access_size, "Total memory range must be a multiple access size.");
 
-  // Check if ratio is equal to one
-  const bool is_ratio_equal_one = (read_ratio + write_ratio) == 1.0;
-  CHECK_ARGUMENT(is_ratio_equal_one, "Read and write ratio must add up to 1");
+  // Check if ratio is between one and zero
+  const bool is_ratio_between_one_zero = 0 <= write_ratio && write_ratio <= 1;
+  CHECK_ARGUMENT(is_ratio_between_one_zero, "Write ratio must be between 0 and 1");
 
   // Check if at least one thread
   const bool is_at_least_one_thread = number_threads > 0;
@@ -521,7 +519,7 @@ void BenchmarkConfig::validate() const {
   CHECK_ARGUMENT(is_number_operations_set_random, "Number of operations should only be set for random access");
 
   // Assumption: sequential access does not make sense if we mix reads and writes
-  const bool is_mixed_workload_random = (read_ratio == 1 || read_ratio == 0) || exec_mode == internal::Random;
+  const bool is_mixed_workload_random = (write_ratio == 1 || write_ratio == 0) || exec_mode == internal::Random;
   CHECK_ARGUMENT(is_mixed_workload_random, "Mixed read/write workloads only supported for random execution.");
 
   // Assumption: total memory needs to fit into N chunks exactly
