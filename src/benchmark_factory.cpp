@@ -23,7 +23,7 @@ std::vector<Benchmark> BenchmarkFactory::create_benchmarks(const std::filesystem
   }
 
   if (config_files.empty()) {
-    throw std::invalid_argument{"Benchmark config path " + std::string(config_file_path.c_str()) +
+    throw std::invalid_argument{"Benchmark config path " + config_file_path.string() +
                                 " must contain at least one config file."};
   }
 
