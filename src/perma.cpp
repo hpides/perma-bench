@@ -12,21 +12,12 @@ auto check_path_exists = [](const std::string& path) {
   return (!std::filesystem::exists(path)) ? "No such file or directory: " + path : "";
 };
 
-auto check_path_exists_or_create = [](const std::string& path) {
-  bool exists = std::filesystem::exists(path);
-  bool is_created = false;
-  if (!exists) {
-    is_created = std::filesystem::create_directories(path);
-  }
-  return (!is_created && !exists) ? "Neither the path exists nor can it be created: " + path : "";
-};
-
 auto check_is_dir = [](const std::string& pmem_dir) {
   return (!std::filesystem::is_directory(pmem_dir)) ? "Path is not a directory: " + pmem_dir : "";
 };
 }  // namespace
 
-constexpr auto DEFAULT_CONFIG_PATH = "configs/bm-suite.yaml";
+constexpr auto DEFAULT_CONFIG_PATH = "configs/workloads";
 
 int main(int argc, char** argv) {
 #ifdef NDEBUG
@@ -41,7 +32,7 @@ int main(int argc, char** argv) {
   std::filesystem::path config_file = std::filesystem::current_path() / DEFAULT_CONFIG_PATH;
   app.add_option("-c,--config", config_file,
                  "Path to the benchmark config YAML file (default: " + std::string{DEFAULT_CONFIG_PATH} + ")")
-      ->check(check_path_exists_or_create);
+      ->check(check_path_exists);
 
   // Define result directory
   std::filesystem::path result_path = std::filesystem::current_path();
