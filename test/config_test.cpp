@@ -25,7 +25,7 @@ class ConfigTest : public ::testing::Test {
 };
 
 TEST_F(ConfigTest, DecodeSequential) {
-  std::vector<Benchmark> benchmarks = BenchmarkFactory::create_benchmarks("/tmp/foo", config_file_seq);
+  std::vector<UnaryBenchmark> benchmarks = BenchmarkFactory::create_single_benchmarks("/tmp/foo", config_file_seq);
   ASSERT_EQ(benchmarks.size(), 1);
   bm_config = benchmarks.at(0).get_benchmark_config();
 
@@ -52,7 +52,7 @@ TEST_F(ConfigTest, DecodeSequential) {
 }
 
 TEST_F(ConfigTest, DecodeRandom) {
-  std::vector<Benchmark> benchmarks = BenchmarkFactory::create_benchmarks("/tmp/foo", config_file_random);
+  std::vector<UnaryBenchmark> benchmarks = BenchmarkFactory::create_single_benchmarks("/tmp/foo", config_file_random);
   ASSERT_EQ(benchmarks.size(), 1);
   bm_config = benchmarks.at(0).get_benchmark_config();
 
@@ -79,7 +79,7 @@ TEST_F(ConfigTest, DecodeRandom) {
 
 TEST_F(ConfigTest, DecodeMatrix) {
   const size_t num_bms = 6;
-  std::vector<Benchmark> benchmarks = BenchmarkFactory::create_benchmarks("/tmp/foo", config_file_matrix);
+  std::vector<UnaryBenchmark> benchmarks = BenchmarkFactory::create_single_benchmarks("/tmp/foo", config_file_matrix);
   ASSERT_EQ(benchmarks.size(), num_bms);
   EXPECT_EQ(benchmarks[0].get_benchmark_config().number_threads, 1);
   EXPECT_EQ(benchmarks[0].get_benchmark_config().access_size, 256);
@@ -96,7 +96,7 @@ TEST_F(ConfigTest, DecodeMatrix) {
 
   BenchmarkConfig bm_config_default{};
   for (size_t i = 0; i < num_bms; ++i) {
-    const Benchmark& bm = benchmarks[i];
+    const UnaryBenchmark& bm = benchmarks[i];
     const BenchmarkConfig& config = bm.get_benchmark_config();
 
     // Other args are identical for all configs

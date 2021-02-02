@@ -116,34 +116,62 @@ struct BenchmarkResult {
 
 class Benchmark {
  public:
-  Benchmark(std::string benchmark_name, const BenchmarkConfig& config);
-  Benchmark(std::string benchmark_name, const BenchmarkConfig& config, std::filesystem::path pmem_file);
-
-  Benchmark(Benchmark&& other) = default;
-  Benchmark(const Benchmark& other) = delete;
-  Benchmark& operator=(const Benchmark& other) = delete;
-  Benchmark& operator=(Benchmark&& other) = delete;
-
+  explicit Benchmark(std::string benchmark_name) : benchmark_name_{std::move(benchmark_name)} {}
   /** Main run method which executes the benchmark. `setup()` should be called before this. */
-  void run();
+  virtual void run() = 0;
 
   /**
    * Generates the data needed for the benchmark.
    * This is probably the first method to be called so that a virtual
    * address space is available to generate the IO addresses.
    */
-  void create_data_file();
+  virtual void create_data_file() = 0;
 
   /** Create all the IO addresses ahead of time to avoid unnecessary ops during the actual benchmark. */
-  void set_up();
+  virtual void set_up() = 0;
 
   /** Clean up after te benchmark */
-  void tear_down(bool force = false);
+  virtual void tear_down(bool force) = 0;
 
   /** Return the results as a JSON to be exported to the user and visualization. */
-  nlohmann::json get_result_as_json();
+  virtual nlohmann::json get_result_as_json() = 0;
 
+  /** Return the name of the benchmark. */
   const std::string& benchmark_name() const;
+
+ protected:
+  const std::string benchmark_name_;
+};
+
+class UnaryBenchmark : public Benchmark {
+ public:
+  UnaryBenchmark(std::string benchmark_name, const BenchmarkConfig& config);
+  UnaryBenchmark(std::string benchmark_name, const BenchmarkConfig& config, std::filesystem::path pmem_file);
+
+  UnaryBenchmark(UnaryBenchmark&& other) = default;
+  UnaryBenchmark(const UnaryBenchmark& other) = delete;
+  UnaryBenchmark& operator=(const UnaryBenchmark& other) = delete;
+  UnaryBenchmark& operator=(UnaryBenchmark&& other) = delete;
+
+  /** Main run method which executes the benchmark. `setup()` should be called before this. */
+  void run() override;
+
+  /**
+   * Generates the data needed for the benchmark.
+   * This is probably the first method to be called so that a virtual
+   * address space is available to generate the IO addresses.
+   */
+  void create_data_file() override;
+
+  /** Create all the IO addresses ahead of time to avoid unnecessary ops during the actual benchmark. */
+  void set_up() override;
+
+  /** Clean up after te benchmark */
+  void tear_down(bool force) override;
+
+  /** Return the results as a JSON to be exported to the user and visualization. */
+  nlohmann::json get_result_as_json() override;
+
   const BenchmarkConfig& get_benchmark_config() const;
   const std::filesystem::path& get_pmem_file() const;
   const char* get_pmem_data() const;
@@ -151,14 +179,12 @@ class Benchmark {
   const BenchmarkResult& get_benchmark_result() const;
   bool owns_pmem_file() const;
 
-  ~Benchmark() { tear_down(); }
+  ~UnaryBenchmark() { UnaryBenchmark::tear_down(false); }
 
  private:
   nlohmann::json get_json_config();
-  void run_in_thread(ThreadRunConfig& thread_config);
 
-  const std::string benchmark_name_;
-  const std::filesystem::path pmem_file_;
+  std::filesystem::path pmem_file_;
   bool owns_pmem_file_;
   char* pmem_data_{nullptr};
 
@@ -168,4 +194,58 @@ class Benchmark {
   std::vector<std::thread> pool_;
 };
 
+class BinaryBenchmark : public Benchmark {
+ public:
+  BinaryBenchmark(std::string benchmark_name, std::string first_benchmark_name, std::string second_benchmark_name,
+                  const BenchmarkConfig& first_config, const BenchmarkConfig& second_config);
+  BinaryBenchmark(std::string benchmark_name, std::string first_benchmark_name, std::string second_benchmark_name,
+                  const BenchmarkConfig& first_config, const BenchmarkConfig& second_config,
+                  std::filesystem::path pmem_file_first);
+  BinaryBenchmark(std::string benchmark_name, std::string first_benchmark_name, std::string second_benchmark_name,
+                  const BenchmarkConfig& first_config, const BenchmarkConfig& second_config,
+                  std::filesystem::path pmem_file_first, std::filesystem::path pmem_file_second);
+
+  BinaryBenchmark(BinaryBenchmark&& other) = default;
+  BinaryBenchmark(const BinaryBenchmark& other) = delete;
+  BinaryBenchmark& operator=(const BinaryBenchmark& other) = delete;
+  BinaryBenchmark& operator=(BinaryBenchmark&& other) = delete;
+
+  void run() override;
+
+  void create_data_file() override;
+
+  void set_up() override;
+
+  void tear_down(bool force) override;
+
+  nlohmann::json get_result_as_json() override;
+
+  ~BinaryBenchmark() { BinaryBenchmark::tear_down(false); }
+
+ private:
+  std::string benchmark_name_one_;
+  std::string benchmark_name_two_;
+  std::filesystem::path pmem_file_one_;
+  std::filesystem::path pmem_file_two_;
+  bool owns_pmem_file_one_;
+  bool owns_pmem_file_two_;
+  char* pmem_data_one_{nullptr};
+  char* pmem_data_two_{nullptr};
+
+  BenchmarkConfig config_one_;
+  BenchmarkConfig config_two_;
+  std::unique_ptr<BenchmarkResult> result_one_;
+  std::unique_ptr<BenchmarkResult> result_two_;
+  std::vector<ThreadRunConfig> thread_configs_one_;
+  std::vector<ThreadRunConfig> thread_configs_two_;
+  std::vector<std::thread> pool_one_;
+  std::vector<std::thread> pool_two_;
+};
+
+inline void single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
+                          std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config);
+
+inline void create_single_data_file(const BenchmarkConfig& config, char*& pmem_data, std::filesystem::path& pmem_file);
+
+inline void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
 }  // namespace perma

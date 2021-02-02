@@ -21,8 +21,11 @@ constexpr size_t MIN_IO_CHUNK_SIZE = 16 * 1024u;
 
 }  // namespace internal
 
+struct ThreadRunConfig;
+struct BenchmarkConfig;
+
 class IoOperation {
-  friend class Benchmark;
+  friend void run_in_thread(const ThreadRunConfig&, const BenchmarkConfig&);
 
  public:
   inline void run() {
