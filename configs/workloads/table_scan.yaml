@@ -7,7 +7,6 @@ table_scan_large:
   args:
     exec_mode: sequential
     total_memory_range: 10737418240 # 10 GiB
-    read_ratio: 1
     write_ratio: 0
 
 table_scan_small:
@@ -18,5 +17,4 @@ table_scan_small:
   args:
       exec_mode: sequential
       total_memory_range: 1073741824 # 1 GiB
-      read_ratio: 1
       write_ratio: 0

@@ -28,15 +28,22 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
   spdlog::info("Running benchmarks...");
   nlohmann::json results = nlohmann::json::array();
   nlohmann::json matrix_bm_results = nlohmann::json::array();
-
+  bool printed_info = false;
   for (size_t i = 0; i < benchmarks.size(); ++i) {
     Benchmark& benchmark = benchmarks[i];
+
     if (previous_bm && previous_bm->benchmark_name() != benchmark.benchmark_name()) {
       // Started new benchmark, force delete old data in case it was a matrix.
       // If it is not a matrix, this does nothing.
       results += benchmark_results_to_json(*previous_bm, matrix_bm_results);
       matrix_bm_results = nlohmann::json::array();
       previous_bm->tear_down(/*force=*/true);
+      printed_info = false;
+    }
+    if (!printed_info) {
+      spdlog::info("Running benchmark {} with matrix args {}", benchmark.benchmark_name(),
+                   nlohmann::json(benchmark.get_benchmark_config().matrix_args).dump());
+      printed_info = true;
     }
 
     benchmark.create_data_file();
