@@ -1,5 +1,6 @@
 import glob
 import sys
+import warnings
 
 from itertools import permutations
 from mat_json_plotter import MatrixJsonPlotter
@@ -49,8 +50,8 @@ class PngCreator:
                     continue
 
                 if bm_names.count(bm_name) > 1:
-                    print(f"Benchmark names have to be unique. Since this does not apply to {bm_name}, no "
-                          f"visualization was generated for this benchmark.")
+                    warnings.warn(f"Benchmark names have to be unique. Since this does not apply to \"{bm_name}\", no "
+                                  f"visualization was generated for this benchmark.")
                     [indices_to_skip.append(idx) for idx, name in enumerate(bm_names) if name == bm_name]
                     continue
 
@@ -60,8 +61,9 @@ class PngCreator:
 
                     # prevent visualization of more than three matrix arguments
                     if len(matrix_args) > 3:
-                        print(f"Results of benchmark {bm_name} cannot be visualized, because visualization of more than "
-                              f"three matrix arguments is not supported as there would be too many plots.")
+                        warnings.warn(f"Results of benchmark \"{bm_name}\" cannot be visualized, because "
+                                      f"visualization of more than three matrix arguments is not supported as there "
+                                      f"would be too many plots.")
                         continue
 
                     # create pngs for matrix with two or three dimensions
@@ -87,5 +89,5 @@ class PngCreator:
                             plotter.plot_continuous_x(matrix_args[0], "bandwidth_values", bm_idx)
 
                 else:
-                    print(f"Results of benchmark {bm_name} cannot be visualized as no matrix arguments are defined.")
-
+                    warnings.warn(f"Results of benchmark \"{bm_name}\" cannot be visualized as no matrix arguments are "
+                                  f"defined.")
