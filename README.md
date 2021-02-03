@@ -52,7 +52,7 @@ TODO
 TODO    
 
 ### Visualization
-PerMA-Bench offers a Python tool to visualize its results as PNGs and view them in a user interface. In order to do that, you have to build a virtual environment first. For this, `setup_viz.sh` must be executed once:
+PerMA-Bench offers a Python tool to visualize its results as PNGs and view them in a user interface. In order to do that, you have to build a virtual environment first. For this, the script `setup_viz.sh`, which requires Python 3 and Pip 3,  must be executed once:
 ``` shell script
 $ ./setup_viz.sh
 ``` 
@@ -62,7 +62,9 @@ If a virtual environment has been built, the visualization can be started with t
 $ python3 viz/main.py path/to/results/dir/
 ``` 
 
-The visualization produces PNG files that will be saved in a subdirectory of the result folder called `img/`. Additionally, you will find an `index.html` file as an entry point to the user interface and one HTML file for each benchmark in `viz/html/`. With every run of the `main.py` script, you have the possibility to remove all already existing PNG and HTML files with the optional parameter `--delete`:    
+The visualization produces PNG files that will be saved in a subdirectory of the result folder called `img/`. Additionally, you will find an `index.html` file as an entry point to the user interface and one HTML file for each benchmark in `viz/html/`. Note that each benchmark name must be unique and visualizations are only generated for benchmarks with a maximum of 3 matrix arguments.
+
+With every run of the `main.py` script, you have the possibility to remove all already existing PNG and HTML files with the optional parameter `--delete`:    
 ``` shell script
 $ python3 viz/main.py path/to/results/dir/ --delete
 ``` 
