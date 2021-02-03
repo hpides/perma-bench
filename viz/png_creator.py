@@ -1,9 +1,9 @@
 import glob
 import sys
-from itertools import permutations
 
-from raw_json_plotter import RawJsonPlotter
+from itertools import permutations
 from mat_json_plotter import MatrixJsonPlotter
+from raw_json_plotter import RawJsonPlotter
 
 
 class PngCreator:
@@ -34,13 +34,25 @@ class PngCreator:
             matrix_jsons.append(path)
 
         if len(matrix_jsons) < 1:
-            sys.exit(f"The visualization cannot be started until at least one JSON file is provided in {self.results_dir}.")
+            sys.exit(f"Visualization cannot be started until at least one JSON file is provided in {self.results_dir}.")
 
         for mat_json in matrix_jsons:
             plotter = MatrixJsonPlotter(self.img_dir, mat_json)
+            bm_names = plotter.reader.get_bm_names()
+            indices_to_skip = list()
 
             # iterate benchmark results
-            for bm_idx in range(plotter.reader.get_num_benchmarks()):
+            for bm_idx, bm_name in enumerate(bm_names):
+
+                # forbid visualization for benchmarks whose names occur multiple times
+                if bm_idx in indices_to_skip:
+                    continue
+
+                if bm_names.count(bm_name) > 1:
+                    print(f"Benchmark names have to be unique. Since this does not apply to {bm_name}, no "
+                          f"visualization was generated for this benchmark.")
+                    [indices_to_skip.append(idx) for idx, name in enumerate(bm_names) if name == bm_name]
+                    continue
 
                 # only execute visualization for benchmark if matrix arguments exist
                 if plotter.reader.get_result("matrix_args", bm_idx):
@@ -48,8 +60,7 @@ class PngCreator:
 
                     # prevent visualization of more than three matrix arguments
                     if len(matrix_args) > 3:
-                        name = plotter.reader.get_result("bm_name", bm_idx)
-                        print(f"Results of benchmark {name} cannot be visualized, because visualization of more than "
+                        print(f"Results of benchmark {bm_name} cannot be visualized, because visualization of more than "
                               f"three matrix arguments is not supported as there would be too many plots.")
                         continue
 
@@ -74,3 +85,7 @@ class PngCreator:
                         else:
                             plotter.plot_continuous_x(matrix_args[0], "avg", bm_idx)
                             plotter.plot_continuous_x(matrix_args[0], "bandwidth_values", bm_idx)
+
+                else:
+                    print(f"Results of benchmark {bm_name} cannot be visualized as no matrix arguments are defined.")
+
