@@ -7,12 +7,10 @@ bm_0:
   args:
     total_memory_range: 67108864
     exec_mode: sequential
-    read_ratio: 1
     write_ratio: 0
 
 bm_1:
   args:
     total_memory_range: 67108864
     exec_mode: random
-    read_ratio: 1
     write_ratio: 0

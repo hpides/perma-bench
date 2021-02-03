@@ -63,7 +63,6 @@ struct BenchmarkConfig {
   internal::PersistInstruction persist_instruction{internal::PersistInstruction::NoCache};
 
   double write_ratio = 0.0;
-  double read_ratio = 1.0;
 
   uint64_t pause_frequency = 0;
   uint64_t pause_length_micros = 1000;  // 1 ms
