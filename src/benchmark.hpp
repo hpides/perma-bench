@@ -219,12 +219,18 @@ class BinaryBenchmark : public Benchmark {
   void tear_down(bool force) override;
 
   nlohmann::json get_result_as_json() override;
+  const BenchmarkConfig& get_benchmark_config_one() const;
+  const BenchmarkConfig& get_benchmark_config_two() const;
+  const std::string& get_benchmark_name_one() const;
+  const std::string& get_benchmark_name_two() const;
 
   ~BinaryBenchmark() { BinaryBenchmark::tear_down(false); }
 
  private:
-  std::string benchmark_name_one_;
-  std::string benchmark_name_two_;
+  nlohmann::json get_json_config_one();
+  nlohmann::json get_json_config_two();
+  const std::string benchmark_name_one_;
+  const std::string benchmark_name_two_;
   std::filesystem::path pmem_file_one_;
   std::filesystem::path pmem_file_two_;
   bool owns_pmem_file_one_;
@@ -232,8 +238,8 @@ class BinaryBenchmark : public Benchmark {
   char* pmem_data_one_{nullptr};
   char* pmem_data_two_{nullptr};
 
-  BenchmarkConfig config_one_;
-  BenchmarkConfig config_two_;
+  const BenchmarkConfig config_one_;
+  const BenchmarkConfig config_two_;
   std::unique_ptr<BenchmarkResult> result_one_;
   std::unique_ptr<BenchmarkResult> result_two_;
   std::vector<ThreadRunConfig> thread_configs_one_;
@@ -248,4 +254,6 @@ inline void single_set_up(const BenchmarkConfig& config, char* pmem_data, std::u
 inline void create_single_data_file(const BenchmarkConfig& config, char*& pmem_data, std::filesystem::path& pmem_file);
 
 inline void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
+
+nlohmann::json get_benchmark_config_as_json(const BenchmarkConfig& bm_config);
 }  // namespace perma

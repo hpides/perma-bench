@@ -15,6 +15,13 @@ nlohmann::json benchmark_results_to_json(const perma::UnaryBenchmark& bm, const 
           {"benchmarks", bm_results}};
 }
 
+nlohmann::json benchmark_results_to_json(const perma::BinaryBenchmark& bm, const nlohmann::json& bm_results) {
+  return {{"bm_name", bm.benchmark_name()},
+          {"matrix_args_one", bm.get_benchmark_config_one().matrix_args},
+          {"matrix_args_two", bm.get_benchmark_config_two().matrix_args},
+          {"benchmarks", bm_results}};
+}
+
 }  // namespace
 
 namespace perma {
@@ -63,6 +70,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
   // Add last matrix benchmark to final results
   if (!single_benchmarks.empty()) {
     results += benchmark_results_to_json(single_benchmarks.back(), matrix_bm_results);
+    previous_u_bm->tear_down(/*force=*/true);
   }
 
   std::vector<BinaryBenchmark> parallel_benchmarks =
@@ -70,19 +78,21 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
   spdlog::info("Running {0} parallel benchmark{1}...", parallel_benchmarks.size(),
                parallel_benchmarks.size() > 1 ? "s" : "");
   printed_info = false;
+  matrix_bm_results = nlohmann::json::array();
   for (size_t i = 0; i < parallel_benchmarks.size(); ++i) {
     BinaryBenchmark& benchmark = parallel_benchmarks[i];
 
     if (previous_b_bm && previous_b_bm->benchmark_name() != benchmark.benchmark_name()) {
       // Started new benchmark, force delete old data in case it was a matrix.
       // If it is not a matrix, this does nothing.
-      // TODO: results += benchmark_results_to_json(*previous_b_bm, matrix_bm_results);
+      results += benchmark_results_to_json(*previous_b_bm, matrix_bm_results);
       matrix_bm_results = nlohmann::json::array();
       previous_b_bm->tear_down(/*force=*/true);
       printed_info = false;
     }
     if (!printed_info) {
-      spdlog::info("Running parallel benchmark {}", benchmark.benchmark_name());
+      spdlog::info("Running parallel benchmark {} with sub benchmarks {} and {}.", benchmark.benchmark_name(),
+                   benchmark.get_benchmark_name_one(), benchmark.get_benchmark_name_two());
       printed_info = true;
     }
 
@@ -97,6 +107,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
     spdlog::info("Completed {0}/{1} parallel benchmark{2}.", i + 1, parallel_benchmarks.size(),
                  parallel_benchmarks.size() > 1 ? "s" : "");
   }
+  results += benchmark_results_to_json(parallel_benchmarks.back(), matrix_bm_results);
 
   const std::filesystem::path result_file = result_directory / config_file.stem().concat("-results.json");
   std::ofstream output(result_file);
@@ -104,7 +115,9 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
   output.close();
 
   // Final clean up
-  previous_u_bm->tear_down(/*force=*/true);
+  if (previous_b_bm != nullptr) {
+    previous_b_bm->tear_down(/*force=*/true);
+  }
 }
 
 }  // namespace perma

@@ -152,39 +152,7 @@ nlohmann::json UnaryBenchmark::get_result_as_json() {
   return result;
 }
 
-nlohmann::json UnaryBenchmark::get_json_config() {
-  nlohmann::json config;
-  config["total_memory_range"] = config_.total_memory_range;
-  config["access_size"] = config_.access_size;
-  config["exec_mode"] = get_enum_as_string(ConfigEnums::str_to_mode, config_.exec_mode);
-  config["write_ratio"] = config_.write_ratio;
-  config["pause_frequency"] = config_.pause_frequency;
-  config["number_partitions"] = config_.number_partitions;
-  config["number_threads"] = config_.number_threads;
-  config["data_instruction"] = get_enum_as_string(ConfigEnums::str_to_data_instruction, config_.data_instruction);
-
-  if (config_.pause_frequency > 0) {
-    config["pause_length_micros"] = config_.pause_length_micros;
-  }
-
-  if (config_.write_ratio > 0) {
-    config["persist_instruction"] =
-        get_enum_as_string(ConfigEnums::str_to_persist_instruction, config_.persist_instruction);
-  }
-
-  if (config_.exec_mode == internal::Mode::Random) {
-    config["number_operations"] = config_.number_operations;
-    config["random_distribution"] =
-        get_enum_as_string(ConfigEnums::str_to_random_distribution, config_.random_distribution);
-    if (config_.random_distribution == internal::Zipf) {
-      config["zipf_alpha"] = config_.zipf_alpha;
-    }
-  }
-
-  config["prefault_file"] = config_.prefault_file;
-
-  return config;
-}
+nlohmann::json UnaryBenchmark::get_json_config() { return get_benchmark_config_as_json(config_); }
 
 UnaryBenchmark::UnaryBenchmark(std::string benchmark_name, const BenchmarkConfig& config)
     : Benchmark(std::move(benchmark_name)),
@@ -503,7 +471,28 @@ void BinaryBenchmark::tear_down(bool force) {
   }
 }
 
-nlohmann::json BinaryBenchmark::get_result_as_json() { return nlohmann::json(); }
+nlohmann::json BinaryBenchmark::get_result_as_json() {
+  nlohmann::json result;
+  result["config_one"] = get_json_config_one();
+  result["name_one"] = get_benchmark_name_one();
+  result["config_two"] = get_json_config_two();
+  result["name_two"] = get_benchmark_name_two();
+  result["result_one"].update(result_one_->get_result_as_json());
+  result["result_two"].update(result_two_->get_result_as_json());
+  return result;
+}
+
+const BenchmarkConfig& BinaryBenchmark::get_benchmark_config_one() const { return config_one_; }
+
+const BenchmarkConfig& BinaryBenchmark::get_benchmark_config_two() const { return config_two_; }
+
+nlohmann::json BinaryBenchmark::get_json_config_one() { return get_benchmark_config_as_json(config_one_); }
+
+nlohmann::json BinaryBenchmark::get_json_config_two() { return get_benchmark_config_as_json(config_two_); }
+
+const std::string& BinaryBenchmark::get_benchmark_name_one() const { return benchmark_name_one_; }
+
+const std::string& BinaryBenchmark::get_benchmark_name_two() const { return benchmark_name_two_; }
 
 inline void single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
                           std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config) {
@@ -635,5 +624,39 @@ inline void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkC
       thread_config.latencies->emplace_back(latency);
     }
   }
+}
+
+nlohmann::json get_benchmark_config_as_json(const BenchmarkConfig& bm_config) {
+  nlohmann::json config;
+  config["total_memory_range"] = bm_config.total_memory_range;
+  config["access_size"] = bm_config.access_size;
+  config["exec_mode"] = get_enum_as_string(ConfigEnums::str_to_mode, bm_config.exec_mode);
+  config["write_ratio"] = bm_config.write_ratio;
+  config["pause_frequency"] = bm_config.pause_frequency;
+  config["number_partitions"] = bm_config.number_partitions;
+  config["number_threads"] = bm_config.number_threads;
+  config["data_instruction"] = get_enum_as_string(ConfigEnums::str_to_data_instruction, bm_config.data_instruction);
+
+  if (bm_config.pause_frequency > 0) {
+    config["pause_length_micros"] = bm_config.pause_length_micros;
+  }
+
+  if (bm_config.write_ratio > 0) {
+    config["persist_instruction"] =
+        get_enum_as_string(ConfigEnums::str_to_persist_instruction, bm_config.persist_instruction);
+  }
+
+  if (bm_config.exec_mode == internal::Mode::Random) {
+    config["number_operations"] = bm_config.number_operations;
+    config["random_distribution"] =
+        get_enum_as_string(ConfigEnums::str_to_random_distribution, bm_config.random_distribution);
+    if (bm_config.random_distribution == internal::Zipf) {
+      config["zipf_alpha"] = bm_config.zipf_alpha;
+    }
+  }
+
+  config["prefault_file"] = bm_config.prefault_file;
+
+  return config;
 }
 }  // namespace perma
