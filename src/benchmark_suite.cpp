@@ -11,18 +11,18 @@ namespace {
 
 nlohmann::json benchmark_results_to_json(const perma::SingleBenchmark& bm, const nlohmann::json& bm_results) {
   return {{"bm_name", bm.benchmark_name()},
-          {"bm_type", bm.benchmark_type()},
-          {"matrix_args", bm.get_benchmark_config().matrix_args},
+          {"bm_type", bm.benchmark_type_as_str()},
+          {"matrix_args", bm.get_benchmark_config()[0].matrix_args},
           {"benchmarks", bm_results}};
 }
 
 nlohmann::json benchmark_results_to_json(const perma::ParallelBenchmark& bm, const nlohmann::json& bm_results) {
   return {{"bm_name", bm.benchmark_name()},
           {"sub_bm_names", {bm.get_benchmark_name_one(), bm.get_benchmark_name_two()}},
-          {"bm_type", bm.benchmark_type()},
+          {"bm_type", bm.benchmark_type_as_str()},
           {"matrix_args",
-           {{bm.get_benchmark_name_one(), bm.get_benchmark_config_one().matrix_args},
-            {bm.get_benchmark_name_two(), bm.get_benchmark_config_two().matrix_args}}},
+           {{bm.get_benchmark_name_one(), bm.get_benchmark_config()[0].matrix_args},
+            {bm.get_benchmark_name_two(), bm.get_benchmark_config()[1].matrix_args}}},
           {"benchmarks", bm_results}};
 }
 
@@ -55,7 +55,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
     }
     if (!printed_info) {
       spdlog::info("Running single benchmark {} with matrix args {}", benchmark.benchmark_name(),
-                   nlohmann::json(benchmark.get_benchmark_config().matrix_args).dump());
+                   nlohmann::json(benchmark.get_benchmark_config()[0].matrix_args).dump());
       printed_info = true;
     }
 

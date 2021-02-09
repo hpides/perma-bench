@@ -41,6 +41,8 @@ struct alignas(16) Measurement {
   const Latency latency;
 };
 
+enum BenchmarkType { Single, Parallel };
+
 }  // namespace internal
 
 struct BenchmarkConfig {
@@ -116,8 +118,15 @@ struct BenchmarkResult {
 
 class Benchmark {
  public:
-  explicit Benchmark(std::string benchmark_name, std::string benchmark_type)
-      : benchmark_name_{std::move(benchmark_name)}, benchmark_type_{std::move(benchmark_type)} {}
+  Benchmark(std::string benchmark_name, internal::BenchmarkType benchmark_type,
+            std::vector<std::filesystem::path> pmem_files, std::vector<bool> owns_pmem_files,
+            std::vector<BenchmarkConfig> configs, std::vector<std::unique_ptr<BenchmarkResult>> results)
+      : benchmark_name_{std::move(benchmark_name)},
+        benchmark_type_{benchmark_type},
+        pmem_files_{std::move(pmem_files)},
+        owns_pmem_files_{std::move(owns_pmem_files)},
+        configs_{std::move(configs)},
+        results_{std::move(results)} {}
   /** Main run method which executes the benchmark. `setup()` should be called before this. */
   virtual void run() = 0;
 
@@ -141,143 +150,38 @@ class Benchmark {
   const std::string& benchmark_name() const;
 
   /** Return the type of the benchmark. */
-  const std::string& benchmark_type() const;
+  std::string benchmark_type_as_str() const;
+
+  const std::vector<BenchmarkConfig>& get_benchmark_config() const;
+  const std::vector<std::filesystem::path>& get_pmem_file() const;
+  std::vector<char*> get_pmem_data() const;
+  const std::vector<std::vector<ThreadRunConfig>>& get_thread_configs() const;
+  const std::vector<std::unique_ptr<BenchmarkResult>>& get_benchmark_result() const;
+  std::vector<bool> owns_pmem_file() const;
 
  protected:
+  nlohmann::json get_json_config(uint8_t config_index);
+  static void single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
+                            std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config);
+
+  static void create_single_data_file(const BenchmarkConfig& config, char** pmem_data,
+                                      std::filesystem::path& pmem_file);
+
+  static void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
+
+  static nlohmann::json get_benchmark_config_as_json(const BenchmarkConfig& bm_config);
+
   const std::string benchmark_name_;
-  const std::string benchmark_type_;
+  const internal::BenchmarkType benchmark_type_;
+
+  std::vector<std::filesystem::path> pmem_files_;
+  std::vector<bool> owns_pmem_files_;
+  std::vector<char*> pmem_data_;
+
+  const std::vector<BenchmarkConfig> configs_;
+  std::vector<std::unique_ptr<BenchmarkResult>> results_;
+  std::vector<std::vector<ThreadRunConfig>> thread_configs_;
+  std::vector<std::vector<std::thread>> pools_;
 };
 
-class SingleBenchmark : public Benchmark {
- public:
-  SingleBenchmark(std::string benchmark_name, const BenchmarkConfig& config);
-  SingleBenchmark(std::string benchmark_name, const BenchmarkConfig& config, std::filesystem::path pmem_file);
-
-  SingleBenchmark(SingleBenchmark&& other) = default;
-  SingleBenchmark(const SingleBenchmark& other) = delete;
-  SingleBenchmark& operator=(const SingleBenchmark& other) = delete;
-  SingleBenchmark& operator=(SingleBenchmark&& other) = delete;
-
-  /** Main run method which executes the benchmark. `setup()` should be called before this. */
-  void run() override;
-
-  /**
-   * Generates the data needed for the benchmark.
-   * This is probably the first method to be called so that a virtual
-   * address space is available to generate the IO addresses.
-   */
-  void create_data_file() override;
-
-  /** Create all the IO addresses ahead of time to avoid unnecessary ops during the actual benchmark. */
-  void set_up() override;
-
-  /** Clean up after te benchmark */
-  void tear_down(bool force) override;
-
-  /** Return the results as a JSON to be exported to the user and visualization. */
-  nlohmann::json get_result_as_json() override;
-
-  const BenchmarkConfig& get_benchmark_config() const;
-  const std::filesystem::path& get_pmem_file() const;
-  const char* get_pmem_data() const;
-  const std::vector<ThreadRunConfig>& get_thread_configs() const;
-  const BenchmarkResult& get_benchmark_result() const;
-  bool owns_pmem_file() const;
-
-  ~SingleBenchmark() { SingleBenchmark::tear_down(false); }
-
- private:
-  nlohmann::json get_json_config();
-
-  std::filesystem::path pmem_file_;
-  bool owns_pmem_file_;
-  char* pmem_data_{nullptr};
-
-  const BenchmarkConfig config_;
-  std::unique_ptr<BenchmarkResult> result_;
-  std::vector<ThreadRunConfig> thread_configs_;
-  std::vector<std::thread> pool_;
-};
-
-class ParallelBenchmark : public Benchmark {
- public:
-  ParallelBenchmark(std::string benchmark_name, std::string first_benchmark_name, std::string second_benchmark_name,
-                    const BenchmarkConfig& first_config, const BenchmarkConfig& second_config);
-  ParallelBenchmark(std::string benchmark_name, std::string first_benchmark_name, std::string second_benchmark_name,
-                    const BenchmarkConfig& first_config, const BenchmarkConfig& second_config,
-                    std::filesystem::path pmem_file_first);
-  ParallelBenchmark(std::string benchmark_name, std::string first_benchmark_name, std::string second_benchmark_name,
-                    const BenchmarkConfig& first_config, const BenchmarkConfig& second_config,
-                    std::filesystem::path pmem_file_first, std::filesystem::path pmem_file_second);
-
-  ParallelBenchmark(ParallelBenchmark&& other) = default;
-  ParallelBenchmark(const ParallelBenchmark& other) = delete;
-  ParallelBenchmark& operator=(const ParallelBenchmark& other) = delete;
-  ParallelBenchmark& operator=(ParallelBenchmark&& other) = delete;
-
-  /** Main run method which executes the benchmark. `setup()` should be called before this. */
-  void run() override;
-
-  /**
-   * Generates the data needed for the benchmark.
-   * This is probably the first method to be called so that a virtual
-   * address space is available to generate the IO addresses.
-   */
-  void create_data_file() override;
-
-  /** Create all the IO addresses ahead of time to avoid unnecessary ops during the actual benchmark. */
-  void set_up() override;
-
-  /** Clean up after te benchmark */
-  void tear_down(bool force) override;
-
-  /** Return the results as a JSON to be exported to the user and visualization. */
-  nlohmann::json get_result_as_json() override;
-
-  const BenchmarkConfig& get_benchmark_config_one() const;
-  const BenchmarkConfig& get_benchmark_config_two() const;
-  const std::string& get_benchmark_name_one() const;
-  const std::string& get_benchmark_name_two() const;
-  const std::filesystem::path& get_pmem_file_one() const;
-  const std::filesystem::path& get_pmem_file_two() const;
-  const char* get_pmem_data_one() const;
-  const char* get_pmem_data_two() const;
-  const BenchmarkResult& get_benchmark_result_one() const;
-  const BenchmarkResult& get_benchmark_result_two() const;
-  bool owns_pmem_file_one() const;
-  bool owns_pmem_file_two() const;
-
-  ~ParallelBenchmark() { ParallelBenchmark::tear_down(false); }
-
- private:
-  nlohmann::json get_json_config_one();
-  nlohmann::json get_json_config_two();
-
-  const std::string benchmark_name_one_;
-  const std::string benchmark_name_two_;
-  std::filesystem::path pmem_file_one_;
-  std::filesystem::path pmem_file_two_;
-  bool owns_pmem_file_one_;
-  bool owns_pmem_file_two_;
-  char* pmem_data_one_{nullptr};
-  char* pmem_data_two_{nullptr};
-
-  const BenchmarkConfig config_one_;
-  const BenchmarkConfig config_two_;
-  std::unique_ptr<BenchmarkResult> result_one_;
-  std::unique_ptr<BenchmarkResult> result_two_;
-  std::vector<ThreadRunConfig> thread_configs_one_;
-  std::vector<ThreadRunConfig> thread_configs_two_;
-  std::vector<std::thread> pool_one_;
-  std::vector<std::thread> pool_two_;
-};
-
-void single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
-                   std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config);
-
-void create_single_data_file(const BenchmarkConfig& config, char*& pmem_data, std::filesystem::path& pmem_file);
-
-inline void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
-
-nlohmann::json get_benchmark_config_as_json(const BenchmarkConfig& bm_config);
 }  // namespace perma

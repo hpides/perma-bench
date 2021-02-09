@@ -1,6 +1,8 @@
 #pragma once
 
 #include "benchmark.hpp"
+#include "parallel_benchmark.hpp"
+#include "single_benchmark.hpp"
 
 namespace perma {
 
