@@ -24,13 +24,13 @@ class BenchmarkTest : public ::testing::Test {
 };
 
 TEST_F(BenchmarkTest, CreateBenchmark) {
-  ASSERT_NO_THROW(UnaryBenchmark("test_bm1", base_config_));
-  ASSERT_NO_THROW(UnaryBenchmark("test_bm2", base_config_, "/tmp/foo/bar"));
+  ASSERT_NO_THROW(SingleBenchmark("test_bm1", base_config_));
+  ASSERT_NO_THROW(SingleBenchmark("test_bm2", base_config_, "/tmp/foo/bar"));
 }
 
 TEST_F(BenchmarkTest, CreateNewDataFile) {
   base_config_.write_ratio = 1;
-  UnaryBenchmark bm{bm_name_, base_config_};
+  SingleBenchmark bm{bm_name_, base_config_};
   const std::filesystem::path pmem_file = bm.get_pmem_file();
 
   ASSERT_FALSE(std::filesystem::exists(pmem_file));
@@ -55,7 +55,7 @@ TEST_F(BenchmarkTest, CreateExistingDataFile) {
   temp_stream.close();
   std::filesystem::resize_file(existing_pmem_file, PMEM_FILE_SIZE);
 
-  UnaryBenchmark bm{bm_name_, base_config_, existing_pmem_file};
+  SingleBenchmark bm{bm_name_, base_config_, existing_pmem_file};
   const std::filesystem::path pmem_file = bm.get_pmem_file();
 
   ASSERT_EQ(pmem_file, existing_pmem_file);
@@ -77,7 +77,7 @@ TEST_F(BenchmarkTest, CreateExistingDataFile) {
 
 TEST_F(BenchmarkTest, CreateReadDataFile) {
   base_config_.write_ratio = 0;
-  UnaryBenchmark bm{bm_name_, base_config_};
+  SingleBenchmark bm{bm_name_, base_config_};
   const std::filesystem::path pmem_file = bm.get_pmem_file();
 
   ASSERT_FALSE(std::filesystem::exists(pmem_file));
@@ -100,7 +100,7 @@ TEST_F(BenchmarkTest, CreateReadDataFile) {
 TEST_F(BenchmarkTest, SetUpSingleThread) {
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  UnaryBenchmark bm{bm_name_, base_config_};
+  SingleBenchmark bm{bm_name_, base_config_};
   bm.create_data_file();
   bm.set_up();
 
@@ -127,7 +127,7 @@ TEST_F(BenchmarkTest, SetUpMultiThread) {
   base_config_.number_threads = num_threads;
   base_config_.number_partitions = 2;
   base_config_.access_size = 512;
-  UnaryBenchmark bm{bm_name_, base_config_};
+  SingleBenchmark bm{bm_name_, base_config_};
   bm.create_data_file();
   bm.set_up();
 
@@ -174,7 +174,7 @@ TEST_F(BenchmarkTest, RunSingeThreadRead) {
   base_config_.access_size = 256;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = 256 * num_ops;
-  UnaryBenchmark bm{bm_name_, base_config_};
+  SingleBenchmark bm{bm_name_, base_config_};
   bm.create_data_file();
   bm.set_up();
   bm.run();
@@ -202,7 +202,7 @@ TEST_F(BenchmarkTest, RunSingeThreadWrite) {
   base_config_.access_size = 256;
   base_config_.write_ratio = 1;
   base_config_.total_memory_range = total_size;
-  UnaryBenchmark bm{bm_name_, base_config_};
+  SingleBenchmark bm{bm_name_, base_config_};
   bm.create_data_file();
   bm.set_up();
   bm.run();
@@ -233,7 +233,7 @@ TEST_F(BenchmarkTest, RunSingeThreadMixed) {
   base_config_.number_operations = num_ops;
   base_config_.exec_mode = internal::Random;
   base_config_.total_memory_range = 256 * num_ops;
-  UnaryBenchmark bm{bm_name_, base_config_};
+  SingleBenchmark bm{bm_name_, base_config_};
   bm.create_data_file();
   bm.set_up();
   bm.run();
@@ -261,7 +261,7 @@ TEST_F(BenchmarkTest, RunMultiThreadRead) {
   base_config_.access_size = 1024;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = 1024 * num_ops;
-  UnaryBenchmark bm{bm_name_, base_config_};
+  SingleBenchmark bm{bm_name_, base_config_};
   bm.create_data_file();
   bm.set_up();
   bm.run();
@@ -290,7 +290,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWrite) {
   base_config_.access_size = 512;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = total_size;
-  UnaryBenchmark bm{bm_name_, base_config_};
+  SingleBenchmark bm{bm_name_, base_config_};
   bm.create_data_file();
   bm.set_up();
   bm.run();
@@ -321,7 +321,7 @@ TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = 1024 * num_ops;
   base_config_.exec_mode = internal::Sequential_Desc;
-  UnaryBenchmark bm{bm_name_, base_config_};
+  SingleBenchmark bm{bm_name_, base_config_};
   bm.create_data_file();
   bm.set_up();
   bm.run();
@@ -351,7 +351,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = total_size;
   base_config_.exec_mode = internal::Sequential_Desc;
-  UnaryBenchmark bm{bm_name_, base_config_};
+  SingleBenchmark bm{bm_name_, base_config_};
   bm.create_data_file();
   bm.set_up();
   bm.run();
@@ -383,7 +383,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteRaw) {
   base_config_.access_size = 512;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = total_size;
-  UnaryBenchmark bm{bm_name_, base_config_};
+  SingleBenchmark bm{bm_name_, base_config_};
   bm.create_data_file();
   bm.set_up();
   bm.run();

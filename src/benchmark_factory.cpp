@@ -9,9 +9,9 @@
 
 namespace perma {
 
-std::vector<UnaryBenchmark> BenchmarkFactory::create_single_benchmarks(const std::filesystem::path& pmem_directory,
-                                                                       std::vector<YAML::Node>& configs) {
-  std::vector<UnaryBenchmark> benchmarks{};
+std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const std::filesystem::path& pmem_directory,
+                                                                        std::vector<YAML::Node>& configs) {
+  std::vector<SingleBenchmark> benchmarks{};
 
   for (YAML::Node& config : configs) {
     for (YAML::iterator it = config.begin(); it != config.end(); ++it) {
@@ -51,9 +51,9 @@ std::vector<UnaryBenchmark> BenchmarkFactory::create_single_benchmarks(const std
   return benchmarks;
 }
 
-std::vector<BinaryBenchmark> BenchmarkFactory::create_parallel_benchmarks(const std::filesystem::path& pmem_directory,
-                                                                          std::vector<YAML::Node>& configs) {
-  std::vector<BinaryBenchmark> benchmarks{};
+std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(const std::filesystem::path& pmem_directory,
+                                                                            std::vector<YAML::Node>& configs) {
+  std::vector<ParallelBenchmark> benchmarks{};
 
   for (YAML::Node& config : configs) {
     for (YAML::iterator it = config.begin(); it != config.end(); ++it) {

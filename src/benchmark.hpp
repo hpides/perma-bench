@@ -116,7 +116,8 @@ struct BenchmarkResult {
 
 class Benchmark {
  public:
-  explicit Benchmark(std::string benchmark_name) : benchmark_name_{std::move(benchmark_name)} {}
+  explicit Benchmark(std::string benchmark_name, std::string benchmark_type)
+      : benchmark_name_{std::move(benchmark_name)}, benchmark_type_{std::move(benchmark_type)} {}
   /** Main run method which executes the benchmark. `setup()` should be called before this. */
   virtual void run() = 0;
 
@@ -139,19 +140,23 @@ class Benchmark {
   /** Return the name of the benchmark. */
   const std::string& benchmark_name() const;
 
+  /** Return the type of the benchmark. */
+  const std::string& benchmark_type() const;
+
  protected:
   const std::string benchmark_name_;
+  const std::string benchmark_type_;
 };
 
-class UnaryBenchmark : public Benchmark {
+class SingleBenchmark : public Benchmark {
  public:
-  UnaryBenchmark(std::string benchmark_name, const BenchmarkConfig& config);
-  UnaryBenchmark(std::string benchmark_name, const BenchmarkConfig& config, std::filesystem::path pmem_file);
+  SingleBenchmark(std::string benchmark_name, const BenchmarkConfig& config);
+  SingleBenchmark(std::string benchmark_name, const BenchmarkConfig& config, std::filesystem::path pmem_file);
 
-  UnaryBenchmark(UnaryBenchmark&& other) = default;
-  UnaryBenchmark(const UnaryBenchmark& other) = delete;
-  UnaryBenchmark& operator=(const UnaryBenchmark& other) = delete;
-  UnaryBenchmark& operator=(UnaryBenchmark&& other) = delete;
+  SingleBenchmark(SingleBenchmark&& other) = default;
+  SingleBenchmark(const SingleBenchmark& other) = delete;
+  SingleBenchmark& operator=(const SingleBenchmark& other) = delete;
+  SingleBenchmark& operator=(SingleBenchmark&& other) = delete;
 
   /** Main run method which executes the benchmark. `setup()` should be called before this. */
   void run() override;
@@ -179,7 +184,7 @@ class UnaryBenchmark : public Benchmark {
   const BenchmarkResult& get_benchmark_result() const;
   bool owns_pmem_file() const;
 
-  ~UnaryBenchmark() { UnaryBenchmark::tear_down(false); }
+  ~SingleBenchmark() { SingleBenchmark::tear_down(false); }
 
  private:
   nlohmann::json get_json_config();
@@ -194,41 +199,52 @@ class UnaryBenchmark : public Benchmark {
   std::vector<std::thread> pool_;
 };
 
-class BinaryBenchmark : public Benchmark {
+class ParallelBenchmark : public Benchmark {
  public:
-  BinaryBenchmark(std::string benchmark_name, std::string first_benchmark_name, std::string second_benchmark_name,
-                  const BenchmarkConfig& first_config, const BenchmarkConfig& second_config);
-  BinaryBenchmark(std::string benchmark_name, std::string first_benchmark_name, std::string second_benchmark_name,
-                  const BenchmarkConfig& first_config, const BenchmarkConfig& second_config,
-                  std::filesystem::path pmem_file_first);
-  BinaryBenchmark(std::string benchmark_name, std::string first_benchmark_name, std::string second_benchmark_name,
-                  const BenchmarkConfig& first_config, const BenchmarkConfig& second_config,
-                  std::filesystem::path pmem_file_first, std::filesystem::path pmem_file_second);
+  ParallelBenchmark(std::string benchmark_name, std::string first_benchmark_name, std::string second_benchmark_name,
+                    const BenchmarkConfig& first_config, const BenchmarkConfig& second_config);
+  ParallelBenchmark(std::string benchmark_name, std::string first_benchmark_name, std::string second_benchmark_name,
+                    const BenchmarkConfig& first_config, const BenchmarkConfig& second_config,
+                    std::filesystem::path pmem_file_first);
+  ParallelBenchmark(std::string benchmark_name, std::string first_benchmark_name, std::string second_benchmark_name,
+                    const BenchmarkConfig& first_config, const BenchmarkConfig& second_config,
+                    std::filesystem::path pmem_file_first, std::filesystem::path pmem_file_second);
 
-  BinaryBenchmark(BinaryBenchmark&& other) = default;
-  BinaryBenchmark(const BinaryBenchmark& other) = delete;
-  BinaryBenchmark& operator=(const BinaryBenchmark& other) = delete;
-  BinaryBenchmark& operator=(BinaryBenchmark&& other) = delete;
+  ParallelBenchmark(ParallelBenchmark&& other) = default;
+  ParallelBenchmark(const ParallelBenchmark& other) = delete;
+  ParallelBenchmark& operator=(const ParallelBenchmark& other) = delete;
+  ParallelBenchmark& operator=(ParallelBenchmark&& other) = delete;
 
+  /** Main run method which executes the benchmark. `setup()` should be called before this. */
   void run() override;
 
+  /**
+   * Generates the data needed for the benchmark.
+   * This is probably the first method to be called so that a virtual
+   * address space is available to generate the IO addresses.
+   */
   void create_data_file() override;
 
+  /** Create all the IO addresses ahead of time to avoid unnecessary ops during the actual benchmark. */
   void set_up() override;
 
+  /** Clean up after te benchmark */
   void tear_down(bool force) override;
 
+  /** Return the results as a JSON to be exported to the user and visualization. */
   nlohmann::json get_result_as_json() override;
+
   const BenchmarkConfig& get_benchmark_config_one() const;
   const BenchmarkConfig& get_benchmark_config_two() const;
   const std::string& get_benchmark_name_one() const;
   const std::string& get_benchmark_name_two() const;
 
-  ~BinaryBenchmark() { BinaryBenchmark::tear_down(false); }
+  ~ParallelBenchmark() { ParallelBenchmark::tear_down(false); }
 
  private:
   nlohmann::json get_json_config_one();
   nlohmann::json get_json_config_two();
+
   const std::string benchmark_name_one_;
   const std::string benchmark_name_two_;
   std::filesystem::path pmem_file_one_;
@@ -248,10 +264,10 @@ class BinaryBenchmark : public Benchmark {
   std::vector<std::thread> pool_two_;
 };
 
-inline void single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
-                          std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config);
+void single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
+                   std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config);
 
-inline void create_single_data_file(const BenchmarkConfig& config, char*& pmem_data, std::filesystem::path& pmem_file);
+void create_single_data_file(const BenchmarkConfig& config, char*& pmem_data, std::filesystem::path& pmem_file);
 
 inline void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
 
