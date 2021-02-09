@@ -86,7 +86,7 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
           std::vector<BenchmarkConfig> matrix = create_benchmark_matrix(pmem_directory, bm_args_one, bm_matrix_one);
           std::move(matrix.begin(), matrix.end(), std::back_inserter(bm_one_configs));
         } else {
-          BenchmarkConfig bm_config = BenchmarkConfig::decode(raw_bm_args_one);
+          BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args_one);
           bm_config.pmem_directory = pmem_directory;
           bm_one_configs.emplace_back(bm_config);
         }
@@ -95,7 +95,7 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
           std::vector<BenchmarkConfig> matrix = create_benchmark_matrix(pmem_directory, bm_args_two, bm_matrix_two);
           std::move(matrix.begin(), matrix.end(), std::back_inserter(bm_two_configs));
         } else {
-          BenchmarkConfig bm_config = BenchmarkConfig::decode(raw_bm_args_two);
+          BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args_two);
           bm_config.pmem_directory = pmem_directory;
           bm_two_configs.emplace_back(bm_config);
         }
