@@ -165,22 +165,21 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, st
   }
 }
 
-void Benchmark::create_single_data_file(const BenchmarkConfig& config, char** pmem_data,
-                                        std::filesystem::path& pmem_file) {
+char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& pmem_file) {
   if (std::filesystem::exists(pmem_file)) {
     // Data was already generated. Only re-map it.
-    *pmem_data = map_pmem_file(pmem_file, config.total_memory_range);
-    return;
+    return map_pmem_file(pmem_file, config.total_memory_range);
   }
 
-  *pmem_data = create_pmem_file(pmem_file, config.total_memory_range);
+  char* pmem_data = create_pmem_file(pmem_file, config.total_memory_range);
   if (config.write_ratio < 1) {
     // If we read data in this benchmark, we need to generate it first.
-    generate_read_data(*pmem_data, config.total_memory_range);
+    generate_read_data(pmem_data, config.total_memory_range);
   }
   if (config.write_ratio == 1 && config.prefault_file) {
-    prefault_file(*pmem_data, config.total_memory_range);
+    prefault_file(pmem_data, config.total_memory_range);
   }
+  return pmem_data;
 }
 
 void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config) {

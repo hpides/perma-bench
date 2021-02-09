@@ -15,7 +15,7 @@ void SingleBenchmark::run() {
   }
 }
 
-void SingleBenchmark::create_data_file() { create_single_data_file(configs_[0], &pmem_data_[0], pmem_files_[0]); }
+void SingleBenchmark::create_data_file() { pmem_data_[0] = create_single_data_file(configs_[0], pmem_files_[0]); }
 
 void SingleBenchmark::set_up() {
   single_set_up(configs_[0], pmem_data_[0], results_[0], pools_[0], thread_configs_[0]);

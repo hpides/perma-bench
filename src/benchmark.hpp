@@ -164,8 +164,7 @@ class Benchmark {
   static void single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
                             std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config);
 
-  static void create_single_data_file(const BenchmarkConfig& config, char** pmem_data,
-                                      std::filesystem::path& pmem_file);
+  static char* create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& pmem_file);
 
   static void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
 
