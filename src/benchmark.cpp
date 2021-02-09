@@ -347,6 +347,8 @@ const char* SingleBenchmark::get_pmem_data() const { return pmem_data_; }
 
 const std::vector<ThreadRunConfig>& SingleBenchmark::get_thread_configs() const { return thread_configs_; }
 
+const BenchmarkResult& SingleBenchmark::get_benchmark_result() const { return *result_; }
+
 void ParallelBenchmark::run() {
   for (size_t thread_index = 0; thread_index < config_one_.number_threads; thread_index++) {
     pool_one_.emplace_back(&run_in_thread, std::ref(thread_configs_one_[thread_index]), std::ref(config_one_));
@@ -459,7 +461,21 @@ const std::string& ParallelBenchmark::get_benchmark_name_one() const { return be
 
 const std::string& ParallelBenchmark::get_benchmark_name_two() const { return benchmark_name_two_; }
 
-const BenchmarkResult& SingleBenchmark::get_benchmark_result() const { return *result_; }
+const std::filesystem::path& ParallelBenchmark::get_pmem_file_one() const { return pmem_file_one_; }
+
+const std::filesystem::path& ParallelBenchmark::get_pmem_file_two() const { return pmem_file_two_; }
+
+const char* ParallelBenchmark::get_pmem_data_one() const { return pmem_data_one_; }
+
+const char* ParallelBenchmark::get_pmem_data_two() const { return pmem_data_two_; }
+
+const BenchmarkResult& ParallelBenchmark::get_benchmark_result_one() const { return *result_one_; }
+
+const BenchmarkResult& ParallelBenchmark::get_benchmark_result_two() const { return *result_two_; }
+
+bool ParallelBenchmark::owns_pmem_file_one() const { return owns_pmem_file_one_; }
+
+bool ParallelBenchmark::owns_pmem_file_two() const { return owns_pmem_file_two_; }
 
 BenchmarkResult::BenchmarkResult(const BenchmarkConfig& config) : config{config}, latency_hdr{nullptr} {
   // Initialize HdrHistrogram

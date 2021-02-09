@@ -238,6 +238,14 @@ class ParallelBenchmark : public Benchmark {
   const BenchmarkConfig& get_benchmark_config_two() const;
   const std::string& get_benchmark_name_one() const;
   const std::string& get_benchmark_name_two() const;
+  const std::filesystem::path& get_pmem_file_one() const;
+  const std::filesystem::path& get_pmem_file_two() const;
+  const char* get_pmem_data_one() const;
+  const char* get_pmem_data_two() const;
+  const BenchmarkResult& get_benchmark_result_one() const;
+  const BenchmarkResult& get_benchmark_result_two() const;
+  bool owns_pmem_file_one() const;
+  bool owns_pmem_file_two() const;
 
   ~ParallelBenchmark() { ParallelBenchmark::tear_down(false); }
 
