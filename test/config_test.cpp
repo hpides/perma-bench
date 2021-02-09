@@ -13,14 +13,14 @@ class ConfigTest : public ::testing::Test {
  protected:
   void SetUp() override {
     const std::filesystem::path test_config_path = std::filesystem::current_path() / "resources" / "configs";
-    config_file_matrix = test_config_path / TEST_CONFIG_FILE_MATRIX;
-    config_file_seq = test_config_path / TEST_CONFIG_FILE_SEQ;
-    config_file_random = test_config_path / TEST_CONFIG_FILE_RANDOM;
+    config_file_matrix = BenchmarkFactory::get_config_files(test_config_path / TEST_CONFIG_FILE_MATRIX);
+    config_file_seq = BenchmarkFactory::get_config_files(test_config_path / TEST_CONFIG_FILE_SEQ);
+    config_file_random = BenchmarkFactory::get_config_files(test_config_path / TEST_CONFIG_FILE_RANDOM);
   }
 
-  std::filesystem::path config_file_matrix;
-  std::filesystem::path config_file_seq;
-  std::filesystem::path config_file_random;
+  std::vector<YAML::Node> config_file_matrix;
+  std::vector<YAML::Node> config_file_seq;
+  std::vector<YAML::Node> config_file_random;
   BenchmarkConfig bm_config;
 };
 
