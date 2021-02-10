@@ -1,4 +1,5 @@
 import json
+
 from collections import defaultdict
 
 
@@ -13,7 +14,13 @@ class MatrixJsonReader:
         # set main fields of each benchmark
         for bm in range(len(json_obj)):
             self.results["bm_name"].append(json_obj[bm]["bm_name"])
-            self.results["matrix_args"].append(json_obj[bm]["matrix_args"])
+
+            # add empty list to matrix_args if benchmark has none
+            if "matrix_args" not in json_obj[bm]:
+                self.results["matrix_args"].append(list())
+            else:
+                self.results["matrix_args"].append(json_obj[bm]["matrix_args"])
+
             benchmarks.append(json_obj[bm]["benchmarks"])
 
         # set subfields of bandwidth, config and duration field
@@ -21,12 +28,12 @@ class MatrixJsonReader:
 
         # set arg lists
         self.continuous_args = ["total_memory_range", "access_size", "write_ratio", "read_ratio", "pause_frequency",
-                             "number_partitions", "number_threads", "pause_length_micros", "number_operations",
-                             "zipf_alpha"]
+                                "number_partitions", "number_threads", "pause_length_micros", "number_operations",
+                                "zipf_alpha"]
         self.categorical_args = ["exec_mode", "data_instruction", "persist_instruction", "random_distribution"]
 
         # set labels of matrix arguments
-        self.arg_labels = list()
+        self.arg_labels = dict()
         self.set_arg_labels()
 
     """ 
@@ -56,8 +63,15 @@ class MatrixJsonReader:
                             self.results[l[0]][i].append(l[1])
 
     def set_arg_labels(self):
-        # TODO: add units and filler words to continuously args for better readability
-        self.arg_labels = {arg: arg.replace("_", " ").title() for arg in self.continuous_args + self.categorical_args}
+        for arg in self.continuous_args + self.categorical_args:
+            arg_label = arg.replace("_", " ").title()
+
+            if arg in ["total_memory_range", "access_size", "pause_frequency"]:
+                arg_label += " (B)"
+            elif arg == "pause_length_micros":
+                arg_label += r" ($\mu$s)"
+
+            self.arg_labels[arg] = arg_label
 
     """ 
         getter:
@@ -66,8 +80,8 @@ class MatrixJsonReader:
     def get_result(self, name, bm_idx):
         return self.results[name][bm_idx]
 
-    def get_num_benchmarks(self):
-        return len(self.results["bm_name"])
+    def get_bm_names(self):
+        return self.results["bm_name"]
 
     def get_categorical_args(self):
         return self.categorical_args
