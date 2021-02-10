@@ -85,8 +85,8 @@ class MatrixJsonReader:
     def get_result(self, name, bm_idx):
         return self.results[name][bm_idx]
 
-    def get_num_benchmarks(self):
-        return len(self.results["bm_name"])
+    def get_bm_names(self):
+        return self.results["bm_name"]
 
     def get_categorical_args(self):
         return self.categorical_args

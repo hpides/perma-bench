@@ -1,5 +1,6 @@
 import glob
 import sys
+import warnings
 
 from itertools import permutations
 from mat_json_plotter import MatrixJsonPlotter
@@ -18,7 +19,7 @@ class PngCreator:
     def process_raw_jsons(self):
         # collect raw jsons of benchmarks
         raw_jsons = list()
-        for path in glob.glob(self.results_dir + "/raw/*.json"):
+        for path in glob.glob(self.results_dir + "raw/*.json"):
             raw_jsons.append(path)
 
         # create pngs
@@ -34,7 +35,7 @@ class PngCreator:
     def process_matrix_jsons(self):
         # collect jsons containing matrix arguments
         matrix_jsons = list()
-        for path in glob.glob(self.results_dir + "/*.json"):
+        for path in glob.glob(self.results_dir + "*.json"):
             matrix_jsons.append(path)
 
         if len(matrix_jsons) < 1:
@@ -42,9 +43,21 @@ class PngCreator:
 
         for mat_json in matrix_jsons:
             plotter = MatrixJsonPlotter(self.img_dir, mat_json)
+            bm_names = plotter.reader.get_bm_names()
+            indices_to_skip = list()
 
             # iterate benchmark results
-            for bm_idx in range(plotter.reader.get_num_benchmarks()):
+            for bm_idx, bm_name in enumerate(bm_names):
+
+                # forbid visualization for benchmarks whose names occur multiple times
+                if bm_idx in indices_to_skip:
+                    continue
+
+                if bm_names.count(bm_name) > 1:
+                    warnings.warn(f"Benchmark names have to be unique. Since this does not apply to \"{bm_name}\", no "
+                                  f"visualization was generated for this benchmark.")
+                    [indices_to_skip.append(idx+bm_idx) for idx, name in enumerate(bm_names[bm_idx:]) if name == bm_name]
+                    continue
 
                 # only execute visualization for benchmark if matrix arguments exist
                 if plotter.reader.get_result("matrix_args", bm_idx):
@@ -52,9 +65,9 @@ class PngCreator:
 
                     # prevent visualization of more than three matrix arguments
                     if len(matrix_args) > 3:
-                        name = plotter.reader.get_result("bm_name", bm_idx)
-                        print(f"Results of benchmark {name} cannot be visualized, because visualization of more than "
-                              f"three matrix arguments is not supported as there would be too many plots.")
+                        warnings.warn(f"Results of benchmark \"{bm_name}\" cannot be visualized, because "
+                                      f"visualization of more than three matrix arguments is not supported as there "
+                                      f"would be too many plots.")
                         continue
 
                     # create pngs for matrix with two or three dimensions
@@ -80,5 +93,5 @@ class PngCreator:
                             plotter.plot_continuous_x(matrix_args[0], "bandwidth_values", bm_idx)
 
                 else:
-                    name = plotter.reader.get_result("bm_name", bm_idx)
-                    print(f"Results of benchmark {name} cannot be visualized as no matrix arguments are defined.")
+                    warnings.warn(f"Results of benchmark \"{bm_name}\" cannot be visualized as no matrix arguments are "
+                                  f"defined.")

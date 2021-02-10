@@ -34,7 +34,7 @@ if __name__ == "__main__":
     # parse args + check for correctness and completeness of args
     parser = argparse.ArgumentParser()
     parser.add_argument("results_dir", type=dir_path, help="path to the results directory")
-    parser.add_argument("--delete", action="store_true", help="delete already existing png and html files")
+    parser.add_argument("--delete", action="store_true", help="delete already existing PNG and HTML files")
     args = parser.parse_args()
 
     # get directory paths of html and img folder
@@ -61,5 +61,5 @@ if __name__ == "__main__":
 
     # create user interface for pngs
     ui.init(img_dir)
-    print(f"The visualization is finished. The result png files are located in {img_dir} and can be viewed in a "
+    print(f"The visualization is finished. The result PNG files are located in {img_dir} and can be viewed in a "
           f"browser with \"<browser-name> {html_dir}/index.html\"")
