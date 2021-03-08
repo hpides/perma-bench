@@ -23,6 +23,8 @@ class BenchmarkFactory {
  private:
   static std::vector<BenchmarkConfig> create_benchmark_matrix(const std::filesystem::path& pmem_directory,
                                                               YAML::Node& config_args, YAML::Node& matrix_args);
+  static void parse_yaml_node(const std::filesystem::path& pmem_directory,
+                                     std::vector<BenchmarkConfig>& bm_configs, YAML::iterator& par_it, std::string& unique_name);
 };
 
 }  // namespace perma

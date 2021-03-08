@@ -35,16 +35,22 @@ std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const st
         const std::filesystem::path pmem_data_file = generate_random_file_name(pmem_directory);
         for (BenchmarkConfig& bm : matrix) {
           // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
+          std::vector<std::unique_ptr<BenchmarkResult>> results{};
+          results.reserve(1);
+          results.push_back(std::make_unique<BenchmarkResult>(bm));
           if (bm.write_ratio > 0) {
-            benchmarks.emplace_back(name, bm);
+            benchmarks.emplace_back(name, bm, results);
           } else {
-            benchmarks.emplace_back(name, bm, pmem_data_file);
+            benchmarks.emplace_back(name, bm, results, pmem_data_file);
           }
         }
       } else {
         BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args);
         bm_config.pmem_directory = pmem_directory;
-        benchmarks.emplace_back(name, bm_config);
+        std::vector<std::unique_ptr<BenchmarkResult>> results{};
+        results.reserve(1);
+        results.push_back(std::make_unique<BenchmarkResult>(bm_config));
+        benchmarks.emplace_back(name, bm_config, results);
       }
     }
   }
@@ -69,36 +75,13 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
 
         std::vector<BenchmarkConfig> bm_one_configs{};
         std::vector<BenchmarkConfig> bm_two_configs{};
+        std::string unique_name_one;
+        std::string unique_name_two;
 
         YAML::iterator par_it = parallel_bm.begin();
-        const auto unique_name_one = par_it->first.as<std::string>();
-        YAML::Node raw_bm_args_one = par_it->second;
-        YAML::Node bm_args_one = raw_bm_args_one["args"];
+        parse_yaml_node(pmem_directory, bm_one_configs, par_it, unique_name_one);
         par_it++;
-        const auto unique_name_two = par_it->first.as<std::string>();
-        YAML::Node raw_bm_args_two = par_it->second;
-        YAML::Node bm_args_two = raw_bm_args_two["args"];
-        if (!bm_args_one || !bm_args_two) {
-          throw std::invalid_argument{"Benchmark config must contain 'args' if it is not empty."};
-        }
-        YAML::Node bm_matrix_one = raw_bm_args_one["matrix"];
-        if (bm_matrix_one) {
-          std::vector<BenchmarkConfig> matrix = create_benchmark_matrix(pmem_directory, bm_args_one, bm_matrix_one);
-          std::move(matrix.begin(), matrix.end(), std::back_inserter(bm_one_configs));
-        } else {
-          BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args_one);
-          bm_config.pmem_directory = pmem_directory;
-          bm_one_configs.emplace_back(bm_config);
-        }
-        YAML::Node bm_matrix_two = raw_bm_args_two["matrix"];
-        if (bm_matrix_two) {
-          std::vector<BenchmarkConfig> matrix = create_benchmark_matrix(pmem_directory, bm_args_two, bm_matrix_two);
-          std::move(matrix.begin(), matrix.end(), std::back_inserter(bm_two_configs));
-        } else {
-          BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args_two);
-          bm_config.pmem_directory = pmem_directory;
-          bm_two_configs.emplace_back(bm_config);
-        }
+        parse_yaml_node(pmem_directory, bm_two_configs, par_it, unique_name_two);
 
         const std::filesystem::path pmem_data_file_one = generate_random_file_name(pmem_directory);
         const std::filesystem::path pmem_data_file_two = generate_random_file_name(pmem_directory);
@@ -106,16 +89,20 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
         for (const BenchmarkConfig& config_one : bm_one_configs) {
           for (const BenchmarkConfig& config_two : bm_two_configs) {
             // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
+            std::vector<std::unique_ptr<BenchmarkResult>> results{};
+            results.reserve(2);
+            results.push_back(std::move(std::make_unique<BenchmarkResult>(config_one)));
+            results.push_back(std::move(std::make_unique<BenchmarkResult>(config_two)));
             if (config_one.write_ratio > 0 && config_two.write_ratio > 0) {
-              benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two);
+              benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results);
             } else if (config_one.write_ratio > 0) {
-              benchmarks.emplace_back(name, unique_name_two, unique_name_one, config_two, config_one,
+              benchmarks.emplace_back(name, unique_name_two, unique_name_one, config_two, config_one, results,
                                       pmem_data_file_two);
             } else if (config_two.write_ratio > 0) {
-              benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two,
+              benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results,
                                       pmem_data_file_one);
             } else {
-              benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two,
+              benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results,
                                       pmem_data_file_one, pmem_data_file_two);
             }
           }
@@ -124,6 +111,27 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
     }
   }
   return benchmarks;
+}
+
+void BenchmarkFactory::parse_yaml_node(const std::filesystem::path& pmem_directory,
+                                       std::vector<BenchmarkConfig>& bm_configs, YAML::iterator& par_it,
+                                       std::string& unique_name) {
+  unique_name = par_it->first.as<std::string>();
+  YAML::Node raw_bm_args = par_it->second;
+  YAML::Node bm_args = raw_bm_args["args"];
+
+  if (!bm_args) {
+    throw std::invalid_argument{"Benchmark config must contain 'args' if it is not empty."};
+  }
+  YAML::Node bm_matrix = raw_bm_args["matrix"];
+  if (bm_matrix) {
+    std::vector<BenchmarkConfig> matrix = create_benchmark_matrix(pmem_directory, bm_args, bm_matrix);
+    std::move(matrix.begin(), matrix.end(), std::back_inserter(bm_configs));
+  } else {
+    BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args);
+    bm_config.pmem_directory = pmem_directory;
+    bm_configs.emplace_back(bm_config);
+  }
 }
 
 std::vector<BenchmarkConfig> BenchmarkFactory::create_benchmark_matrix(const std::filesystem::path& pmem_directory,

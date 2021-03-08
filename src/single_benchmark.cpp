@@ -15,18 +15,23 @@ void SingleBenchmark::run() {
   }
 }
 
-void SingleBenchmark::create_data_file() { pmem_data_[0] = create_single_data_file(configs_[0], pmem_files_[0]); }
+void SingleBenchmark::create_data_file() {
+  pmem_data_.reserve(1);
+  pmem_data_[0] = create_single_data_file(configs_[0], pmem_files_[0]);
+}
 
 void SingleBenchmark::set_up() {
+  pools_.resize(1);
+  thread_configs_.resize(1);
   single_set_up(configs_[0], pmem_data_[0], results_[0], pools_[0], thread_configs_[0]);
 }
 
 void SingleBenchmark::tear_down(const bool force) {
-  if (pmem_data_[0] != nullptr) {
+  if (!pmem_data_.empty() && pmem_data_[0] != nullptr) {
     pmem_unmap(pmem_data_[0], configs_[0].total_memory_range);
     pmem_data_[0] = nullptr;
   }
-  if (owns_pmem_files_[0] || force) {
+  if (!owns_pmem_files_.empty() && owns_pmem_files_[0] || force) {
     std::filesystem::remove(pmem_files_[0]);
   }
 }
@@ -38,17 +43,17 @@ nlohmann::json SingleBenchmark::get_result_as_json() {
   return result;
 }
 
-SingleBenchmark::SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config)
+SingleBenchmark::SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config,
+                                 std::vector<std::unique_ptr<BenchmarkResult>>& results)
     : Benchmark(benchmark_name, internal::BenchmarkType::Single,
                 std::vector<std::filesystem::path>{generate_random_file_name(config.pmem_directory)},
-                std::vector<bool>{true}, std::vector<BenchmarkConfig>{config},
-                std::vector<std::unique_ptr<BenchmarkResult>>{std::move(std::make_unique<BenchmarkResult>(config))}) {}
+                std::vector<bool>{true}, std::vector<BenchmarkConfig>{config}, std::move(results)) {}
 
 SingleBenchmark::SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config,
+                                 std::vector<std::unique_ptr<BenchmarkResult>>& results,
                                  std::filesystem::path pmem_file)
     : Benchmark(benchmark_name, internal::BenchmarkType::Single,
                 std::vector<std::filesystem::path>{std::move(pmem_file)}, std::vector<bool>{false},
-                std::vector<BenchmarkConfig>{config},
-                std::vector<std::unique_ptr<BenchmarkResult>>{std::move(std::make_unique<BenchmarkResult>(config))}) {}
+                std::vector<BenchmarkConfig>{config}, std::move(results)) {}
 
 }  // namespace perma

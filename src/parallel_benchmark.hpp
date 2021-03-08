@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "benchmark.hpp"
 
 namespace perma {
@@ -8,14 +10,15 @@ class ParallelBenchmark : public Benchmark {
  public:
   ParallelBenchmark(const std::string& benchmark_name, std::string first_benchmark_name,
                     std::string second_benchmark_name, const BenchmarkConfig& first_config,
-                    const BenchmarkConfig& second_config);
+                    const BenchmarkConfig& second_config, std::vector<std::unique_ptr<BenchmarkResult>>& results);
   ParallelBenchmark(const std::string& benchmark_name, std::string first_benchmark_name,
                     std::string second_benchmark_name, const BenchmarkConfig& first_config,
-                    const BenchmarkConfig& second_config, std::filesystem::path pmem_file_first);
+                    const BenchmarkConfig& second_config, std::vector<std::unique_ptr<BenchmarkResult>>& results,
+                    std::filesystem::path pmem_file_first);
   ParallelBenchmark(const std::string& benchmark_name, std::string first_benchmark_name,
                     std::string second_benchmark_name, const BenchmarkConfig& first_config,
-                    const BenchmarkConfig& second_config, std::filesystem::path pmem_file_first,
-                    std::filesystem::path pmem_file_second);
+                    const BenchmarkConfig& second_config, std::vector<std::unique_ptr<BenchmarkResult>>& results,
+                    std::filesystem::path pmem_file_first, std::filesystem::path pmem_file_second);
 
   ParallelBenchmark(ParallelBenchmark&& other) = default;
   ParallelBenchmark(const ParallelBenchmark& other) = delete;

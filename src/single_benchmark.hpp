@@ -1,13 +1,17 @@
 #pragma once
 
+#include <string>
+
 #include "benchmark.hpp"
 
 namespace perma {
 
 class SingleBenchmark : public Benchmark {
  public:
-  SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config);
-  SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config, std::filesystem::path pmem_file);
+  SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config,
+                  std::vector<std::unique_ptr<BenchmarkResult>>& results);
+  SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config,
+                  std::vector<std::unique_ptr<BenchmarkResult>>& results, std::filesystem::path pmem_file);
 
   SingleBenchmark(SingleBenchmark&& other) = default;
   SingleBenchmark(const SingleBenchmark& other) = delete;

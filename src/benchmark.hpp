@@ -127,6 +127,12 @@ class Benchmark {
         owns_pmem_files_{std::move(owns_pmem_files)},
         configs_{std::move(configs)},
         results_{std::move(results)} {}
+
+  Benchmark(Benchmark&& other) = default;
+  Benchmark(const Benchmark& other) = delete;
+  Benchmark& operator=(const Benchmark& other) = delete;
+  Benchmark& operator=(Benchmark&& other) = delete;
+
   /** Main run method which executes the benchmark. `setup()` should be called before this. */
   virtual void run() = 0;
 

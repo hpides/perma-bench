@@ -20,11 +20,14 @@ void ParallelBenchmark::run() {
 }
 
 void ParallelBenchmark::create_data_file() {
+  pmem_data_.reserve(2);
   pmem_data_[0] = create_single_data_file(configs_[0], pmem_files_[0]);
   pmem_data_[1] = create_single_data_file(configs_[1], pmem_files_[1]);
 }
 
 void ParallelBenchmark::set_up() {
+  pools_.resize(2);
+  thread_configs_.resize(2);
   single_set_up(configs_[0], pmem_data_[0], results_[0], pools_[0], thread_configs_[0]);
   single_set_up(configs_[1], pmem_data_[1], results_[1], pools_[1], thread_configs_[1]);
 }
@@ -52,40 +55,38 @@ nlohmann::json ParallelBenchmark::get_result_as_json() {
 
 ParallelBenchmark::ParallelBenchmark(const std::string& benchmark_name, std::string first_benchmark_name,
                                      std::string second_benchmark_name, const BenchmarkConfig& first_config,
-                                     const BenchmarkConfig& second_config)
-    : Benchmark(
-          benchmark_name, internal::BenchmarkType::Single,
-          std::vector<std::filesystem::path>{generate_random_file_name(first_config.pmem_directory),
-                                             generate_random_file_name(second_config.pmem_directory)},
-          std::vector<bool>{true, true}, std::vector<BenchmarkConfig>{first_config, second_config},
-          std::vector<std::unique_ptr<BenchmarkResult>>{std::move(std::make_unique<BenchmarkResult>(first_config)),
-                                                        std::move(std::make_unique<BenchmarkResult>(second_config))}),
+                                     const BenchmarkConfig& second_config,
+                                     std::vector<std::unique_ptr<BenchmarkResult>>& results)
+    : Benchmark(benchmark_name, internal::BenchmarkType::Parallel,
+                std::vector<std::filesystem::path>{generate_random_file_name(first_config.pmem_directory),
+                                                   generate_random_file_name(second_config.pmem_directory)},
+                std::vector<bool>{true, true}, std::vector<BenchmarkConfig>{first_config, second_config},
+                std::move(results)),
       benchmark_name_one_{std::move(first_benchmark_name)},
       benchmark_name_two_{std::move(second_benchmark_name)} {}
 
 ParallelBenchmark::ParallelBenchmark(const std::string& benchmark_name, std::string first_benchmark_name,
                                      std::string second_benchmark_name, const BenchmarkConfig& first_config,
-                                     const BenchmarkConfig& second_config, std::filesystem::path pmem_file_first)
-    : Benchmark(
-          benchmark_name, internal::BenchmarkType::Single,
-          std::vector<std::filesystem::path>{std::move(pmem_file_first),
-                                             generate_random_file_name(second_config.pmem_directory)},
-          std::vector<bool>{false, true}, std::vector<BenchmarkConfig>{first_config, second_config},
-          std::vector<std::unique_ptr<BenchmarkResult>>{std::move(std::make_unique<BenchmarkResult>(first_config)),
-                                                        std::move(std::make_unique<BenchmarkResult>(second_config))}),
+                                     const BenchmarkConfig& second_config,
+                                     std::vector<std::unique_ptr<BenchmarkResult>>& results,
+                                     std::filesystem::path pmem_file_first)
+    : Benchmark(benchmark_name, internal::BenchmarkType::Parallel,
+                std::vector<std::filesystem::path>{std::move(pmem_file_first),
+                                                   generate_random_file_name(second_config.pmem_directory)},
+                std::vector<bool>{false, true}, std::vector<BenchmarkConfig>{first_config, second_config},
+                std::move(results)),
       benchmark_name_one_{std::move(first_benchmark_name)},
       benchmark_name_two_{std::move(second_benchmark_name)} {}
 
 ParallelBenchmark::ParallelBenchmark(const std::string& benchmark_name, std::string first_benchmark_name,
                                      std::string second_benchmark_name, const BenchmarkConfig& first_config,
-                                     const BenchmarkConfig& second_config, std::filesystem::path pmem_file_first,
-                                     std::filesystem::path pmem_file_second)
-    : Benchmark(
-          benchmark_name, internal::BenchmarkType::Single,
-          std::vector<std::filesystem::path>{std::move(pmem_file_first), std::move(pmem_file_second)},
-          std::vector<bool>{false, false}, std::vector<BenchmarkConfig>{first_config, second_config},
-          std::vector<std::unique_ptr<BenchmarkResult>>{std::move(std::make_unique<BenchmarkResult>(first_config)),
-                                                        std::move(std::make_unique<BenchmarkResult>(second_config))}),
+                                     const BenchmarkConfig& second_config,
+                                     std::vector<std::unique_ptr<BenchmarkResult>>& results,
+                                     std::filesystem::path pmem_file_first, std::filesystem::path pmem_file_second)
+    : Benchmark(benchmark_name, internal::BenchmarkType::Parallel,
+                std::vector<std::filesystem::path>{std::move(pmem_file_first), std::move(pmem_file_second)},
+                std::vector<bool>{false, false}, std::vector<BenchmarkConfig>{first_config, second_config},
+                std::move(results)),
       benchmark_name_one_{std::move(first_benchmark_name)},
       benchmark_name_two_{std::move(second_benchmark_name)} {}
 

@@ -95,7 +95,7 @@ struct BenchmarkEnums {
 };
 
 const std::unordered_map<std::string, internal::BenchmarkType> BenchmarkEnums::str_to_benchmark_type{
-    {"single", internal::BenchmarkType::Parallel}, {"parallel", internal::BenchmarkType::Parallel}};
+    {"single", internal::BenchmarkType::Single}, {"parallel", internal::BenchmarkType::Parallel}};
 
 struct ConfigEnums {
   static const std::unordered_map<std::string, internal::Mode> str_to_mode;
