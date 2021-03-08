@@ -35,8 +35,8 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
                                     const std::filesystem::path& result_directory) {
   std::vector<YAML::Node> configs = BenchmarkFactory::get_config_files(config_file);
   nlohmann::json results = nlohmann::json::array();
-  // Start single unary benchmarks
-  SingleBenchmark* previous_u_bm = nullptr;
+  // Start single benchmarks
+  SingleBenchmark* previous_single_bm = nullptr;
   std::vector<SingleBenchmark> single_benchmarks = BenchmarkFactory::create_single_benchmarks(pmem_directory, configs);
 
   spdlog::info("Running {0} single benchmark{1}...", single_benchmarks.size(), single_benchmarks.size() > 1 ? "s" : "");
@@ -45,12 +45,12 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
   for (size_t i = 0; i < single_benchmarks.size(); ++i) {
     SingleBenchmark& benchmark = single_benchmarks[i];
 
-    if (previous_u_bm && previous_u_bm->benchmark_name() != benchmark.benchmark_name()) {
+    if (previous_single_bm && previous_single_bm->benchmark_name() != benchmark.benchmark_name()) {
       // Started new benchmark, force delete old data in case it was a matrix.
       // If it is not a matrix, this does nothing.
-      results += benchmark_results_to_json(*previous_u_bm, matrix_bm_results);
+      results += benchmark_results_to_json(*previous_single_bm, matrix_bm_results);
       matrix_bm_results = nlohmann::json::array();
-      previous_u_bm->tear_down(/*force=*/true);
+      previous_single_bm->tear_down(/*force=*/true);
       printed_info = false;
     }
     if (!printed_info) {
@@ -66,7 +66,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
     matrix_bm_results += benchmark.get_result_as_json();
 
     benchmark.tear_down(false);
-    previous_u_bm = &benchmark;
+    previous_single_bm = &benchmark;
     spdlog::info("Completed {0}/{1} single benchmark{2}.", i + 1, single_benchmarks.size(),
                  single_benchmarks.size() > 1 ? "s" : "");
   }
@@ -74,11 +74,11 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
   // Add last matrix benchmark to final results and final clean up single benchmarks
   if (!single_benchmarks.empty()) {
     results += benchmark_results_to_json(single_benchmarks.back(), matrix_bm_results);
-    previous_u_bm->tear_down(/*force=*/true);
+    previous_single_bm->tear_down(/*force=*/true);
   }
 
-  // Start parallel binary benchmarks
-  ParallelBenchmark* previous_b_bm = nullptr;
+  // Start parallel benchmarks
+  ParallelBenchmark* previous_par_bm = nullptr;
   std::vector<ParallelBenchmark> parallel_benchmarks =
       BenchmarkFactory::create_parallel_benchmarks(pmem_directory, configs);
   spdlog::info("Running {0} parallel benchmark{1}...", parallel_benchmarks.size(),
@@ -88,12 +88,12 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
   for (size_t i = 0; i < parallel_benchmarks.size(); ++i) {
     ParallelBenchmark& benchmark = parallel_benchmarks[i];
 
-    if (previous_b_bm && previous_b_bm->benchmark_name() != benchmark.benchmark_name()) {
+    if (previous_par_bm && previous_par_bm->benchmark_name() != benchmark.benchmark_name()) {
       // Started new benchmark, force delete old data in case it was a matrix.
       // If it is not a matrix, this does nothing.
-      results += benchmark_results_to_json(*previous_b_bm, matrix_bm_results);
+      results += benchmark_results_to_json(*previous_par_bm, matrix_bm_results);
       matrix_bm_results = nlohmann::json::array();
-      previous_b_bm->tear_down(/*force=*/true);
+      previous_par_bm->tear_down(/*force=*/true);
       printed_info = false;
     }
     if (!printed_info) {
@@ -109,14 +109,14 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
     matrix_bm_results += benchmark.get_result_as_json();
 
     benchmark.tear_down(false);
-    previous_b_bm = &benchmark;
+    previous_par_bm = &benchmark;
     spdlog::info("Completed {0}/{1} parallel benchmark{2}.", i + 1, parallel_benchmarks.size(),
                  parallel_benchmarks.size() > 1 ? "s" : "");
   }
   // Add last matrix benchmark to final results and final clean up parallel benchmarks
   if (!parallel_benchmarks.empty()) {
     results += benchmark_results_to_json(parallel_benchmarks.back(), matrix_bm_results);
-    previous_b_bm->tear_down(true);
+    previous_par_bm->tear_down(true);
   }
 
   const std::filesystem::path result_file = result_directory / config_file.stem().concat("-results.json");
