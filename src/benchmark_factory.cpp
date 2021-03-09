@@ -1,6 +1,5 @@
 #include "benchmark_factory.hpp"
 
-#include <spdlog/spdlog.h>
 #include <yaml-cpp/yaml.h>
 
 #include <string>
