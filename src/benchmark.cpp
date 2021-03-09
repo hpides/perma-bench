@@ -127,6 +127,8 @@ std::string Benchmark::benchmark_type_as_str() const {
   return get_enum_as_string(BenchmarkEnums::str_to_benchmark_type, benchmark_type_);
 }
 
+internal::BenchmarkType Benchmark::get_benchmark_type() const { return benchmark_type_; }
+
 void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
                               std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config) {
   const size_t num_total_range_ops = config.total_memory_range / config.access_size;

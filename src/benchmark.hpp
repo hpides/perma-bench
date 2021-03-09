@@ -157,6 +157,7 @@ class Benchmark {
 
   /** Return the type of the benchmark. */
   std::string benchmark_type_as_str() const;
+  internal::BenchmarkType get_benchmark_type() const;
 
   const std::vector<BenchmarkConfig>& get_benchmark_config() const;
   const std::vector<std::filesystem::path>& get_pmem_file() const;
