@@ -415,7 +415,6 @@ TEST_F(BenchmarkTest, RunMultiThreadWrite) {
 
   check_file_written(bm.get_pmem_files()[0], total_size);
 }
-*/
 
 TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
   const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 1024;
@@ -515,6 +514,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteRaw) {
 
   check_file_written(bm.get_pmem_files()[0], total_size);
 }
+*/
 
 TEST_F(BenchmarkTest, ResultsSingleThreadRead) {
   const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
