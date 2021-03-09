@@ -41,6 +41,8 @@ struct alignas(16) Measurement {
   const Latency latency;
 };
 
+enum BenchmarkType { Single, Parallel };
+
 }  // namespace internal
 
 struct BenchmarkConfig {
@@ -116,8 +118,15 @@ struct BenchmarkResult {
 
 class Benchmark {
  public:
-  Benchmark(std::string benchmark_name, const BenchmarkConfig& config);
-  Benchmark(std::string benchmark_name, const BenchmarkConfig& config, std::filesystem::path pmem_file);
+  Benchmark(std::string benchmark_name, internal::BenchmarkType benchmark_type,
+            std::vector<std::filesystem::path> pmem_files, std::vector<bool> owns_pmem_files,
+            std::vector<BenchmarkConfig> configs, std::vector<std::unique_ptr<BenchmarkResult>> results)
+      : benchmark_name_{std::move(benchmark_name)},
+        benchmark_type_{benchmark_type},
+        pmem_files_{std::move(pmem_files)},
+        owns_pmem_files_{std::move(owns_pmem_files)},
+        configs_{std::move(configs)},
+        results_{std::move(results)} {}
 
   Benchmark(Benchmark&& other) = default;
   Benchmark(const Benchmark& other) = delete;
@@ -125,47 +134,60 @@ class Benchmark {
   Benchmark& operator=(Benchmark&& other) = delete;
 
   /** Main run method which executes the benchmark. `setup()` should be called before this. */
-  void run();
+  virtual void run() = 0;
 
   /**
    * Generates the data needed for the benchmark.
    * This is probably the first method to be called so that a virtual
    * address space is available to generate the IO addresses.
    */
-  void create_data_file();
+  virtual void create_data_file() = 0;
 
   /** Create all the IO addresses ahead of time to avoid unnecessary ops during the actual benchmark. */
-  void set_up();
+  virtual void set_up() = 0;
 
   /** Clean up after te benchmark */
-  void tear_down(bool force = false);
+  virtual void tear_down(bool force) = 0;
 
   /** Return the results as a JSON to be exported to the user and visualization. */
-  nlohmann::json get_result_as_json();
+  virtual nlohmann::json get_result_as_json() = 0;
 
+  /** Return the name of the benchmark. */
   const std::string& benchmark_name() const;
-  const BenchmarkConfig& get_benchmark_config() const;
-  const std::filesystem::path& get_pmem_file() const;
-  const char* get_pmem_data() const;
-  const std::vector<ThreadRunConfig>& get_thread_configs() const;
-  const BenchmarkResult& get_benchmark_result() const;
-  bool owns_pmem_file() const;
 
-  ~Benchmark() { tear_down(); }
+  /** Return the type of the benchmark. */
+  std::string benchmark_type_as_str() const;
+  internal::BenchmarkType get_benchmark_type() const;
 
- private:
-  nlohmann::json get_json_config();
-  void run_in_thread(ThreadRunConfig& thread_config);
+  const std::vector<BenchmarkConfig>& get_benchmark_configs() const;
+  const std::vector<std::filesystem::path>& get_pmem_files() const;
+  std::vector<char*> get_pmem_data() const;
+  const std::vector<std::vector<ThreadRunConfig>>& get_thread_configs() const;
+  const std::vector<std::unique_ptr<BenchmarkResult>>& get_benchmark_results() const;
+  std::vector<bool> owns_pmem_files() const;
+
+ protected:
+  nlohmann::json get_json_config(uint8_t config_index);
+  static void single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
+                            std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config);
+
+  static char* create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& pmem_file);
+
+  static void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
+
+  static nlohmann::json get_benchmark_config_as_json(const BenchmarkConfig& bm_config);
 
   const std::string benchmark_name_;
-  const std::filesystem::path pmem_file_;
-  bool owns_pmem_file_;
-  char* pmem_data_{nullptr};
+  const internal::BenchmarkType benchmark_type_;
 
-  const BenchmarkConfig config_;
-  std::unique_ptr<BenchmarkResult> result_;
-  std::vector<ThreadRunConfig> thread_configs_;
-  std::vector<std::thread> pool_;
+  std::vector<std::filesystem::path> pmem_files_;
+  std::vector<bool> owns_pmem_files_;
+  std::vector<char*> pmem_data_;
+
+  const std::vector<BenchmarkConfig> configs_;
+  std::vector<std::unique_ptr<BenchmarkResult>> results_;
+  std::vector<std::vector<ThreadRunConfig>> thread_configs_;
+  std::vector<std::vector<std::thread>> pools_;
 };
 
 }  // namespace perma

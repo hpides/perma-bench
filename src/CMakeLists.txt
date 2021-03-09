@@ -8,6 +8,10 @@ set(
         benchmark_suite.cpp
         benchmark_suite.hpp
         io_operation.hpp
+        single_benchmark.cpp
+        single_benchmark.hpp
+        parallel_benchmark.cpp
+        parallel_benchmark.hpp
         utils.cpp
         utils.hpp)
 

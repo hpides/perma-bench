@@ -4,11 +4,7 @@
 
 #include <cstdint>
 #include <memory>
-#include <random>
 #include <thread>
-
-#include "read_write_ops.hpp"
-#include "utils.hpp"
 
 namespace {
 
@@ -94,6 +90,13 @@ inline double get_bandwidth(const uint64_t total_data_size, const uint64_t total
 
 namespace perma {
 
+struct BenchmarkEnums {
+  static const std::unordered_map<std::string, internal::BenchmarkType> str_to_benchmark_type;
+};
+
+const std::unordered_map<std::string, internal::BenchmarkType> BenchmarkEnums::str_to_benchmark_type{
+    {"single", internal::BenchmarkType::Single}, {"parallel", internal::BenchmarkType::Parallel}};
+
 struct ConfigEnums {
   static const std::unordered_map<std::string, internal::Mode> str_to_mode;
   static const std::unordered_map<std::string, internal::DataInstruction> str_to_data_instruction;
@@ -118,43 +121,106 @@ const std::unordered_map<std::string, internal::PersistInstruction> ConfigEnums:
 const std::unordered_map<std::string, internal::RandomDistribution> ConfigEnums::str_to_random_distribution{
     {"uniform", internal::RandomDistribution::Uniform}, {"zipf", internal::RandomDistribution::Zipf}};
 
-void Benchmark::run_in_thread(ThreadRunConfig& thread_config) {
-  const size_t ops_per_iteration = thread_config.num_threads_per_partition * config_.access_size;
-  const uint32_t num_accesses_in_range = thread_config.partition_size / config_.access_size;
-  const bool is_read_only = config_.write_ratio == 0;
-  const bool is_write_only = config_.write_ratio == 1;
-  const bool has_pause = config_.pause_frequency > 0;
+const std::string& Benchmark::benchmark_name() const { return benchmark_name_; }
+
+std::string Benchmark::benchmark_type_as_str() const {
+  return get_enum_as_string(BenchmarkEnums::str_to_benchmark_type, benchmark_type_);
+}
+
+internal::BenchmarkType Benchmark::get_benchmark_type() const { return benchmark_type_; }
+
+void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
+                              std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config) {
+  const size_t num_total_range_ops = config.total_memory_range / config.access_size;
+  const size_t num_operations = (config.exec_mode == internal::Random) ? config.number_operations : num_total_range_ops;
+  const size_t num_ops_per_thread = num_operations / config.number_threads;
+
+  pool.reserve(config.number_threads);
+  thread_config.reserve(config.number_threads);
+
+  if (config.raw_results) {
+    result->raw_measurements.resize(config.number_threads);
+  } else {
+    result->latencies.resize(config.number_threads);
+  }
+
+  const uint16_t num_threads_per_partition = config.number_threads / config.number_partitions;
+  const uint64_t partition_size = config.total_memory_range / config.number_partitions;
+
+  for (uint16_t partition_num = 0; partition_num < config.number_partitions; partition_num++) {
+    char* partition_start =
+        (config.exec_mode == internal::Sequential_Desc)
+            ? pmem_data + ((config.number_partitions - partition_num) * partition_size) - config.access_size
+            : partition_start = pmem_data + (partition_num * partition_size);
+
+    for (uint16_t thread_num = 0; thread_num < num_threads_per_partition; thread_num++) {
+      const uint32_t index = thread_num + (partition_num * num_threads_per_partition);
+      if (config.raw_results) {
+        result->raw_measurements[index].reserve(num_ops_per_thread);
+      } else {
+        result->latencies[index].reserve(num_ops_per_thread);
+      }
+      thread_config.emplace_back(partition_start, partition_size, num_threads_per_partition, thread_num,
+                                 num_ops_per_thread, &result->raw_measurements[index], &result->latencies[index],
+                                 config);
+    }
+  }
+}
+
+char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& pmem_file) {
+  if (std::filesystem::exists(pmem_file)) {
+    // Data was already generated. Only re-map it.
+    return map_pmem_file(pmem_file, config.total_memory_range);
+  }
+
+  char* pmem_data = create_pmem_file(pmem_file, config.total_memory_range);
+  if (config.write_ratio < 1) {
+    // If we read data in this benchmark, we need to generate it first.
+    generate_read_data(pmem_data, config.total_memory_range);
+  }
+  if (config.write_ratio == 1 && config.prefault_file) {
+    prefault_file(pmem_data, config.total_memory_range);
+  }
+  return pmem_data;
+}
+
+void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config) {
+  const size_t ops_per_iteration = thread_config.num_threads_per_partition * config.access_size;
+  const uint32_t num_accesses_in_range = thread_config.partition_size / config.access_size;
+  const bool is_read_only = config.write_ratio == 0;
+  const bool is_write_only = config.write_ratio == 1;
+  const bool has_pause = config.pause_frequency > 0;
   size_t current_pause_frequency_count = 0;
   bool is_read = is_read_only;
-  assert(is_write_only || is_read_only || config_.exec_mode == internal::Random);
+  assert(is_write_only || is_read_only || config.exec_mode == internal::Random);
 
-  const size_t thread_partition_offset = thread_config.thread_num * config_.access_size;
-  char* next_op_position = config_.exec_mode == internal::Sequential_Desc
+  const size_t thread_partition_offset = thread_config.thread_num * config.access_size;
+  char* next_op_position = config.exec_mode == internal::Sequential_Desc
                                ? thread_config.partition_start_addr - thread_partition_offset
                                : thread_config.partition_start_addr + thread_partition_offset;
 
   std::random_device rnd_device;
   std::mt19937_64 rnd_generator{rnd_device()};
-  std::bernoulli_distribution io_mode_distribution(1 - config_.write_ratio);
+  std::bernoulli_distribution io_mode_distribution(1 - config.write_ratio);
   std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
 
   const size_t ops_per_chunk =
-      config_.access_size < internal::MIN_IO_CHUNK_SIZE ? internal::MIN_IO_CHUNK_SIZE / config_.access_size : 1;
+      config.access_size < internal::MIN_IO_CHUNK_SIZE ? internal::MIN_IO_CHUNK_SIZE / config.access_size : 1;
   const size_t num_chunks = thread_config.num_ops / ops_per_chunk;
 
   for (uint32_t io_chunk = 0; io_chunk < num_chunks; ++io_chunk) {
     std::vector<char*> op_addresses{ops_per_chunk};
 
     for (size_t io_op = 0; io_op < ops_per_chunk; ++io_op) {
-      switch (config_.exec_mode) {
+      switch (config.exec_mode) {
         case internal::Mode::Random: {
           uint64_t random_value;
-          if (config_.random_distribution == internal::RandomDistribution::Uniform) {
+          if (config.random_distribution == internal::RandomDistribution::Uniform) {
             random_value = access_distribution(rnd_generator);
           } else {
-            random_value = zipf(config_.zipf_alpha, num_accesses_in_range);
+            random_value = zipf(config.zipf_alpha, num_accesses_in_range);
           }
-          op_addresses[io_op] = thread_config.partition_start_addr + (random_value * config_.access_size);
+          op_addresses[io_op] = thread_config.partition_start_addr + (random_value * config.access_size);
           is_read = !is_write_only && io_mode_distribution(rnd_generator);
           break;
         }
@@ -172,22 +238,22 @@ void Benchmark::run_in_thread(ThreadRunConfig& thread_config) {
     }
 
     IoOperation operation =
-        is_read ? IoOperation::ReadOp(std::move(op_addresses), config_.access_size, config_.data_instruction)
-                : IoOperation::WriteOp(std::move(op_addresses), config_.access_size, config_.data_instruction,
-                                       config_.persist_instruction);
+        is_read ? IoOperation::ReadOp(std::move(op_addresses), config.access_size, config.data_instruction)
+                : IoOperation::WriteOp(std::move(op_addresses), config.access_size, config.data_instruction,
+                                       config.persist_instruction);
 
     const auto start_ts = std::chrono::high_resolution_clock::now();
     operation.run();
     const auto end_ts = std::chrono::high_resolution_clock::now();
 
-    if (has_pause && ++current_pause_frequency_count >= config_.pause_frequency &&
+    if (has_pause && ++current_pause_frequency_count >= config.pause_frequency &&
         io_chunk < thread_config.num_ops - 1) {
-      IoOperation::PauseOp(config_.pause_length_micros).run();
+      IoOperation::PauseOp(config.pause_length_micros).run();
       current_pause_frequency_count = 0;
     }
 
     internal::Latency latency{static_cast<uint64_t>((end_ts - start_ts).count()), operation.op_type_};
-    if (config_.raw_results) {
+    if (config.raw_results) {
       thread_config.raw_measurements->emplace_back(start_ts, latency);
     } else {
       thread_config.latencies->emplace_back(latency);
@@ -195,152 +261,54 @@ void Benchmark::run_in_thread(ThreadRunConfig& thread_config) {
   }
 }
 
-void Benchmark::run() {
-  for (size_t thread_index = 1; thread_index < config_.number_threads; thread_index++) {
-    pool_.emplace_back(&Benchmark::run_in_thread, this, std::ref(thread_configs_[thread_index]));
-  }
-
-  run_in_thread(std::ref(thread_configs_[0]));
-
-  // wait for all threads
-  for (std::thread& thread : pool_) {
-    thread.join();
-  }
-}
-
-void Benchmark::create_data_file() {
-  if (std::filesystem::exists(pmem_file_)) {
-    // Data was already generated. Only re-map it.
-    pmem_data_ = map_pmem_file(pmem_file_, config_.total_memory_range);
-    return;
-  }
-
-  pmem_data_ = create_pmem_file(pmem_file_, config_.total_memory_range);
-  if (config_.write_ratio < 1) {
-    // If we read data in this benchmark, we need to generate it first.
-    generate_read_data(pmem_data_, config_.total_memory_range);
-  }
-  if (config_.write_ratio == 1 && config_.prefault_file) {
-    prefault_file(pmem_data_, config_.total_memory_range);
-  }
-}
-
-void Benchmark::set_up() {
-  const size_t num_total_range_ops = config_.total_memory_range / config_.access_size;
-  const size_t num_operations =
-      (config_.exec_mode == internal::Random) ? config_.number_operations : num_total_range_ops;
-  const size_t num_ops_per_thread = num_operations / config_.number_threads;
-
-  pool_.reserve(config_.number_threads - 1);
-  thread_configs_.reserve(config_.number_threads);
-
-  if (config_.raw_results) {
-    result_->raw_measurements.resize(config_.number_threads);
-  } else {
-    result_->latencies.resize(config_.number_threads);
-  }
-
-  const uint16_t num_threads_per_partition = config_.number_threads / config_.number_partitions;
-  const uint64_t partition_size = config_.total_memory_range / config_.number_partitions;
-
-  for (uint16_t partition_num = 0; partition_num < config_.number_partitions; partition_num++) {
-    char* partition_start =
-        (config_.exec_mode == internal::Sequential_Desc)
-            ? pmem_data_ + ((config_.number_partitions - partition_num) * partition_size) - config_.access_size
-            : partition_start = pmem_data_ + (partition_num * partition_size);
-
-    for (uint16_t thread_num = 0; thread_num < num_threads_per_partition; thread_num++) {
-      const uint32_t index = thread_num + (partition_num * num_threads_per_partition);
-      if (config_.raw_results) {
-        result_->raw_measurements[index].reserve(num_ops_per_thread);
-      } else {
-        result_->latencies[index].reserve(num_ops_per_thread);
-      }
-      thread_configs_.emplace_back(partition_start, partition_size, num_threads_per_partition, thread_num,
-                                   num_ops_per_thread, &result_->raw_measurements[index], &result_->latencies[index],
-                                   config_);
-    }
-  }
-}
-
-void Benchmark::tear_down(const bool force) {
-  if (pmem_data_ != nullptr) {
-    pmem_unmap(pmem_data_, config_.total_memory_range);
-    pmem_data_ = nullptr;
-  }
-  if (owns_pmem_file_ || force) {
-    std::filesystem::remove(pmem_file_);
-  }
-}
-
-nlohmann::json Benchmark::get_result_as_json() {
-  nlohmann::json result;
-  result["config"] = get_json_config();
-  result.update(result_->get_result_as_json());
-  return result;
-}
-
-nlohmann::json Benchmark::get_json_config() {
+nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm_config) {
   nlohmann::json config;
-  config["total_memory_range"] = config_.total_memory_range;
-  config["access_size"] = config_.access_size;
-  config["exec_mode"] = get_enum_as_string(ConfigEnums::str_to_mode, config_.exec_mode);
-  config["write_ratio"] = config_.write_ratio;
-  config["pause_frequency"] = config_.pause_frequency;
-  config["number_partitions"] = config_.number_partitions;
-  config["number_threads"] = config_.number_threads;
-  config["data_instruction"] = get_enum_as_string(ConfigEnums::str_to_data_instruction, config_.data_instruction);
+  config["total_memory_range"] = bm_config.total_memory_range;
+  config["access_size"] = bm_config.access_size;
+  config["exec_mode"] = get_enum_as_string(ConfigEnums::str_to_mode, bm_config.exec_mode);
+  config["write_ratio"] = bm_config.write_ratio;
+  config["pause_frequency"] = bm_config.pause_frequency;
+  config["number_partitions"] = bm_config.number_partitions;
+  config["number_threads"] = bm_config.number_threads;
+  config["data_instruction"] = get_enum_as_string(ConfigEnums::str_to_data_instruction, bm_config.data_instruction);
+  config["prefault_file"] = bm_config.prefault_file;
 
-  if (config_.pause_frequency > 0) {
-    config["pause_length_micros"] = config_.pause_length_micros;
+  if (bm_config.pause_frequency > 0) {
+    config["pause_length_micros"] = bm_config.pause_length_micros;
   }
 
-  if (config_.write_ratio > 0) {
+  if (bm_config.write_ratio > 0) {
     config["persist_instruction"] =
-        get_enum_as_string(ConfigEnums::str_to_persist_instruction, config_.persist_instruction);
+        get_enum_as_string(ConfigEnums::str_to_persist_instruction, bm_config.persist_instruction);
   }
 
-  if (config_.exec_mode == internal::Mode::Random) {
-    config["number_operations"] = config_.number_operations;
+  if (bm_config.exec_mode == internal::Mode::Random) {
+    config["number_operations"] = bm_config.number_operations;
     config["random_distribution"] =
-        get_enum_as_string(ConfigEnums::str_to_random_distribution, config_.random_distribution);
-    if (config_.random_distribution == internal::Zipf) {
-      config["zipf_alpha"] = config_.zipf_alpha;
+        get_enum_as_string(ConfigEnums::str_to_random_distribution, bm_config.random_distribution);
+    if (bm_config.random_distribution == internal::Zipf) {
+      config["zipf_alpha"] = bm_config.zipf_alpha;
     }
   }
-
-  config["prefault_file"] = config_.prefault_file;
 
   return config;
 }
 
-Benchmark::Benchmark(std::string benchmark_name, const BenchmarkConfig& config)
-    : benchmark_name_{std::move(benchmark_name)},
-      pmem_file_{generate_random_file_name(config.pmem_directory)},
-      owns_pmem_file_{true},
-      config_{config},
-      result_{std::make_unique<BenchmarkResult>(config)} {}
+const std::vector<BenchmarkConfig>& Benchmark::get_benchmark_configs() const { return configs_; }
 
-Benchmark::Benchmark(std::string benchmark_name, const BenchmarkConfig& config, std::filesystem::path pmem_file)
-    : benchmark_name_{std::move(benchmark_name)},
-      pmem_file_{std::move(pmem_file)},
-      owns_pmem_file_{false},
-      config_{config},
-      result_{std::make_unique<BenchmarkResult>(config)} {}
+const std::vector<std::filesystem::path>& Benchmark::get_pmem_files() const { return pmem_files_; }
 
-const std::string& Benchmark::benchmark_name() const { return benchmark_name_; }
+std::vector<char*> Benchmark::get_pmem_data() const { return pmem_data_; }
 
-const BenchmarkConfig& Benchmark::get_benchmark_config() const { return config_; }
+const std::vector<std::vector<ThreadRunConfig>>& Benchmark::get_thread_configs() const { return thread_configs_; }
 
-const std::filesystem::path& Benchmark::get_pmem_file() const { return pmem_file_; }
+const std::vector<std::unique_ptr<BenchmarkResult>>& Benchmark::get_benchmark_results() const { return results_; }
 
-bool Benchmark::owns_pmem_file() const { return owns_pmem_file_; }
+std::vector<bool> Benchmark::owns_pmem_files() const { return owns_pmem_files_; }
 
-const char* Benchmark::get_pmem_data() const { return pmem_data_; }
-
-const std::vector<ThreadRunConfig>& Benchmark::get_thread_configs() const { return thread_configs_; }
-
-const BenchmarkResult& Benchmark::get_benchmark_result() const { return *result_; }
+nlohmann::json Benchmark::get_json_config(uint8_t config_index) {
+  return get_benchmark_config_as_json(configs_[config_index]);
+}
 
 BenchmarkResult::BenchmarkResult(const BenchmarkConfig& config) : config{config}, latency_hdr{nullptr} {
   // Initialize HdrHistrogram
@@ -540,4 +508,5 @@ void BenchmarkConfig::validate() const {
                                               std::to_string(internal::MIN_IO_CHUNK_SIZE) + " Byte / " +
                                               std::to_string(access_size) + " Byte) in this configuration.");
 }
+
 }  // namespace perma

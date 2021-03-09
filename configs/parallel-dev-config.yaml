@@ -1,0 +1,20 @@
+parallel_test:
+  parallel_benchmark:
+    logging:
+      matrix:
+        number_threads: [ 8, 16 ]
+        access_size: [ 64, 256 ]
+      args:
+        total_memory_range: 10737418240  # 10 GiB
+        persist_instruction: nocache
+        exec_mode: sequential
+        write_ratio: 1
+
+    table_scan:
+      matrix:
+        number_threads: [ 8, 16 ]
+        access_size: [ 256, 4096 ]
+      args:
+        exec_mode: sequential
+        total_memory_range: 10737418240 # 10 GiB
+        write_ratio: 0
