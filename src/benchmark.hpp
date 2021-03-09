@@ -163,7 +163,7 @@ class Benchmark {
   const std::vector<std::filesystem::path>& get_pmem_files() const;
   std::vector<char*> get_pmem_data() const;
   const std::vector<std::vector<ThreadRunConfig>>& get_thread_configs() const;
-  const std::vector<std::unique_ptr<BenchmarkResult>>& get_benchmark_result() const;
+  const std::vector<std::unique_ptr<BenchmarkResult>>& get_benchmark_results() const;
   std::vector<bool> owns_pmem_files() const;
 
  protected:

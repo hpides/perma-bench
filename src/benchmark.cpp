@@ -302,7 +302,7 @@ std::vector<char*> Benchmark::get_pmem_data() const { return pmem_data_; }
 
 const std::vector<std::vector<ThreadRunConfig>>& Benchmark::get_thread_configs() const { return thread_configs_; }
 
-const std::vector<std::unique_ptr<BenchmarkResult>>& Benchmark::get_benchmark_result() const { return results_; }
+const std::vector<std::unique_ptr<BenchmarkResult>>& Benchmark::get_benchmark_results() const { return results_; }
 
 std::vector<bool> Benchmark::owns_pmem_files() const { return owns_pmem_files_; }
 

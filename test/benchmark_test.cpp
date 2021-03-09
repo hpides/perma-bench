@@ -207,11 +207,11 @@ TEST_F(BenchmarkTest, SetUpSingleThread) {
   EXPECT_EQ(thread_config.partition_start_addr, bm.get_pmem_data()[0]);
   EXPECT_EQ(&thread_config.config, &bm.get_benchmark_configs()[0]);
 
-  const std::vector<std::vector<internal::Latency>>& latencies = bm.get_benchmark_result()[0]->latencies;
+  const std::vector<std::vector<internal::Latency>>& latencies = bm.get_benchmark_results()[0]->latencies;
   ASSERT_EQ(latencies.size(), 1);
   EXPECT_EQ(thread_config.latencies->data(), latencies[0].data());
 
-  bm.get_benchmark_result()[0]->config.validate();
+  bm.get_benchmark_results()[0]->config.validate();
 }
 
 TEST_F(BenchmarkTest, SetUpMultiThread) {
@@ -243,7 +243,7 @@ TEST_F(BenchmarkTest, SetUpMultiThread) {
   EXPECT_EQ(thread_config2.partition_start_addr, bm.get_pmem_data()[0] + partition_size);
   EXPECT_EQ(thread_config3.partition_start_addr, bm.get_pmem_data()[0] + partition_size);
 
-  const std::vector<std::vector<internal::Latency>>& latencies = bm.get_benchmark_result()[0]->latencies;
+  const std::vector<std::vector<internal::Latency>>& latencies = bm.get_benchmark_results()[0]->latencies;
   ASSERT_EQ(latencies.size(), num_threads);
   EXPECT_EQ(thread_config0.latencies->data(), latencies[0].data());
   EXPECT_EQ(thread_config1.latencies->data(), latencies[1].data());
@@ -257,7 +257,7 @@ TEST_F(BenchmarkTest, SetUpMultiThread) {
     EXPECT_EQ(tc.num_ops, PMEM_FILE_SIZE / num_threads / 512);
     EXPECT_EQ(&tc.config, &bm.get_benchmark_configs()[0]);
   }
-  bm.get_benchmark_result()[0]->config.validate();
+  bm.get_benchmark_results()[0]->config.validate();
 }
 
 TEST_F(BenchmarkTest, RunSingeThreadRead) {
@@ -275,7 +275,7 @@ TEST_F(BenchmarkTest, RunSingeThreadRead) {
   bm.set_up();
   bm.run();
 
-  const BenchmarkResult& result = *bm.get_benchmark_result()[0];
+  const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
   const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), 1);
@@ -305,7 +305,7 @@ TEST_F(BenchmarkTest, RunSingeThreadWrite) {
   bm.set_up();
   bm.run();
 
-  const BenchmarkResult& result = *bm.get_benchmark_result()[0];
+  const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
   const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), 1);
@@ -338,7 +338,7 @@ TEST_F(BenchmarkTest, RunSingeThreadMixed) {
   bm.set_up();
   bm.run();
 
-  const BenchmarkResult& result = *bm.get_benchmark_result()[0];
+  const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
   const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), 1);
@@ -368,7 +368,7 @@ TEST_F(BenchmarkTest, RunMultiThreadRead) {
   bm.set_up();
   bm.run();
 
-  const BenchmarkResult& result = *bm.get_benchmark_result()[0];
+  const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
   const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), num_threads);
@@ -399,7 +399,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWrite) {
   bm.set_up();
   bm.run();
 
-  const BenchmarkResult& result = *bm.get_benchmark_result()[0];
+  const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
   const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), num_threads);
@@ -432,7 +432,7 @@ TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
   bm.set_up();
   bm.run();
 
-  const BenchmarkResult& result = *bm.get_benchmark_result()[0];
+  const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
   const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), num_threads);
@@ -464,7 +464,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
   bm.set_up();
   bm.run();
 
-  const BenchmarkResult& result = *bm.get_benchmark_result()[0];
+  const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
   const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), num_threads);
@@ -498,7 +498,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteRaw) {
   bm.set_up();
   bm.run();
 
-  const BenchmarkResult& result = *bm.get_benchmark_result()[0];
+  const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
   const std::vector<std::vector<internal::Measurement>>& all_measurements = result.raw_measurements;
   ASSERT_EQ(all_measurements.size(), num_threads);
@@ -784,8 +784,8 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadRead) {
   bm.set_up();
   bm.run();
 
-  const BenchmarkResult& result_one = *bm.get_benchmark_result()[0];
-  const BenchmarkResult& result_two = *bm.get_benchmark_result()[1];
+  const BenchmarkResult& result_one = *bm.get_benchmark_results()[0];
+  const BenchmarkResult& result_two = *bm.get_benchmark_results()[1];
 
   const std::vector<std::vector<internal::Latency>>& all_latencies_one = result_one.latencies;
   const std::vector<std::vector<internal::Latency>>& all_latencies_two = result_two.latencies;
@@ -827,8 +827,8 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadWrite) {
   bm.set_up();
   bm.run();
 
-  const BenchmarkResult& result_one = *bm.get_benchmark_result()[0];
-  const BenchmarkResult& result_two = *bm.get_benchmark_result()[1];
+  const BenchmarkResult& result_one = *bm.get_benchmark_results()[0];
+  const BenchmarkResult& result_two = *bm.get_benchmark_results()[1];
 
   const std::vector<std::vector<internal::Latency>>& all_latencies_one = result_one.latencies;
   const std::vector<std::vector<internal::Latency>>& all_latencies_two = result_two.latencies;
@@ -877,8 +877,8 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadMixed) {
   bm.set_up();
   bm.run();
 
-  const BenchmarkResult& result_one = *bm.get_benchmark_result()[0];
-  const BenchmarkResult& result_two = *bm.get_benchmark_result()[1];
+  const BenchmarkResult& result_one = *bm.get_benchmark_results()[0];
+  const BenchmarkResult& result_two = *bm.get_benchmark_results()[1];
 
   const std::vector<std::vector<internal::Latency>>& all_latencies_one = result_one.latencies;
   const std::vector<std::vector<internal::Latency>>& all_latencies_two = result_two.latencies;
