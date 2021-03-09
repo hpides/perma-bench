@@ -91,8 +91,13 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
             // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
             std::vector<std::unique_ptr<BenchmarkResult>> results{};
             results.reserve(2);
-            results.push_back(std::move(std::make_unique<BenchmarkResult>(config_one)));
-            results.push_back(std::move(std::make_unique<BenchmarkResult>(config_two)));
+            if (config_one.write_ratio == 0 && config_two.write_ratio > 0) {
+              results.push_back(std::move(std::make_unique<BenchmarkResult>(config_one)));
+              results.push_back(std::move(std::make_unique<BenchmarkResult>(config_two)));
+            } else {
+              results.push_back(std::move(std::make_unique<BenchmarkResult>(config_two)));
+              results.push_back(std::move(std::make_unique<BenchmarkResult>(config_one)));
+            }
             if (config_one.write_ratio > 0 && config_two.write_ratio > 0) {
               benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results);
             } else if (config_one.write_ratio > 0) {
