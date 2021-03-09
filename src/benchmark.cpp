@@ -99,6 +99,7 @@ const std::unordered_map<std::string, internal::BenchmarkType> BenchmarkEnums::s
 
 struct ConfigEnums {
   static const std::unordered_map<std::string, internal::Mode> str_to_mode;
+  static const std::unordered_map<std::string, internal::NumaPattern> str_to_numa_pattern;
   static const std::unordered_map<std::string, internal::DataInstruction> str_to_data_instruction;
   static const std::unordered_map<std::string, internal::PersistInstruction> str_to_persist_instruction;
   static const std::unordered_map<std::string, internal::RandomDistribution> str_to_random_distribution;
@@ -109,6 +110,9 @@ const std::unordered_map<std::string, internal::Mode> ConfigEnums::str_to_mode{
     {"sequential_asc", internal::Mode::Sequential},
     {"sequential_desc", internal::Mode::Sequential_Desc},
     {"random", internal::Mode::Random}};
+
+const std::unordered_map<std::string, internal::NumaPattern> ConfigEnums::str_to_numa_pattern{
+    {"near", internal::NumaPattern::Near}, {"far", internal::NumaPattern::Far}};
 
 const std::unordered_map<std::string, internal::DataInstruction> ConfigEnums::str_to_data_instruction{
     {"simd", internal::DataInstruction::SIMD}, {"mov", internal::DataInstruction::MOV}};
@@ -144,6 +148,13 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, st
     result->latencies.resize(config.number_threads);
   }
 
+  cpu_set_t cpu_set;
+  if (config.numa_pattern == internal::NumaPattern::Near) {
+    cpu_set = get_near_cpus();
+  } else {  // internal::NumaPattern::Far
+    cpu_set = get_far_cpus();
+  }
+
   const uint16_t num_threads_per_partition = config.number_threads / config.number_partitions;
   const uint64_t partition_size = config.total_memory_range / config.number_partitions;
 
@@ -162,7 +173,7 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, st
       }
       thread_config.emplace_back(partition_start, partition_size, num_threads_per_partition, thread_num,
                                  num_ops_per_thread, &result->raw_measurements[index], &result->latencies[index],
-                                 config);
+                                 config, cpu_set);
     }
   }
 }
@@ -185,6 +196,7 @@ char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::fil
 }
 
 void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config) {
+  pthread_setaffinity_np(pthread_self(), sizeof(thread_config.cpu_set), &thread_config.cpu_set);
   const size_t ops_per_iteration = thread_config.num_threads_per_partition * config.access_size;
   const uint32_t num_accesses_in_range = thread_config.partition_size / config.access_size;
   const bool is_read_only = config.write_ratio == 0;
@@ -270,6 +282,7 @@ nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm
   config["pause_frequency"] = bm_config.pause_frequency;
   config["number_partitions"] = bm_config.number_partitions;
   config["number_threads"] = bm_config.number_threads;
+  config["numa_pattern"] = get_enum_as_string(ConfigEnums::str_to_numa_pattern, bm_config.numa_pattern);
   config["data_instruction"] = get_enum_as_string(ConfigEnums::str_to_data_instruction, bm_config.data_instruction);
   config["prefault_file"] = bm_config.prefault_file;
 
@@ -428,6 +441,7 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_if_present(node, "raw_results", &bm_config.raw_results);
     num_found += get_if_present(node, "prefault_file", &bm_config.prefault_file);
     num_found += get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_mode, &bm_config.exec_mode);
+    num_found += get_enum_if_present(node, "numa_pattern", ConfigEnums::str_to_numa_pattern, &bm_config.numa_pattern);
     num_found += get_enum_if_present(node, "random_distribution", ConfigEnums::str_to_random_distribution,
                                      &bm_config.random_distribution);
     num_found += get_enum_if_present(node, "data_instruction", ConfigEnums::str_to_data_instruction,

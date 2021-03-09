@@ -56,6 +56,7 @@ struct BenchmarkConfig {
   uint32_t access_size = 256;
   uint64_t number_operations = 10'000'000;
   internal::Mode exec_mode{internal::Mode::Sequential};
+  internal::NumaPattern numa_pattern{internal::NumaPattern::Near};
 
   internal::RandomDistribution random_distribution{internal::RandomDistribution::Uniform};
   // TODO: re-evaluate this value for real world access patterns
@@ -90,10 +91,11 @@ struct ThreadRunConfig {
   std::vector<internal::Measurement>* raw_measurements;
   std::vector<internal::Latency>* latencies;
   const BenchmarkConfig& config;
+  const cpu_set_t cpu_set;
 
   ThreadRunConfig(char* partition_start_addr, const size_t partition_size, const size_t num_threads_per_partition,
                   const size_t thread_num, const size_t num_ops, std::vector<internal::Measurement>* raw_measurements,
-                  std::vector<internal::Latency>* latencies, const BenchmarkConfig& config)
+                  std::vector<internal::Latency>* latencies, const BenchmarkConfig& config, const cpu_set_t cpu_set)
       : partition_start_addr(partition_start_addr),
         partition_size(partition_size),
         num_threads_per_partition(num_threads_per_partition),
@@ -101,7 +103,8 @@ struct ThreadRunConfig {
         num_ops(num_ops),
         raw_measurements(raw_measurements),
         latencies(latencies),
-        config(config) {}
+        config(config),
+        cpu_set(cpu_set) {}
 };
 
 struct BenchmarkResult {

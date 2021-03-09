@@ -2,6 +2,9 @@
 
 #include <libpmem.h>
 #include <spdlog/spdlog.h>
+#include <sys/sysinfo.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <algorithm>
 #include <random>
@@ -242,6 +245,81 @@ void init_numa(const std::filesystem::path& pmem_dir) {
   spdlog::info("Setting NUMA-affinity to node{}: {}", allowed_numa_nodes.size() > 1 ? "s" : "", used_noes_str);
   numa_bind(numa_nodes);
   numa_free_nodemask(numa_nodes);
+#endif
+}
+
+cpu_set_t no_numa_support() {
+  // Don't do anything, as we don't have NUMA support.
+  // Set affinity to all possible CPU cores.
+  spdlog::warn("Thread affinity is set to all CPU cores.");
+  int num_cores = get_nprocs();
+
+  cpu_set_t cpu_set;
+  CPU_ZERO(&cpu_set);
+  for (u_int16_t core_id = 0; core_id < num_cores; core_id++) {
+    CPU_SET(core_id, &cpu_set);
+  }
+
+  return cpu_set;
+}
+
+cpu_set_t get_near_cpus() {
+#ifndef HAS_NUMA
+  return no_numa_support();
+#else
+  const size_t num_numa_nodes = numa_num_configured_nodes();
+  if (num_numa_nodes < 2) {
+    return no_numa_support();
+  }
+
+  cpu_set_t cpu_set;
+  CPU_ZERO(&cpu_set);
+
+  bitmask* bit_mask_cpu = numa_allocate_cpumask();
+  unsigned long cpu_mask = *bit_mask_cpu->maskp;
+
+  u_int16_t core_id = 0;
+  while (cpu_mask) {
+    if (cpu_mask & 1) {
+      CPU_SET(core_id, &cpu_set);
+    }
+    cpu_mask >>= 1;
+    core_id++;
+  }
+
+  return cpu_set;
+#endif
+}
+
+cpu_set_t get_far_cpus() {
+#ifndef HAS_NUMA
+  return no_numa_support();
+#else
+  const size_t num_numa_nodes = numa_num_configured_nodes();
+  if (num_numa_nodes < 2) {
+    return no_numa_support();
+  }
+
+  cpu_set_t cpu_set;
+  CPU_ZERO(&cpu_set);
+
+  bitmask* bit_mask_cpu = numa_allocate_cpumask();
+  unsigned long cpu_mask = *bit_mask_cpu->maskp;
+  if (cpu_mask == 0) {
+    spdlog::info("Benchmark is set to the NUMA far pattern but no far NUMA nodes are available.");
+    return get_near_cpus();
+  }
+
+  u_int16_t core_id = 0;
+  while (cpu_mask) {
+    if (!(cpu_mask & 1)) {
+      CPU_SET(core_id, &cpu_set);
+    }
+    cpu_mask >>= 1;
+    core_id++;
+  }
+
+  return cpu_set;
 #endif
 }
 
