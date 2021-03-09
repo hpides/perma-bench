@@ -294,9 +294,9 @@ nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm
   return config;
 }
 
-const std::vector<BenchmarkConfig>& Benchmark::get_benchmark_config() const { return configs_; }
+const std::vector<BenchmarkConfig>& Benchmark::get_benchmark_configs() const { return configs_; }
 
-const std::vector<std::filesystem::path>& Benchmark::get_pmem_file() const { return pmem_files_; }
+const std::vector<std::filesystem::path>& Benchmark::get_pmem_files() const { return pmem_files_; }
 
 std::vector<char*> Benchmark::get_pmem_data() const { return pmem_data_; }
 
@@ -304,7 +304,7 @@ const std::vector<std::vector<ThreadRunConfig>>& Benchmark::get_thread_configs()
 
 const std::vector<std::unique_ptr<BenchmarkResult>>& Benchmark::get_benchmark_result() const { return results_; }
 
-std::vector<bool> Benchmark::owns_pmem_file() const { return owns_pmem_files_; }
+std::vector<bool> Benchmark::owns_pmem_files() const { return owns_pmem_files_; }
 
 nlohmann::json Benchmark::get_json_config(uint8_t config_index) {
   return get_benchmark_config_as_json(configs_[config_index]);

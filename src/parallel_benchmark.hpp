@@ -8,13 +8,26 @@ namespace perma {
 
 class ParallelBenchmark : public Benchmark {
  public:
+  /**
+   * Constructor for two writing benchmarks, i.e., no reusage of existing files.
+   */
   ParallelBenchmark(const std::string& benchmark_name, std::string first_benchmark_name,
                     std::string second_benchmark_name, const BenchmarkConfig& first_config,
                     const BenchmarkConfig& second_config, std::vector<std::unique_ptr<BenchmarkResult>>& results);
+
+  /**
+   * Constructor for one writing benchmark and one read-only benchmark.
+   * Only reuse the read-only file.
+   */
   ParallelBenchmark(const std::string& benchmark_name, std::string first_benchmark_name,
                     std::string second_benchmark_name, const BenchmarkConfig& first_config,
                     const BenchmarkConfig& second_config, std::vector<std::unique_ptr<BenchmarkResult>>& results,
                     std::filesystem::path pmem_file_first);
+
+  /**
+   * Constructor for two read-only benchmarks.
+   * Reuse both files.
+   */
   ParallelBenchmark(const std::string& benchmark_name, std::string first_benchmark_name,
                     std::string second_benchmark_name, const BenchmarkConfig& first_config,
                     const BenchmarkConfig& second_config, std::vector<std::unique_ptr<BenchmarkResult>>& results,

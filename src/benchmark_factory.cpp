@@ -35,7 +35,6 @@ std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const st
         for (BenchmarkConfig& bm : matrix) {
           // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
           std::vector<std::unique_ptr<BenchmarkResult>> results{};
-          results.reserve(1);
           results.push_back(std::make_unique<BenchmarkResult>(bm));
           if (bm.write_ratio > 0) {
             benchmarks.emplace_back(name, bm, results);
@@ -47,7 +46,6 @@ std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const st
         BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args);
         bm_config.pmem_directory = pmem_directory;
         std::vector<std::unique_ptr<BenchmarkResult>> results{};
-        results.reserve(1);
         results.push_back(std::make_unique<BenchmarkResult>(bm_config));
         benchmarks.emplace_back(name, bm_config, results);
       }
@@ -67,48 +65,53 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
 
       // Only consider parallel nodes
       YAML::Node parallel_bm = raw_par_bm["parallel_benchmark"];
-      if (parallel_bm.IsDefined()) {
-        if (parallel_bm.size() != 2) {
-          throw std::invalid_argument{"Number of parallel benchmarks should be two."};
-        }
 
-        std::vector<BenchmarkConfig> bm_one_configs{};
-        std::vector<BenchmarkConfig> bm_two_configs{};
-        std::string unique_name_one;
-        std::string unique_name_two;
+      if (!parallel_bm.IsDefined()) {
+        continue;
+      }
 
-        YAML::iterator par_it = parallel_bm.begin();
-        parse_yaml_node(pmem_directory, bm_one_configs, par_it, unique_name_one);
-        par_it++;
-        parse_yaml_node(pmem_directory, bm_two_configs, par_it, unique_name_two);
+      if (parallel_bm.size() != 2) {
+        throw std::invalid_argument{"Number of parallel benchmarks should be two."};
+      }
 
-        const std::filesystem::path pmem_data_file_one = generate_random_file_name(pmem_directory);
-        const std::filesystem::path pmem_data_file_two = generate_random_file_name(pmem_directory);
-        // Build cartesian product of both benchmarks
-        for (const BenchmarkConfig& config_one : bm_one_configs) {
-          for (const BenchmarkConfig& config_two : bm_two_configs) {
-            // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
-            std::vector<std::unique_ptr<BenchmarkResult>> results{};
-            results.reserve(2);
-            if (config_one.write_ratio == 0 && config_two.write_ratio > 0) {
-              results.push_back(std::move(std::make_unique<BenchmarkResult>(config_one)));
-              results.push_back(std::move(std::make_unique<BenchmarkResult>(config_two)));
-            } else {
-              results.push_back(std::move(std::make_unique<BenchmarkResult>(config_two)));
-              results.push_back(std::move(std::make_unique<BenchmarkResult>(config_one)));
-            }
-            if (config_one.write_ratio > 0 && config_two.write_ratio > 0) {
-              benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results);
-            } else if (config_one.write_ratio > 0) {
-              benchmarks.emplace_back(name, unique_name_two, unique_name_one, config_two, config_one, results,
-                                      pmem_data_file_two);
-            } else if (config_two.write_ratio > 0) {
-              benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results,
-                                      pmem_data_file_one);
-            } else {
-              benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results,
-                                      pmem_data_file_one, pmem_data_file_two);
-            }
+      std::vector<BenchmarkConfig> bm_one_configs{};
+      std::vector<BenchmarkConfig> bm_two_configs{};
+      std::string unique_name_one;
+      std::string unique_name_two;
+
+      YAML::iterator par_it = parallel_bm.begin();
+      parse_yaml_node(pmem_directory, bm_one_configs, par_it, unique_name_one);
+      par_it++;
+      parse_yaml_node(pmem_directory, bm_two_configs, par_it, unique_name_two);
+
+      const std::filesystem::path pmem_data_file_one = generate_random_file_name(pmem_directory);
+      const std::filesystem::path pmem_data_file_two = generate_random_file_name(pmem_directory);
+      // Build cartesian product of both benchmarks
+      for (const BenchmarkConfig& config_one : bm_one_configs) {
+        for (const BenchmarkConfig& config_two : bm_two_configs) {
+          // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
+          std::vector<std::unique_ptr<BenchmarkResult>> results{};
+
+          // Reorder benchmarks if only the first benchmark is read-only and the second writing
+          if (config_one.write_ratio == 0 && config_two.write_ratio > 0) {
+            results.push_back(std::move(std::make_unique<BenchmarkResult>(config_one)));
+            results.push_back(std::move(std::make_unique<BenchmarkResult>(config_two)));
+          } else {
+            results.push_back(std::move(std::make_unique<BenchmarkResult>(config_two)));
+            results.push_back(std::move(std::make_unique<BenchmarkResult>(config_one)));
+          }
+
+          if (config_one.write_ratio > 0 && config_two.write_ratio > 0) {
+            benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results);
+          } else if (config_one.write_ratio > 0) {
+            benchmarks.emplace_back(name, unique_name_two, unique_name_one, config_two, config_one, results,
+                                    pmem_data_file_two);
+          } else if (config_two.write_ratio > 0) {
+            benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results,
+                                    pmem_data_file_one);
+          } else {
+            benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results,
+                                    pmem_data_file_one, pmem_data_file_two);
           }
         }
       }
