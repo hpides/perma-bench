@@ -190,6 +190,8 @@ TEST_F(BenchmarkTest, CreateParallelReadDataFileMixed) {
 TEST_F(BenchmarkTest, SetUpSingleThread) {
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
+  base_results_.reserve(1);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
   bm.create_data_file();
   bm.set_up();
@@ -217,6 +219,8 @@ TEST_F(BenchmarkTest, SetUpMultiThread) {
   base_config_.number_threads = num_threads;
   base_config_.number_partitions = 2;
   base_config_.access_size = 512;
+  base_results_.reserve(1);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
   bm.create_data_file();
   bm.set_up();
@@ -264,6 +268,8 @@ TEST_F(BenchmarkTest, RunSingeThreadRead) {
   base_config_.access_size = 256;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = 256 * num_ops;
+  base_results_.reserve(1);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
   bm.create_data_file();
   bm.set_up();
@@ -292,6 +298,8 @@ TEST_F(BenchmarkTest, RunSingeThreadWrite) {
   base_config_.access_size = 256;
   base_config_.write_ratio = 1;
   base_config_.total_memory_range = total_size;
+  base_results_.reserve(1);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
   bm.create_data_file();
   bm.set_up();
@@ -323,6 +331,8 @@ TEST_F(BenchmarkTest, RunSingeThreadMixed) {
   base_config_.number_operations = num_ops;
   base_config_.exec_mode = internal::Random;
   base_config_.total_memory_range = 256 * num_ops;
+  base_results_.reserve(1);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
   bm.create_data_file();
   bm.set_up();
@@ -351,6 +361,8 @@ TEST_F(BenchmarkTest, RunMultiThreadRead) {
   base_config_.access_size = 1024;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = 1024 * num_ops;
+  base_results_.reserve(1);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
   bm.create_data_file();
   bm.set_up();
@@ -380,6 +392,8 @@ TEST_F(BenchmarkTest, RunMultiThreadWrite) {
   base_config_.access_size = 512;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = total_size;
+  base_results_.reserve(1);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
   bm.create_data_file();
   bm.set_up();
@@ -411,6 +425,8 @@ TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = 1024 * num_ops;
   base_config_.exec_mode = internal::Sequential_Desc;
+  base_results_.reserve(1);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
   bm.create_data_file();
   bm.set_up();
@@ -441,6 +457,8 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = total_size;
   base_config_.exec_mode = internal::Sequential_Desc;
+  base_results_.reserve(1);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
   bm.create_data_file();
   bm.set_up();
@@ -473,6 +491,8 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteRaw) {
   base_config_.access_size = 512;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = total_size;
+  base_results_.reserve(1);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
   bm.create_data_file();
   bm.set_up();
@@ -755,6 +775,10 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadRead) {
   base_config_.access_size = 256;
   base_config_.write_ratio = 0;
   base_config_.total_memory_range = 256 * num_ops;
+  base_results_.reserve(2);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
+
   ParallelBenchmark bm{bm_name_, "sub_bm_1", "sub_bm_2", base_config_, base_config_, base_results_};
   bm.create_data_file();
   bm.set_up();
@@ -794,6 +818,10 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadWrite) {
   base_config_.access_size = 256;
   base_config_.write_ratio = 1;
   base_config_.total_memory_range = total_size;
+  base_results_.reserve(2);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
+
   ParallelBenchmark bm{bm_name_, "sub_bm_1", "sub_bm_2", base_config_, base_config_, base_results_};
   bm.create_data_file();
   bm.set_up();
@@ -840,6 +868,10 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadMixed) {
   BenchmarkConfig bm_config_write = base_config_;
   bm_config_read.write_ratio = 0;
   bm_config_write.write_ratio = 1;
+  base_results_.reserve(2);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(bm_config_read));
+  base_results_.push_back(std::make_unique<BenchmarkResult>(bm_config_write));
+
   ParallelBenchmark bm{bm_name_, "sub_bm_1", "sub_bm_2", bm_config_read, bm_config_write, base_results_};
   bm.create_data_file();
   bm.set_up();

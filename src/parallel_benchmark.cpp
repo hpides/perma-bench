@@ -21,8 +21,8 @@ void ParallelBenchmark::run() {
 
 void ParallelBenchmark::create_data_file() {
   pmem_data_.reserve(2);
-  pmem_data_[0] = create_single_data_file(configs_[0], pmem_files_[0]);
-  pmem_data_[1] = create_single_data_file(configs_[1], pmem_files_[1]);
+  pmem_data_.push_back(create_single_data_file(configs_[0], pmem_files_[0]));
+  pmem_data_.push_back(create_single_data_file(configs_[1], pmem_files_[1]));
 }
 
 void ParallelBenchmark::set_up() {
