@@ -60,10 +60,10 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
   // Start single benchmarks
 
   std::vector<SingleBenchmark> single_benchmarks = BenchmarkFactory::create_single_benchmarks(pmem_directory, configs);
-  spdlog::info("{} single benchmark{}.", single_benchmarks.size(), single_benchmarks.size() == 1 ? "s" : "");
+  spdlog::info("{} single benchmark{}.", single_benchmarks.size(), single_benchmarks.size() != 1 ? "s" : "");
   std::vector<ParallelBenchmark> parallel_benchmarks =
       BenchmarkFactory::create_parallel_benchmarks(pmem_directory, configs);
-  spdlog::info("{} parallel benchmark{}.", parallel_benchmarks.size(), parallel_benchmarks.size() == 1 ? "s" : "");
+  spdlog::info("{} parallel benchmark{}.", parallel_benchmarks.size(), parallel_benchmarks.size() != 1 ? "s" : "");
 
   Benchmark* previous_bm = nullptr;
   std::vector<Benchmark*> benchmarks{};
