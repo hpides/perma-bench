@@ -52,8 +52,6 @@ TEST_F(ConfigTest, SingleDecodeSequential) {
 
   EXPECT_EQ(bm_config.write_ratio, 0);
 
-  EXPECT_EQ(bm_config.numa_pattern, internal::NumaPattern::Far);
-
   EXPECT_EQ(bm_config.number_operations, bm_config_default.number_operations);
   EXPECT_EQ(bm_config.random_distribution, bm_config_default.random_distribution);
   EXPECT_EQ(bm_config.zipf_alpha, bm_config_default.zipf_alpha);
@@ -61,6 +59,7 @@ TEST_F(ConfigTest, SingleDecodeSequential) {
   EXPECT_EQ(bm_config.persist_instruction, bm_config_default.persist_instruction);
   EXPECT_EQ(bm_config.number_partitions, bm_config_default.number_partitions);
   EXPECT_EQ(bm_config.prefault_file, bm_config_default.prefault_file);
+  EXPECT_EQ(bm_config.numa_pattern, bm_config_default.numa_pattern);
 }
 
 TEST_F(ConfigTest, DecodeRandom) {
