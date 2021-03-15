@@ -248,7 +248,7 @@ void init_numa(const std::filesystem::path& pmem_dir) {
 void set_to_far_cpus() {
 #ifndef HAS_NUMA
   // Don't do anything, as we don't have NUMA support.
-  spdlog::warn("Running far numa pattern benchmark without NUMA-awareness.");
+  spdlog::error("Running far numa pattern benchmark without NUMA-awareness.");
   return;
 #else
   const size_t num_numa_nodes = numa_num_configured_nodes();
