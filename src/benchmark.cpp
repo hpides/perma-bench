@@ -190,7 +190,7 @@ char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::fil
 
 void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config) {
 #ifdef HAS_NUMA
-  if (config.numa_pattern == internal::Far) {
+  if (config.numa_pattern == internal::NumaPattern::Far) {
     set_to_far_cpus();
   }
 #endif
