@@ -2,8 +2,6 @@
 
 #include <libpmem.h>
 #include <spdlog/spdlog.h>
-#include <sys/sysinfo.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -248,79 +246,31 @@ void init_numa(const std::filesystem::path& pmem_dir) {
 #endif
 }
 
-cpu_set_t no_numa_support() {
-  // Don't do anything, as we don't have NUMA support.
-  // Set affinity to all possible CPU cores.
-  spdlog::warn("Thread affinity is set to all CPU cores.");
-  int num_cores = get_nprocs();
-
-  cpu_set_t cpu_set;
-  CPU_ZERO(&cpu_set);
-  for (u_int16_t core_id = 0; core_id < num_cores; core_id++) {
-    CPU_SET(core_id, &cpu_set);
-  }
-
-  return cpu_set;
-}
-
-cpu_set_t get_near_cpus() {
-#ifndef HAS_NUMA
-  return no_numa_support();
-#else
+#ifdef HAS_NUMA
+void set_to_far_cpus() {
   const size_t num_numa_nodes = numa_num_configured_nodes();
   if (num_numa_nodes < 2) {
-    return no_numa_support();
+    // Do nothing, as there isn't any affinity to be set.
+    // Infos printed during init numa
+    return;
   }
 
-  cpu_set_t cpu_set;
-  CPU_ZERO(&cpu_set);
+  bitmask* init_node_mask = numa_get_run_node_mask();
+  bitmask* thread_node_mask = numa_allocate_nodemask();
 
-  bitmask* bit_mask_cpu = numa_allocate_cpumask();
-  unsigned long cpu_mask = *bit_mask_cpu->maskp;
-
-  u_int16_t core_id = 0;
-  while (cpu_mask) {
-    if (cpu_mask & 1) {
-      CPU_SET(core_id, &cpu_set);
+  for (uint64_t numa_node = 0; numa_node < num_numa_nodes; numa_node++) {
+    // Set numa node if not set in initial near node mask
+    if (!(*init_node_mask->maskp & (1 << numa_node))) {
+      *thread_node_mask->maskp = *thread_node_mask->maskp | (1 << numa_node);
     }
-    cpu_mask >>= 1;
-    core_id++;
   }
 
-  return cpu_set;
-#endif
+  if (*thread_node_mask->maskp == 0) {
+    spdlog::warn("Benchmark is set to the NUMA far pattern but no far NUMA nodes are available.");
+    spdlog::warn("Running benchmark on near NUMA nodes.");
+    return;
+  }
+  numa_run_on_node_mask(thread_node_mask);
 }
-
-cpu_set_t get_far_cpus() {
-#ifndef HAS_NUMA
-  return no_numa_support();
-#else
-  const size_t num_numa_nodes = numa_num_configured_nodes();
-  if (num_numa_nodes < 2) {
-    return no_numa_support();
-  }
-
-  cpu_set_t cpu_set;
-  CPU_ZERO(&cpu_set);
-
-  bitmask* bit_mask_cpu = numa_allocate_cpumask();
-  unsigned long cpu_mask = *bit_mask_cpu->maskp;
-  if (cpu_mask == 0) {
-    spdlog::info("Benchmark is set to the NUMA far pattern but no far NUMA nodes are available.");
-    return get_near_cpus();
-  }
-
-  u_int16_t core_id = 0;
-  while (cpu_mask) {
-    if (!(cpu_mask & 1)) {
-      CPU_SET(core_id, &cpu_set);
-    }
-    cpu_mask >>= 1;
-    core_id++;
-  }
-
-  return cpu_set;
 #endif
-}
-
 }  // namespace perma

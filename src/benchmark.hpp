@@ -91,11 +91,10 @@ struct ThreadRunConfig {
   std::vector<internal::Measurement>* raw_measurements;
   std::vector<internal::Latency>* latencies;
   const BenchmarkConfig& config;
-  const cpu_set_t cpu_set;
 
   ThreadRunConfig(char* partition_start_addr, const size_t partition_size, const size_t num_threads_per_partition,
                   const size_t thread_num, const size_t num_ops, std::vector<internal::Measurement>* raw_measurements,
-                  std::vector<internal::Latency>* latencies, const BenchmarkConfig& config, const cpu_set_t cpu_set)
+                  std::vector<internal::Latency>* latencies, const BenchmarkConfig& config)
       : partition_start_addr(partition_start_addr),
         partition_size(partition_size),
         num_threads_per_partition(num_threads_per_partition),
@@ -103,8 +102,7 @@ struct ThreadRunConfig {
         num_ops(num_ops),
         raw_measurements(raw_measurements),
         latencies(latencies),
-        config(config),
-        cpu_set(cpu_set) {}
+        config(config) {}
 };
 
 struct BenchmarkResult {
@@ -176,7 +174,7 @@ class Benchmark {
 
   static char* create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& pmem_file);
 
-  static void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
+  static void run_in_thread(ThreadRunConfig& thread_config, const BenchmarkConfig& config);
 
   static nlohmann::json get_benchmark_config_as_json(const BenchmarkConfig& bm_config);
 

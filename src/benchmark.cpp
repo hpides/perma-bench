@@ -148,13 +148,6 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, st
     result->latencies.resize(config.number_threads);
   }
 
-  cpu_set_t cpu_set;
-  if (config.numa_pattern == internal::NumaPattern::Near) {
-    cpu_set = get_near_cpus();
-  } else {  // internal::NumaPattern::Far
-    cpu_set = get_far_cpus();
-  }
-
   const uint16_t num_threads_per_partition = config.number_threads / config.number_partitions;
   const uint64_t partition_size = config.total_memory_range / config.number_partitions;
 
@@ -173,7 +166,7 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, st
       }
       thread_config.emplace_back(partition_start, partition_size, num_threads_per_partition, thread_num,
                                  num_ops_per_thread, &result->raw_measurements[index], &result->latencies[index],
-                                 config, cpu_set);
+                                 config);
     }
   }
 }
@@ -195,8 +188,12 @@ char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::fil
   return pmem_data;
 }
 
-void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config) {
-  pthread_setaffinity_np(pthread_self(), sizeof(thread_config.cpu_set), &thread_config.cpu_set);
+void Benchmark::run_in_thread(ThreadRunConfig& thread_config, const BenchmarkConfig& config) {
+#ifdef HAS_NUMA
+  if (config.numa_pattern == internal::Far) {
+    set_to_far_cpus();
+  }
+#endif
   const size_t ops_per_iteration = thread_config.num_threads_per_partition * config.access_size;
   const uint32_t num_accesses_in_range = thread_config.partition_size / config.access_size;
   const bool is_read_only = config.write_ratio == 0;
