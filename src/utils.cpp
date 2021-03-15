@@ -246,6 +246,7 @@ void init_numa(const std::filesystem::path& pmem_dir) {
 }
 
 void get_far_nodes(std::vector<uint64_t>& far_nodes) {
+#ifdef HAS_NUMA
   const size_t num_numa_nodes = numa_num_configured_nodes();
 
   bitmask* init_node_mask = numa_get_run_node_mask();
@@ -257,6 +258,7 @@ void get_far_nodes(std::vector<uint64_t>& far_nodes) {
       far_nodes.push_back(numa_node);
     }
   }
+#endif
 }
 
 void set_to_far_cpus() {
