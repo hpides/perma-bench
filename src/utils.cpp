@@ -264,19 +264,11 @@ bitmask* get_far_nodes_bitmask() {
 
 void set_to_far_cpus() {
 #ifndef HAS_NUMA
-  // Don't do anything, as we don't have NUMA support.
-  spdlog::error("Running far numa pattern benchmark without NUMA-awareness.");
-  return;
+  throw std::runtime_error("Running far numa pattern benchmark without NUMA-awareness.");
 #else
-  const size_t num_numa_nodes = numa_num_configured_nodes();
-  if (num_numa_nodes < 2) {
-    // Do nothing, as there isn't any affinity to be set.
-    spdlog::warn("Running far numa pattern benchmark on system with fewer than 2 NUMA nodes.");
-    return;
-  }
-
   bitmask* thread_node_mask = get_far_nodes_bitmask();
   numa_run_on_node_mask(thread_node_mask);
+  numa_free_nodemask(thread_node_mask);
 #endif
 }
 
@@ -285,7 +277,9 @@ bool has_far_numa_nodes() {
   return false;
 #else
   bitmask* thread_node_mask = get_far_nodes_bitmask();
-  return *thread_node_mask->maskp > 0;
+  bool has_nodes = *thread_node_mask->maskp > 0;
+  numa_free_nodemask(thread_node_mask);
+  return has_nodes;
 #endif
 }
 
