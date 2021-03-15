@@ -2,7 +2,6 @@
 
 #include <libpmem.h>
 #include <spdlog/spdlog.h>
-#include <unistd.h>
 
 #include <algorithm>
 #include <random>
