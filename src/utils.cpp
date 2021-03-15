@@ -260,8 +260,8 @@ void set_to_far_cpus() {
 
   for (uint64_t numa_node = 0; numa_node < num_numa_nodes; numa_node++) {
     // Set numa node if not set in initial near node mask
-    if (!(*init_node_mask->maskp & (1 << numa_node))) {
-      *thread_node_mask->maskp = *thread_node_mask->maskp | (1 << numa_node);
+    if (!numa_bitmask_isbitset(init_node_mask, numa_node)) {
+      numa_bitmask_setbit(thread_node_mask, numa_node);
     }
   }
 
@@ -273,4 +273,5 @@ void set_to_far_cpus() {
   numa_run_on_node_mask(thread_node_mask);
 }
 #endif
+
 }  // namespace perma
