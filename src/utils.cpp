@@ -245,12 +245,16 @@ void init_numa(const std::filesystem::path& pmem_dir) {
 #endif
 }
 
-#ifdef HAS_NUMA
 void set_to_far_cpus() {
+#ifndef HAS_NUMA
+  // Don't do anything, as we don't have NUMA support.
+  spdlog::warn("Running far numa pattern benchmark without NUMA-awareness.");
+  return;
+#else
   const size_t num_numa_nodes = numa_num_configured_nodes();
   if (num_numa_nodes < 2) {
     // Do nothing, as there isn't any affinity to be set.
-    // Infos printed during init numa
+    spdlog::warn("Running far numa pattern benchmark on system with less than 3 NUMA nodes.");
     return;
   }
 

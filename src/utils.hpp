@@ -26,8 +26,6 @@ uint64_t zipf(double alpha, uint64_t n);
 double rand_val();
 
 void init_numa(const std::filesystem::path& pmem_dir);
-
-#ifdef HAS_NUMA
 void set_to_far_cpus();
-#endif
+
 }  // namespace perma

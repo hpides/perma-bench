@@ -189,11 +189,9 @@ char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::fil
 }
 
 void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config) {
-#ifdef HAS_NUMA
   if (config.numa_pattern == internal::NumaPattern::Far) {
     set_to_far_cpus();
   }
-#endif
   const size_t ops_per_iteration = thread_config.num_threads_per_partition * config.access_size;
   const uint32_t num_accesses_in_range = thread_config.partition_size / config.access_size;
   const bool is_read_only = config.write_ratio == 0;
