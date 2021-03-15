@@ -27,5 +27,6 @@ double rand_val();
 
 void init_numa(const std::filesystem::path& pmem_dir);
 void set_to_far_cpus();
+bool has_far_numa_nodes();
 
 }  // namespace perma

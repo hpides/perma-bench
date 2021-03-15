@@ -516,6 +516,9 @@ void BenchmarkConfig::validate() const {
                                               std::to_string(internal::MIN_IO_CHUNK_SIZE / access_size) + " ops (" +
                                               std::to_string(internal::MIN_IO_CHUNK_SIZE) + " Byte / " +
                                               std::to_string(access_size) + " Byte) in this configuration.");
+
+  const bool is_far_numa_node_available = numa_pattern == internal::NumaPattern::Near || !has_far_numa_nodes();
+  CHECK_ARGUMENT(is_far_numa_node_available, "Cannot run far NUMA node benchmark without far NUMA nodes.");
 }
 
 }  // namespace perma

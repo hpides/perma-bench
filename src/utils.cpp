@@ -245,6 +245,23 @@ void init_numa(const std::filesystem::path& pmem_dir) {
 #endif
 }
 
+bitmask* get_far_nodes_bitmask() {
+  const size_t num_numa_nodes = numa_num_configured_nodes();
+
+  bitmask* init_node_mask = numa_get_run_node_mask();
+  bitmask* thread_node_mask = numa_allocate_nodemask();
+
+  for (uint64_t numa_node = 0; numa_node < num_numa_nodes; numa_node++) {
+    // Set numa node if not set in initial near node mask
+    if (!numa_bitmask_isbitset(init_node_mask, numa_node)) {
+      spdlog::trace("Far NUMA node {} set", numa_node);
+      numa_bitmask_setbit(thread_node_mask, numa_node);
+    }
+  }
+
+  return thread_node_mask;
+}
+
 void set_to_far_cpus() {
 #ifndef HAS_NUMA
   // Don't do anything, as we don't have NUMA support.
@@ -258,23 +275,17 @@ void set_to_far_cpus() {
     return;
   }
 
-  bitmask* init_node_mask = numa_get_run_node_mask();
-  bitmask* thread_node_mask = numa_allocate_nodemask();
-
-  for (uint64_t numa_node = 0; numa_node < num_numa_nodes; numa_node++) {
-    // Set numa node if not set in initial near node mask
-    if (!numa_bitmask_isbitset(init_node_mask, numa_node)) {
-      spdlog::trace("Far NUMA node {} set", numa_node);
-      numa_bitmask_setbit(thread_node_mask, numa_node);
-    }
-  }
-
-  if (*thread_node_mask->maskp == 0) {
-    spdlog::warn("Benchmark is set to the NUMA far pattern but no far NUMA nodes are available.");
-    spdlog::warn("Running benchmark on near NUMA nodes.");
-    return;
-  }
+  bitmask* thread_node_mask = get_far_nodes_bitmask();
   numa_run_on_node_mask(thread_node_mask);
+#endif
+}
+
+bool has_far_numa_nodes() {
+#ifndef HAS_NUMA
+  return false;
+#else
+  bitmask* thread_node_mask = get_far_nodes_bitmask();
+  return *thread_node_mask->maskp > 0;
 #endif
 }
 
