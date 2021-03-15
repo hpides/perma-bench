@@ -275,7 +275,8 @@ void set_to_far_cpus() {
     return;
   }
   numa_run_on_node_mask(thread_node_mask);
-}
 #endif
+}
+
 
 }  // namespace perma
