@@ -277,7 +277,7 @@ bool has_far_numa_nodes() {
   return false;
 #else
   bitmask* thread_node_mask = get_far_nodes_bitmask();
-  bool has_nodes = *thread_node_mask->maskp > 0;
+  const bool has_nodes = *thread_node_mask->maskp > 0;
   numa_free_nodemask(thread_node_mask);
   return has_nodes;
 #endif
