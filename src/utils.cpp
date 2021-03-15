@@ -278,5 +278,4 @@ void set_to_far_cpus() {
 #endif
 }
 
-
 }  // namespace perma
