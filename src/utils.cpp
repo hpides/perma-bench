@@ -260,6 +260,7 @@ void set_to_far_cpus() {
   for (uint64_t numa_node = 0; numa_node < num_numa_nodes; numa_node++) {
     // Set numa node if not set in initial near node mask
     if (!numa_bitmask_isbitset(init_node_mask, numa_node)) {
+      spdlog::trace("Far NUMA node {} set", numa_node);
       numa_bitmask_setbit(thread_node_mask, numa_node);
     }
   }
