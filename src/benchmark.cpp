@@ -188,7 +188,7 @@ char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::fil
   return pmem_data;
 }
 
-void Benchmark::run_in_thread(ThreadRunConfig& thread_config, const BenchmarkConfig& config) {
+void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config) {
 #ifdef HAS_NUMA
   if (config.numa_pattern == internal::Far) {
     set_to_far_cpus();

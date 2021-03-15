@@ -174,7 +174,7 @@ class Benchmark {
 
   static char* create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& pmem_file);
 
-  static void run_in_thread(ThreadRunConfig& thread_config, const BenchmarkConfig& config);
+  static void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
 
   static nlohmann::json get_benchmark_config_as_json(const BenchmarkConfig& bm_config);
 
