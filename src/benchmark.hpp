@@ -56,6 +56,7 @@ struct BenchmarkConfig {
   uint32_t access_size = 256;
   uint64_t number_operations = 10'000'000;
   internal::Mode exec_mode{internal::Mode::Sequential};
+  internal::NumaPattern numa_pattern{internal::NumaPattern::Near};
 
   internal::RandomDistribution random_distribution{internal::RandomDistribution::Uniform};
   // TODO: re-evaluate this value for real world access patterns
