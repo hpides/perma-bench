@@ -245,8 +245,11 @@ void init_numa(const std::filesystem::path& pmem_dir) {
 #endif
 }
 
-void get_far_nodes(std::vector<uint64_t>& far_nodes) {
-#ifdef HAS_NUMA
+std::vector<uint64_t> get_far_nodes() {
+#ifndef HAS_NUMA
+  throw std::runtime_error("Running far numa pattern benchmark without NUMA-awareness.");
+#else
+  std::vector<uint64_t> far_numa_nodes{};
   const size_t num_numa_nodes = numa_num_configured_nodes();
 
   bitmask* init_node_mask = numa_get_run_node_mask();
@@ -255,9 +258,10 @@ void get_far_nodes(std::vector<uint64_t>& far_nodes) {
     // Set numa node if not set in initial near node mask
     if (!numa_bitmask_isbitset(init_node_mask, numa_node)) {
       spdlog::trace("Far NUMA node {} set", numa_node);
-      far_nodes.push_back(numa_node);
+      far_numa_nodes.push_back(numa_node);
     }
   }
+  return far_numa_nodes;
 #endif
 }
 
@@ -265,8 +269,7 @@ void set_to_far_cpus() {
 #ifndef HAS_NUMA
   throw std::runtime_error("Running far numa pattern benchmark without NUMA-awareness.");
 #else
-  std::vector<uint64_t> far_numa_nodes{};
-  get_far_nodes(far_numa_nodes);
+  std::vector<uint64_t> far_numa_nodes = get_far_nodes(far_numa_nodes);
 
   bitmask* thread_node_mask = numa_allocate_nodemask();
   for (uint64_t far_numa_node : far_numa_nodes) {
@@ -282,8 +285,7 @@ bool has_far_numa_nodes() {
 #ifndef HAS_NUMA
   return false;
 #else
-  std::vector<uint64_t> far_numa_nodes{};
-  get_far_nodes(far_numa_nodes);
+  std::vector<uint64_t> far_numa_nodes = get_far_nodes(far_numa_nodes);
   return !far_numa_nodes.empty();
 #endif
 }
