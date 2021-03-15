@@ -13,6 +13,9 @@ static const size_t PMEM_PAGE_SIZE = 2 * (1024ul * 1024);  // 2MiB persistent me
 char* map_pmem_file(const std::filesystem::path& file, size_t expected_length);
 char* create_pmem_file(const std::filesystem::path& file, size_t length);
 
+char* map_dram_file(const std::filesystem::path& file, size_t expected_length);
+char* create_dram_file(const std::filesystem::path& file, size_t length);
+
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir);
 
 void generate_read_data(char* addr, uint64_t total_memory_range);

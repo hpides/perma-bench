@@ -1,9 +1,12 @@
 #include "utils.hpp"
 
+#include <fcntl.h>
 #include <libpmem.h>
 #include <spdlog/spdlog.h>
+#include <sys/mman.h>
 
 #include <algorithm>
+#include <fstream>
 #include <random>
 #include <thread>
 
@@ -15,6 +18,14 @@
 #endif
 
 namespace perma {
+
+void create_dir_if_not_exists(const std::filesystem::path& file) {
+  if (!std::filesystem::exists(file)) {
+    if (!std::filesystem::create_directories(file)) {
+      throw std::runtime_error{"Could not create dir: " + file.string()};
+    }
+  }
+}
 
 char* map_pmem_file(const std::filesystem::path& file, const size_t expected_length) {
   int is_pmem;
@@ -36,12 +47,7 @@ char* map_pmem_file(const std::filesystem::path& file, const size_t expected_len
 }
 
 char* create_pmem_file(const std::filesystem::path& file, const size_t length) {
-  const std::filesystem::path base_dir = file.parent_path();
-  if (!std::filesystem::exists(base_dir)) {
-    if (!std::filesystem::create_directories(base_dir)) {
-      throw std::runtime_error{"Could not create dir: " + base_dir.string()};
-    }
-  }
+  create_dir_if_not_exists(file.parent_path());
 
   int is_pmem;
   size_t mapped_length;
@@ -59,6 +65,32 @@ char* create_pmem_file(const std::filesystem::path& file, const size_t length) {
   }
 
   return static_cast<char*>(pmem_addr);
+}
+
+char* map_dram_file(const std::filesystem::path& file, size_t expected_length) {
+  uint64_t fd = open(file.c_str(), O_RDWR, S_IRWXU);
+  if (fd == -1) {
+    throw std::runtime_error{"Could not map file: " + file.string()};
+  }
+
+  void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+
+  if (addr == MAP_FAILED) {
+    throw std::runtime_error{"Could not map file: " + file.string()};
+  }
+
+  // TODO: check what to do with file descriptor
+  return static_cast<char*>(addr);
+}
+
+char* create_dram_file(const std::filesystem::path& file, size_t length) {
+  create_dir_if_not_exists(file.parent_path());
+
+  std::ofstream temp_stream{file};
+  temp_stream.close();
+  std::filesystem::resize_file(file, length);
+
+  return map_dram_file(file, length);
 }
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir) {

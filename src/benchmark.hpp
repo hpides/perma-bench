@@ -52,6 +52,8 @@ struct BenchmarkConfig {
   std::vector<std::string> matrix_args{};
 
   // The values below here actually define the benchmark and are not just used for meta-information.
+  internal::MemType memory_type = internal::MemType::PMem;
+
   uint64_t total_memory_range = 10'737'418'240;  // 10 GiB
   uint32_t access_size = 256;
   uint64_t number_operations = 10'000'000;
@@ -171,7 +173,7 @@ class Benchmark {
   static void single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
                             std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config);
 
-  static char* create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& pmem_file);
+  static char* create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& data_file);
 
   static void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
 
