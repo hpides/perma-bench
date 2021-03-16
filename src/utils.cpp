@@ -21,8 +21,8 @@
 
 namespace perma {
 
-char* map_file(const std::filesystem::path& file, const bool is_dram, size_t expected_length, uint64_t& fd) {
-  fd = -1;
+char* map_file(const std::filesystem::path& file, const bool is_dram, size_t expected_length) {
+  uint64_t fd = -1;
   int flags;
   if (!is_dram) {
     const mode_t mode = S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;  // 0644
@@ -36,6 +36,7 @@ char* map_file(const std::filesystem::path& file, const bool is_dram, size_t exp
   }
 
   void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, flags, fd, 0);
+  close(fd);
   if (addr == MAP_FAILED) {
     throw std::runtime_error{"Could not map file: " + file.string()};
   }
@@ -43,7 +44,7 @@ char* map_file(const std::filesystem::path& file, const bool is_dram, size_t exp
   return static_cast<char*>(addr);
 }
 
-char* create_file(const std::filesystem::path& file, const bool is_dram, size_t length, uint64_t& fd) {
+char* create_file(const std::filesystem::path& file, const bool is_dram, size_t length) {
   if (!is_dram) {
     const std::filesystem::path base_dir = file.parent_path();
     if (!std::filesystem::exists(base_dir)) {
@@ -56,7 +57,7 @@ char* create_file(const std::filesystem::path& file, const bool is_dram, size_t 
     temp_stream.close();
     std::filesystem::resize_file(file, length);
   }
-  return map_file(file, is_dram, length, fd);
+  return map_file(file, is_dram, length);
 }
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir) {
@@ -205,15 +206,15 @@ void init_numa(const std::filesystem::path& pmem_dir, const bool is_dram) {
   const std::filesystem::path temp_file = generate_random_file_name(pmem_dir);
   // Create random 2 MiB file
   const size_t temp_size = 2u * (1024u * 1024u);
-  uint64_t fd;
-  char* pmem_data = create_file(temp_file, is_dram, temp_size, fd);
+  char* pmem_data = create_file(temp_file, is_dram, temp_size);
   rw_ops::write_data(pmem_data, pmem_data + temp_size);
 
   int numa_node = -1;
   get_mempolicy(&numa_node, NULL, 0, (void*)pmem_data, MPOL_F_NODE | MPOL_F_ADDR);
   munmap(pmem_data, temp_size);
-  close(fd);
-  std::filesystem::remove(temp_file);
+  if (!is_dram) {
+    std::filesystem::remove(temp_file);
+  }
 
   if (numa_node < 0 || numa_node > num_numa_nodes) {
     spdlog::warn("Could not determine NUMA node. Running without NUMA-awareness.");

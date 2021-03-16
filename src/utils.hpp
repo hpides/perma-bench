@@ -12,8 +12,8 @@ static constexpr size_t ONE_GB = 1024ul * 1024 * 1024;
 
 }  // namespace internal
 
-char* map_file(const std::filesystem::path& file, bool is_dram, size_t expected_length, uint64_t& fd);
-char* create_file(const std::filesystem::path& file, bool is_dram, size_t length, uint64_t& fd);
+char* map_file(const std::filesystem::path& file, bool is_dram, size_t expected_length);
+char* create_file(const std::filesystem::path& file, bool is_dram, size_t length);
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir);
 
