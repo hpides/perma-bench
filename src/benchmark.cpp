@@ -175,13 +175,14 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, st
   }
 }
 
-char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& data_file) {
+char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& data_file,
+                                         uint64_t& fd) {
   if (std::filesystem::exists(data_file)) {
     // Data was already generated. Only re-map it.
     if (config.memory_type == internal::MemType::PMem) {
       return map_pmem_file(data_file, config.total_memory_range);
     } else {
-      return map_dram_file(data_file, config.total_memory_range);
+      return map_dram_file(data_file, config.total_memory_range, fd);
     }
   }
 
@@ -189,7 +190,7 @@ char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::fil
   if (config.memory_type == internal::MemType::PMem) {
     pmem_data = create_pmem_file(data_file, config.total_memory_range);
   } else {
-    pmem_data = create_dram_file(data_file, config.total_memory_range);
+    pmem_data = create_dram_file(data_file, config.total_memory_range, fd);
   }
   if (config.write_ratio < 1) {
     // If we read data in this benchmark, we need to generate it first.

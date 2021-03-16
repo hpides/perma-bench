@@ -67,10 +67,10 @@ char* create_pmem_file(const std::filesystem::path& file, const size_t length) {
   return static_cast<char*>(pmem_addr);
 }
 
-char* map_dram_file(const std::filesystem::path& file, size_t expected_length) {
-  uint64_t fd = open(file.c_str(), O_RDWR, S_IRWXU);
+char* map_dram_file(const std::filesystem::path& file, size_t expected_length, uint64_t& fd) {
+  fd = open(file.c_str(), O_RDWR, S_IRWXU);
   if (fd == -1) {
-    throw std::runtime_error{"Could not map file: " + file.string()};
+    throw std::runtime_error{"Could not open file: " + file.string()};
   }
 
   void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
@@ -79,18 +79,17 @@ char* map_dram_file(const std::filesystem::path& file, size_t expected_length) {
     throw std::runtime_error{"Could not map file: " + file.string()};
   }
 
-  // TODO: check what to do with file descriptor
   return static_cast<char*>(addr);
 }
 
-char* create_dram_file(const std::filesystem::path& file, size_t length) {
+char* create_dram_file(const std::filesystem::path& file, size_t length, uint64_t& fd) {
   create_dir_if_not_exists(file.parent_path());
 
   std::ofstream temp_stream{file};
   temp_stream.close();
   std::filesystem::resize_file(file, length);
 
-  return map_dram_file(file, length);
+  return map_dram_file(file, length, fd);
 }
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir) {

@@ -174,7 +174,7 @@ class Benchmark {
   static void single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
                             std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config);
 
-  static char* create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& data_file);
+  static char* create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& data_file, uint64_t& fd);
 
   static void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
 
@@ -186,6 +186,7 @@ class Benchmark {
   std::vector<std::filesystem::path> pmem_files_;
   std::vector<bool> owns_pmem_files_;
   std::vector<char*> pmem_data_;
+  std::vector<uint64_t> file_descriptors_;
 
   const std::vector<BenchmarkConfig> configs_;
   std::vector<std::unique_ptr<BenchmarkResult>> results_;

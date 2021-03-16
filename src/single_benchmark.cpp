@@ -1,6 +1,7 @@
 #include "single_benchmark.hpp"
 
-#include <utility>
+#include <sys/mman.h>
+#include <unistd.h>
 
 namespace perma {
 
@@ -16,8 +17,8 @@ void SingleBenchmark::run() {
 }
 
 void SingleBenchmark::create_data_file() {
-  pmem_data_.reserve(1);
-  pmem_data_.push_back(create_single_data_file(configs_[0], pmem_files_[0]));
+  file_descriptors_.resize(1);
+  pmem_data_.push_back(create_single_data_file(configs_[0], pmem_files_[0], file_descriptors_[0]));
 }
 
 void SingleBenchmark::set_up() {
@@ -28,8 +29,14 @@ void SingleBenchmark::set_up() {
 
 void SingleBenchmark::tear_down(const bool force) {
   if (!pmem_data_.empty() && pmem_data_[0] != nullptr) {
-    pmem_unmap(pmem_data_[0], configs_[0].total_memory_range);
-    pmem_data_[0] = nullptr;
+    if (configs_[0].memory_type == internal::MemType::PMem) {
+      pmem_unmap(pmem_data_[0], configs_[0].total_memory_range);
+      pmem_data_[0] = nullptr;
+    } else {
+      munmap(pmem_data_[0], configs_[0].total_memory_range);
+      close(file_descriptors_[0]);
+      pmem_data_[0] = nullptr;
+    }
   }
   if (!owns_pmem_files_.empty() && owns_pmem_files_[0] || force) {
     std::filesystem::remove(pmem_files_[0]);

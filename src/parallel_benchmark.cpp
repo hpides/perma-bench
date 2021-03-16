@@ -1,5 +1,8 @@
 #include "parallel_benchmark.hpp"
 
+#include <sys/mman.h>
+#include <unistd.h>
+
 namespace perma {
 
 void ParallelBenchmark::run() {
@@ -20,8 +23,9 @@ void ParallelBenchmark::run() {
 }
 
 void ParallelBenchmark::create_data_file() {
-  pmem_data_.push_back(create_single_data_file(configs_[0], pmem_files_[0]));
-  pmem_data_.push_back(create_single_data_file(configs_[1], pmem_files_[1]));
+  file_descriptors_.resize(2);
+  pmem_data_.push_back(create_single_data_file(configs_[0], pmem_files_[0], file_descriptors_[0]));
+  pmem_data_.push_back(create_single_data_file(configs_[1], pmem_files_[1], file_descriptors_[1]));
 }
 
 void ParallelBenchmark::set_up() {
@@ -34,8 +38,14 @@ void ParallelBenchmark::set_up() {
 void ParallelBenchmark::tear_down(bool force) {
   for (size_t index = 0; index < pmem_data_.size(); index++) {
     if (pmem_data_[index] != nullptr) {
-      pmem_unmap(pmem_data_[index], configs_[index].total_memory_range);
-      pmem_data_[index] = nullptr;
+      if (configs_[index].memory_type == internal::MemType::PMem) {
+        pmem_unmap(pmem_data_[index], configs_[index].total_memory_range);
+        pmem_data_[index] = nullptr;
+      } else {
+        munmap(pmem_data_[index], configs_[index].total_memory_range);
+        close(file_descriptors_[index]);
+        pmem_data_[index] = nullptr;
+      }
     }
     if (owns_pmem_files_[index] || force) {
       std::filesystem::remove(pmem_files_[index]);
