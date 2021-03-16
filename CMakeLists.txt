@@ -57,6 +57,54 @@ else ()
     message(STATUS "System does not support CLWB.")
 endif ()
 
+##################### PMDK ####################
+option(BUILD_PMDK "Set true if PMDK should be downloaded and built from source.")
+option(PMDK_INCLUDE_PATH "Path to custom PMDK include files" "")
+option(PMDK_LIBRARY_PATH "Path to custom PMDK library" "")
+
+if (${BUILD_PMDK})
+    message(STATUS "PMDK not provided. Downloading and building from source.")
+    set(PMDK_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/pmdk")
+    ExternalProject_Add(
+            PMDK
+
+            GIT_REPOSITORY https://github.com/pmem/pmdk.git
+            GIT_TAG 1.10
+            BUILD_IN_SOURCE 1
+            BUILD_COMMAND $(MAKE)
+            PREFIX ${PMDK_PREFIX}
+            CONFIGURE_COMMAND ""
+            INSTALL_COMMAND ""
+            LOG_DOWNLOAD ON
+            LOG_CONFIGURE ON
+            LOG_BUILD ON
+            UPDATE_DISCONNECTED 1
+    )
+
+    include_directories(${PMDK_PREFIX}/src/PMDK/src/include)
+    if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+        link_directories(${PMDK_PREFIX}/src/PMDK/src/debug)
+    else ()
+        link_directories(${PMDK_PREFIX}/src/PMDK/src/nondebug)
+    endif ()
+else ()
+    set(PMDK_INCLUDE_HINTS ${PMDK_INCLUDE_PATH} ${INCLUDE_HINTS})
+    set(PMDK_HINTS ${PMDK_LIBRARY_PATH} ${LIB_HINTS})
+
+    find_path(PMEM_INCLUDE_DIRS libpmem.h REQUIRED HINTS ${PMDK_INCLUDE_HINTS})
+    find_library(PMEM_LIBRARIES NAMES pmem libpmem REQUIRED HINTS ${PMDK_HINTS})
+
+    if (NOT PMEM_INCLUDE_DIRS OR "${PMEM_INCLUDE_DIRS}" STREQUAL "")
+        message(FATAL_ERROR "ERROR: libpmem include directory not found.")
+    endif ()
+    if (NOT PMEM_LIBRARIES OR "${PMEM_LIBRARIES}" STREQUAL "")
+        message(FATAL_ERROR "ERROR: libpmem library not found.")
+    endif ()
+
+    include_directories(${LIBPMEM_INCLUDE_DIRS})
+    message(STATUS "PMDK provided. Including ${PMEM_INCLUDE_DIRS} and linking ${PMEM_LIBRARIES}.")
+endif ()
+
 ################### NUMA ####################
 option(NUMA_INCLUDE_PATH "Path to custom NUMA include files" "")
 option(NUMA_LIBRARY_PATH "Path to custom NUMA library" "")
