@@ -19,16 +19,20 @@
 
 namespace perma {
 
-char* map_file(const std::filesystem::path& file, size_t expected_length, uint64_t& fd) {
-  const mode_t mode = S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;  // 0644
-  fd = open(file.c_str(), O_RDWR | O_DIRECT | O_SYNC, mode);
-  if (fd == -1) {
-    throw std::runtime_error{"Could not open file: " + file.string()};
+char* map_file(const std::filesystem::path& file, const bool is_dram, size_t expected_length, uint64_t& fd) {
+  fd = -1;
+  int flags = MAP_SHARED;  // MAP_SHARED_VALIDATE | MAP_SYNC;
+  if (!is_dram) {
+    const mode_t mode = S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;  // 0644
+    fd = open(file.c_str(), O_RDWR | O_DIRECT | O_SYNC, mode);
+    if (fd == -1) {
+      throw std::runtime_error{"Could not open file: " + file.string()};
+    }
+  } else {
+    flags = flags | MAP_ANONYMOUS;
   }
 
-  void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, MAP_SHARED, fd,
-                    0);  // CREATE READ WRITE MAP SYNC MAP SHARED VALIDATE
-  // Anonymous shared if dram
+  void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, flags, fd, 0);
   if (addr == MAP_FAILED) {
     throw std::runtime_error{"Could not map file: " + file.string()};
   }
@@ -36,19 +40,20 @@ char* map_file(const std::filesystem::path& file, size_t expected_length, uint64
   return static_cast<char*>(addr);
 }
 
-char* create_file(const std::filesystem::path& file, size_t length, uint64_t& fd) {
-  const std::filesystem::path base_dir = file.parent_path();
-  if (!std::filesystem::exists(base_dir)) {
-    if (!std::filesystem::create_directories(base_dir)) {
-      throw std::runtime_error{"Could not create dir: " + base_dir.string()};
+char* create_file(const std::filesystem::path& file, const bool is_dram, size_t length, uint64_t& fd) {
+  if (!is_dram) {
+    const std::filesystem::path base_dir = file.parent_path();
+    if (!std::filesystem::exists(base_dir)) {
+      if (!std::filesystem::create_directories(base_dir)) {
+        throw std::runtime_error{"Could not create dir: " + base_dir.string()};
+      }
     }
+
+    std::ofstream temp_stream{file};
+    temp_stream.close();
+    std::filesystem::resize_file(file, length);
   }
-
-  std::ofstream temp_stream{file};
-  temp_stream.close();
-  std::filesystem::resize_file(file, length);
-
-  return map_file(file, length, fd);
+  return map_file(file, is_dram, length, fd);
 }
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir) {
@@ -173,7 +178,7 @@ double rand_val() {
   return ((double)x / m);
 }
 
-void init_numa(const std::filesystem::path& pmem_dir) {
+void init_numa(const std::filesystem::path& pmem_dir, const bool is_dram) {
 #ifndef HAS_NUMA
   // Don't do anything, as we don't have NUMA support.
   spdlog::warn("Running without NUMA-awareness.");
@@ -195,7 +200,7 @@ void init_numa(const std::filesystem::path& pmem_dir) {
   // Create random 2 MiB file
   const size_t temp_size = 2u * (1024u * 1024u);
   uint64_t fd;
-  char* pmem_data = create_file(temp_file, temp_size, fd);
+  char* pmem_data = create_file(temp_file, is_dram, temp_size, fd);
   rw_ops::write_data(pmem_data, pmem_data + temp_size);
 
   int numa_node = -1;

@@ -50,6 +50,7 @@ struct BenchmarkConfig {
   // i.e., it must be set as a command line argument.
   std::string pmem_directory{};
   std::vector<std::string> matrix_args{};
+  bool is_pmem = true;
 
   // The values below here actually define the benchmark and are not just used for meta-information.
   uint64_t total_memory_range = 10'737'418'240;  // 10 GiB

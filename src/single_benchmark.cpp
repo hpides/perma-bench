@@ -30,10 +30,12 @@ void SingleBenchmark::set_up() {
 void SingleBenchmark::tear_down(const bool force) {
   if (!pmem_data_.empty() && pmem_data_[0] != nullptr) {
     munmap(pmem_data_[0], configs_[0].total_memory_range);
-    close(file_descriptors_[0]);
     pmem_data_[0] = nullptr;
+    if (configs_[0].is_pmem) {
+      close(file_descriptors_[0]);
+    }
   }
-  if (!owns_pmem_files_.empty() && owns_pmem_files_[0] || force) {
+  if (configs_[0].is_pmem && (!owns_pmem_files_.empty() && owns_pmem_files_[0] || force)) {
     std::filesystem::remove(pmem_files_[0]);
   }
 }
