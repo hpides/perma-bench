@@ -1,5 +1,7 @@
 #include "utils.hpp"
 
+#include <asm-generic/mman-common.h>
+#include <asm-generic/mman.h>
 #include <fcntl.h>
 #include <spdlog/spdlog.h>
 #include <sys/mman.h>
@@ -8,7 +10,7 @@
 #include <algorithm>
 #include <fstream>
 #include <random>
-#include <thread>
+#include <thread>Y
 
 #include "read_write_ops.hpp"
 
@@ -21,7 +23,7 @@ namespace perma {
 
 char* map_file(const std::filesystem::path& file, const bool is_dram, size_t expected_length, uint64_t& fd) {
   fd = -1;
-  int flags = MAP_SHARED;  // MAP_SHARED_VALIDATE | MAP_SYNC;
+  int flags = MAP_SHARED_VALIDATE | MAP_SYNC;
   if (!is_dram) {
     const mode_t mode = S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;  // 0644
     fd = open(file.c_str(), O_RDWR | O_DIRECT | O_SYNC, mode);
