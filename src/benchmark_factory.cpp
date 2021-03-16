@@ -9,7 +9,6 @@
 namespace perma {
 
 std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const std::filesystem::path& pmem_directory,
-                                                                        const bool is_dram,
                                                                         std::vector<YAML::Node>& configs) {
   std::vector<SingleBenchmark> benchmarks{};
 
@@ -31,7 +30,7 @@ std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const st
 
       YAML::Node bm_matrix = raw_bm_args["matrix"];
       if (bm_matrix) {
-        std::vector<BenchmarkConfig> matrix = create_benchmark_matrix(pmem_directory, is_dram, bm_args, bm_matrix);
+        std::vector<BenchmarkConfig> matrix = create_benchmark_matrix(pmem_directory, bm_args, bm_matrix);
         const std::filesystem::path pmem_data_file = generate_random_file_name(pmem_directory);
         for (BenchmarkConfig& bm : matrix) {
           // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
@@ -46,7 +45,7 @@ std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const st
       } else {
         BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args);
         bm_config.pmem_directory = pmem_directory;
-        bm_config.is_pmem = !is_dram;
+        bm_config.is_pmem = pmem_directory != "";
         std::vector<std::unique_ptr<BenchmarkResult>> results{};
         results.push_back(std::make_unique<BenchmarkResult>(bm_config));
         benchmarks.emplace_back(name, bm_config, results);
@@ -57,7 +56,6 @@ std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const st
 }
 
 std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(const std::filesystem::path& pmem_directory,
-                                                                            const bool is_dram,
                                                                             std::vector<YAML::Node>& configs) {
   std::vector<ParallelBenchmark> benchmarks{};
 
@@ -83,9 +81,9 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
       std::string unique_name_two;
 
       YAML::iterator par_it = parallel_bm.begin();
-      parse_yaml_node(pmem_directory, is_dram, bm_one_configs, par_it, unique_name_one);
+      parse_yaml_node(pmem_directory, bm_one_configs, par_it, unique_name_one);
       par_it++;
-      parse_yaml_node(pmem_directory, is_dram, bm_two_configs, par_it, unique_name_two);
+      parse_yaml_node(pmem_directory, bm_two_configs, par_it, unique_name_two);
 
       const std::filesystem::path pmem_data_file_one = generate_random_file_name(pmem_directory);
       const std::filesystem::path pmem_data_file_two = generate_random_file_name(pmem_directory);
@@ -123,7 +121,7 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
   return benchmarks;
 }
 
-void BenchmarkFactory::parse_yaml_node(const std::filesystem::path& pmem_directory, const bool is_dram,
+void BenchmarkFactory::parse_yaml_node(const std::filesystem::path& pmem_directory,
                                        std::vector<BenchmarkConfig>& bm_configs, YAML::iterator& par_it,
                                        std::string& unique_name) {
   unique_name = par_it->first.as<std::string>();
@@ -135,18 +133,18 @@ void BenchmarkFactory::parse_yaml_node(const std::filesystem::path& pmem_directo
   }
   YAML::Node bm_matrix = raw_bm_args["matrix"];
   if (bm_matrix) {
-    std::vector<BenchmarkConfig> matrix = create_benchmark_matrix(pmem_directory, is_dram, bm_args, bm_matrix);
+    std::vector<BenchmarkConfig> matrix = create_benchmark_matrix(pmem_directory, bm_args, bm_matrix);
     std::move(matrix.begin(), matrix.end(), std::back_inserter(bm_configs));
   } else {
     BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args);
     bm_config.pmem_directory = pmem_directory;
-    bm_config.is_pmem = !is_dram;
+    bm_config.is_pmem = pmem_directory != "";
     bm_configs.emplace_back(bm_config);
   }
 }
 
 std::vector<BenchmarkConfig> BenchmarkFactory::create_benchmark_matrix(const std::filesystem::path& pmem_directory,
-                                                                       const bool is_dram, YAML::Node& config_args,
+                                                                       YAML::Node& config_args,
                                                                        YAML::Node& matrix_args) {
   if (!matrix_args.IsMap()) {
     throw std::invalid_argument("'matrix' must be a YAML map.");
@@ -166,7 +164,7 @@ std::vector<BenchmarkConfig> BenchmarkFactory::create_benchmark_matrix(const std
 
       BenchmarkConfig final_config = BenchmarkConfig::decode(clean_config);
       final_config.pmem_directory = pmem_directory;
-      final_config.is_pmem = !is_dram;
+      final_config.is_pmem = pmem_directory != "";
       final_config.matrix_args = {matrix_arg_names.begin(), matrix_arg_names.end()};
 
       matrix.emplace_back(final_config);

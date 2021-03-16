@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
   // Run the actual benchmarks after parsing and validating them.
   spdlog::info("Running benchmarks on '{}' with config(s) from '{}'.", pmem_directory.string(), config_file.string());
   spdlog::info("Writing results to '{}'.", result_path.string());
-  BenchmarkSuite::run_benchmarks(pmem_directory, use_dram, config_file, result_path);
+  BenchmarkSuite::run_benchmarks(pmem_directory, config_file, result_path);
 
   return 0;
 }

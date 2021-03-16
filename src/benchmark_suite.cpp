@@ -52,18 +52,17 @@ void print_bm_information(const perma::Benchmark& bm) {
 
 namespace perma {
 
-void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory, const bool is_dram,
+void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
                                     const std::filesystem::path& config_file,
                                     const std::filesystem::path& result_directory) {
   std::vector<YAML::Node> configs = BenchmarkFactory::get_config_files(config_file);
   nlohmann::json results = nlohmann::json::array();
-  // Start single benchmarks
 
-  std::vector<SingleBenchmark> single_benchmarks =
-      BenchmarkFactory::create_single_benchmarks(pmem_directory, is_dram, configs);
+  // Start single benchmarks
+  std::vector<SingleBenchmark> single_benchmarks = BenchmarkFactory::create_single_benchmarks(pmem_directory, configs);
   spdlog::info("Found {} single benchmark{}.", single_benchmarks.size(), single_benchmarks.size() != 1 ? "s" : "");
   std::vector<ParallelBenchmark> parallel_benchmarks =
-      BenchmarkFactory::create_parallel_benchmarks(pmem_directory, is_dram, configs);
+      BenchmarkFactory::create_parallel_benchmarks(pmem_directory, configs);
   spdlog::info("Found {} parallel benchmark{}.", parallel_benchmarks.size(),
                parallel_benchmarks.size() != 1 ? "s" : "");
 
