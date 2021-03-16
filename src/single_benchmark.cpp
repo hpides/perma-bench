@@ -16,7 +16,6 @@ void SingleBenchmark::run() {
 }
 
 void SingleBenchmark::create_data_file() {
-  pmem_data_.reserve(1);
   pmem_data_.push_back(create_single_data_file(configs_[0], pmem_files_[0]));
 }
 
