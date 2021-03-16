@@ -61,10 +61,10 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
 
   std::vector<SingleBenchmark> single_benchmarks =
       BenchmarkFactory::create_single_benchmarks(pmem_directory, is_dram, configs);
-  spdlog::info("{} single benchmark{}.", single_benchmarks.size(), single_benchmarks.size() != 1 ? "s" : "");
+  spdlog::info("Found {} single benchmark{}.", single_benchmarks.size(), single_benchmarks.size() != 1 ? "s" : "");
   std::vector<ParallelBenchmark> parallel_benchmarks =
       BenchmarkFactory::create_parallel_benchmarks(pmem_directory, is_dram, configs);
-  spdlog::info("{} parallel benchmark{}.", parallel_benchmarks.size(), parallel_benchmarks.size() != 1 ? "s" : "");
+  spdlog::info("Found {} parallel benchmark{}.", parallel_benchmarks.size(), parallel_benchmarks.size() != 1 ? "s" : "");
 
   Benchmark* previous_bm = nullptr;
   std::vector<Benchmark*> benchmarks{};
@@ -111,7 +111,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
 
   const std::filesystem::path result_file = result_directory / config_file.stem().concat("-results.json");
   std::ofstream output(result_file);
-  output << results.dump() << std::endl;
+  output << std::setw(2) << results << std::endl;
   output.close();
 }
 

@@ -6,8 +6,10 @@ namespace perma {
 
 namespace internal {
 
-static const size_t NUM_UTIL_THREADS = 4;                  // Should be a power of two
-static const size_t PMEM_PAGE_SIZE = 2 * (1024ul * 1024);  // 2MiB persistent memory page size
+static constexpr size_t NUM_UTIL_THREADS = 4;                  // Should be a power of two
+static constexpr size_t PMEM_PAGE_SIZE = 2 * (1024ul * 1024);  // 2MiB persistent memory page size
+static constexpr size_t ONE_GB = 1024ul * 1024 * 1024;
+
 }  // namespace internal
 
 char* map_file(const std::filesystem::path& file, bool is_dram, size_t expected_length, uint64_t& fd);

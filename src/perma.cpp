@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
   // Define result directory
   std::filesystem::path result_path = std::filesystem::current_path();
   app.add_option("-r,--result-dir", result_path,
-                 "Path to the result directory (default: " + std::string{result_path} + ")");
+                 "Path to the result directory (default: " + result_path.string() + ")");
 
   // Define NUMA nodes to pin to.
   // This takes a list of nodes, e.g., --numa=0,1
@@ -82,6 +82,8 @@ int main(int argc, char** argv) {
   init_numa(pmem_directory, use_dram);
 
   // Run the actual benchmarks after parsing and validating them.
+  spdlog::info("Running benchmarks on '{}' with config(s) from '{}'.", pmem_directory.string(), config_file.string());
+  spdlog::info("Writing results to '{}'.", result_path.string());
   BenchmarkSuite::run_benchmarks(pmem_directory, use_dram, config_file, result_path);
 
   return 0;
