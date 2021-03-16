@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <fstream>
 #include <random>
-#include <thread>Y
+#include <thread>
 
 #include "read_write_ops.hpp"
 
@@ -23,15 +23,16 @@ namespace perma {
 
 char* map_file(const std::filesystem::path& file, const bool is_dram, size_t expected_length, uint64_t& fd) {
   fd = -1;
-  int flags = MAP_SHARED_VALIDATE | MAP_SYNC;
+  int flags;
   if (!is_dram) {
     const mode_t mode = S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;  // 0644
     fd = open(file.c_str(), O_RDWR | O_DIRECT | O_SYNC, mode);
     if (fd == -1) {
       throw std::runtime_error{"Could not open file: " + file.string()};
     }
+    flags = MAP_SHARED_VALIDATE | MAP_SYNC;
   } else {
-    flags = flags | MAP_ANONYMOUS;
+    flags = MAP_SHARED | MAP_ANONYMOUS;
   }
 
   void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, flags, fd, 0);
