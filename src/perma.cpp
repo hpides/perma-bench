@@ -48,16 +48,28 @@ int main(int argc, char** argv) {
       ->delimiter(',')
       ->expected(1, 10);
 
-  // Require path to PMem directory
+  // Path to PMem directory
+  // --path
   std::filesystem::path pmem_directory;
-  app.add_option("/path/to/pmem", pmem_directory,
+  auto path_opt = app.add_option("-p,--path", pmem_directory,
                  "Path to persistent memory directory in which to perform the benchmarks, e.g., /mnt/pmem1/")
-      ->required()
       ->check(check_path_exists)
       ->check(check_is_dir);
 
+  // Flag if DRAM should be used
+  // --dram
+  bool use_dram;
+  auto dram_flg = app.add_flag("--dram", use_dram, "Set this flag to run benchmarks in DRAM");
+
+  // Do not allow path to be set if dram is set
+  dram_flg->excludes(path_opt);
+  // Do not allow dram flag to be set if path is set
+  path_opt->excludes(dram_flg);
   try {
     app.parse(argc, argv);
+    if (path_opt->empty() && dram_flg->empty()) {
+      throw CLI::RequiredError("Either --path or --dram must be set.");
+    }
   } catch (const CLI::ParseError& e) {
     app.failure_message(CLI::FailureMessage::help);
     return app.exit(e);
