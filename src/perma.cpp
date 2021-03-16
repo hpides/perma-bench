@@ -51,10 +51,11 @@ int main(int argc, char** argv) {
   // Path to PMem directory
   // --path
   std::filesystem::path pmem_directory;
-  auto path_opt = app.add_option("-p,--path", pmem_directory,
-                 "Path to persistent memory directory in which to perform the benchmarks, e.g., /mnt/pmem1/")
-      ->check(check_path_exists)
-      ->check(check_is_dir);
+  auto path_opt =
+      app.add_option("-p,--path", pmem_directory,
+                     "Path to persistent memory directory in which to perform the benchmarks, e.g., /mnt/pmem1/")
+          ->check(check_path_exists)
+          ->check(check_is_dir);
 
   // Flag if DRAM should be used
   // --dram
