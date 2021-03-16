@@ -269,7 +269,7 @@ void set_to_far_cpus() {
 #ifndef HAS_NUMA
   throw std::runtime_error("Running far numa pattern benchmark without NUMA-awareness.");
 #else
-  std::vector<uint64_t> far_numa_nodes = get_far_nodes(far_numa_nodes);
+  const std::vector<uint64_t> far_numa_nodes = get_far_nodes();
 
   bitmask* thread_node_mask = numa_allocate_nodemask();
   for (uint64_t far_numa_node : far_numa_nodes) {
@@ -285,7 +285,7 @@ bool has_far_numa_nodes() {
 #ifndef HAS_NUMA
   return false;
 #else
-  std::vector<uint64_t> far_numa_nodes = get_far_nodes(far_numa_nodes);
+  const std::vector<uint64_t> far_numa_nodes = get_far_nodes();
   return !far_numa_nodes.empty();
 #endif
 }
