@@ -52,6 +52,7 @@ void print_bm_information(const perma::Benchmark& bm) {
 
 namespace perma {
 
+void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory, const bool is_dram,
                                     const std::filesystem::path& config_file,
                                     const std::filesystem::path& result_directory) {
   std::vector<YAML::Node> configs = BenchmarkFactory::get_config_files(config_file);
