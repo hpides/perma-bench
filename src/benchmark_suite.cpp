@@ -63,7 +63,8 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
   spdlog::info("Found {} single benchmark{}.", single_benchmarks.size(), single_benchmarks.size() != 1 ? "s" : "");
   std::vector<ParallelBenchmark> parallel_benchmarks =
       BenchmarkFactory::create_parallel_benchmarks(pmem_directory, configs);
-  spdlog::info("Found {} parallel benchmark{}.", parallel_benchmarks.size(), parallel_benchmarks.size() != 1 ? "s" : "");
+  spdlog::info("Found {} parallel benchmark{}.", parallel_benchmarks.size(),
+               parallel_benchmarks.size() != 1 ? "s" : "");
 
   Benchmark* previous_bm = nullptr;
   std::vector<Benchmark*> benchmarks{};
