@@ -10,11 +10,8 @@ static const size_t NUM_UTIL_THREADS = 4;                  // Should be a power 
 static const size_t PMEM_PAGE_SIZE = 2 * (1024ul * 1024);  // 2MiB persistent memory page size
 }  // namespace internal
 
-char* map_pmem_file(const std::filesystem::path& file, size_t expected_length);
-char* create_pmem_file(const std::filesystem::path& file, size_t length);
-
-char* map_dram_file(const std::filesystem::path& file, size_t expected_length, uint64_t& fd);
-char* create_dram_file(const std::filesystem::path& file, size_t length, uint64_t& fd);
+char* map_file(const std::filesystem::path& file, size_t expected_length, uint64_t& fd);
+char* create_file(const std::filesystem::path& file, size_t length, uint64_t& fd);
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir);
 

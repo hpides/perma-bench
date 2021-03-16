@@ -52,8 +52,6 @@ struct BenchmarkConfig {
   std::vector<std::string> matrix_args{};
 
   // The values below here actually define the benchmark and are not just used for meta-information.
-  internal::MemType memory_type = internal::MemType::PMem;
-
   uint64_t total_memory_range = 10'737'418'240;  // 10 GiB
   uint32_t access_size = 256;
   uint64_t number_operations = 10'000'000;

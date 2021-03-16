@@ -9,8 +9,6 @@ namespace perma {
 
 namespace internal {
 
-enum MemType : uint8_t { PMem, DRAM };
-
 enum Mode : uint8_t { Sequential, Sequential_Desc, Random };
 enum RandomDistribution : uint8_t { Uniform, Zipf };
 

@@ -38,14 +38,9 @@ void ParallelBenchmark::set_up() {
 void ParallelBenchmark::tear_down(bool force) {
   for (size_t index = 0; index < pmem_data_.size(); index++) {
     if (pmem_data_[index] != nullptr) {
-      if (configs_[index].memory_type == internal::MemType::PMem) {
-        pmem_unmap(pmem_data_[index], configs_[index].total_memory_range);
-        pmem_data_[index] = nullptr;
-      } else {
-        munmap(pmem_data_[index], configs_[index].total_memory_range);
-        close(file_descriptors_[index]);
-        pmem_data_[index] = nullptr;
-      }
+      munmap(pmem_data_[index], configs_[index].total_memory_range);
+      close(file_descriptors_[index]);
+      pmem_data_[index] = nullptr;
     }
     if (owns_pmem_files_[index] || force) {
       std::filesystem::remove(pmem_files_[index]);

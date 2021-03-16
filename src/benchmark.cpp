@@ -98,16 +98,12 @@ const std::unordered_map<std::string, internal::BenchmarkType> BenchmarkEnums::s
     {"single", internal::BenchmarkType::Single}, {"parallel", internal::BenchmarkType::Parallel}};
 
 struct ConfigEnums {
-  static const std::unordered_map<std::string, internal::MemType> str_to_mem_type;
   static const std::unordered_map<std::string, internal::Mode> str_to_mode;
   static const std::unordered_map<std::string, internal::NumaPattern> str_to_numa_pattern;
   static const std::unordered_map<std::string, internal::DataInstruction> str_to_data_instruction;
   static const std::unordered_map<std::string, internal::PersistInstruction> str_to_persist_instruction;
   static const std::unordered_map<std::string, internal::RandomDistribution> str_to_random_distribution;
 };
-
-const std::unordered_map<std::string, internal::MemType> ConfigEnums::str_to_mem_type{
-    {"pmem", internal::MemType::PMem}, {"dram", internal::MemType::DRAM}};
 
 const std::unordered_map<std::string, internal::Mode> ConfigEnums::str_to_mode{
     {"sequential", internal::Mode::Sequential},
@@ -179,19 +175,10 @@ char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::fil
                                          uint64_t& fd) {
   if (std::filesystem::exists(data_file)) {
     // Data was already generated. Only re-map it.
-    if (config.memory_type == internal::MemType::PMem) {
-      return map_pmem_file(data_file, config.total_memory_range);
-    } else {
-      return map_dram_file(data_file, config.total_memory_range, fd);
-    }
+    return map_file(data_file, config.total_memory_range, fd);
   }
 
-  char* pmem_data;
-  if (config.memory_type == internal::MemType::PMem) {
-    pmem_data = create_pmem_file(data_file, config.total_memory_range);
-  } else {
-    pmem_data = create_dram_file(data_file, config.total_memory_range, fd);
-  }
+  char* pmem_data = create_file(data_file, config.total_memory_range, fd);
   if (config.write_ratio < 1) {
     // If we read data in this benchmark, we need to generate it first.
     generate_read_data(pmem_data, config.total_memory_range);
@@ -284,7 +271,6 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
 
 nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm_config) {
   nlohmann::json config;
-  config["memory_type"] = get_enum_as_string(ConfigEnums::str_to_mem_type, bm_config.memory_type);
   config["total_memory_range"] = bm_config.total_memory_range;
   config["access_size"] = bm_config.access_size;
   config["exec_mode"] = get_enum_as_string(ConfigEnums::str_to_mode, bm_config.exec_mode);
@@ -450,7 +436,6 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_if_present(node, "zipf_alpha", &bm_config.zipf_alpha);
     num_found += get_if_present(node, "raw_results", &bm_config.raw_results);
     num_found += get_if_present(node, "prefault_file", &bm_config.prefault_file);
-    num_found += get_enum_if_present(node, "memory_type", ConfigEnums::str_to_mem_type, &bm_config.memory_type);
     num_found += get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_mode, &bm_config.exec_mode);
     num_found += get_enum_if_present(node, "numa_pattern", ConfigEnums::str_to_numa_pattern, &bm_config.numa_pattern);
     num_found += get_enum_if_present(node, "random_distribution", ConfigEnums::str_to_random_distribution,

@@ -1,9 +1,9 @@
 #include "utils.hpp"
 
 #include <fcntl.h>
-#include <libpmem.h>
 #include <spdlog/spdlog.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
 #include <algorithm>
 #include <fstream>
@@ -19,62 +19,16 @@
 
 namespace perma {
 
-void create_dir_if_not_exists(const std::filesystem::path& file) {
-  if (!std::filesystem::exists(file)) {
-    if (!std::filesystem::create_directories(file)) {
-      throw std::runtime_error{"Could not create dir: " + file.string()};
-    }
-  }
-}
-
-char* map_pmem_file(const std::filesystem::path& file, const size_t expected_length) {
-  int is_pmem;
-  size_t mapped_length;
-  void* pmem_addr = pmem_map_file(file.c_str(), 0, 0, 0, &mapped_length, &is_pmem);
-  if (pmem_addr == nullptr || (unsigned long)pmem_addr == 0xFFFFFFFFFFFFFFFF) {
-    throw std::runtime_error{"Could not map file: " + file.string()};
-  }
-
-  if (mapped_length != expected_length) {
-    throw std::runtime_error("Existing pmem data file has wrong size.");
-  }
-
-  if (!is_pmem) {
-    spdlog::warn("File {} is not in persistent memory!", file.string());
-  }
-
-  return static_cast<char*>(pmem_addr);
-}
-
-char* create_pmem_file(const std::filesystem::path& file, const size_t length) {
-  create_dir_if_not_exists(file.parent_path());
-
-  int is_pmem;
-  size_t mapped_length;
-  void* pmem_addr = pmem_map_file(file.c_str(), length, PMEM_FILE_CREATE, 0644, &mapped_length, &is_pmem);
-  if (pmem_addr == nullptr || (unsigned long)pmem_addr == 0xFFFFFFFFFFFFFFFF) {
-    throw std::runtime_error{"Could not create file: " + file.string() + " (error: " + std::strerror(errno) + ")"};
-  }
-
-  if (!is_pmem) {
-    spdlog::warn("File {} is not in persistent memory!", file.string());
-  }
-
-  if (length != mapped_length) {
-    throw std::runtime_error{"Mapped size different than specified size!"};
-  }
-
-  return static_cast<char*>(pmem_addr);
-}
-
-char* map_dram_file(const std::filesystem::path& file, size_t expected_length, uint64_t& fd) {
-  fd = open(file.c_str(), O_RDWR, S_IRWXU);
+char* map_file(const std::filesystem::path& file, size_t expected_length, uint64_t& fd) {
+  const mode_t mode = S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;  // 0644
+  fd = open(file.c_str(), O_RDWR | O_DIRECT | O_SYNC, mode);
   if (fd == -1) {
     throw std::runtime_error{"Could not open file: " + file.string()};
   }
 
-  void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-
+  void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, MAP_SHARED, fd,
+                    0);  // CREATE READ WRITE MAP SYNC MAP SHARED VALIDATE
+  // Anonymous shared if dram
   if (addr == MAP_FAILED) {
     throw std::runtime_error{"Could not map file: " + file.string()};
   }
@@ -82,14 +36,19 @@ char* map_dram_file(const std::filesystem::path& file, size_t expected_length, u
   return static_cast<char*>(addr);
 }
 
-char* create_dram_file(const std::filesystem::path& file, size_t length, uint64_t& fd) {
-  create_dir_if_not_exists(file.parent_path());
+char* create_file(const std::filesystem::path& file, size_t length, uint64_t& fd) {
+  const std::filesystem::path base_dir = file.parent_path();
+  if (!std::filesystem::exists(base_dir)) {
+    if (!std::filesystem::create_directories(base_dir)) {
+      throw std::runtime_error{"Could not create dir: " + base_dir.string()};
+    }
+  }
 
   std::ofstream temp_stream{file};
   temp_stream.close();
   std::filesystem::resize_file(file, length);
 
-  return map_dram_file(file, length, fd);
+  return map_file(file, length, fd);
 }
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir) {
@@ -235,12 +194,14 @@ void init_numa(const std::filesystem::path& pmem_dir) {
   const std::filesystem::path temp_file = generate_random_file_name(pmem_dir);
   // Create random 2 MiB file
   const size_t temp_size = 2u * (1024u * 1024u);
-  char* pmem_data = create_pmem_file(temp_file, temp_size);
+  uint64_t fd;
+  char* pmem_data = create_file(temp_file, temp_size, fd);
   rw_ops::write_data(pmem_data, pmem_data + temp_size);
 
   int numa_node = -1;
   get_mempolicy(&numa_node, NULL, 0, (void*)pmem_data, MPOL_F_NODE | MPOL_F_ADDR);
-  pmem_unmap(pmem_data, temp_size);
+  munmap(pmem_data, temp_size);
+  close(fd);
   std::filesystem::remove(temp_file);
 
   if (numa_node < 0 || numa_node > num_numa_nodes) {
