@@ -49,7 +49,6 @@ int main(int argc, char** argv) {
       ->expected(1, 10);
 
   // Path to PMem directory
-  // --path
   std::filesystem::path pmem_directory;
   auto path_opt =
       app.add_option("-p,--path", pmem_directory,
@@ -59,7 +58,6 @@ int main(int argc, char** argv) {
           ->check(check_is_dir);
 
   // Flag if DRAM should be used
-  // --dram
   bool use_dram;
   auto dram_flg = app.add_flag("--dram", use_dram, "Set this flag to run benchmarks in DRAM")->default_val(false);
 

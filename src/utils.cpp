@@ -25,7 +25,7 @@ char* map_file(const std::filesystem::path& file, const bool is_dram, size_t exp
   uint64_t fd = -1;
   int flags;
   if (!is_dram) {
-    const mode_t mode = S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH;  // 0644
+    const mode_t mode = 0644;
     fd = open(file.c_str(), O_RDWR | O_DIRECT, mode);
     if (fd == -1) {
       throw std::runtime_error{"Could not open file: " + file.string()};
