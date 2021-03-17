@@ -249,7 +249,7 @@ void set_numa_nodes(const std::vector<uint64_t>& nodes, const size_t num_numa_no
   bitmask* numa_nodes = numa_bitmask_alloc(num_numa_nodes);
   for (uint64_t node : nodes) {
     if (node >= num_numa_nodes) {
-      spdlog::critical("Given numa node too large! {} >= {}", node, num_numa_nodes);
+      spdlog::critical("Given numa node too large! (given: {}, max: {})", node, num_numa_nodes - 1);
       crash_exit();
     }
     numa_bitmask_setbit(numa_nodes, node);
