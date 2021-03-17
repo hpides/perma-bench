@@ -113,6 +113,8 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
   std::ofstream output(result_file);
   output << std::setw(2) << results << std::endl;
   output.close();
+
+  spdlog::info("Finished all benchmarks successfully.");
 }
 
 }  // namespace perma

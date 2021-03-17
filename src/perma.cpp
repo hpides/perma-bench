@@ -7,16 +7,6 @@
 
 using namespace perma;
 
-namespace {
-auto check_path_exists = [](const std::string& path) {
-  return (!std::filesystem::exists(path)) ? "No such file or directory: " + path : "";
-};
-
-auto check_is_dir = [](const std::string& pmem_dir) {
-  return (!std::filesystem::is_directory(pmem_dir)) ? "Path is not a directory: " + pmem_dir : "";
-};
-}  // namespace
-
 constexpr auto DEFAULT_CONFIG_PATH = "configs/workloads";
 
 int main(int argc, char** argv) {
@@ -32,7 +22,7 @@ int main(int argc, char** argv) {
   std::filesystem::path config_file = std::filesystem::current_path() / DEFAULT_CONFIG_PATH;
   app.add_option("-c,--config", config_file,
                  "Path to the benchmark config YAML file (default: " + std::string{DEFAULT_CONFIG_PATH} + ")")
-      ->check(check_path_exists);
+      ->check(CLI::ExistingPath);
 
   // Define result directory
   std::filesystem::path result_path = std::filesystem::current_path();
@@ -41,8 +31,8 @@ int main(int argc, char** argv) {
 
   // Define NUMA nodes to pin to.
   // This takes a list of nodes, e.g., --numa=0,1
-  std::vector<uint16_t> numa_nodes;
-  app.add_option<std::vector<uint16_t>>(
+  std::vector<uint64_t> numa_nodes;
+  app.add_option<std::vector<uint64_t>>(
          "--numa", numa_nodes,
          "Comma separated list of NUMA nodes to pin to, e.g., --numa=0,1 (default: determined from PMem directory)")
       ->delimiter(',')
@@ -53,8 +43,7 @@ int main(int argc, char** argv) {
   app.add_option("/path/to/pmem", pmem_directory,
                  "Path to persistent memory directory in which to perform the benchmarks, e.g., /mnt/pmem1/")
       ->required()
-      ->check(check_path_exists)
-      ->check(check_is_dir);
+      ->check(CLI::ExistingDirectory);
 
   try {
     app.parse(argc, argv);
@@ -64,7 +53,7 @@ int main(int argc, char** argv) {
   }
 
   // Make sure that the benchmarks are NUMA-aware. Setting this in the main thread will inherit to all child threads.
-  init_numa(pmem_directory);
+  init_numa(pmem_directory, numa_nodes);
 
   // Run the actual benchmarks after parsing and validating them.
   spdlog::info("Running benchmarks on '{}' with config(s) from '{}'.", pmem_directory.string(), config_file.string());
