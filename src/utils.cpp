@@ -338,8 +338,9 @@ bool has_far_numa_nodes() {
 
 void print_segfault_error() {
   spdlog::critical("A thread encountered an unexpected SIGSEGV!");
-  spdlog::critical("Please create an issue on GitHub (https://github.com/hpides/perma-bench/issues/new) "
-                   "with your configuration and system information so that we can try to fix this.");
+  spdlog::critical(
+      "Please create an issue on GitHub (https://github.com/hpides/perma-bench/issues/new) "
+      "with your configuration and system information so that we can try to fix this.");
 }
 
 }  // namespace perma

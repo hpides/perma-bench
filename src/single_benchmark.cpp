@@ -10,7 +10,6 @@ void thread_error_handler(int) { thread_error = 1; }
 
 }  // namespace
 
-
 namespace perma {
 
 bool SingleBenchmark::run() {
@@ -24,7 +23,10 @@ bool SingleBenchmark::run() {
 
   // wait for all threads
   for (std::thread& thread : pool) {
-    if (thread_error) { print_segfault_error(); return false; }
+    if (thread_error) {
+      print_segfault_error();
+      return false;
+    }
     thread.join();
   }
 

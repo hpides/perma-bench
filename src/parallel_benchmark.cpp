@@ -23,11 +23,17 @@ bool ParallelBenchmark::run() {
 
   // wait for all threads
   for (std::thread& thread : pools_[0]) {
-    if (thread_error) { print_segfault_error(); return false; }
+    if (thread_error) {
+      print_segfault_error();
+      return false;
+    }
     thread.join();
   }
   for (std::thread& thread : pools_[1]) {
-    if (thread_error) { print_segfault_error(); return false; }
+    if (thread_error) {
+      print_segfault_error();
+      return false;
+    }
     thread.join();
   }
 
