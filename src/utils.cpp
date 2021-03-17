@@ -1,14 +1,15 @@
 #include "utils.hpp"
 
-#include <libpmem.h>
-#include <spdlog/spdlog.h>
-
 #include <algorithm>
+#include <fstream>
 #include <random>
 #include <thread>
 #include <vector>
 
+#include "json.hpp"
+#include "libpmem.h"
 #include "read_write_ops.hpp"
+#include "spdlog/spdlog.h"
 
 #ifdef HAS_NUMA
 #include <numa.h>
@@ -93,7 +94,7 @@ void generate_read_data(char* addr, const uint64_t total_memory_range) {
 }
 
 void prefault_file(char* addr, const uint64_t total_memory_range) {
-  spdlog::info("Prefaulting data.");
+  spdlog::debug("Prefaulting data.");
   const size_t page_size = internal::PMEM_PAGE_SIZE;
   const size_t num_prefault_pages = total_memory_range / page_size;
   for (size_t prefault_offset = 0; prefault_offset < num_prefault_pages; ++prefault_offset) {
@@ -334,6 +335,59 @@ bool has_far_numa_nodes() {
 #else
   return !get_far_nodes().empty();
 #endif
+}
+
+std::string get_time_string() {
+  auto now = std::chrono::system_clock::now();
+  auto in_time_t = std::chrono::system_clock::to_time_t(now);
+  std::stringstream ss;
+  ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d-%H-%M");
+  return ss.str();
+}
+
+std::filesystem::path create_result_file(const std::filesystem::path& result_dir,
+                                         const std::filesystem::path& config_path) {
+  std::error_code ec;
+  const bool created = std::filesystem::create_directories(result_dir, ec);
+  if (!created && ec) {
+    spdlog::critical("Could not create result directory! Error: {}", ec.message());
+    perma::crash_exit();
+  }
+
+  std::string file_name;
+  const std::string result_suffix = "-results-" + get_time_string() + ".json";
+  if (std::filesystem::is_regular_file(config_path)) {
+    file_name = config_path.stem().concat(result_suffix);
+  } else if (std::filesystem::is_directory(config_path)) {
+    std::filesystem::path config_dir_name = *(--config_path.end());
+    file_name = config_dir_name.concat(result_suffix);
+  } else {
+    spdlog::critical("Unexpected config file type for '{}'.", config_path.string());
+    perma::crash_exit();
+  }
+
+  std::filesystem::path result_path = result_dir / file_name;
+  std::ofstream result_file(result_path);
+  result_file << nlohmann::json::array() << std::endl;
+
+  return result_path;
+}
+
+void write_benchmark_results(const std::filesystem::path& result_path, const nlohmann::json& results) {
+  nlohmann::json all_results;
+  std::ifstream previous_result_file(result_path);
+  previous_result_file >> all_results;
+
+  if (!all_results.is_array()) {
+    previous_result_file.close();
+    spdlog::critical("Result file '{}' is corrupted! Content must be a valid JSON array.", result_path.string());
+    perma::crash_exit();
+  }
+
+  all_results.push_back(results);
+  // Clear all existing data.
+  std::ofstream new_result_file(result_path, std::ofstream::trunc);
+  new_result_file << std::setw(2) << all_results << std::endl;
 }
 
 }  // namespace perma
