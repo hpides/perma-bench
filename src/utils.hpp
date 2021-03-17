@@ -29,6 +29,7 @@ uint64_t zipf(double alpha, uint64_t n);
 double rand_val();
 
 void crash_exit();
+void print_segfault_error();
 
 void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t>& arg_nodes);
 void set_to_far_cpus();

@@ -1,8 +1,19 @@
 #include "parallel_benchmark.hpp"
 
+#include <csignal>
+
+namespace {
+
+volatile sig_atomic_t thread_error;
+void thread_error_handler(int) { thread_error = 1; }
+
+}  // namespace
+
 namespace perma {
 
-void ParallelBenchmark::run() {
+bool ParallelBenchmark::run() {
+  signal(SIGSEGV, thread_error_handler);
+
   for (size_t thread_index = 0; thread_index < configs_[0].number_threads; thread_index++) {
     pools_[0].emplace_back(&run_in_thread, std::ref(thread_configs_[0][thread_index]), std::ref(configs_[0]));
   }
@@ -12,11 +23,15 @@ void ParallelBenchmark::run() {
 
   // wait for all threads
   for (std::thread& thread : pools_[0]) {
+    if (thread_error) { print_segfault_error(); return false; }
     thread.join();
   }
   for (std::thread& thread : pools_[1]) {
+    if (thread_error) { print_segfault_error(); return false; }
     thread.join();
   }
+
+  return true;
 }
 
 void ParallelBenchmark::create_data_file() {
