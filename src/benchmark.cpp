@@ -175,7 +175,7 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, st
 }
 
 char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& data_file) {
-  if (!config.is_pmem || std::filesystem::exists(data_file)) {
+  if (std::filesystem::exists(data_file)) {
     // Data was already generated. Only re-map it.
     return map_file(data_file, !config.is_pmem, config.total_memory_range);
   }
