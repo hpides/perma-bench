@@ -8,12 +8,9 @@
 #include <fstream>
 #include <random>
 #include <thread>
-#include <vector>
 
 #include "json.hpp"
-#include "libpmem.h"
 #include "read_write_ops.hpp"
-#include "spdlog/spdlog.h"
 
 #ifdef HAS_NUMA
 #include <numa.h>
