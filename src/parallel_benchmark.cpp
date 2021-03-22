@@ -1,7 +1,6 @@
 #include "parallel_benchmark.hpp"
 
 #include <sys/mman.h>
-#include <unistd.h>
 
 #include <csignal>
 
