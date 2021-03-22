@@ -1,5 +1,9 @@
 #pragma once
 
+#include <asm-generic/mman-common.h>
+#include <asm-generic/mman.h>
+#include <sys/mman.h>
+
 #include <filesystem>
 
 namespace perma {
@@ -9,6 +13,9 @@ namespace internal {
 static constexpr size_t NUM_UTIL_THREADS = 4;                  // Should be a power of two
 static constexpr size_t PMEM_PAGE_SIZE = 2 * (1024ul * 1024);  // 2MiB persistent memory page size
 static constexpr size_t ONE_GB = 1024ul * 1024 * 1024;
+
+static constexpr int PMEM_MAP_FLAGS = MAP_SHARED_VALIDATE | MAP_SYNC;
+static constexpr int DRAM_MAP_FLAGS = MAP_SHARED | MAP_ANONYMOUS;
 
 }  // namespace internal
 

@@ -1,10 +1,7 @@
 #include "utils.hpp"
 
-#include <asm-generic/mman-common.h>
-#include <asm-generic/mman.h>
 #include <fcntl.h>
 #include <spdlog/spdlog.h>
-#include <sys/mman.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -30,9 +27,9 @@ char* map_file(const std::filesystem::path& file, const bool is_dram, size_t exp
     if (fd == -1) {
       throw std::runtime_error{"Could not open file: " + file.string()};
     }
-    flags = MAP_SHARED_VALIDATE | MAP_SYNC;
+    flags = internal::PMEM_MAP_FLAGS;
   } else {
-    flags = MAP_SHARED | MAP_ANONYMOUS;
+    flags = internal::DRAM_MAP_FLAGS;
   }
 
   void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, flags, fd, 0);
