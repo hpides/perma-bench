@@ -2,10 +2,10 @@
 
 #include <spdlog/spdlog.h>
 
-#include <fstream>
 #include <json.hpp>
 
 #include "benchmark_factory.hpp"
+#include "utils.hpp"
 
 namespace {
 
@@ -45,6 +45,9 @@ void print_bm_information(const perma::Benchmark& bm) {
     spdlog::info("Running parallel benchmark {} with sub benchmarks {} and {}.", benchmark.benchmark_name(),
                  benchmark.get_benchmark_name_one(), benchmark.get_benchmark_name_two());
   } else {
+    // This should never happen
+    spdlog::critical("Unknown benchmark type: {}", bm.get_benchmark_type());
+    perma::crash_exit();
   }
 }
 
@@ -76,6 +79,8 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
     benchmarks.push_back(&benchmark);
   }
 
+  const std::filesystem::path result_file = create_result_file(result_directory, config_file);
+
   if (benchmarks.empty()) {
     spdlog::warn("No benchmarks found. Nothing to do.");
     return;
@@ -89,7 +94,8 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
     if (previous_bm && previous_bm->benchmark_name() != benchmark.benchmark_name()) {
       // Started new benchmark, force delete old data in case it was a matrix.
       // If it is not a matrix, this does nothing.
-      results += benchmark_results_to_json(*previous_bm, matrix_bm_results);
+      nlohmann::json bm_results = benchmark_results_to_json(*previous_bm, matrix_bm_results);
+      write_benchmark_results(result_file, bm_results);
       matrix_bm_results = nlohmann::json::array();
       previous_bm->tear_down(/*force=*/true);
       printed_info = false;
@@ -116,13 +122,11 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
     spdlog::info("Completed {0}/{1} benchmark{2}.", i + 1, benchmarks.size(), benchmarks.size() > 1 ? "s" : "");
   }
 
-  results += benchmark_results_to_json(*benchmarks.back(), matrix_bm_results);
-  previous_bm->tear_down(/*force=*/true);
-
-  const std::filesystem::path result_file = result_directory / config_file.stem().concat("-results.json");
-  std::ofstream output(result_file);
-  output << std::setw(2) << results << std::endl;
-  output.close();
+  if (!benchmarks.empty()) {
+    nlohmann::json bm_results = benchmark_results_to_json(*previous_bm, matrix_bm_results);
+    write_benchmark_results(result_file, bm_results);
+    previous_bm->tear_down(/*force=*/true);
+  }
 
   if (had_error) {
     crash_exit();

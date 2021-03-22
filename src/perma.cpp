@@ -8,6 +8,7 @@
 using namespace perma;
 
 constexpr auto DEFAULT_CONFIG_PATH = "configs/workloads";
+constexpr auto DEFAULT_RESULT_PATH = "results";
 
 int main(int argc, char** argv) {
 #ifdef NDEBUG
@@ -25,9 +26,8 @@ int main(int argc, char** argv) {
       ->check(CLI::ExistingPath);
 
   // Define result directory
-  std::filesystem::path result_path = std::filesystem::current_path();
-  app.add_option("-r,--result-dir", result_path,
-                 "Path to the result directory (default: " + result_path.string() + ")");
+  std::filesystem::path result_path = std::filesystem::current_path() / DEFAULT_RESULT_PATH;
+  app.add_option("-r,--results", result_path, "Path to the result directory (default: " + result_path.string() + ")");
 
   // Define NUMA nodes to pin to.
   // This takes a list of nodes, e.g., --numa=0,1
