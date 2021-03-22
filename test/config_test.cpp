@@ -1,4 +1,9 @@
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/spdlog.h>
 #include <yaml-cpp/yaml.h>
+
+#include <filesystem>
+#include <fstream>
 
 #include "benchmark_factory.hpp"
 #include "gtest/gtest.h"
@@ -13,6 +18,16 @@ constexpr auto TEST_PAR_CONFIG_FILE_MATRIX = "test_parallel_matrix.yaml";
 
 class ConfigTest : public ::testing::Test {
  protected:
+  static void SetUpTestSuite() {
+    test_logger_path = std::filesystem::temp_directory_path() / "test-logger.log";
+    auto file_logger = spdlog::basic_logger_mt("test-logger", test_logger_path.string());
+    spdlog::set_default_logger(file_logger);
+  }
+
+  static void TearDownTestSuite() {
+    std::filesystem::remove(test_logger_path);
+  }
+
   void SetUp() override {
     const std::filesystem::path test_config_path = std::filesystem::current_path() / "resources" / "configs";
     config_single_file_matrix = BenchmarkFactory::get_config_files(test_config_path / TEST_SINGLE_CONFIG_FILE_MATRIX);
@@ -22,13 +37,35 @@ class ConfigTest : public ::testing::Test {
     config_par_file_matrix = BenchmarkFactory::get_config_files(test_config_path / TEST_PAR_CONFIG_FILE_MATRIX);
   }
 
+  void TearDown() override {
+    std::ofstream empty_log(test_logger_path, std::ostream::trunc);
+  }
+
+  static void check_log_for_critical(const std::string& expected_msg) {
+    std::stringstream raw_log_content;
+    std::ifstream log_checker(test_logger_path);
+    raw_log_content << log_checker.rdbuf();
+    std::string log_content = raw_log_content.str();
+
+    if (log_content.find("critical") == std::string::npos) {
+      FAIL() << "Did not find keyword 'critical' in log file.";
+    }
+
+    if (log_content.find(expected_msg) == std::string::npos) {
+      FAIL() << "Did not find expected '" << expected_msg << "' in log file.";
+    }
+  }
+
   std::vector<YAML::Node> config_single_file_matrix;
   std::vector<YAML::Node> config_single_file_seq;
   std::vector<YAML::Node> config_single_file_random;
   std::vector<YAML::Node> config_par_file_seq_random;
   std::vector<YAML::Node> config_par_file_matrix;
   BenchmarkConfig bm_config;
+  static std::filesystem::path test_logger_path;
 };
+
+std::filesystem::path ConfigTest::test_logger_path;
 
 TEST_F(ConfigTest, SingleDecodeSequential) {
   std::vector<SingleBenchmark> benchmarks =
@@ -252,43 +289,58 @@ TEST_F(ConfigTest, CheckDefaultConfig) { bm_config.validate(); }
 
 TEST_F(ConfigTest, InvalidHighReadWriteRatio) {
   bm_config.write_ratio = 1.1;
-  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+  EXPECT_DEATH(bm_config.validate(), "");
+  check_log_for_critical("must be between");
 }
 
 TEST_F(ConfigTest, InvalidLowReadWriteRatio) {
   bm_config.write_ratio = -1.0;
-  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+  EXPECT_DEATH(bm_config.validate(), "");
+  check_log_for_critical("must be between");
 }
 
 TEST_F(ConfigTest, InvalidSmallAccessSize) {
   bm_config.access_size = 32;
-  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+  EXPECT_DEATH(bm_config.validate(), "");
+  check_log_for_critical("at least 64-byte");
 }
 
 TEST_F(ConfigTest, InvalidPowerAccessSize) {
   bm_config.access_size = 100;
-  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+  EXPECT_DEATH(bm_config.validate(), "");
+  check_log_for_critical("power of 2");
 }
 
 TEST_F(ConfigTest, InvalidMemoryRangeAccessSizeMultiple) {
   bm_config.total_memory_range = 100000;
-  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+  EXPECT_DEATH(bm_config.validate(), "");
+  check_log_for_critical("multiple of access size");
 }
 
 TEST_F(ConfigTest, InvalidNumberThreads) {
   bm_config.number_threads = 0;
-  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+  EXPECT_DEATH(bm_config.validate(), "");
+  check_log_for_critical("threads must be");
 }
 
 TEST_F(ConfigTest, InvalidNumberPartitions) {
   bm_config.number_partitions = 0;
-  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+  EXPECT_DEATH(bm_config.validate(), "");
+  check_log_for_critical("partitions must be");
 }
 
 TEST_F(ConfigTest, InvalidThreadPartitionRatio) {
   bm_config.number_partitions = 2;
   bm_config.number_threads = 1;
-  EXPECT_THROW(bm_config.validate(), std::invalid_argument);
+  EXPECT_DEATH(bm_config.validate(), "");
+  check_log_for_critical("threads must be a multiple of number partitions");
+}
+
+TEST_F(ConfigTest, BadNumberPartitionSplit) {
+  bm_config.number_threads = 36;
+  bm_config.number_partitions = 36;
+  EXPECT_DEATH(bm_config.validate(), "");
+  check_log_for_critical("evenly divisible into");
 }
 
 }  // namespace perma
