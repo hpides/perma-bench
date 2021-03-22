@@ -14,8 +14,10 @@ static constexpr size_t NUM_UTIL_THREADS = 4;                  // Should be a po
 static constexpr size_t PMEM_PAGE_SIZE = 2 * (1024ul * 1024);  // 2MiB persistent memory page size
 static constexpr size_t ONE_GB = 1024ul * 1024 * 1024;
 
-static constexpr int PMEM_MAP_FLAGS = MAP_SHARED_VALIDATE | MAP_SYNC;
-static constexpr int DRAM_MAP_FLAGS = MAP_SHARED | MAP_ANONYMOUS;
+static int PMEM_MAP_FLAGS = MAP_SHARED_VALIDATE | MAP_SYNC;
+static int DRAM_MAP_FLAGS = MAP_SHARED | MAP_ANONYMOUS;
+
+void setPMEM_MAP_FLAGS(int flags);
 
 }  // namespace internal
 

@@ -10,12 +10,6 @@
 
 namespace perma {
 
-#ifdef HAS_PMEM_TEST
-const bool TEST_IS_PMEM = true;
-#else
-const bool TEST_IS_PMEM = false;
-#endif
-
 constexpr size_t TEST_FILE_SIZE = 1048576;  // 1 MiB
 
 // Duplicate this instead of using global constant so that we notice when it is changed.
@@ -26,7 +20,8 @@ class BenchmarkTest : public ::testing::Test {
   void SetUp() override {
     base_config_.pmem_directory = temp_dir_;
     base_config_.total_memory_range = TEST_FILE_SIZE;
-    base_config_.is_pmem = TEST_IS_PMEM;
+
+    internal::setPMEM_MAP_FLAGS(MAP_SHARED);
   }
 
   BenchmarkConfig base_config_{};
@@ -53,17 +48,13 @@ TEST_F(BenchmarkTest, CreateSingleNewDataFile) {
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
   const std::filesystem::path pmem_file = bm.get_pmem_files()[0];
 
-#ifdef HAS_PMEM_TEST
   ASSERT_FALSE(std::filesystem::exists(pmem_file));
-#endif
 
   bm.create_data_file();
 
-#ifdef HAS_PMEM_TEST
   ASSERT_TRUE(std::filesystem::exists(pmem_file));
   ASSERT_TRUE(std::filesystem::is_regular_file(pmem_file));
   EXPECT_EQ(std::filesystem::file_size(pmem_file), TEST_FILE_SIZE);
-#endif
   EXPECT_TRUE(bm.owns_pmem_files()[0]);
   EXPECT_NE(bm.get_pmem_data()[0], nullptr);
 }
@@ -74,28 +65,23 @@ TEST_F(BenchmarkTest, CreateParallelNewDataFile) {
   const std::filesystem::path pmem_file_one = bm.get_pmem_files()[0];
   const std::filesystem::path pmem_file_two = bm.get_pmem_files()[1];
 
-#ifdef HAS_PMEM_TEST
   ASSERT_FALSE(std::filesystem::exists(pmem_file_one));
   ASSERT_FALSE(std::filesystem::exists(pmem_file_two));
-#endif
 
   bm.create_data_file();
 
-#ifdef HAS_PMEM_TEST
   ASSERT_TRUE(std::filesystem::exists(pmem_file_one));
   ASSERT_TRUE(std::filesystem::exists(pmem_file_two));
   ASSERT_TRUE(std::filesystem::is_regular_file(pmem_file_one));
   ASSERT_TRUE(std::filesystem::is_regular_file(pmem_file_two));
   EXPECT_EQ(std::filesystem::file_size(pmem_file_one), TEST_FILE_SIZE);
   EXPECT_EQ(std::filesystem::file_size(pmem_file_two), TEST_FILE_SIZE);
-#endif
   EXPECT_TRUE(bm.owns_pmem_files()[0]);
   EXPECT_TRUE(bm.owns_pmem_files()[1]);
   EXPECT_NE(bm.get_pmem_data()[0], nullptr);
   EXPECT_NE(bm.get_pmem_data()[1], nullptr);
 }
 
-#ifdef HAS_PMEM_TEST
 TEST_F(BenchmarkTest, CreateExistingDataFile) {
   base_config_.write_ratio = 1;
 
@@ -126,24 +112,19 @@ TEST_F(BenchmarkTest, CreateExistingDataFile) {
 
   bm.tear_down(true);
 }
-#endif
 
 TEST_F(BenchmarkTest, CreateSingleReadDataFile) {
   base_config_.write_ratio = 0;
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
   const std::filesystem::path pmem_file = bm.get_pmem_files()[0];
 
-#ifdef HAS_PMEM_TEST
   ASSERT_FALSE(std::filesystem::exists(pmem_file));
-#endif
 
   bm.create_data_file();
 
-#ifdef HAS_PMEM_TEST
   ASSERT_TRUE(std::filesystem::exists(pmem_file));
   ASSERT_TRUE(std::filesystem::is_regular_file(pmem_file));
   EXPECT_EQ(std::filesystem::file_size(pmem_file), TEST_FILE_SIZE);
-#endif
 
   EXPECT_TRUE(bm.owns_pmem_files()[0]);
 
@@ -161,21 +142,18 @@ TEST_F(BenchmarkTest, CreateParallelReadDataFile) {
   const std::filesystem::path pmem_file_one = bm.get_pmem_files()[0];
   const std::filesystem::path pmem_file_two = bm.get_pmem_files()[1];
 
-#ifdef HAS_PMEM_TEST
   ASSERT_FALSE(std::filesystem::exists(pmem_file_one));
   ASSERT_FALSE(std::filesystem::exists(pmem_file_two));
-#endif
 
   bm.create_data_file();
 
-#ifdef HAS_PMEM_TEST
   ASSERT_TRUE(std::filesystem::exists(pmem_file_one));
   ASSERT_TRUE(std::filesystem::exists(pmem_file_two));
   ASSERT_TRUE(std::filesystem::is_regular_file(pmem_file_one));
   ASSERT_TRUE(std::filesystem::is_regular_file(pmem_file_two));
   EXPECT_EQ(std::filesystem::file_size(pmem_file_one), TEST_FILE_SIZE);
   EXPECT_EQ(std::filesystem::file_size(pmem_file_two), TEST_FILE_SIZE);
-#endif
+
 
   EXPECT_TRUE(bm.owns_pmem_files()[0]);
   EXPECT_TRUE(bm.owns_pmem_files()[1]);
@@ -203,11 +181,9 @@ TEST_F(BenchmarkTest, CreateParallelReadDataFileMixed) {
 
   bm.create_data_file();
 
-#ifdef HAS_PMEM_TEST
   ASSERT_TRUE(std::filesystem::exists(pmem_file));
   ASSERT_TRUE(std::filesystem::is_regular_file(pmem_file));
   EXPECT_EQ(std::filesystem::file_size(pmem_file), TEST_FILE_SIZE);
-#endif
 
   EXPECT_TRUE(bm.owns_pmem_files()[1]);
 
@@ -350,9 +326,7 @@ TEST_F(BenchmarkTest, RunSingleThreadWrite) {
   }
   ASSERT_EQ(result.raw_measurements.size(), 0);
 
-#ifdef HAS_PMEM_TEST
   check_file_written(bm.get_pmem_files()[0], total_size);
-#endif
 }
 
 TEST_F(BenchmarkTest, RunSingeThreadMixed) {
@@ -888,10 +862,8 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadWrite) {
   ASSERT_EQ(result_one.raw_measurements.size(), 0);
   ASSERT_EQ(result_two.raw_measurements.size(), 0);
 
-#ifdef HAS_PMEM_TEST
   check_file_written(bm.get_pmem_files()[0], total_size);
   check_file_written(bm.get_pmem_files()[1], total_size);
-#endif
 }
 
 TEST_F(BenchmarkTest, ResultsParallelSingleThreadMixed) {
@@ -940,9 +912,7 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadMixed) {
   ASSERT_EQ(result_one.raw_measurements.size(), 0);
   ASSERT_EQ(result_two.raw_measurements.size(), 0);
 
-#ifdef HAS_PMEM_TEST
   check_file_written(bm.get_pmem_files()[1], total_size);
-#endif
 }
 
 }  // namespace perma

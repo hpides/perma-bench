@@ -18,6 +18,8 @@
 
 namespace perma {
 
+void internal::setPMEM_MAP_FLAGS(const int flags) { internal::PMEM_MAP_FLAGS = flags; }
+
 char* map_file(const std::filesystem::path& file, const bool is_dram, size_t expected_length) {
   uint64_t fd = -1;
   int flags;
