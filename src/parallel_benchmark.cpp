@@ -15,11 +15,13 @@ void thread_error_handler(int) { thread_error = 1; }
 namespace perma {
 
 bool ParallelBenchmark::run() {
-  for (size_t thread_index = 0; thread_index < configs_[0].number_threads; thread_index++) {
-    pools_[0].emplace_back(&run_in_thread, std::ref(thread_configs_[0][thread_index]), std::ref(configs_[0]));
-  }
-  for (size_t thread_index = 0; thread_index < configs_[1].number_threads; thread_index++) {
-    pools_[1].emplace_back(&run_in_thread, std::ref(thread_configs_[1][thread_index]), std::ref(configs_[1]));
+  signal(SIGSEGV, thread_error_handler);
+
+  for (size_t bm_num = 0; bm_num < configs_.size(); ++bm_num) {
+    for (size_t thread_index = 0; thread_index < configs_[bm_num].number_threads; thread_index++) {
+      pools_[bm_num].emplace_back(&run_in_thread, std::ref(thread_configs_[bm_num][thread_index]),
+                                  std::ref(configs_[bm_num]));
+    }
   }
 
   // wait for all threads
