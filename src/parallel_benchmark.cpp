@@ -3,6 +3,15 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include <csignal>
+
+namespace {
+
+volatile sig_atomic_t thread_error;
+void thread_error_handler(int) { thread_error = 1; }
+
+}  // namespace
+
 namespace perma {
 
 void ParallelBenchmark::run() {
@@ -14,12 +23,17 @@ void ParallelBenchmark::run() {
   }
 
   // wait for all threads
-  for (std::thread& thread : pools_[0]) {
-    thread.join();
+  for (std::vector<std::thread>& pool : pools_) {
+    for (std::thread& thread : pool) {
+      if (thread_error) {
+        print_segfault_error();
+        return false;
+      }
+      thread.join();
+    }
   }
-  for (std::thread& thread : pools_[1]) {
-    thread.join();
-  }
+
+  return true;
 }
 
 void ParallelBenchmark::create_data_file() {

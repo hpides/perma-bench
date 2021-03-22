@@ -9,7 +9,10 @@
 namespace {
 
 #define CHECK_ARGUMENT(exp, txt) \
-  if (!exp) throw std::invalid_argument(txt)
+  if (!exp) {                    \
+    spdlog::critical(txt);       \
+    perma::crash_exit();         \
+  }
 
 constexpr auto VISITED_TAG = "visited";
 
@@ -476,7 +479,7 @@ void BenchmarkConfig::validate() const {
 
   // Check if memory range is multiple of access size
   const bool is_memory_range_multiple_of_access_size = (total_memory_range % access_size) == 0;
-  CHECK_ARGUMENT(is_memory_range_multiple_of_access_size, "Total memory range must be a multiple access size.");
+  CHECK_ARGUMENT(is_memory_range_multiple_of_access_size, "Total memory range must be a multiple of access size.");
 
   // Check if ratio is between one and zero
   const bool is_ratio_between_one_zero = 0 <= write_ratio && write_ratio <= 1;
@@ -494,6 +497,12 @@ void BenchmarkConfig::validate() const {
   const bool is_number_threads_multiple_of_number_partitions = (number_threads % number_partitions) == 0;
   CHECK_ARGUMENT(is_number_threads_multiple_of_number_partitions,
                  "Number threads must be a multiple of number partitions");
+
+  // Assumption: total memory range must be evenly divisible into number of partitions
+  const bool is_partitionable = ((total_memory_range / number_partitions) % access_size) == 0;
+  CHECK_ARGUMENT(is_partitionable,
+                 "Total memory range must be evenly divisible into number of partitions. "
+                 "Most likely you can fix this by using 2^x partitions.");
 
   // Assumption: number_operations should only be set for random access. It is ignored in sequential IO.
   const bool is_number_operations_set_random =

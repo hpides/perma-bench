@@ -5,6 +5,9 @@
 #include <sys/mman.h>
 
 #include <filesystem>
+#include <vector>
+
+#include "json.hpp"
 
 namespace perma {
 
@@ -36,8 +39,16 @@ uint64_t duration_to_nanoseconds(std::chrono::high_resolution_clock::duration du
 uint64_t zipf(double alpha, uint64_t n);
 double rand_val();
 
-void init_numa(const std::filesystem::path& pmem_dir, bool is_dram);
+void crash_exit();
+void print_segfault_error();
+
+void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t>& arg_nodes, bool is_dram);
 void set_to_far_cpus();
 bool has_far_numa_nodes();
+
+std::string get_time_string();
+std::filesystem::path create_result_file(const std::filesystem::path& result_dir,
+                                         const std::filesystem::path& config_path);
+void write_benchmark_results(const std::filesystem::path& result_path, const nlohmann::json& results);
 
 }  // namespace perma
