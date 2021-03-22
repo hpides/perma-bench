@@ -389,7 +389,7 @@ void write_benchmark_results(const std::filesystem::path& result_path, const nlo
   std::ofstream new_result_file(result_path, std::ofstream::trunc);
   new_result_file << std::setw(2) << all_results << std::endl;
 }
-  
+
 void print_segfault_error() {
   spdlog::critical("A thread encountered an unexpected SIGSEGV!");
   spdlog::critical(
