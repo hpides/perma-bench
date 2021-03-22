@@ -76,6 +76,12 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
     benchmarks.push_back(&benchmark);
   }
 
+  if (benchmarks.empty()) {
+    spdlog::warn("No benchmarks found. Nothing to do.");
+    return;
+  }
+
+  bool had_error = false;
   nlohmann::json matrix_bm_results = nlohmann::json::array();
   bool printed_info = false;
   for (size_t i = 0; i < benchmarks.size(); ++i) {
@@ -96,23 +102,31 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
 
     benchmark.create_data_file();
     benchmark.set_up();
-    benchmark.run();
+    const bool success = benchmark.run();
+    previous_bm = &benchmark;
+
+    if (!success) {
+      // Encountered an error. End suite gracefully.
+      had_error = true;
+      break;
+    }
 
     matrix_bm_results += benchmark.get_result_as_json();
     benchmark.tear_down(false);
-    previous_bm = &benchmark;
     spdlog::info("Completed {0}/{1} benchmark{2}.", i + 1, benchmarks.size(), benchmarks.size() > 1 ? "s" : "");
   }
 
-  if (!benchmarks.empty()) {
-    results += benchmark_results_to_json(*benchmarks.back(), matrix_bm_results);
-    previous_bm->tear_down(/*force=*/true);
-  }
+  results += benchmark_results_to_json(*benchmarks.back(), matrix_bm_results);
+  previous_bm->tear_down(/*force=*/true);
 
   const std::filesystem::path result_file = result_directory / config_file.stem().concat("-results.json");
   std::ofstream output(result_file);
   output << std::setw(2) << results << std::endl;
   output.close();
+
+  if (had_error) {
+    crash_exit();
+  }
 
   spdlog::info("Finished all benchmarks successfully.");
 }
