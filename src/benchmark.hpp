@@ -135,7 +135,7 @@ class Benchmark {
   Benchmark& operator=(Benchmark&& other) = delete;
 
   /** Main run method which executes the benchmark. `setup()` should be called before this.
-   *  Return true is benchmark ran successfully, false if an error was encountered.
+   *  Return true if benchmark ran successfully, false if an error was encountered.
    */
   virtual bool run() = 0;
 
