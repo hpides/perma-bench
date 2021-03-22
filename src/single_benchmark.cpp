@@ -1,9 +1,6 @@
 #include "single_benchmark.hpp"
 
-#include <sys/mman.h>
-
 #include <csignal>
-#include <utility>
 
 namespace {
 

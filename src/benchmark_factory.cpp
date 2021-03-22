@@ -4,8 +4,6 @@
 
 #include <string>
 
-#include "benchmark.hpp"
-
 namespace perma {
 
 std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const std::filesystem::path& pmem_directory,

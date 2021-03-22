@@ -1,7 +1,6 @@
 #pragma once
 
 #include <hdr_histogram.h>
-#include <libpmem.h>
 #include <yaml-cpp/yaml.h>
 
 #include <filesystem>
