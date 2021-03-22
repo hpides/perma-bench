@@ -1,7 +1,7 @@
 #include "single_benchmark.hpp"
 
 #include <sys/mman.h>
-#include <unistd.h>
+
 #include <csignal>
 #include <utility>
 

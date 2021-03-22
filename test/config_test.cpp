@@ -24,9 +24,7 @@ class ConfigTest : public ::testing::Test {
     spdlog::set_default_logger(file_logger);
   }
 
-  static void TearDownTestSuite() {
-    std::filesystem::remove(test_logger_path);
-  }
+  static void TearDownTestSuite() { std::filesystem::remove(test_logger_path); }
 
   void SetUp() override {
     const std::filesystem::path test_config_path = std::filesystem::current_path() / "resources" / "configs";
@@ -37,9 +35,7 @@ class ConfigTest : public ::testing::Test {
     config_par_file_matrix = BenchmarkFactory::get_config_files(test_config_path / TEST_PAR_CONFIG_FILE_MATRIX);
   }
 
-  void TearDown() override {
-    std::ofstream empty_log(test_logger_path, std::ostream::trunc);
-  }
+  void TearDown() override { std::ofstream empty_log(test_logger_path, std::ostream::trunc); }
 
   static void check_log_for_critical(const std::string& expected_msg) {
     std::stringstream raw_log_content;

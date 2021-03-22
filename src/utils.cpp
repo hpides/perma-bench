@@ -200,7 +200,8 @@ void log_numa_nodes(const std::vector<uint64_t>& nodes) {
   spdlog::info("Setting NUMA-affinity to node{}: {}", nodes.size() > 1 ? "s" : "", used_nodes_str);
 }
 
-std::vector<uint64_t> auto_detect_numa(const std::filesystem::path& pmem_dir, const size_t num_numa_nodes) {
+std::vector<uint64_t> auto_detect_numa(const std::filesystem::path& pmem_dir, const size_t num_numa_nodes,
+                                       const bool is_dram) {
 #ifndef HAS_NUMA
   spdlog::critical("Cannot detect numa nodes without NUMA support.");
   crash_exit();
@@ -298,7 +299,7 @@ void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t
     return;
   }
 
-  const std::vector<uint64_t> detected_nodes = auto_detect_numa(pmem_dir, num_numa_nodes);
+  const std::vector<uint64_t> detected_nodes = auto_detect_numa(pmem_dir, num_numa_nodes, is_dram);
   log_numa_nodes(detected_nodes);
   return set_numa_nodes(detected_nodes, num_numa_nodes);
 #endif
