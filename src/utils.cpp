@@ -93,7 +93,7 @@ void generate_read_data(char* addr, const uint64_t total_memory_range) {
 }
 
 void prefault_file(char* addr, const uint64_t total_memory_range) {
-  spdlog::info("Prefaulting data.");
+  spdlog::debug("Prefaulting data.");
   const size_t page_size = internal::PMEM_PAGE_SIZE;
   const size_t num_prefault_pages = total_memory_range / page_size;
   for (size_t prefault_offset = 0; prefault_offset < num_prefault_pages; ++prefault_offset) {
@@ -334,6 +334,13 @@ bool has_far_numa_nodes() {
 #else
   return !get_far_nodes().empty();
 #endif
+}
+
+void print_segfault_error() {
+  spdlog::critical("A thread encountered an unexpected SIGSEGV!");
+  spdlog::critical(
+      "Please create an issue on GitHub (https://github.com/hpides/perma-bench/issues/new) "
+      "with your configuration and system information so that we can try to fix this.");
 }
 
 }  // namespace perma
