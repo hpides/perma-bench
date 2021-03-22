@@ -39,7 +39,7 @@ class ParallelBenchmark : public Benchmark {
   ParallelBenchmark& operator=(ParallelBenchmark&& other) = delete;
 
   /** Main run method which executes the benchmark. `setup()` should be called before this. */
-  void run() override;
+  bool run() override;
 
   /**
    * Generates the data needed for the benchmark.
