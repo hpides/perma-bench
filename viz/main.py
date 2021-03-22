@@ -44,11 +44,13 @@ if __name__ == "__main__":
 
     # delete already existing png and html files
     if args.delete:
-        for file in os.listdir(html_dir):
-            if file.endswith(".html"):
-                os.remove(os.path.join(html_dir, file))
-        for png in os.listdir(img_dir):
-            os.remove(os.path.join(img_dir, png))
+        if os.path.exists(html_dir):
+            for file in os.listdir(html_dir):
+                if file.endswith(".html"):
+                    os.remove(os.path.join(html_dir, file))
+        if os.path.exists(img_dir):
+            for png in os.listdir(img_dir):
+                os.remove(os.path.join(img_dir, png))
 
     # create img folder
     if not os.path.isdir(img_dir):
