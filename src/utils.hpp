@@ -1,13 +1,18 @@
 #pragma once
 
 #include <filesystem>
+#include <vector>
+
+#include "json.hpp"
 
 namespace perma {
 
 namespace internal {
 
-static const size_t NUM_UTIL_THREADS = 4;                  // Should be a power of two
-static const size_t PMEM_PAGE_SIZE = 2 * (1024ul * 1024);  // 2MiB persistent memory page size
+static constexpr size_t NUM_UTIL_THREADS = 4;                  // Should be a power of two
+static constexpr size_t PMEM_PAGE_SIZE = 2 * (1024ul * 1024);  // 2MiB persistent memory page size
+static constexpr size_t ONE_GB = 1024ul * 1024 * 1024;
+
 }  // namespace internal
 
 char* map_pmem_file(const std::filesystem::path& file, size_t expected_length);
@@ -25,6 +30,16 @@ uint64_t duration_to_nanoseconds(std::chrono::high_resolution_clock::duration du
 uint64_t zipf(double alpha, uint64_t n);
 double rand_val();
 
-void init_numa(const std::filesystem::path& pmem_dir);
+void crash_exit();
+void print_segfault_error();
+
+void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t>& arg_nodes);
+void set_to_far_cpus();
+bool has_far_numa_nodes();
+
+std::string get_time_string();
+std::filesystem::path create_result_file(const std::filesystem::path& result_dir,
+                                         const std::filesystem::path& config_path);
+void write_benchmark_results(const std::filesystem::path& result_path, const nlohmann::json& results);
 
 }  // namespace perma
