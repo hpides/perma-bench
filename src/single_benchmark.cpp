@@ -1,7 +1,6 @@
 #include "single_benchmark.hpp"
 
 #include <csignal>
-#include <utility>
 
 namespace {
 
@@ -43,10 +42,10 @@ void SingleBenchmark::set_up() {
 
 void SingleBenchmark::tear_down(const bool force) {
   if (!pmem_data_.empty() && pmem_data_[0] != nullptr) {
-    pmem_unmap(pmem_data_[0], configs_[0].total_memory_range);
+    munmap(pmem_data_[0], configs_[0].total_memory_range);
     pmem_data_[0] = nullptr;
   }
-  if (!owns_pmem_files_.empty() && owns_pmem_files_[0] || force) {
+  if (configs_[0].is_pmem && (!owns_pmem_files_.empty() && (owns_pmem_files_[0] || force))) {
     std::filesystem::remove(pmem_files_[0]);
   }
 }

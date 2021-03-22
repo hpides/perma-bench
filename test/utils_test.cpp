@@ -1,5 +1,8 @@
 #include "utils.hpp"
 
+#include <sys/mman.h>
+
+#include <filesystem>
 #include <fstream>
 
 #include "json.hpp"
@@ -17,24 +20,19 @@ class UtilsTest : public ::testing::Test {
  protected:
   void SetUp() override {
     tmp_file_name_create = std::tmpnam(nullptr);
-    create_file = std::fopen(tmp_file_name_create.c_str(), "w+");
+    std::ofstream temp_stream_create{tmp_file_name_create};
+    temp_stream_create.close();
+
     tmp_file_name_read = std::tmpnam(nullptr);
-    read_file = std::fopen(tmp_file_name_read.c_str(), "w+");
+    std::ofstream temp_stream_read{tmp_file_name_read};
+    temp_stream_read.close();
+    fs::resize_file(tmp_file_name_read, FILE_SIZE);
 
-    std::fseek(read_file, FILE_SIZE - 1, SEEK_SET);
-    std::fputc('a', read_file);
-    std::fflush(read_file);
+    internal::setPMEM_MAP_FLAGS(MAP_SHARED);
   }
 
-  void TearDown() {
-    std::fclose(create_file);
-    std::fclose(read_file);
-  }
-
-  std::FILE* create_file;
-  std::FILE* read_file;
-  fs::path tmp_file_name_create;
-  fs::path tmp_file_name_read;
+  std::filesystem::path tmp_file_name_create;
+  std::filesystem::path tmp_file_name_read;
 };
 
 /**
@@ -51,20 +49,18 @@ TEST_F(UtilsTest, ZipfBound) {
 /**
  * Verifies whether the memory mapped file is the same size as the file.
  */
-TEST_F(UtilsTest, ReadMapFileCorrectSize) { EXPECT_NO_THROW(map_pmem_file(tmp_file_name_read, FILE_SIZE)); }
+TEST_F(UtilsTest, ReadMapFileCorrectSizePmem) { EXPECT_NO_THROW(map_file(tmp_file_name_read, false, FILE_SIZE)); }
 
 /**
- * Verifies whether the memory mapped file is not the same size as the file.
+ * Verifies whether the memory mapped file can be mapped without a backing file.
  */
-TEST_F(UtilsTest, ReadMapFileIncorrectSize) {
-  EXPECT_THROW(map_pmem_file(tmp_file_name_read, FILE_SIZE - 1), std::runtime_error);
-}
+TEST_F(UtilsTest, ReadMapFileCorrectSizeDRAM) { EXPECT_NO_THROW(map_file(tmp_file_name_read, true, FILE_SIZE)); }
 
 /**
  * Verifies whether the created memory mapped file is of the correct size.
  */
 TEST_F(UtilsTest, CreateMapFileSize) {
-  ASSERT_NO_THROW(create_pmem_file(tmp_file_name_create, FILE_SIZE));
+  ASSERT_NO_THROW(create_file(tmp_file_name_create, false, FILE_SIZE));
   size_t file_size = fs::file_size(tmp_file_name_create);
   EXPECT_EQ(file_size, FILE_SIZE);
 }
@@ -72,7 +68,7 @@ TEST_F(UtilsTest, CreateMapFileSize) {
 TEST_F(UtilsTest, CreateResultFileFromConfigFile) {
   const std::filesystem::path config_path = fs::temp_directory_path() / "test.yaml";
   std::ofstream config_file(config_path);
-  
+
   const fs::path result_dir = fs::temp_directory_path();
   const fs::path result_file = create_result_file(result_dir, config_path);
   ASSERT_TRUE(fs::is_regular_file(result_file));

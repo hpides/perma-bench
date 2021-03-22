@@ -38,22 +38,35 @@ int main(int argc, char** argv) {
       ->delimiter(',')
       ->expected(1, 10);
 
-  // Require path to PMem directory
+  // Path to PMem directory
   std::filesystem::path pmem_directory;
-  app.add_option("/path/to/pmem", pmem_directory,
-                 "Path to persistent memory directory in which to perform the benchmarks, e.g., /mnt/pmem1/")
-      ->required()
-      ->check(CLI::ExistingDirectory);
+  auto path_opt =
+      app.add_option("-p,--path", pmem_directory,
+                     "Path to persistent memory directory in which to perform the benchmarks, e.g., /mnt/pmem1/")
+          ->default_str("")
+          ->check(CLI::ExistingDirectory);
+
+  // Flag if DRAM should be used
+  bool use_dram;
+  auto dram_flg = app.add_flag("--dram", use_dram, "Set this flag to run benchmarks in DRAM")->default_val(false);
+
+  // Do not allow path to be set if dram is set
+  dram_flg->excludes(path_opt);
+  // Do not allow dram flag to be set if path is set
+  path_opt->excludes(dram_flg);
 
   try {
     app.parse(argc, argv);
+    if (path_opt->empty() && dram_flg->empty()) {
+      throw CLI::RequiredError("Either --path or --dram");
+    }
   } catch (const CLI::ParseError& e) {
     app.failure_message(CLI::FailureMessage::help);
     return app.exit(e);
   }
 
   // Make sure that the benchmarks are NUMA-aware. Setting this in the main thread will inherit to all child threads.
-  init_numa(pmem_directory, numa_nodes);
+  init_numa(pmem_directory, numa_nodes, use_dram);
 
   // Run the actual benchmarks after parsing and validating them.
   spdlog::info("Running benchmarks on '{}' with config(s) from '{}'.", pmem_directory.string(), config_file.string());

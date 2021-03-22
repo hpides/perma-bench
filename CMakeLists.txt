@@ -187,7 +187,7 @@ add_subdirectory(src)
 option(BUILD_TEST "Set true if tests should be built and run.")
 
 if (${BUILD_TEST})
-    message(STATUS "Test are included in this build.")
+    message(STATUS "Tests are included in this build.")
     enable_testing()
     add_subdirectory(test)
 endif ()

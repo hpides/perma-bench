@@ -1,3 +1,5 @@
+#include <fcntl.h>
+
 #include <benchmark.hpp>
 #include <fstream>
 
@@ -8,7 +10,7 @@
 
 namespace perma {
 
-constexpr size_t PMEM_FILE_SIZE = 1048576;  // 1 MiB
+constexpr size_t TEST_FILE_SIZE = 1048576;  // 1 MiB
 
 // Duplicate this instead of using global constant so that we notice when it is changed.
 const size_t TEST_IO_OP_CHUNK_SIZE = 16 * 1024u;
@@ -17,7 +19,9 @@ class BenchmarkTest : public ::testing::Test {
  protected:
   void SetUp() override {
     base_config_.pmem_directory = temp_dir_;
-    base_config_.total_memory_range = PMEM_FILE_SIZE;
+    base_config_.total_memory_range = TEST_FILE_SIZE;
+
+    internal::setPMEM_MAP_FLAGS(MAP_SHARED);
   }
 
   BenchmarkConfig base_config_{};
@@ -50,7 +54,7 @@ TEST_F(BenchmarkTest, CreateSingleNewDataFile) {
 
   ASSERT_TRUE(std::filesystem::exists(pmem_file));
   ASSERT_TRUE(std::filesystem::is_regular_file(pmem_file));
-  EXPECT_EQ(std::filesystem::file_size(pmem_file), PMEM_FILE_SIZE);
+  EXPECT_EQ(std::filesystem::file_size(pmem_file), TEST_FILE_SIZE);
   EXPECT_TRUE(bm.owns_pmem_files()[0]);
   EXPECT_NE(bm.get_pmem_data()[0], nullptr);
 }
@@ -70,8 +74,8 @@ TEST_F(BenchmarkTest, CreateParallelNewDataFile) {
   ASSERT_TRUE(std::filesystem::exists(pmem_file_two));
   ASSERT_TRUE(std::filesystem::is_regular_file(pmem_file_one));
   ASSERT_TRUE(std::filesystem::is_regular_file(pmem_file_two));
-  EXPECT_EQ(std::filesystem::file_size(pmem_file_one), PMEM_FILE_SIZE);
-  EXPECT_EQ(std::filesystem::file_size(pmem_file_two), PMEM_FILE_SIZE);
+  EXPECT_EQ(std::filesystem::file_size(pmem_file_one), TEST_FILE_SIZE);
+  EXPECT_EQ(std::filesystem::file_size(pmem_file_two), TEST_FILE_SIZE);
   EXPECT_TRUE(bm.owns_pmem_files()[0]);
   EXPECT_TRUE(bm.owns_pmem_files()[1]);
   EXPECT_NE(bm.get_pmem_data()[0], nullptr);
@@ -87,7 +91,7 @@ TEST_F(BenchmarkTest, CreateExistingDataFile) {
   temp_stream << test_string << std::endl;
   temp_stream.flush();
   temp_stream.close();
-  std::filesystem::resize_file(existing_pmem_file, PMEM_FILE_SIZE);
+  std::filesystem::resize_file(existing_pmem_file, TEST_FILE_SIZE);
 
   SingleBenchmark bm{bm_name_, base_config_, base_results_, existing_pmem_file};
   const std::filesystem::path pmem_file = bm.get_pmem_files()[0];
@@ -99,7 +103,7 @@ TEST_F(BenchmarkTest, CreateExistingDataFile) {
 
   ASSERT_TRUE(std::filesystem::exists(pmem_file));
   ASSERT_TRUE(std::filesystem::is_regular_file(pmem_file));
-  EXPECT_EQ(std::filesystem::file_size(pmem_file), PMEM_FILE_SIZE);
+  EXPECT_EQ(std::filesystem::file_size(pmem_file), TEST_FILE_SIZE);
   EXPECT_FALSE(bm.owns_pmem_files()[0]);
   const char* pmem_data = bm.get_pmem_data()[0];
   ASSERT_NE(pmem_data, nullptr);
@@ -120,7 +124,8 @@ TEST_F(BenchmarkTest, CreateSingleReadDataFile) {
 
   ASSERT_TRUE(std::filesystem::exists(pmem_file));
   ASSERT_TRUE(std::filesystem::is_regular_file(pmem_file));
-  EXPECT_EQ(std::filesystem::file_size(pmem_file), PMEM_FILE_SIZE);
+  EXPECT_EQ(std::filesystem::file_size(pmem_file), TEST_FILE_SIZE);
+
   EXPECT_TRUE(bm.owns_pmem_files()[0]);
 
   const char* pmem_data = bm.get_pmem_data()[0];
@@ -146,8 +151,9 @@ TEST_F(BenchmarkTest, CreateParallelReadDataFile) {
   ASSERT_TRUE(std::filesystem::exists(pmem_file_two));
   ASSERT_TRUE(std::filesystem::is_regular_file(pmem_file_one));
   ASSERT_TRUE(std::filesystem::is_regular_file(pmem_file_two));
-  EXPECT_EQ(std::filesystem::file_size(pmem_file_one), PMEM_FILE_SIZE);
-  EXPECT_EQ(std::filesystem::file_size(pmem_file_two), PMEM_FILE_SIZE);
+  EXPECT_EQ(std::filesystem::file_size(pmem_file_one), TEST_FILE_SIZE);
+  EXPECT_EQ(std::filesystem::file_size(pmem_file_two), TEST_FILE_SIZE);
+
   EXPECT_TRUE(bm.owns_pmem_files()[0]);
   EXPECT_TRUE(bm.owns_pmem_files()[1]);
 
@@ -176,7 +182,8 @@ TEST_F(BenchmarkTest, CreateParallelReadDataFileMixed) {
 
   ASSERT_TRUE(std::filesystem::exists(pmem_file));
   ASSERT_TRUE(std::filesystem::is_regular_file(pmem_file));
-  EXPECT_EQ(std::filesystem::file_size(pmem_file), PMEM_FILE_SIZE);
+  EXPECT_EQ(std::filesystem::file_size(pmem_file), TEST_FILE_SIZE);
+
   EXPECT_TRUE(bm.owns_pmem_files()[1]);
 
   const char* pmem_data = bm.get_pmem_data()[1];
@@ -202,8 +209,8 @@ TEST_F(BenchmarkTest, SetUpSingleThread) {
 
   EXPECT_EQ(thread_config.thread_num, 0);
   EXPECT_EQ(thread_config.num_threads_per_partition, 1);
-  EXPECT_EQ(thread_config.partition_size, PMEM_FILE_SIZE);
-  EXPECT_EQ(thread_config.num_ops, PMEM_FILE_SIZE / 256);
+  EXPECT_EQ(thread_config.partition_size, TEST_FILE_SIZE);
+  EXPECT_EQ(thread_config.num_ops, TEST_FILE_SIZE / 256);
   EXPECT_EQ(thread_config.partition_start_addr, bm.get_pmem_data()[0]);
   EXPECT_EQ(&thread_config.config, &bm.get_benchmark_configs()[0]);
 
@@ -225,7 +232,7 @@ TEST_F(BenchmarkTest, SetUpMultiThread) {
   bm.create_data_file();
   bm.set_up();
 
-  const size_t partition_size = PMEM_FILE_SIZE / 2;
+  const size_t partition_size = TEST_FILE_SIZE / 2;
   const std::vector<ThreadRunConfig>& thread_configs = bm.get_thread_configs()[0];
   ASSERT_EQ(thread_configs.size(), num_threads);
   const ThreadRunConfig& thread_config0 = thread_configs[0];
@@ -254,7 +261,7 @@ TEST_F(BenchmarkTest, SetUpMultiThread) {
   for (const ThreadRunConfig& tc : thread_configs) {
     EXPECT_EQ(tc.num_threads_per_partition, 2);
     EXPECT_EQ(tc.partition_size, partition_size);
-    EXPECT_EQ(tc.num_ops, PMEM_FILE_SIZE / num_threads / 512);
+    EXPECT_EQ(tc.num_ops, TEST_FILE_SIZE / num_threads / 512);
     EXPECT_EQ(&tc.config, &bm.get_benchmark_configs()[0]);
   }
   bm.get_benchmark_results()[0]->config.validate();
@@ -289,7 +296,37 @@ TEST_F(BenchmarkTest, RunSingeThreadRead) {
   ASSERT_EQ(result.raw_measurements.size(), 0);
 }
 
-TEST_F(BenchmarkTest, RunSingeThreadWrite) {
+TEST_F(BenchmarkTest, RunSingeThreadReadDRAM) {
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
+  const size_t num_chunks = 8;
+  const size_t num_ops = num_chunks * ops_per_chunk;
+  base_config_.number_threads = 1;
+  base_config_.access_size = 256;
+  base_config_.write_ratio = 0;
+  base_config_.total_memory_range = 256 * num_ops;
+  base_config_.is_pmem = false;
+  base_results_.reserve(1);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
+  SingleBenchmark bm{bm_name_, base_config_, base_results_};
+  bm.create_data_file();
+  bm.set_up();
+  bm.run();
+
+  const BenchmarkResult& result = *bm.get_benchmark_results()[0];
+
+  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  ASSERT_EQ(all_latencies.size(), 1);
+  const std::vector<internal::Latency>& latencies = all_latencies[0];
+
+  ASSERT_EQ(latencies.size(), num_chunks);
+  for (const internal::Latency latency : latencies) {
+    EXPECT_EQ(latency.op_type, internal::Read);
+    EXPECT_GE(latency.duration, 0);
+  }
+  ASSERT_EQ(result.raw_measurements.size(), 0);
+}
+
+TEST_F(BenchmarkTest, RunSingleThreadWrite) {
   const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
   const size_t num_chunks = 8;
   const size_t num_ops = num_chunks * ops_per_chunk;
@@ -319,6 +356,37 @@ TEST_F(BenchmarkTest, RunSingeThreadWrite) {
   ASSERT_EQ(result.raw_measurements.size(), 0);
 
   check_file_written(bm.get_pmem_files()[0], total_size);
+}
+
+TEST_F(BenchmarkTest, RunSingleThreadWriteDRAM) {
+  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
+  const size_t num_chunks = 8;
+  const size_t num_ops = num_chunks * ops_per_chunk;
+  const size_t total_size = 256 * num_ops;
+  base_config_.number_threads = 1;
+  base_config_.access_size = 256;
+  base_config_.write_ratio = 1;
+  base_config_.total_memory_range = total_size;
+  base_config_.is_pmem = false;
+  base_results_.reserve(1);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
+  SingleBenchmark bm{bm_name_, base_config_, base_results_};
+  bm.create_data_file();
+  bm.set_up();
+  bm.run();
+
+  const BenchmarkResult& result = *bm.get_benchmark_results()[0];
+
+  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  ASSERT_EQ(all_latencies.size(), 1);
+  const std::vector<internal::Latency>& latencies = all_latencies[0];
+
+  ASSERT_EQ(latencies.size(), num_chunks);
+  for (const internal::Latency latency : latencies) {
+    EXPECT_EQ(latency.op_type, internal::Write);
+    EXPECT_GE(latency.duration, 0);
+  }
+  ASSERT_EQ(result.raw_measurements.size(), 0);
 }
 
 TEST_F(BenchmarkTest, RunSingeThreadMixed) {
