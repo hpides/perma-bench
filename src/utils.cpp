@@ -261,7 +261,8 @@ void set_numa_nodes(const std::vector<uint64_t>& nodes, const size_t num_numa_no
 #endif
 }
 
-void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t>& arg_nodes, const bool is_dram) {
+void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t>& arg_nodes,
+               const bool is_dram) {  // TODO: handle numa for dram
 #ifndef HAS_NUMA
   if (!arg_nodes.empty()) {
     spdlog::critical("Cannot explicitly set numa nodes without NUMA support.");
