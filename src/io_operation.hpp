@@ -17,6 +17,8 @@ enum PersistInstruction : uint8_t { Cache, NoCache, None };
 
 enum OpType : uint8_t { Read, Write, Pause };
 
+enum NumaPattern : uint8_t { Near, Far };
+
 constexpr size_t MIN_IO_CHUNK_SIZE = 16 * 1024u;
 
 }  // namespace internal

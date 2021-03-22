@@ -1,13 +1,15 @@
 #include "utils.hpp"
 
-#include <libpmem.h>
-#include <spdlog/spdlog.h>
-
 #include <algorithm>
+#include <fstream>
 #include <random>
 #include <thread>
+#include <vector>
 
+#include "json.hpp"
+#include "libpmem.h"
 #include "read_write_ops.hpp"
+#include "spdlog/spdlog.h"
 
 #ifdef HAS_NUMA
 #include <numa.h>
@@ -72,6 +74,7 @@ std::filesystem::path generate_random_file_name(const std::filesystem::path& bas
 }
 
 void generate_read_data(char* addr, const uint64_t total_memory_range) {
+  spdlog::info("Generating {} GB of random data to read.", total_memory_range / internal::ONE_GB);
   std::vector<std::thread> thread_pool;
   thread_pool.reserve(internal::NUM_UTIL_THREADS - 1);
   uint64_t thread_memory_range = total_memory_range / internal::NUM_UTIL_THREADS;
@@ -87,9 +90,11 @@ void generate_read_data(char* addr, const uint64_t total_memory_range) {
   for (std::thread& thread : thread_pool) {
     thread.join();
   }
+  spdlog::info("Finished generating data.");
 }
 
 void prefault_file(char* addr, const uint64_t total_memory_range) {
+  spdlog::debug("Prefaulting data.");
   const size_t page_size = internal::PMEM_PAGE_SIZE;
   const size_t num_prefault_pages = total_memory_range / page_size;
   for (size_t prefault_offset = 0; prefault_offset < num_prefault_pages; ++prefault_offset) {
@@ -183,24 +188,23 @@ double rand_val() {
   return ((double)x / m);
 }
 
-void init_numa(const std::filesystem::path& pmem_dir) {
+void crash_exit() {
+  spdlog::error("Terminating due to a critical error. See logs above for more details.");
+  exit(1);
+}
+
+void log_numa_nodes(const std::vector<uint64_t>& nodes) {
+  const std::string used_nodes_str = std::accumulate(
+      nodes.begin(), nodes.end(), std::string(),
+      [](const auto& a, const auto b) -> std::string { return a + (a.length() > 0 ? ", " : "") + std::to_string(b); });
+  spdlog::info("Setting NUMA-affinity to node{}: {}", nodes.size() > 1 ? "s" : "", used_nodes_str);
+}
+
+std::vector<uint64_t> auto_detect_numa(const std::filesystem::path& pmem_dir, const size_t num_numa_nodes) {
 #ifndef HAS_NUMA
-  // Don't do anything, as we don't have NUMA support.
-  spdlog::warn("Running without NUMA-awareness.");
-  return;
+  spdlog::critical("Cannot detect numa nodes without NUMA support.");
+  crash_exit();
 #else
-  if (numa_available() < 0) {
-    throw std::runtime_error("NUMA supported but could not be found!");
-  }
-
-  const size_t num_numa_nodes = numa_num_configured_nodes();
-  spdlog::debug("Number of NUMA nodes in system: {}", num_numa_nodes);
-  if (num_numa_nodes < 2) {
-    // Do nothing, as there isn't any affinity to be set.
-    spdlog::info("Not setting NUMA-awareness with {} nodes", num_numa_nodes);
-    return;
-  }
-
   const std::filesystem::path temp_file = generate_random_file_name(pmem_dir);
   // Create random 2 MiB file
   const size_t temp_size = 2u * (1024u * 1024u);
@@ -214,35 +218,183 @@ void init_numa(const std::filesystem::path& pmem_dir) {
 
   if (numa_node < 0 || numa_node > num_numa_nodes) {
     spdlog::warn("Could not determine NUMA node. Running without NUMA-awareness.");
-    return;
+    return {};
   }
+
   spdlog::info("Detected memory on NUMA node: {}", numa_node);
 
-  bitmask* numa_nodes = numa_bitmask_alloc(num_numa_nodes);
-  std::vector<uint16_t> allowed_numa_nodes{};
+  std::vector<uint64_t> allowed_numa_nodes{};
   for (int other_node = 0; other_node < num_numa_nodes; ++other_node) {
     const size_t numa_dist = numa_distance(numa_node, other_node);
     spdlog::trace("NUMA-Distance: {} -> {} = {}", numa_node, other_node, numa_dist);
     if (numa_dist < 20) {
       // This should cover all NUMA nodes that are close, i.e. self = 10, close = 11.
-      numa_bitmask_setbit(numa_nodes, other_node);
       allowed_numa_nodes.push_back(other_node);
     }
   }
 
   if (allowed_numa_nodes.empty()) {
     // Distance info did not work
-    numa_bitmask_setbit(numa_nodes, numa_node);
     allowed_numa_nodes.push_back(numa_node);
   }
 
-  const std::string used_noes_str = std::accumulate(
-      allowed_numa_nodes.begin(), allowed_numa_nodes.end(), std::string(),
-      [](const auto& a, const auto b) -> std::string { return a + (a.length() > 0 ? ", " : "") + std::to_string(b); });
-  spdlog::info("Setting NUMA-affinity to node{}: {}", allowed_numa_nodes.size() > 1 ? "s" : "", used_noes_str);
-  numa_bind(numa_nodes);
+  return allowed_numa_nodes;
+#endif
+}
+
+void set_numa_nodes(const std::vector<uint64_t>& nodes, const size_t num_numa_nodes) {
+#ifndef HAS_NUMA
+  spdlog::critical("Cannot set numa nodes without NUMA support.");
+  crash_exit();
+#else
+  bitmask* numa_nodes = numa_bitmask_alloc(num_numa_nodes);
+  for (uint64_t node : nodes) {
+    if (node >= num_numa_nodes) {
+      spdlog::critical("Given numa node too large! (given: {}, max: {})", node, num_numa_nodes - 1);
+      crash_exit();
+    }
+    numa_bitmask_setbit(numa_nodes, node);
+  }
+
+  numa_run_on_node_mask(numa_nodes);
   numa_free_nodemask(numa_nodes);
 #endif
+}
+
+void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t>& arg_nodes) {
+#ifndef HAS_NUMA
+  if (!arg_nodes.empty()) {
+    spdlog::critical("Cannot explicitly set numa nodes without NUMA support.");
+    crash_exit();
+  }
+
+  // Don't do anything, as we don't have NUMA support.
+  spdlog::warn("Running without NUMA-awareness.");
+  return;
+#else
+  if (numa_available() < 0) {
+    throw std::runtime_error("NUMA supported but could not be found!");
+  }
+
+  const size_t num_numa_nodes = numa_num_configured_nodes();
+  spdlog::info("Number of NUMA nodes in system: {}", num_numa_nodes);
+
+  if (!arg_nodes.empty()) {
+    // User specified numa nodes via the command line. No need to auto-detect.
+    if (num_numa_nodes < arg_nodes.size()) {
+      spdlog::critical("More numa nodes specified than detected on server.");
+      crash_exit();
+    }
+    spdlog::info("Setting NUMA nodes according to command line arguments.");
+    log_numa_nodes(arg_nodes);
+    return set_numa_nodes(arg_nodes, num_numa_nodes);
+  }
+
+  if (num_numa_nodes < 2) {
+    // Do nothing, as there isn't any affinity to be set.
+    spdlog::info("Not setting NUMA-awareness with {} node(s).", num_numa_nodes);
+    return;
+  }
+
+  const std::vector<uint64_t> detected_nodes = auto_detect_numa(pmem_dir, num_numa_nodes);
+  log_numa_nodes(detected_nodes);
+  return set_numa_nodes(detected_nodes, num_numa_nodes);
+#endif
+}
+
+std::vector<uint64_t> get_far_nodes() {
+#ifndef HAS_NUMA
+  throw std::runtime_error("Running far numa pattern benchmark without NUMA-awareness.");
+#else
+  const size_t num_numa_nodes = numa_num_configured_nodes();
+  bitmask* init_node_mask = numa_get_run_node_mask();
+
+  std::vector<uint64_t> far_numa_nodes{};
+  for (uint64_t numa_node = 0; numa_node < num_numa_nodes; numa_node++) {
+    // Set numa node if not set in initial near node mask
+    if (!numa_bitmask_isbitset(init_node_mask, numa_node)) {
+      spdlog::trace("Far NUMA node {} set", numa_node);
+      far_numa_nodes.push_back(numa_node);
+    }
+  }
+  return far_numa_nodes;
+#endif
+}
+
+void set_to_far_cpus() {
+#ifndef HAS_NUMA
+  throw std::runtime_error("Running far numa pattern benchmark without NUMA-awareness.");
+#else
+  return set_numa_nodes(get_far_nodes(), numa_num_configured_nodes());
+#endif
+}
+
+bool has_far_numa_nodes() {
+#ifndef HAS_NUMA
+  return false;
+#else
+  return !get_far_nodes().empty();
+#endif
+}
+
+std::string get_time_string() {
+  auto now = std::chrono::system_clock::now();
+  auto in_time_t = std::chrono::system_clock::to_time_t(now);
+  std::stringstream ss;
+  ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d-%H-%M");
+  return ss.str();
+}
+
+std::filesystem::path create_result_file(const std::filesystem::path& result_dir,
+                                         const std::filesystem::path& config_path) {
+  std::error_code ec;
+  const bool created = std::filesystem::create_directories(result_dir, ec);
+  if (!created && ec) {
+    spdlog::critical("Could not create result directory! Error: {}", ec.message());
+    perma::crash_exit();
+  }
+
+  std::string file_name;
+  const std::string result_suffix = "-results-" + get_time_string() + ".json";
+  if (std::filesystem::is_regular_file(config_path)) {
+    file_name = config_path.stem().concat(result_suffix);
+  } else if (std::filesystem::is_directory(config_path)) {
+    std::filesystem::path config_dir_name = *(--config_path.end());
+    file_name = config_dir_name.concat(result_suffix);
+  } else {
+    spdlog::critical("Unexpected config file type for '{}'.", config_path.string());
+    perma::crash_exit();
+  }
+
+  std::filesystem::path result_path = result_dir / file_name;
+  std::ofstream result_file(result_path);
+  result_file << nlohmann::json::array() << std::endl;
+
+  return result_path;
+}
+
+void write_benchmark_results(const std::filesystem::path& result_path, const nlohmann::json& results) {
+  nlohmann::json all_results;
+  std::ifstream previous_result_file(result_path);
+  previous_result_file >> all_results;
+
+  if (!all_results.is_array()) {
+    previous_result_file.close();
+    spdlog::critical("Result file '{}' is corrupted! Content must be a valid JSON array.", result_path.string());
+    perma::crash_exit();
+  }
+
+  all_results.push_back(results);
+  // Clear all existing data.
+  std::ofstream new_result_file(result_path, std::ofstream::trunc);
+  new_result_file << std::setw(2) << all_results << std::endl;
+}
+
+void print_segfault_error() {
+  spdlog::critical("A thread encountered an unexpected SIGSEGV!");
+  spdlog::critical(
+      "Please create an issue on GitHub (https://github.com/hpides/perma-bench/issues/new) "
+      "with your configuration and system information so that we can try to fix this.");
 }
 
 }  // namespace perma

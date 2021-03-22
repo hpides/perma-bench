@@ -9,7 +9,10 @@
 namespace {
 
 #define CHECK_ARGUMENT(exp, txt) \
-  if (!exp) throw std::invalid_argument(txt)
+  if (!exp) {                    \
+    spdlog::critical(txt);       \
+    perma::crash_exit();         \
+  }
 
 constexpr auto VISITED_TAG = "visited";
 
@@ -99,6 +102,7 @@ const std::unordered_map<std::string, internal::BenchmarkType> BenchmarkEnums::s
 
 struct ConfigEnums {
   static const std::unordered_map<std::string, internal::Mode> str_to_mode;
+  static const std::unordered_map<std::string, internal::NumaPattern> str_to_numa_pattern;
   static const std::unordered_map<std::string, internal::DataInstruction> str_to_data_instruction;
   static const std::unordered_map<std::string, internal::PersistInstruction> str_to_persist_instruction;
   static const std::unordered_map<std::string, internal::RandomDistribution> str_to_random_distribution;
@@ -109,6 +113,9 @@ const std::unordered_map<std::string, internal::Mode> ConfigEnums::str_to_mode{
     {"sequential_asc", internal::Mode::Sequential},
     {"sequential_desc", internal::Mode::Sequential_Desc},
     {"random", internal::Mode::Random}};
+
+const std::unordered_map<std::string, internal::NumaPattern> ConfigEnums::str_to_numa_pattern{
+    {"near", internal::NumaPattern::Near}, {"far", internal::NumaPattern::Far}};
 
 const std::unordered_map<std::string, internal::DataInstruction> ConfigEnums::str_to_data_instruction{
     {"simd", internal::DataInstruction::SIMD}, {"mov", internal::DataInstruction::MOV}};
@@ -185,6 +192,10 @@ char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::fil
 }
 
 void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config) {
+  if (config.numa_pattern == internal::NumaPattern::Far) {
+    set_to_far_cpus();
+  }
+
   const size_t ops_per_iteration = thread_config.num_threads_per_partition * config.access_size;
   const uint32_t num_accesses_in_range = thread_config.partition_size / config.access_size;
   const bool is_read_only = config.write_ratio == 0;
@@ -270,6 +281,7 @@ nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm
   config["pause_frequency"] = bm_config.pause_frequency;
   config["number_partitions"] = bm_config.number_partitions;
   config["number_threads"] = bm_config.number_threads;
+  config["numa_pattern"] = get_enum_as_string(ConfigEnums::str_to_numa_pattern, bm_config.numa_pattern);
   config["data_instruction"] = get_enum_as_string(ConfigEnums::str_to_data_instruction, bm_config.data_instruction);
   config["prefault_file"] = bm_config.prefault_file;
 
@@ -428,6 +440,7 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_if_present(node, "raw_results", &bm_config.raw_results);
     num_found += get_if_present(node, "prefault_file", &bm_config.prefault_file);
     num_found += get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_mode, &bm_config.exec_mode);
+    num_found += get_enum_if_present(node, "numa_pattern", ConfigEnums::str_to_numa_pattern, &bm_config.numa_pattern);
     num_found += get_enum_if_present(node, "random_distribution", ConfigEnums::str_to_random_distribution,
                                      &bm_config.random_distribution);
     num_found += get_enum_if_present(node, "data_instruction", ConfigEnums::str_to_data_instruction,
@@ -462,7 +475,7 @@ void BenchmarkConfig::validate() const {
 
   // Check if memory range is multiple of access size
   const bool is_memory_range_multiple_of_access_size = (total_memory_range % access_size) == 0;
-  CHECK_ARGUMENT(is_memory_range_multiple_of_access_size, "Total memory range must be a multiple access size.");
+  CHECK_ARGUMENT(is_memory_range_multiple_of_access_size, "Total memory range must be a multiple of access size.");
 
   // Check if ratio is between one and zero
   const bool is_ratio_between_one_zero = 0 <= write_ratio && write_ratio <= 1;
@@ -480,6 +493,12 @@ void BenchmarkConfig::validate() const {
   const bool is_number_threads_multiple_of_number_partitions = (number_threads % number_partitions) == 0;
   CHECK_ARGUMENT(is_number_threads_multiple_of_number_partitions,
                  "Number threads must be a multiple of number partitions");
+
+  // Assumption: total memory range must be evenly divisible into number of partitions
+  const bool is_partitionable = ((total_memory_range / number_partitions) % access_size) == 0;
+  CHECK_ARGUMENT(is_partitionable,
+                 "Total memory range must be evenly divisible into number of partitions. "
+                 "Most likely you can fix this by using 2^x partitions.");
 
   // Assumption: number_operations should only be set for random access. It is ignored in sequential IO.
   const bool is_number_operations_set_random =
@@ -507,6 +526,9 @@ void BenchmarkConfig::validate() const {
                                               std::to_string(internal::MIN_IO_CHUNK_SIZE / access_size) + " ops (" +
                                               std::to_string(internal::MIN_IO_CHUNK_SIZE) + " Byte / " +
                                               std::to_string(access_size) + " Byte) in this configuration.");
+
+  const bool is_far_numa_node_available = numa_pattern == internal::NumaPattern::Near || has_far_numa_nodes();
+  CHECK_ARGUMENT(is_far_numa_node_available, "Cannot run far NUMA node benchmark without far NUMA nodes.");
 }
 
 }  // namespace perma
