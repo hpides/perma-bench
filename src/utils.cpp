@@ -288,9 +288,11 @@ bool check_if_far_numa_nodes_exist(const std::vector<uint64_t>& numa_nodes) {
     }
     if (found_far_node) {
       // This covers one NUMA node that is far to each user-provided NUMA node.
+      numa_free_nodemask(numa_set);
       return true;
     }
   }
+  numa_free_nodemask(numa_set);
   return false;
 }
 
