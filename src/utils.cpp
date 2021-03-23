@@ -262,6 +262,10 @@ void set_numa_nodes(const std::vector<uint64_t>& nodes, const size_t num_numa_no
 }
 
 bool check_if_far_numa_nodes_exist(const std::vector<uint64_t>& numa_nodes) {
+#ifndef HAS_NUMA
+  // Return false as no numa nodes exist.
+  return false;
+#else
   const size_t num_numa_nodes = numa_num_configured_nodes();
   bitmask* numa_set = numa_bitmask_alloc(num_numa_nodes);
   for (uint64_t node : numa_nodes) {
@@ -294,6 +298,7 @@ bool check_if_far_numa_nodes_exist(const std::vector<uint64_t>& numa_nodes) {
   }
   numa_free_nodemask(numa_set);
   return false;
+#endif
 }
 
 void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t>& arg_nodes,
