@@ -5,9 +5,9 @@
 #include <filesystem>
 #include <fstream>
 
-#include "json.hpp"
-#include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "json.hpp"
 
 namespace perma {
 
@@ -19,16 +19,25 @@ constexpr auto FILE_SIZE = 8388608u;  // 8 MiB
 class UtilsTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    tmp_file_name_create = std::tmpnam(nullptr);
-    std::ofstream temp_stream_create{tmp_file_name_create};
-    temp_stream_create.close();
+    char file_name_create[] = "tmp_create_file.XXXXXX";
+    char file_name_read[] = "tmp_read_file.XXXXXX";
 
-    tmp_file_name_read = std::tmpnam(nullptr);
-    std::ofstream temp_stream_read{tmp_file_name_read};
-    temp_stream_read.close();
-    fs::resize_file(tmp_file_name_read, FILE_SIZE);
+    int fd;
+    fd = mkstemp(file_name_create);
+    close(fd);
+    tmp_file_name_create = std::filesystem::current_path() / file_name_create;
+
+    fd = mkstemp(file_name_read);
+    close(fd);
+    tmp_file_name_read = std::filesystem::current_path() / file_name_read;
+    fs::resize_file(file_name_read, FILE_SIZE);
 
     internal::setPMEM_MAP_FLAGS(MAP_SHARED);
+  }
+
+  void TearDown() override {
+    std::filesystem::remove(tmp_file_name_create);
+    std::filesystem::remove(tmp_file_name_read);
   }
 
   std::filesystem::path tmp_file_name_create;
