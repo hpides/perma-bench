@@ -19,17 +19,17 @@ constexpr auto FILE_SIZE = 8388608u;  // 8 MiB
 class UtilsTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    char file_name_create[] = "tmp_create_file.XXXXXX";
-    char file_name_read[] = "tmp_read_file.XXXXXX";
+    std::string file_name_create = std::filesystem::temp_directory_path() / "tmp_create_file.XXXXXX";
+    std::string file_name_read = std::filesystem::temp_directory_path() / "tmp_read_file.XXXXXX";
 
     int fd;
-    fd = mkstemp(file_name_create);
+    fd = mkstemp(&file_name_create[0]);
     close(fd);
-    tmp_file_name_create = std::filesystem::current_path() / file_name_create;
+    tmp_file_name_create = file_name_create;
 
-    fd = mkstemp(file_name_read);
+    fd = mkstemp(&file_name_read[0]);
     close(fd);
-    tmp_file_name_read = std::filesystem::current_path() / file_name_read;
+    tmp_file_name_read = file_name_read;
     fs::resize_file(file_name_read, FILE_SIZE);
 
     internal::setPMEM_MAP_FLAGS(MAP_SHARED);
