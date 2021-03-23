@@ -35,7 +35,8 @@ class MatrixJsonReader:
         self.continuous_args = ["total_memory_range", "access_size", "write_ratio", "read_ratio", "pause_frequency",
                                 "number_partitions", "number_threads", "pause_length_micros", "number_operations",
                                 "zipf_alpha"]
-        self.categorical_args = ["exec_mode", "data_instruction", "persist_instruction", "random_distribution"]
+        self.categorical_args = ["exec_mode", "data_instruction", "persist_instruction", "random_distribution",
+                                 "numa_pattern", "memory_type", "prefault_file"]
 
         # set labels of matrix arguments
         self.arg_labels = dict()
