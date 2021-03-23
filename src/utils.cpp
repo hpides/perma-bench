@@ -261,6 +261,39 @@ void set_numa_nodes(const std::vector<uint64_t>& nodes, const size_t num_numa_no
 #endif
 }
 
+bool check_if_far_numa_nodes_exist(const std::vector<uint64_t>& numa_nodes) {
+  const size_t num_numa_nodes = numa_num_configured_nodes();
+  bitmask* numa_set = numa_bitmask_alloc(num_numa_nodes);
+  for (uint64_t node : numa_nodes) {
+    numa_bitmask_setbit(numa_set, node);
+  }
+
+  std::vector<uint64_t> inv_nodes{};
+  for (uint64_t numa_node = 0; numa_node < num_numa_nodes; numa_node++) {
+    if (!numa_bitmask_isbitset(numa_set, numa_node)) {
+      inv_nodes.push_back(numa_node);
+    }
+  }
+
+  bool found_far_node;
+  for (uint64_t inv_node : inv_nodes) {
+    found_far_node = true;
+    for (uint64_t set_node : numa_nodes) {
+      const size_t numa_dist = numa_distance(inv_node, set_node);
+      if (numa_dist < 20) {
+        // This should cover all NUMA nodes that are close, i.e., bigger than self = 10 and close = 11.
+        found_far_node = false;
+        break;
+      }
+    }
+    if (found_far_node) {
+      // This covers one NUMA node that is far to each user-provided NUMA node.
+      return true;
+    }
+  }
+  return false;
+}
+
 void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t>& arg_nodes,
                const bool is_dram) {  // TODO: handle numa for dram
 #ifndef HAS_NUMA
@@ -288,6 +321,10 @@ void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t
     }
     spdlog::info("Setting NUMA nodes according to command line arguments.");
     log_numa_nodes(arg_nodes);
+    if (!check_if_far_numa_nodes_exist(arg_nodes)) {
+      spdlog::warn("User-provided NUMA nodes does not have far NUMA nodes.");
+      spdlog::warn("This might affect benchmarks that run the far NUMA pattern.");
+    }
     return set_numa_nodes(arg_nodes, num_numa_nodes);
   }
 
