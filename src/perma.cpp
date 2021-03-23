@@ -32,18 +32,18 @@ int main(int argc, char** argv) {
   // Define NUMA nodes to pin to.
   // This takes a list of nodes, e.g., --numa=0,1
   std::vector<uint64_t> numa_nodes;
-  auto numa_opt = app.add_option<std::vector<uint64_t>>(
-         "--numa", numa_nodes,
-         "Comma separated list of NUMA nodes to pin to, e.g., --numa=0,1 (default: determined from PMem directory)")
-      ->delimiter(',')
-      ->expected(1, 10);
+  auto numa_opt =
+      app.add_option<std::vector<uint64_t>>(
+             "--numa", numa_nodes,
+             "Comma separated list of NUMA nodes to pin to, e.g., --numa=0,1 (default: determined from PMem directory)")
+          ->delimiter(',')
+          ->expected(1, 10);
 
   // Flag if numa should be initialized.
   bool skip_init_numa;
-  auto skip_init_opt = app.add_flag(
-      "--no-numa", skip_init_numa,
-      "Set this flag to no initialize numa for using, e.g., numactl")
-      ->default_val(false);
+  auto skip_init_opt =
+      app.add_flag("--no-numa", skip_init_numa, "Set this flag to no initialize numa for using, e.g., numactl")
+          ->default_val(false);
 
   // Path to PMem directory
   std::filesystem::path pmem_directory;
@@ -79,7 +79,6 @@ int main(int argc, char** argv) {
   if (!skip_init_numa) {
     init_numa(pmem_directory, numa_nodes, use_dram);
   }
-
 
   // Run the actual benchmarks after parsing and validating them.
   spdlog::info("Running benchmarks on '{}' with config(s) from '{}'.", pmem_directory.string(), config_file.string());
