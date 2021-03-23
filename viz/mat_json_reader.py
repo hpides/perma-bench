@@ -64,7 +64,7 @@ class MatrixJsonReader:
                     # create entry for each key in config or duration field
                     else:
                         for l in k[1].items():
-                            if len(self.results[l[0]]) <= i:
+                            while len(self.results[l[0]]) <= i:
                                 self.results[l[0]].append(list())
                             self.results[l[0]][i].append(l[1])
 
