@@ -42,8 +42,8 @@ int main(int argc, char** argv) {
   // Flag if numa should be initialized.
   bool ignore_numa;
   auto ignore_numa_opt = app.add_flag("--no-numa", ignore_numa,
-                                    "Set this flag to ignore all NUMA related behavior for using, e.g., numactl")
-                           ->default_val(false);
+                                      "Set this flag to ignore all NUMA related behavior for using, e.g., numactl")
+                             ->default_val(false);
 
   // Path to PMem directory
   std::filesystem::path pmem_directory;
