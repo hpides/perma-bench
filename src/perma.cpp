@@ -3,7 +3,7 @@
 #include <CLI11.hpp>
 
 #include "benchmark_suite.hpp"
-#include "utils.hpp"
+#include "numa.hpp"
 
 using namespace perma;
 
@@ -32,11 +32,18 @@ int main(int argc, char** argv) {
   // Define NUMA nodes to pin to.
   // This takes a list of nodes, e.g., --numa=0,1
   std::vector<uint64_t> numa_nodes;
-  app.add_option<std::vector<uint64_t>>(
-         "--numa", numa_nodes,
-         "Comma separated list of NUMA nodes to pin to, e.g., --numa=0,1 (default: determined from PMem directory)")
-      ->delimiter(',')
-      ->expected(1, 10);
+  auto numa_opt =
+      app.add_option<std::vector<uint64_t>>(
+             "--numa", numa_nodes,
+             "Comma separated list of NUMA nodes to pin to, e.g., --numa=0,1 (default: determined from PMem directory)")
+          ->delimiter(',')
+          ->expected(1, 10);
+
+  // Flag if numa should be initialized.
+  bool ignore_numa;
+  auto ignore_numa_opt = app.add_flag("--no-numa", ignore_numa,
+                                      "Set this flag to ignore all NUMA related behavior for using, e.g., numactl")
+                             ->default_val(false);
 
   // Path to PMem directory
   std::filesystem::path pmem_directory;
@@ -54,6 +61,9 @@ int main(int argc, char** argv) {
   dram_flg->excludes(path_opt);
   // Do not allow dram flag to be set if path is set
   path_opt->excludes(dram_flg);
+  // Do not allow to skip initialization of numa and setting numa nodes
+  ignore_numa_opt->excludes(numa_opt);
+  numa_opt->excludes(ignore_numa_opt);
 
   try {
     app.parse(argc, argv);
@@ -66,7 +76,7 @@ int main(int argc, char** argv) {
   }
 
   // Make sure that the benchmarks are NUMA-aware. Setting this in the main thread will inherit to all child threads.
-  init_numa(pmem_directory, numa_nodes, use_dram);
+  init_numa(pmem_directory, numa_nodes, use_dram, ignore_numa);
 
   // Run the actual benchmarks after parsing and validating them.
   spdlog::info("Running benchmarks on '{}' with config(s) from '{}'.", pmem_directory.string(), config_file.string());

@@ -6,6 +6,8 @@
 #include <memory>
 #include <thread>
 
+#include "numa.hpp"
+
 namespace {
 
 #define CHECK_ARGUMENT(exp, txt) \
