@@ -57,7 +57,7 @@ std::vector<uint64_t> auto_detect_numa(const std::filesystem::path& pmem_dir, co
   for (int other_node = 0; other_node < num_numa_nodes; ++other_node) {
     const size_t numa_dist = numa_distance(numa_node, other_node);
     spdlog::trace("NUMA-Distance: {} -> {} = {}", numa_node, other_node, numa_dist);
-    if (numa_dist < 20) {
+    if (numa_dist < internal::NUMA_FAR_DISTANCE) {
       // This should cover all NUMA nodes that are close, i.e. self = 10, close = 11.
       allowed_numa_nodes.push_back(other_node);
     }
