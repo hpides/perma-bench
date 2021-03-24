@@ -14,6 +14,8 @@ namespace perma {
 
 namespace internal {
 
+static const size_t NUMA_FAR_DISTANCE = 20;
+
 static bool IGNORE_NUMA = false;
 
 }  // namespace internal
@@ -156,15 +158,13 @@ std::vector<uint64_t> get_far_nodes() {
     }
   }
 
-  bool found_far_node;
-
   std::vector<uint64_t> far_numa_nodes{};
   for (uint64_t possible_far_node : inv_numa_nodes) {
-    found_far_node = true;
+    bool found_far_node = true;
     // Check for each possible far NUMA node if it is far to every node that is set
     for (uint64_t set_node : set_numa_nodes) {
       const size_t numa_dist = numa_distance(possible_far_node, set_node);
-      if (numa_dist < 20) {
+      if (numa_dist < internal::NUMA_FAR_DISTANCE) {
         // This should cover all NUMA nodes that are close, i.e., bigger than self = 10 and close = 11.
         found_far_node = false;
         break;
