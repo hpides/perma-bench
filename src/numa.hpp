@@ -5,12 +5,6 @@
 
 namespace perma {
 
-namespace internal {
-
-static bool IGNORE_NUMA = false;
-
-}  // namespace internal
-
 void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t>& arg_nodes, bool is_dram,
                bool ignore_numa);
 
