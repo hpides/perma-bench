@@ -1,7 +1,6 @@
 #pragma once
 
 #include <hdr_histogram.h>
-#include <libpmem.h>
 #include <yaml-cpp/yaml.h>
 
 #include <filesystem>
@@ -50,6 +49,7 @@ struct BenchmarkConfig {
   // i.e., it must be set as a command line argument.
   std::string pmem_directory{};
   std::vector<std::string> matrix_args{};
+  bool is_pmem = true;
 
   // The values below here actually define the benchmark and are not just used for meta-information.
   uint64_t total_memory_range = 10'737'418'240;  // 10 GiB
@@ -174,7 +174,7 @@ class Benchmark {
   static void single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
                             std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config);
 
-  static char* create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& pmem_file);
+  static char* create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& data_file);
 
   static void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
 

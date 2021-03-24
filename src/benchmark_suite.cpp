@@ -60,8 +60,8 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
                                     const std::filesystem::path& result_directory) {
   std::vector<YAML::Node> configs = BenchmarkFactory::get_config_files(config_file);
   nlohmann::json results = nlohmann::json::array();
-  // Start single benchmarks
 
+  // Start single benchmarks
   std::vector<SingleBenchmark> single_benchmarks = BenchmarkFactory::create_single_benchmarks(pmem_directory, configs);
   spdlog::info("Found {} single benchmark{}.", single_benchmarks.size(), single_benchmarks.size() != 1 ? "s" : "");
   std::vector<ParallelBenchmark> parallel_benchmarks =

@@ -50,10 +50,10 @@ void ParallelBenchmark::set_up() {
 void ParallelBenchmark::tear_down(bool force) {
   for (size_t index = 0; index < pmem_data_.size(); index++) {
     if (pmem_data_[index] != nullptr) {
-      pmem_unmap(pmem_data_[index], configs_[index].total_memory_range);
+      munmap(pmem_data_[index], configs_[index].total_memory_range);
       pmem_data_[index] = nullptr;
     }
-    if (owns_pmem_files_[index] || force) {
+    if (configs_[index].is_pmem && (owns_pmem_files_[index] || force)) {
       std::filesystem::remove(pmem_files_[index]);
     }
   }

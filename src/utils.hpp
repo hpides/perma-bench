@@ -1,5 +1,9 @@
 #pragma once
 
+#include <asm-generic/mman-common.h>
+#include <asm-generic/mman.h>
+#include <sys/mman.h>
+
 #include <filesystem>
 #include <vector>
 
@@ -13,10 +17,15 @@ static constexpr size_t NUM_UTIL_THREADS = 4;                  // Should be a po
 static constexpr size_t PMEM_PAGE_SIZE = 2 * (1024ul * 1024);  // 2MiB persistent memory page size
 static constexpr size_t ONE_GB = 1024ul * 1024 * 1024;
 
+static int PMEM_MAP_FLAGS = MAP_SHARED_VALIDATE | MAP_SYNC;
+static int DRAM_MAP_FLAGS = MAP_SHARED | MAP_ANONYMOUS;
+
+void setPMEM_MAP_FLAGS(int flags);
+
 }  // namespace internal
 
-char* map_pmem_file(const std::filesystem::path& file, size_t expected_length);
-char* create_pmem_file(const std::filesystem::path& file, size_t length);
+char* map_file(const std::filesystem::path& file, bool is_dram, size_t expected_length);
+char* create_file(const std::filesystem::path& file, bool is_dram, size_t length);
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir);
 
@@ -32,10 +41,6 @@ double rand_val();
 
 void crash_exit();
 void print_segfault_error();
-
-void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t>& arg_nodes);
-void set_to_far_cpus();
-bool has_far_numa_nodes();
 
 std::string get_time_string();
 std::filesystem::path create_result_file(const std::filesystem::path& result_dir,

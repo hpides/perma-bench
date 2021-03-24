@@ -1,66 +1,58 @@
 #include "utils.hpp"
 
+#include <fcntl.h>
+#include <spdlog/spdlog.h>
+#include <unistd.h>
+
 #include <algorithm>
 #include <fstream>
 #include <random>
 #include <thread>
-#include <vector>
 
 #include "json.hpp"
-#include "libpmem.h"
 #include "read_write_ops.hpp"
-#include "spdlog/spdlog.h"
-
-#ifdef HAS_NUMA
-#include <numa.h>
-#include <numaif.h>
-#endif
 
 namespace perma {
 
-char* map_pmem_file(const std::filesystem::path& file, const size_t expected_length) {
-  int is_pmem;
-  size_t mapped_length;
-  void* pmem_addr = pmem_map_file(file.c_str(), 0, 0, 0, &mapped_length, &is_pmem);
-  if (pmem_addr == nullptr || (unsigned long)pmem_addr == 0xFFFFFFFFFFFFFFFF) {
+void internal::setPMEM_MAP_FLAGS(const int flags) { internal::PMEM_MAP_FLAGS = flags; }
+
+char* map_file(const std::filesystem::path& file, const bool is_dram, size_t expected_length) {
+  uint64_t fd = -1;
+  int flags;
+  if (!is_dram) {
+    const mode_t mode = 0644;
+    fd = open(file.c_str(), O_RDWR | O_DIRECT, mode);
+    if (fd == -1) {
+      throw std::runtime_error{"Could not open file: " + file.string()};
+    }
+    flags = internal::PMEM_MAP_FLAGS;
+  } else {
+    flags = internal::DRAM_MAP_FLAGS;
+  }
+
+  void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, flags, fd, 0);
+  close(fd);
+  if (addr == MAP_FAILED) {
     throw std::runtime_error{"Could not map file: " + file.string()};
   }
 
-  if (mapped_length != expected_length) {
-    throw std::runtime_error("Existing pmem data file has wrong size.");
-  }
-
-  if (!is_pmem) {
-    spdlog::warn("File {} is not in persistent memory!", file.string());
-  }
-
-  return static_cast<char*>(pmem_addr);
+  return static_cast<char*>(addr);
 }
 
-char* create_pmem_file(const std::filesystem::path& file, const size_t length) {
-  const std::filesystem::path base_dir = file.parent_path();
-  if (!std::filesystem::exists(base_dir)) {
-    if (!std::filesystem::create_directories(base_dir)) {
-      throw std::runtime_error{"Could not create dir: " + base_dir.string()};
+char* create_file(const std::filesystem::path& file, const bool is_dram, size_t length) {
+  if (!is_dram) {
+    const std::filesystem::path base_dir = file.parent_path();
+    if (!std::filesystem::exists(base_dir)) {
+      if (!std::filesystem::create_directories(base_dir)) {
+        throw std::runtime_error{"Could not create dir: " + base_dir.string()};
+      }
     }
-  }
 
-  int is_pmem;
-  size_t mapped_length;
-  void* pmem_addr = pmem_map_file(file.c_str(), length, PMEM_FILE_CREATE, 0644, &mapped_length, &is_pmem);
-  if (pmem_addr == nullptr || (unsigned long)pmem_addr == 0xFFFFFFFFFFFFFFFF) {
-    throw std::runtime_error{"Could not create file: " + file.string() + " (error: " + std::strerror(errno) + ")"};
+    std::ofstream temp_stream{file};
+    temp_stream.close();
+    std::filesystem::resize_file(file, length);
   }
-
-  if (!is_pmem) {
-    spdlog::warn("File {} is not in persistent memory!", file.string());
-  }
-
-  if (length != mapped_length) {
-    throw std::runtime_error{"Mapped size different than specified size!"};
-  }
-
-  return static_cast<char*>(pmem_addr);
+  return map_file(file, is_dram, length);
 }
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir) {
@@ -191,150 +183,6 @@ double rand_val() {
 void crash_exit() {
   spdlog::error("Terminating due to a critical error. See logs above for more details.");
   exit(1);
-}
-
-void log_numa_nodes(const std::vector<uint64_t>& nodes) {
-  const std::string used_nodes_str = std::accumulate(
-      nodes.begin(), nodes.end(), std::string(),
-      [](const auto& a, const auto b) -> std::string { return a + (a.length() > 0 ? ", " : "") + std::to_string(b); });
-  spdlog::info("Setting NUMA-affinity to node{}: {}", nodes.size() > 1 ? "s" : "", used_nodes_str);
-}
-
-std::vector<uint64_t> auto_detect_numa(const std::filesystem::path& pmem_dir, const size_t num_numa_nodes) {
-#ifndef HAS_NUMA
-  spdlog::critical("Cannot detect numa nodes without NUMA support.");
-  crash_exit();
-#else
-  const std::filesystem::path temp_file = generate_random_file_name(pmem_dir);
-  // Create random 2 MiB file
-  const size_t temp_size = 2u * (1024u * 1024u);
-  char* pmem_data = create_pmem_file(temp_file, temp_size);
-  rw_ops::write_data(pmem_data, pmem_data + temp_size);
-
-  int numa_node = -1;
-  get_mempolicy(&numa_node, NULL, 0, (void*)pmem_data, MPOL_F_NODE | MPOL_F_ADDR);
-  pmem_unmap(pmem_data, temp_size);
-  std::filesystem::remove(temp_file);
-
-  if (numa_node < 0 || numa_node > num_numa_nodes) {
-    spdlog::warn("Could not determine NUMA node. Running without NUMA-awareness.");
-    return {};
-  }
-
-  spdlog::info("Detected memory on NUMA node: {}", numa_node);
-
-  std::vector<uint64_t> allowed_numa_nodes{};
-  for (int other_node = 0; other_node < num_numa_nodes; ++other_node) {
-    const size_t numa_dist = numa_distance(numa_node, other_node);
-    spdlog::trace("NUMA-Distance: {} -> {} = {}", numa_node, other_node, numa_dist);
-    if (numa_dist < 20) {
-      // This should cover all NUMA nodes that are close, i.e. self = 10, close = 11.
-      allowed_numa_nodes.push_back(other_node);
-    }
-  }
-
-  if (allowed_numa_nodes.empty()) {
-    // Distance info did not work
-    allowed_numa_nodes.push_back(numa_node);
-  }
-
-  return allowed_numa_nodes;
-#endif
-}
-
-void set_numa_nodes(const std::vector<uint64_t>& nodes, const size_t num_numa_nodes) {
-#ifndef HAS_NUMA
-  spdlog::critical("Cannot set numa nodes without NUMA support.");
-  crash_exit();
-#else
-  bitmask* numa_nodes = numa_bitmask_alloc(num_numa_nodes);
-  for (uint64_t node : nodes) {
-    if (node >= num_numa_nodes) {
-      spdlog::critical("Given numa node too large! (given: {}, max: {})", node, num_numa_nodes - 1);
-      crash_exit();
-    }
-    numa_bitmask_setbit(numa_nodes, node);
-  }
-
-  numa_run_on_node_mask(numa_nodes);
-  numa_free_nodemask(numa_nodes);
-#endif
-}
-
-void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t>& arg_nodes) {
-#ifndef HAS_NUMA
-  if (!arg_nodes.empty()) {
-    spdlog::critical("Cannot explicitly set numa nodes without NUMA support.");
-    crash_exit();
-  }
-
-  // Don't do anything, as we don't have NUMA support.
-  spdlog::warn("Running without NUMA-awareness.");
-  return;
-#else
-  if (numa_available() < 0) {
-    throw std::runtime_error("NUMA supported but could not be found!");
-  }
-
-  const size_t num_numa_nodes = numa_num_configured_nodes();
-  spdlog::info("Number of NUMA nodes in system: {}", num_numa_nodes);
-
-  if (!arg_nodes.empty()) {
-    // User specified numa nodes via the command line. No need to auto-detect.
-    if (num_numa_nodes < arg_nodes.size()) {
-      spdlog::critical("More numa nodes specified than detected on server.");
-      crash_exit();
-    }
-    spdlog::info("Setting NUMA nodes according to command line arguments.");
-    log_numa_nodes(arg_nodes);
-    return set_numa_nodes(arg_nodes, num_numa_nodes);
-  }
-
-  if (num_numa_nodes < 2) {
-    // Do nothing, as there isn't any affinity to be set.
-    spdlog::info("Not setting NUMA-awareness with {} node(s).", num_numa_nodes);
-    return;
-  }
-
-  const std::vector<uint64_t> detected_nodes = auto_detect_numa(pmem_dir, num_numa_nodes);
-  log_numa_nodes(detected_nodes);
-  return set_numa_nodes(detected_nodes, num_numa_nodes);
-#endif
-}
-
-std::vector<uint64_t> get_far_nodes() {
-#ifndef HAS_NUMA
-  throw std::runtime_error("Running far numa pattern benchmark without NUMA-awareness.");
-#else
-  const size_t num_numa_nodes = numa_num_configured_nodes();
-  bitmask* init_node_mask = numa_get_run_node_mask();
-
-  std::vector<uint64_t> far_numa_nodes{};
-  for (uint64_t numa_node = 0; numa_node < num_numa_nodes; numa_node++) {
-    // Set numa node if not set in initial near node mask
-    if (!numa_bitmask_isbitset(init_node_mask, numa_node)) {
-      spdlog::trace("Far NUMA node {} set", numa_node);
-      far_numa_nodes.push_back(numa_node);
-    }
-  }
-  return far_numa_nodes;
-#endif
-}
-
-void set_to_far_cpus() {
-#ifndef HAS_NUMA
-  throw std::runtime_error("Running far numa pattern benchmark without NUMA-awareness.");
-#else
-  return set_numa_nodes(get_far_nodes(), numa_num_configured_nodes());
-#endif
-}
-
-bool has_far_numa_nodes() {
-#ifndef HAS_NUMA
-  return false;
-#else
-  return !get_far_nodes().empty();
-#endif
 }
 
 std::string get_time_string() {
