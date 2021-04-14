@@ -29,7 +29,7 @@ def dir_path(path):
 if __name__ == "__main__":
     # check if python is running inside virtualenv or inside venv
     if not (getattr(sys, 'real_prefix', None) or (getattr(sys, 'base_prefix', sys.prefix)) != sys.prefix):
-        sys.exit("Please run ./setup_viz.sh once to setup the visualization environment.")
+        sys.exit("Please run `source setup_viz.sh` once to setup the visualization environment.")
 
     # parse args + check for correctness and completeness of args
     parser = argparse.ArgumentParser()

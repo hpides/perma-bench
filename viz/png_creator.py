@@ -19,7 +19,7 @@ class PngCreator:
     def process_raw_jsons(self):
         # collect raw jsons of benchmarks
         raw_jsons = list()
-        for path in glob.glob(self.results_dir + "raw/*.json"):
+        for path in glob.glob(self.results_dir + "/raw/*.json"):
             raw_jsons.append(path)
 
         # create pngs
@@ -35,7 +35,7 @@ class PngCreator:
     def process_matrix_jsons(self):
         # collect jsons containing matrix arguments
         matrix_jsons = list()
-        for path in glob.glob(self.results_dir + "*.json"):
+        for path in glob.glob(self.results_dir + "/*.json"):
             matrix_jsons.append(path)
 
         if len(matrix_jsons) < 1:
@@ -72,7 +72,7 @@ class PngCreator:
 
                     # create pngs for matrix with two or three dimensions
                     elif 2 <= len(matrix_args) <= 3:
-                        perms = list(permutations(matrix_args, 2))
+                        perms = list(permutations(matrix_args, len(matrix_args)))
 
                         for perm in perms:
                             if perm[0] in plotter.reader.get_categorical_args():

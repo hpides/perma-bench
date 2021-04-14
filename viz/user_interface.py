@@ -91,7 +91,7 @@ def create_index_site(benchmark_names):
 def init(img_dir):
     # collect pngs of each benchmark
     benchmark_pngs = defaultdict(list)
-    for path in glob.glob(img_dir + "*.png"):
+    for path in glob.glob(img_dir + "/*.png"):
         png_name = os.path.basename(path)
         benchmark_name = png_name.split("-")[0]
         benchmark_pngs[benchmark_name].append(png_name)

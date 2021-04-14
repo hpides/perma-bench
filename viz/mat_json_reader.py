@@ -42,19 +42,19 @@ class MatrixJsonReader:
         self.arg_labels = dict()
         self.set_arg_labels()
 
-    """ 
+    """
         setter:
     """
 
     def set_benchmark_subfields(self, benchmarks):
         for i, bm in enumerate(benchmarks):
             for bm_block in bm:
-                for k in bm_block.items():
+                for key, fields in bm_block.items():
 
                     # create separate entries for bandwidth operations and values
-                    if k[0] == "bandwidth":
-                        bandwidth_op = list(k[1].keys())[0]
-                        bandwidth_value = list(k[1].values())[0]
+                    if key == "bandwidth":
+                        bandwidth_op = list(fields.keys())[0]
+                        bandwidth_value = list(fields.values())[0]
                         if len(self.results["bandwidth_ops"]) <= i:
                             self.results["bandwidth_ops"].append(list())
                             self.results["bandwidth_values"].append(list())
@@ -63,7 +63,7 @@ class MatrixJsonReader:
 
                     # create entry for each key in config or duration field
                     else:
-                        for l in k[1].items():
+                        for l in fields.items():
                             while len(self.results[l[0]]) <= i:
                                 self.results[l[0]].append(list())
                             self.results[l[0]][i].append(l[1])
@@ -79,7 +79,7 @@ class MatrixJsonReader:
 
             self.arg_labels[arg] = arg_label
 
-    """ 
+    """
         getter:
     """
 

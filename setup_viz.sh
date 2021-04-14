@@ -7,4 +7,6 @@ if [ ! -d "$DIR/viz/venv" ]; then
     python3 -m venv "$DIR/viz/venv"
     source "$DIR/viz/venv/bin/activate"
     pip3 install -r "$DIR/viz/requirements.txt"
+else
+    source "$DIR/viz/venv/bin/activate"
 fi
