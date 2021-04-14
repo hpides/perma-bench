@@ -62,6 +62,7 @@ if __name__ == "__main__":
     png_creator.process_matrix_jsons()
 
     # create user interface for pngs
+    print("Generating HTML pages")
     ui.init(img_dir)
-    print(f"The visualization is finished. The result PNG files are located in {img_dir} and can be viewed in a "
-          f"browser with \"<browser-name> {html_dir}/index.html\"")
+    print(f"\nThe visualization is finished. The result PNG files are located in {img_dir} and can be viewed in a "
+          f"browser with\n\t$ <browser-name> {html_dir}/index.html")

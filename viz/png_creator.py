@@ -42,6 +42,7 @@ class PngCreator:
             sys.exit(f"Visualization cannot be started until at least one JSON file is provided in {self.results_dir}.")
 
         for mat_json in matrix_jsons:
+            print(f"Parsing '{mat_json}'")
             plotter = MatrixJsonPlotter(self.img_dir, mat_json)
             bm_names = plotter.reader.get_bm_names()
             indices_to_skip = list()
@@ -61,6 +62,8 @@ class PngCreator:
 
                 # only execute visualization for benchmark if matrix arguments exist
                 if plotter.reader.get_result("matrix_args", bm_idx):
+                    bm_name = plotter.reader.get_result("bm_name", bm_idx)
+                    print(f"Generating plots for '{bm_name}'")
                     matrix_args = plotter.reader.get_result("matrix_args", bm_idx)
 
                     # prevent visualization of more than three matrix arguments
