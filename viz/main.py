@@ -41,7 +41,6 @@ if __name__ == "__main__":
     # get directory paths of html and img folder
     root_dir = os.path.abspath(os.getcwd())
     output_dir = os.path.abspath(args.output_dir)
-    # html_dir = os.path.join(root_dir, "viz/html")
     img_dir = os.path.join(output_dir, "img/")
 
     try:
