@@ -34,20 +34,28 @@ if __name__ == "__main__":
     # parse args + check for correctness and completeness of args
     parser = argparse.ArgumentParser()
     parser.add_argument("results_dir", type=dir_path, help="path to the results directory")
+    parser.add_argument("output_dir", help="path to the output directory")
     parser.add_argument("--delete", action="store_true", help="delete already existing PNG and HTML files")
     args = parser.parse_args()
 
     # get directory paths of html and img folder
     root_dir = os.path.abspath(os.getcwd())
-    html_dir = os.path.join(root_dir, "viz/html")
-    img_dir = os.path.join(os.path.abspath(args.results_dir), "img/")
+    output_dir = os.path.abspath(args.output_dir)
+    # html_dir = os.path.join(root_dir, "viz/html")
+    img_dir = os.path.join(output_dir, "img/")
+
+    try:
+        os.makedirs(output_dir)
+    except FileExistsError:
+        if os.listdir(output_dir):
+            sys.exit("Cannot write results to non-empty output directory.")
 
     # delete already existing png and html files
     if args.delete:
-        if os.path.exists(html_dir):
-            for file in os.listdir(html_dir):
+        if os.path.exists(output_dir):
+            for file in os.listdir(output_dir):
                 if file.endswith(".html"):
-                    os.remove(os.path.join(html_dir, file))
+                    os.remove(os.path.join(output_dir, file))
         if os.path.exists(img_dir):
             for png in os.listdir(img_dir):
                 os.remove(os.path.join(img_dir, png))
@@ -63,6 +71,6 @@ if __name__ == "__main__":
 
     # create user interface for pngs
     print("Generating HTML pages")
-    ui.init(img_dir)
+    ui.init(output_dir, img_dir)
     print(f"\nThe visualization is finished. The result PNG files are located in {img_dir} and can be viewed in a "
-          f"browser with\n\t$ <browser-name> {html_dir}/index.html")
+          f"browser with\n\t$ <browser-name> {output_dir}/index.html")
