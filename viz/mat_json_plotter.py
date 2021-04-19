@@ -116,13 +116,13 @@ class MatrixJsonPlotter:
             axes = [axes]
 
         x_pos = np.arange(num_categories)
-        bar_width = 0.25
 
         for i, title_val in enumerate(plot_titles):
             ax = axes[i]
             y_vals = y_values_per_legend_category[title_val]
+            bar_width = 0.8 / len(y_vals)
             for offset, cat in enumerate(y_vals.keys()):
-                rects = ax.bar(x_pos + offset * bar_width, y_vals[cat], bar_width, label=cat)
+                rects = ax.bar(x_pos + (offset * bar_width), y_vals[cat], bar_width, label=cat)
 
                 # draw cross if y-value is null
                 for rect in rects:
