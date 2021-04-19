@@ -1,10 +1,14 @@
-import os
-import glob
-import dominate
-from dominate import tags
-from collections import defaultdict
+"""
+    This module creates HTML pages for each benchmark with index.html as an entry point to the user interface.
+"""
 
+import dominate
+import glob
+import os
 import raw_json_reader as raw_reader
+
+from collections import defaultdict
+from dominate import tags
 
 
 def create_benchmark_sites(img_dir, benchmark_pngs):
@@ -33,9 +37,9 @@ def create_benchmark_sites(img_dir, benchmark_pngs):
 
                 with tags.table().add(tags.tbody()):
                     for config in raw_reader.get_raw_configs(bp[0]).items():
-                        l = tags.tr()
-                        l.add(tags.td(config[0]))
-                        l.add(tags.td(config[1]))
+                        row = tags.tr()
+                        row.add(tags.td(config[0]))
+                        row.add(tags.td(config[1]))
 
             # add pngs and matrix argument permutations (for non-raw results)
             tags.h4("Benchmark Results")
@@ -87,7 +91,7 @@ def create_index_site(benchmark_names):
 def init(img_dir):
     # collect pngs of each benchmark
     benchmark_pngs = defaultdict(list)
-    for path in glob.glob(img_dir + "*.png"):
+    for path in glob.glob(img_dir + "/*.png"):
         png_name = os.path.basename(path)
         benchmark_name = png_name.split("-")[0]
         benchmark_pngs[benchmark_name].append(png_name)

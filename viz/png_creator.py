@@ -8,11 +8,15 @@ from raw_json_plotter import RawJsonPlotter
 
 
 class PngCreator:
+    """
+        This class calls the methods of the plotter classes, according go the given JSON.
+    """
+
     def __init__(self, results_dir, img_dir):
         self.results_dir = results_dir
         self.img_dir = img_dir
 
-    def create_pngs_for_raw_jsons(self):
+    def process_raw_jsons(self):
         # collect raw jsons of benchmarks
         raw_jsons = list()
         for path in glob.glob(self.results_dir + "/raw/*.json"):
@@ -28,7 +32,7 @@ class PngCreator:
                 else:
                     plotter.latency_of_same_thread()
 
-    def create_pngs_for_matrix_json(self):
+    def process_matrix_jsons(self):
         # collect jsons containing matrix arguments
         matrix_jsons = list()
         for path in glob.glob(self.results_dir + "/*.json"):
@@ -38,6 +42,7 @@ class PngCreator:
             sys.exit(f"Visualization cannot be started until at least one JSON file is provided in {self.results_dir}.")
 
         for mat_json in matrix_jsons:
+            print(f"Parsing '{mat_json}'")
             plotter = MatrixJsonPlotter(self.img_dir, mat_json)
             bm_names = plotter.reader.get_bm_names()
             indices_to_skip = list()
@@ -52,11 +57,13 @@ class PngCreator:
                 if bm_names.count(bm_name) > 1:
                     warnings.warn(f"Benchmark names have to be unique. Since this does not apply to \"{bm_name}\", no "
                                   f"visualization was generated for this benchmark.")
-                    [indices_to_skip.append(idx) for idx, name in enumerate(bm_names) if name == bm_name]
+                    [indices_to_skip.append(idx+bm_idx) for idx, name in enumerate(bm_names[bm_idx:]) if name == bm_name]
                     continue
 
                 # only execute visualization for benchmark if matrix arguments exist
                 if plotter.reader.get_result("matrix_args", bm_idx):
+                    bm_name = plotter.reader.get_result("bm_name", bm_idx)
+                    print(f"Generating plots for '{bm_name}'")
                     matrix_args = plotter.reader.get_result("matrix_args", bm_idx)
 
                     # prevent visualization of more than three matrix arguments
@@ -68,7 +75,7 @@ class PngCreator:
 
                     # create pngs for matrix with two or three dimensions
                     elif 2 <= len(matrix_args) <= 3:
-                        perms = list(permutations(matrix_args, 2))
+                        perms = list(permutations(matrix_args, len(matrix_args)))
 
                         for perm in perms:
                             if perm[0] in plotter.reader.get_categorical_args():

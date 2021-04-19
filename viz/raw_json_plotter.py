@@ -1,14 +1,18 @@
 # TODO: bandwidth functions
 
 import matplotlib.pyplot as plt
-from itertools import repeat
 import numpy as np
-from collections import defaultdict
 
+from collections import defaultdict
+from itertools import repeat
 from raw_json_reader import RawJsonReader
 
 
 class RawJsonPlotter:
+    """
+        This class provides methods to create PNGs for benchmarks with raw result JSONs.
+    """
+
     def __init__(self, img_dir, path):
         self.img_dir = img_dir
         self.reader = RawJsonReader(path)
