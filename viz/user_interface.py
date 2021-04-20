@@ -5,26 +5,33 @@
 import dominate
 import glob
 import os
+import shutil
 import raw_json_reader as raw_reader
 
 from collections import defaultdict
 from dominate import tags
 
 
-def create_benchmark_sites(img_dir, benchmark_pngs):
-    for bp in benchmark_pngs.items():
-        doc = dominate.document(title="PerMA-Bench Results")
+def new_html_page(benchmark_pngs):
+    doc = dominate.document(title="PerMA-Bench Results")
 
-        with doc.head:
-            tags.link(rel="stylesheet", href="style.css")
+    with doc.head:
+        tags.link(rel="stylesheet", href="style.css")
+
+    with doc.body:
+        # add fixed sidebar
+        with tags.div(cls="sidenav"):
+            tags.a("Home", href="index.html", cls="big")
+            for bm_name in sorted(benchmark_pngs.keys()):
+                tags.a(bm_name, href=bm_name + ".html")
+
+    return doc
+
+def create_benchmark_pages(output_dir, img_dir, benchmark_pngs):
+    for bp in benchmark_pngs.items():
+        doc = new_html_page(benchmark_pngs)
 
         with doc.body:
-            # add fixed sidebar
-            with tags.div(cls="sidenav"):
-                tags.a("Home", href="index.html", cls="big")
-                for bm_name in benchmark_pngs.keys():
-                    tags.a(bm_name, href=bm_name + ".html")
-
             # add benchmark name as heading
             tags.h1(bp[0])
 
@@ -64,31 +71,23 @@ def create_benchmark_sites(img_dir, benchmark_pngs):
 
                 tags.div(tags.img(src=img_dir + png))
 
-        with open("viz/html/" + bp[0] + ".html", "w") as file:
+        file_name = bp[0] + ".html"
+        with open(os.path.join(output_dir, file_name), "w") as file:
             file.write(doc.render())
 
 
-def create_index_site(benchmark_names):
-    doc = dominate.document(title="PerMA-Bench Results")
-
-    with doc.head:
-        tags.link(rel="stylesheet", href="style.css")
+def create_index_page(output_dir, benchmark_pngs):
+    doc = new_html_page(benchmark_pngs)
 
     with doc.body:
-        # add fixed sidebar
-        with tags.div(cls="sidenav"):
-            tags.a("Home", href="index.html", cls="big")
-            for bm_name in benchmark_names:
-                tags.a(bm_name, href=bm_name + ".html")
-
         tags.h1("PerMA-Bench Results")
         tags.p("Put description text here.")
 
-    with open("viz/html/index.html", "w") as file:
+    with open(os.path.join(output_dir, "index.html"), "w") as file:
         file.write(doc.render())
 
 
-def init(img_dir):
+def init(output_dir, img_dir):
     # collect pngs of each benchmark
     benchmark_pngs = defaultdict(list)
     for path in glob.glob(img_dir + "/*.png"):
@@ -96,8 +95,10 @@ def init(img_dir):
         benchmark_name = png_name.split("-")[0]
         benchmark_pngs[benchmark_name].append(png_name)
 
-    # sort pngs of each benchmark for matrix argument extraction in create_benchmark_sites()
+    # sort pngs of each benchmark for matrix argument extraction in create_benchmark_pages()
     benchmark_pngs = {bm: sorted(benchmark_pngs[bm]) for bm in benchmark_pngs.keys()}
 
-    create_index_site(benchmark_pngs.keys())
-    create_benchmark_sites(img_dir, benchmark_pngs)
+    shutil.copyfile("viz/html/style.css", os.path.join(output_dir, "style.css"))
+
+    create_index_page(output_dir, benchmark_pngs)
+    create_benchmark_pages(output_dir, img_dir, benchmark_pngs)

@@ -97,8 +97,11 @@ class MatrixJsonPlotter:
         max_num_indices = max(len(v) for v in indices_per_legend_category.values())
         bm_results = self.reader.get_result(y_value, bm_idx)
 
-        # create lexicographically ordered list of x-categories for correct y-value retrieval and x-ticks later
-        x_categories = sorted(set(x_values))
+        # get unique x categories but keep their order as given in result list
+        x_categories = []
+        for x in x_values:
+            if x not in x_categories:
+                x_categories.append(x)
         num_categories = len(x_categories)
 
         # collect y-values for each legend category
