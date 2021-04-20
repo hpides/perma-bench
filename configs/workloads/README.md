@@ -1,8 +1,8 @@
 # Workloads
 Workload configs that depict typical database access patterns.
 ## Index Look
-The [index lookup](index_lookup.yaml) benchmark depicts accesses to a tree-structured index.
-It consists of two benchmarks: the first is a pure index lookup, i.e., small random reads, and the second is a mixed workload - an update - that runs small random read and write operations.
+The [index](indexing.yaml) benchmark represents accesses to a hash- or tree-based index structure.
+It consists of two benchmarks: the first is a pure index lookup, i.e., small random reads, and the second is a mixed workload that runs small random read and write (i.e., update) operations.
 ## Intermediate Results
 The [intermediate results](intermediate_result.yaml) benchmark represents the usage of persistent memory for intermediate results of joins, aggregations, etc.
 The access is similar to hash map inserts, i.e., small random writes, as hash maps are a widely used data structure for joins and aggregations.
