@@ -26,6 +26,9 @@ def dir_path(path):
     else:
         raise argparse.ArgumentTypeError(f"The path to the results directory is not valid.")
 
+def valid_path(path):
+    return path if os.path.isfile(path) else dir_path(path)
+
 
 if __name__ == "__main__":
     # check if python is running inside virtualenv or inside venv
@@ -34,7 +37,7 @@ if __name__ == "__main__":
 
     # parse args + check for correctness and completeness of args
     parser = argparse.ArgumentParser()
-    parser.add_argument("results_dir", type=dir_path, help="path to the results directory")
+    parser.add_argument("results", type=valid_path, help="path to the results directory")
     parser.add_argument("output_dir", help="path to the output directory")
     parser.add_argument("--delete", action="store_true", help="delete already existing PNG and HTML files")
     args = parser.parse_args()
@@ -62,7 +65,7 @@ if __name__ == "__main__":
         os.makedirs(img_dir)
 
     # create pngs
-    png_creator = PngCreator(args.results_dir, img_dir)
+    png_creator = PngCreator(args.results, img_dir)
     png_creator.process_raw_jsons()
     png_creator.process_matrix_jsons()
 

@@ -1,6 +1,7 @@
 import glob
 import sys
 import warnings
+import os
 
 from itertools import permutations
 from mat_json_plotter import MatrixJsonPlotter
@@ -12,14 +13,15 @@ class PngCreator:
         This class calls the methods of the plotter classes, according go the given JSON.
     """
 
-    def __init__(self, results_dir, img_dir):
-        self.results_dir = results_dir
+    def __init__(self, results, img_dir):
+        self.results = results
         self.img_dir = img_dir
 
     def process_raw_jsons(self):
         # collect raw jsons of benchmarks
         raw_jsons = list()
-        for path in glob.glob(self.results_dir + "/raw/*.json"):
+        # TODO: handle single file raw result
+        for path in glob.glob(self.results + "/raw/*.json"):
             raw_jsons.append(path)
 
         # create pngs
@@ -34,12 +36,13 @@ class PngCreator:
 
     def process_matrix_jsons(self):
         # collect jsons containing matrix arguments
-        matrix_jsons = list()
-        for path in glob.glob(self.results_dir + "/*.json"):
-            matrix_jsons.append(path)
+        if os.path.isfile(self.results) and self.results.endswith(".json"):
+            matrix_jsons = [self.results]
+        else:
+            matrix_jsons = [path for path in glob.glob(self.results + "/*.json")]
 
         if len(matrix_jsons) < 1:
-            sys.exit(f"Visualization cannot be started until at least one JSON file is provided in {self.results_dir}.")
+            sys.exit(f"Visualization cannot be started until at least one JSON file is provided in {self.results}.")
 
         for mat_json in matrix_jsons:
             print(f"Parsing '{mat_json}'")
