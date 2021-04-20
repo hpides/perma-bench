@@ -2,7 +2,7 @@
 index_lookup:
   matrix:
     number_partitions: [ 1, 4, 16 ]
-    access_size: [ 64, 256, 1024 ] # TODO: check size
+    access_size: [ 64, 256, 1024 ]
     random_distribution: [ uniform, zipf ]
 
   args:
@@ -23,4 +23,4 @@ index_update:
     number_threads: 16
     number_operations: 50000000
     exec_mode: random
-    write_ratio: 0.1
+    write_ratio: 0.2
