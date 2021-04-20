@@ -59,8 +59,7 @@ struct BenchmarkConfig {
   internal::NumaPattern numa_pattern{internal::NumaPattern::Near};
 
   internal::RandomDistribution random_distribution{internal::RandomDistribution::Uniform};
-  // TODO: re-evaluate this value for real world access patterns
-  double zipf_alpha = 0.99;
+  double zipf_alpha = 0.9;
 
   internal::DataInstruction data_instruction{internal::DataInstruction::SIMD};
   internal::PersistInstruction persist_instruction{internal::PersistInstruction::NoCache};
