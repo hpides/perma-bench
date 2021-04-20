@@ -2,7 +2,7 @@ intermediate_result:
   matrix:
     number_threads: [ 1, 2, 4, 8, 16, 32 ]
     total_memory_range: [ 10737418240, 1073741824, 104857600 ]  # [10 GiB, 1 GiB, 100 MiB]
-    persist_instruction: [ nocache, none ]
+    persist_instruction: [ cache, nocache, none ]
 
   args:
     exec_mode: random
