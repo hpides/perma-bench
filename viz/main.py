@@ -8,6 +8,7 @@ displays them on an user interface.
 import argparse
 import os
 import sys
+import shutil
 import user_interface as ui
 
 from png_creator import PngCreator
@@ -43,24 +44,21 @@ if __name__ == "__main__":
     output_dir = os.path.abspath(args.output_dir)
     img_dir = os.path.join(output_dir, "img/")
 
+    # delete already existing png and html files
+    if args.delete:
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+        if os.path.exists(img_dir):
+            shutil.rmtree(img_dir)
+
+    # create outputs directories
     try:
         os.makedirs(output_dir)
     except FileExistsError:
         if os.listdir(output_dir):
             sys.exit("Cannot write results to non-empty output directory.")
 
-    # delete already existing png and html files
-    if args.delete:
-        if os.path.exists(output_dir):
-            for file in os.listdir(output_dir):
-                if file.endswith(".html"):
-                    os.remove(os.path.join(output_dir, file))
-        if os.path.exists(img_dir):
-            for png in os.listdir(img_dir):
-                os.remove(os.path.join(img_dir, png))
-
-    # create img folder
-    if not os.path.isdir(img_dir):
+    if not os.path.exists(img_dir):
         os.makedirs(img_dir)
 
     # create pngs
