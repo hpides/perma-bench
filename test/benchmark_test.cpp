@@ -13,7 +13,7 @@ namespace perma {
 constexpr size_t TEST_FILE_SIZE = 1048576;  // 1 MiB
 
 // Duplicate this instead of using global constant so that we notice when it is changed.
-const size_t TEST_IO_OP_CHUNK_SIZE = 16 * 1024u;
+const size_t TEST_IO_OP_CHUNK_SIZE = 128 * 1024u;
 
 class BenchmarkTest : public ::testing::Test {
  protected:

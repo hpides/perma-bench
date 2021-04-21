@@ -7,3 +7,4 @@ test_seq:
     pause_frequency: 1024
     pause_length_micros: 10
     write_ratio: 0
+    min_io_chunk_size: 16384

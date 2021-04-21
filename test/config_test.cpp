@@ -84,6 +84,7 @@ TEST_F(ConfigTest, SingleDecodeSequential) {
   EXPECT_EQ(bm_config.number_threads, 2);
 
   EXPECT_EQ(bm_config.write_ratio, 0);
+  EXPECT_EQ(bm_config.min_io_chunk_size, 16 * 1024);
 
   EXPECT_EQ(bm_config.number_operations, bm_config_default.number_operations);
   EXPECT_EQ(bm_config.random_distribution, bm_config_default.random_distribution);
@@ -121,6 +122,7 @@ TEST_F(ConfigTest, DecodeRandom) {
   EXPECT_EQ(bm_config.number_threads, bm_config_default.number_threads);
   EXPECT_EQ(bm_config.prefault_file, bm_config_default.prefault_file);
   EXPECT_EQ(bm_config.numa_pattern, bm_config_default.numa_pattern);
+  EXPECT_EQ(bm_config.min_io_chunk_size, bm_config_default.min_io_chunk_size);
 }
 
 TEST_F(ConfigTest, ParallelDecodeSequentialRandom) {
@@ -176,6 +178,7 @@ TEST_F(ConfigTest, ParallelDecodeSequentialRandom) {
   EXPECT_EQ(bm_config.pause_frequency, bm_config_default.pause_frequency);
   EXPECT_EQ(bm_config.pause_length_micros, bm_config_default.pause_length_micros);
   EXPECT_EQ(bm_config.numa_pattern, bm_config_default.numa_pattern);
+  EXPECT_EQ(bm_config.min_io_chunk_size, bm_config_default.min_io_chunk_size);
 }
 
 TEST_F(ConfigTest, DecodeMatrix) {
@@ -218,6 +221,7 @@ TEST_F(ConfigTest, DecodeMatrix) {
     EXPECT_EQ(config.pause_length_micros, bm_config_default.pause_length_micros);
     EXPECT_EQ(config.prefault_file, bm_config_default.prefault_file);
     EXPECT_EQ(config.numa_pattern, bm_config_default.numa_pattern);
+    EXPECT_EQ(config.min_io_chunk_size, bm_config_default.min_io_chunk_size);
   }
 }
 
@@ -263,6 +267,7 @@ TEST_F(ConfigTest, ParallelDecodeMatrix) {
     EXPECT_EQ(config_one.pause_frequency, bm_config_default.pause_frequency);
     EXPECT_EQ(config_one.pause_length_micros, bm_config_default.pause_length_micros);
     EXPECT_EQ(config_one.numa_pattern, bm_config_default.numa_pattern);
+    EXPECT_EQ(config_one.min_io_chunk_size, bm_config_default.min_io_chunk_size);
 
     EXPECT_EQ(config_two.total_memory_range, 10737418240);
     EXPECT_EQ(config_two.exec_mode, internal::Mode::Sequential);
@@ -278,6 +283,7 @@ TEST_F(ConfigTest, ParallelDecodeMatrix) {
     EXPECT_EQ(config_two.pause_length_micros, bm_config_default.pause_length_micros);
     EXPECT_EQ(config_two.prefault_file, bm_config_default.prefault_file);
     EXPECT_EQ(config_two.numa_pattern, bm_config_default.numa_pattern);
+    EXPECT_EQ(config_two.min_io_chunk_size, bm_config_default.min_io_chunk_size);
   }
 }
 
