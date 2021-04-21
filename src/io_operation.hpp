@@ -19,8 +19,6 @@ enum OpType : uint8_t { Read, Write, Pause };
 
 enum NumaPattern : uint8_t { Near, Far };
 
-constexpr size_t MIN_IO_CHUNK_SIZE = 16 * 1024u;
-
 }  // namespace internal
 
 class IoOperation {
@@ -49,25 +47,26 @@ class IoOperation {
   inline bool is_write() const { return op_type_ == internal::Write; }
   inline bool is_pause() const { return op_type_ == internal::Pause; }
 
-  static IoOperation ReadOp(std::vector<char*>&& op_addresses, uint32_t access_size,
+  static IoOperation ReadOp(const std::vector<char*>& op_addresses, uint32_t access_size,
                             internal::DataInstruction data_instruction) {
-    return IoOperation{std::move(op_addresses), access_size, internal::Read, data_instruction, internal::None};
+    return IoOperation{op_addresses, access_size, internal::Read, data_instruction, internal::None};
   }
 
-  static IoOperation WriteOp(std::vector<char*>&& op_addresses, uint32_t access_size,
+  static IoOperation WriteOp(const std::vector<char*>& op_addresses, uint32_t access_size,
                              internal::DataInstruction data_instruction,
                              internal::PersistInstruction persist_instruction) {
-    return IoOperation{std::move(op_addresses), access_size, internal::Write, data_instruction, persist_instruction};
+    return IoOperation{op_addresses, access_size, internal::Write, data_instruction, persist_instruction};
   }
 
   static IoOperation PauseOp(uint32_t duration) {
-    return IoOperation{{}, duration, internal::Pause, internal::SIMD, internal::None};
+    static std::vector<char*> op_addresses{};
+    return IoOperation{op_addresses, duration, internal::Pause, internal::SIMD, internal::None};
   }
 
  private:
-  IoOperation(std::vector<char*>&& op_addresses, uint32_t access_size, internal::OpType op_type,
+  IoOperation(const std::vector<char*>& op_addresses, uint32_t access_size, internal::OpType op_type,
               internal::DataInstruction data_instruction, internal::PersistInstruction persist_instruction)
-      : op_addresses_{std::move(op_addresses)},
+      : op_addresses_{op_addresses},
         access_size_{access_size},
         op_type_{op_type},
         data_instruction_{data_instruction},
@@ -188,7 +187,7 @@ class IoOperation {
   }
 
   // The order here is important. At the moment, we can fit this into 16 Byte. Reorder with care.
-  const std::vector<char*> op_addresses_;
+  const std::vector<char*>& op_addresses_;
   union {
     const uint32_t access_size_;
     const uint32_t duration_;

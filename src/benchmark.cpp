@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <memory>
 #include <thread>
+#include <utility>
 
 #include "numa.hpp"
 
@@ -221,12 +222,11 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
   std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
 
   const size_t ops_per_chunk =
-      config.access_size < internal::MIN_IO_CHUNK_SIZE ? internal::MIN_IO_CHUNK_SIZE / config.access_size : 1;
+      config.access_size < config.min_io_chunk_size ? config.min_io_chunk_size / config.access_size : 1;
   const size_t num_chunks = thread_config.num_ops / ops_per_chunk;
 
+  std::vector<char*> op_addresses{ops_per_chunk};
   for (uint32_t io_chunk = 0; io_chunk < num_chunks; ++io_chunk) {
-    std::vector<char*> op_addresses{ops_per_chunk};
-
     for (size_t io_op = 0; io_op < ops_per_chunk; ++io_op) {
       switch (config.exec_mode) {
         case internal::Mode::Random: {
@@ -253,10 +253,9 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
       }
     }
 
-    IoOperation operation =
-        is_read ? IoOperation::ReadOp(std::move(op_addresses), config.access_size, config.data_instruction)
-                : IoOperation::WriteOp(std::move(op_addresses), config.access_size, config.data_instruction,
-                                       config.persist_instruction);
+    IoOperation operation = is_read ? IoOperation::ReadOp(op_addresses, config.access_size, config.data_instruction)
+                                    : IoOperation::WriteOp(op_addresses, config.access_size, config.data_instruction,
+                                                           config.persist_instruction);
 
     const auto start_ts = std::chrono::high_resolution_clock::now();
     operation.run();
@@ -290,6 +289,7 @@ nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm
   config["numa_pattern"] = get_enum_as_string(ConfigEnums::str_to_numa_pattern, bm_config.numa_pattern);
   config["data_instruction"] = get_enum_as_string(ConfigEnums::str_to_data_instruction, bm_config.data_instruction);
   config["prefault_file"] = bm_config.prefault_file;
+  config["min_io_chunk_size"] = bm_config.min_io_chunk_size;
 
   if (bm_config.pause_frequency > 0) {
     config["pause_length_micros"] = bm_config.pause_length_micros;
@@ -328,7 +328,7 @@ nlohmann::json Benchmark::get_json_config(uint8_t config_index) {
   return get_benchmark_config_as_json(configs_[config_index]);
 }
 
-BenchmarkResult::BenchmarkResult(const BenchmarkConfig& config) : config{config}, latency_hdr{nullptr} {
+BenchmarkResult::BenchmarkResult(BenchmarkConfig config) : config{std::move(config)}, latency_hdr{nullptr} {
   // Initialize HdrHistrogram
   // 100 seconds in nanoseconds as max value.
   hdr_init(1, 100000000000, 3, &latency_hdr);
@@ -361,8 +361,8 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
   const size_t num_ops = is_raw ? raw_measurements[0].size() : latencies[0].size();
   assert(num_ops > 0);
   const uint64_t data_size = config.access_size;
-  const uint64_t num_ops_per_chunk = std::max(internal::MIN_IO_CHUNK_SIZE / data_size, 1ul);
-  const uint64_t chunk_size = std::max(internal::MIN_IO_CHUNK_SIZE, data_size);
+  const uint64_t num_ops_per_chunk = std::max(config.min_io_chunk_size / data_size, 1ul);
+  const uint64_t chunk_size = std::max(config.min_io_chunk_size, data_size);
 
   for (uint16_t thread_num = 0; thread_num < config.number_threads; thread_num++) {
     const std::vector<internal::Measurement>& thread_measurements =
@@ -445,6 +445,7 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_if_present(node, "zipf_alpha", &bm_config.zipf_alpha);
     num_found += get_if_present(node, "raw_results", &bm_config.raw_results);
     num_found += get_if_present(node, "prefault_file", &bm_config.prefault_file);
+    num_found += get_if_present(node, "min_io_chunk_size", &bm_config.min_io_chunk_size);
     num_found += get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_mode, &bm_config.exec_mode);
     num_found += get_enum_if_present(node, "numa_pattern", ConfigEnums::str_to_numa_pattern, &bm_config.numa_pattern);
     num_found += get_enum_if_present(node, "random_distribution", ConfigEnums::str_to_random_distribution,
@@ -517,20 +518,19 @@ void BenchmarkConfig::validate() const {
 
   // Assumption: total memory needs to fit into N chunks exactly
   const bool is_seq_total_memory_chunkable =
-      exec_mode == internal::Random || (total_memory_range % internal::MIN_IO_CHUNK_SIZE) == 0;
+      exec_mode == internal::Random || (total_memory_range % min_io_chunk_size) == 0;
   CHECK_ARGUMENT(is_seq_total_memory_chunkable,
-                 "Total file size needs to be multiple of " + std::to_string(internal::MIN_IO_CHUNK_SIZE));
+                 "Total file size needs to be multiple of " + std::to_string(min_io_chunk_size));
 
   // Assumption: we chunk operations and we need enough data to fill at least one chunk
-  const bool is_total_memory_large_enough = (total_memory_range / number_threads) >= internal::MIN_IO_CHUNK_SIZE;
+  const bool is_total_memory_large_enough = (total_memory_range / number_threads) >= min_io_chunk_size;
   CHECK_ARGUMENT(is_total_memory_large_enough,
-                 "Each thread needs at least " + std::to_string(internal::MIN_IO_CHUNK_SIZE) + " memory.");
+                 "Each thread needs at least " + std::to_string(min_io_chunk_size) + " memory.");
 
-  const bool is_pause_freq_chunkable =
-      pause_frequency == 0 || pause_frequency >= (internal::MIN_IO_CHUNK_SIZE / access_size);
+  const bool is_pause_freq_chunkable = pause_frequency == 0 || pause_frequency >= (min_io_chunk_size / access_size);
   CHECK_ARGUMENT(is_pause_freq_chunkable, "Cannot insert pauses with single chunk of " +
-                                              std::to_string(internal::MIN_IO_CHUNK_SIZE / access_size) + " ops (" +
-                                              std::to_string(internal::MIN_IO_CHUNK_SIZE) + " Byte / " +
+                                              std::to_string(min_io_chunk_size / access_size) + " ops (" +
+                                              std::to_string(min_io_chunk_size) + " Byte / " +
                                               std::to_string(access_size) + " Byte) in this configuration.");
 
   const bool is_far_numa_node_available = numa_pattern == internal::NumaPattern::Near || has_far_numa_nodes();

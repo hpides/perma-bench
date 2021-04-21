@@ -17,8 +17,8 @@ namespace perma {
 
 namespace internal {
 
-static const size_t BYTE_IN_GIGABYTE = 1e9;
-static const size_t NANOSECONDS_IN_SECONDS = 1e9;
+static constexpr size_t BYTE_IN_GIGABYTE = 1e9;
+static constexpr size_t NANOSECONDS_IN_SECONDS = 1e9;
 
 struct Latency {
   Latency() : data{-1u} {}
@@ -77,6 +77,8 @@ struct BenchmarkConfig {
 
   bool prefault_file = true;
 
+  uint64_t min_io_chunk_size = 128 * 1024u;  // 128 KiB
+
   static BenchmarkConfig decode(YAML::Node& raw_config_data);
   void validate() const;
 };
@@ -105,7 +107,7 @@ struct ThreadRunConfig {
 };
 
 struct BenchmarkResult {
-  explicit BenchmarkResult(const BenchmarkConfig& config);
+  explicit BenchmarkResult(BenchmarkConfig config);
   ~BenchmarkResult();
 
   nlohmann::json get_result_as_json() const;
