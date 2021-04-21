@@ -26,6 +26,7 @@ def dir_path(path):
     else:
         raise argparse.ArgumentTypeError(f"The path to the results directory is not valid.")
 
+
 def valid_path(path):
     return path if os.path.isfile(path) else dir_path(path)
 
@@ -39,6 +40,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("results", type=valid_path, help="path to the results directory")
     parser.add_argument("output_dir", help="path to the output directory")
+    parser.add_argument("--zip", action="store_true", help="Create a .zip file of the specified output directory for "
+                                                           "easier download from server")
     parser.add_argument("--delete", action="store_true", help="delete already existing PNG and HTML files")
     args = parser.parse_args()
 
@@ -46,6 +49,7 @@ if __name__ == "__main__":
     root_dir = os.path.abspath(os.getcwd())
     output_dir = os.path.abspath(args.output_dir)
     img_dir = os.path.join(output_dir, "img/")
+    results = args.results
 
     # delete already existing png and html files
     if args.delete:
@@ -61,16 +65,29 @@ if __name__ == "__main__":
         if os.listdir(output_dir):
             sys.exit("Cannot write results to non-empty output directory.")
 
-    if not os.path.exists(img_dir):
-        os.makedirs(img_dir)
+    os.makedirs(img_dir, exist_ok=True)
+
+    output_json_dir = os.path.join(output_dir, "json")
+    if os.path.isfile(results):
+        os.makedirs(output_json_dir)
+        output_json_name = os.path.join(output_json_dir, os.path.basename(results))
+        shutil.copy(results, output_json_name)
+    else:
+        shutil.copytree(results, output_json_dir)
 
     # create pngs
-    png_creator = PngCreator(args.results, img_dir)
+    png_creator = PngCreator(results, img_dir)
     png_creator.process_raw_jsons()
     png_creator.process_matrix_jsons()
 
     # create user interface for pngs
     print("Generating HTML pages")
     ui.init(output_dir, img_dir)
-    print(f"\nThe visualization is finished. The result PNG files are located in {img_dir} and can be viewed in a "
-          f"browser with\n\t$ <browser-name> {output_dir}/index.html")
+
+    rel_output_dir = os.path.relpath(output_dir, root_dir)
+    if args.zip:
+        print(f"Zipping {rel_output_dir}")
+        shutil.make_archive(rel_output_dir, "zip", root_dir=os.getcwd(), base_dir=rel_output_dir)
+
+    print(f"\nThe visualization is finished.\nThe result PNG files are located in {img_dir} and can be viewed in a "
+          f"browser with\n\t$ <browser-name> {rel_output_dir}/index.html")
