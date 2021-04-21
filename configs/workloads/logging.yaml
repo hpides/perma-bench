@@ -2,8 +2,8 @@
 logging:
   matrix:
     number_threads: [ 1, 2, 4, 8, 16, 32 ]
-    access_size: [ 64, 128, 256, 512, 1024 ] # ~[168 mil ops, 84 mil ops, 42 mil ops, 21 mil ops, 10 mil ops]
-    # pause_frequency: [100000, 500000, 1000000] # TODO: discuss if needed
+    # ~[168 mil ops, 84 mil ops, 42 mil ops, 21 mil ops, 10 mil ops]
+    access_size: [ 64, 128, 256, 512, 1024 ]
     persist_instruction: [ nocache, cache ]
 
   args:
@@ -15,11 +15,12 @@ logging:
 logging_partition:
   matrix:
     number_partitions: [ 1, 2, 4, 8 ]
-    access_size: [ 64, 128, 256, 512, 1024 ] # ~[168 mil ops, 84 mil ops, 42 mil ops, 21 mil ops, 10 mil ops]
+    # [168 mil ops, 84 mil ops, 42 mil ops, 21 mil ops, 10 mil ops]
+    access_size: [ 64, 128, 256, 512, 1024 ]
     persist_instruction: [ nocache, cache ]
 
   args:
     total_memory_range: 10737418240  # 10 GiB
-    number_threads: 8 # TODO: check good value here
+    number_threads: 8
     exec_mode: sequential
     write_ratio: 1
