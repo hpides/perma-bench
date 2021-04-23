@@ -17,7 +17,8 @@ namespace perma {
 
 namespace internal {
 
-static constexpr size_t BYTE_IN_GIGABYTE = 1e9;
+// We assume 2^30 for GB and not 10^9
+static constexpr size_t BYTE_IN_GIGABYTE = 1024u * 1024 * 1024;
 static constexpr size_t NANOSECONDS_IN_SECONDS = 1e9;
 
 struct Latency {
