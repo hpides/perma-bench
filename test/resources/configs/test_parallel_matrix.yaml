@@ -4,7 +4,7 @@ parallel_test:
       matrix:
         access_size: [ 64, 256 ]
       args:
-        total_memory_range: 10737418240  # 10 GiB
+        total_memory_range: 10G  # 10 GiB
         number_threads: 16
         persist_instruction: nocache
         exec_mode: sequential
@@ -15,7 +15,7 @@ parallel_test:
         number_threads: [ 8 ,16 ]
       args:
         exec_mode: random
-        access_size: 4096
-        total_memory_range: 10737418240 # 10 GiB
-        number_operations: 10000000 # 10 GiB
+        access_size: 4K
+        total_memory_range: 10G
+        number_operations: 10000000
         write_ratio: 0
