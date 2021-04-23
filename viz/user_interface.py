@@ -69,7 +69,8 @@ def create_benchmark_pages(output_dir, img_dir, benchmark_pngs):
                         last_first_arg = first_arg
                         last_second_arg = second_arg
 
-                tags.div(tags.img(src=img_dir + png))
+                # Use relative img path here to allow copying of the output dir
+                tags.div(tags.img(src="img/" + png))
 
         file_name = bp[0] + ".html"
         with open(os.path.join(output_dir, file_name), "w") as file:
@@ -96,7 +97,7 @@ def init(output_dir, img_dir):
         benchmark_pngs[benchmark_name].append(png_name)
 
     # sort pngs of each benchmark for matrix argument extraction in create_benchmark_pages()
-    benchmark_pngs = {bm: sorted(benchmark_pngs[bm]) for bm in benchmark_pngs.keys()}
+    benchmark_pngs = {bm: sorted(pngs) for bm, pngs in benchmark_pngs.items()}
 
     shutil.copyfile("viz/html/style.css", os.path.join(output_dir, "style.css"))
 
