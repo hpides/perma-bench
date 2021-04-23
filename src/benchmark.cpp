@@ -60,6 +60,37 @@ bool get_enum_if_present(YAML::Node& data, const std::string& name, const std::u
 }
 
 template <typename T>
+bool get_size_if_present(YAML::Node& data, const std::string& name, const std::unordered_map<char, uint64_t>& enum_map,
+                         T* attribute) {
+  YAML::Node entry = data[name];
+  if (!entry) {
+    return false;
+  }
+  ensure_unique_key(entry, name);
+
+  const auto size_string = entry.as<std::string>();
+  const char size_suffix = size_string.back();
+  size_t size_end = size_string.length();
+  uint64_t factor = 1;
+
+  auto it = enum_map.find(size_suffix);
+  if (it != enum_map.end()) {
+    factor = it->second;
+    size_end -= 1;
+  } else if (isalpha(size_suffix)) {
+    throw std::invalid_argument(std::string("Unknown size suffix: ") + size_suffix);
+  }
+
+  char* end;
+  const std::string size_number = size_string.substr(0, size_end);
+  const uint64_t size = std::strtoull(size_number.data(), &end, 10);
+  *attribute = size * factor;
+
+  entry.SetTag(VISITED_TAG);
+  return true;
+}
+
+template <typename T>
 std::string get_enum_as_string(const std::unordered_map<std::string, T>& enum_map, T value) {
   for (auto it = enum_map.cbegin(); it != enum_map.cend(); ++it) {
     if (it->second == value) {
@@ -110,6 +141,9 @@ struct ConfigEnums {
   static const std::unordered_map<std::string, internal::DataInstruction> str_to_data_instruction;
   static const std::unordered_map<std::string, internal::PersistInstruction> str_to_persist_instruction;
   static const std::unordered_map<std::string, internal::RandomDistribution> str_to_random_distribution;
+
+  // Map to convert a K/M/G suffix to the correct kibi, mebi-, gibibyte value.
+  static const std::unordered_map<char, uint64_t> scale_suffix_to_factor;
 };
 
 const std::unordered_map<std::string, bool> ConfigEnums::str_to_mem_type{{"pmem", true}, {"dram", false}};
@@ -133,6 +167,13 @@ const std::unordered_map<std::string, internal::PersistInstruction> ConfigEnums:
 
 const std::unordered_map<std::string, internal::RandomDistribution> ConfigEnums::str_to_random_distribution{
     {"uniform", internal::RandomDistribution::Uniform}, {"zipf", internal::RandomDistribution::Zipf}};
+
+const std::unordered_map<char, uint64_t> ConfigEnums::scale_suffix_to_factor{{'k', 1024},
+                                                                             {'K', 1024},
+                                                                             {'m', 1024 * 1024},
+                                                                             {'M', 1024 * 1024},
+                                                                             {'g', 1024 * 1024 * 1024},
+                                                                             {'G', 1024 * 1024 * 1024}};
 
 const std::string& Benchmark::benchmark_name() const { return benchmark_name_; }
 
@@ -432,10 +473,12 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
 
 BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
   BenchmarkConfig bm_config{};
+  size_t num_found = 0;
   try {
-    size_t num_found = 0;
-    num_found += get_if_present(node, "total_memory_range", &bm_config.total_memory_range);
-    num_found += get_if_present(node, "access_size", &bm_config.access_size);
+    num_found += get_size_if_present(node, "total_memory_range", ConfigEnums::scale_suffix_to_factor,
+                                     &bm_config.total_memory_range);
+    num_found += get_size_if_present(node, "access_size", ConfigEnums::scale_suffix_to_factor, &bm_config.access_size);
+
     num_found += get_if_present(node, "number_operations", &bm_config.number_operations);
     num_found += get_if_present(node, "write_ratio", &bm_config.write_ratio);
     num_found += get_if_present(node, "pause_frequency", &bm_config.pause_frequency);
@@ -446,6 +489,7 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_if_present(node, "raw_results", &bm_config.raw_results);
     num_found += get_if_present(node, "prefault_file", &bm_config.prefault_file);
     num_found += get_if_present(node, "min_io_chunk_size", &bm_config.min_io_chunk_size);
+
     num_found += get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_mode, &bm_config.exec_mode);
     num_found += get_enum_if_present(node, "numa_pattern", ConfigEnums::str_to_numa_pattern, &bm_config.numa_pattern);
     num_found += get_enum_if_present(node, "random_distribution", ConfigEnums::str_to_random_distribution,
