@@ -516,6 +516,10 @@ void BenchmarkConfig::validate() const {
   const bool is_mixed_workload_random = (write_ratio == 1 || write_ratio == 0) || exec_mode == internal::Random;
   CHECK_ARGUMENT(is_mixed_workload_random, "Mixed read/write workloads only supported for random execution.");
 
+  // Assumption: min_io_chunk size must be a power of two
+  const bool is_valid_min_io_chunk_size = min_io_chunk_size >= 64 && (min_io_chunk_size & (min_io_chunk_size - 1)) == 0;
+  CHECK_ARGUMENT(is_valid_min_io_chunk_size, "Minimum IO chunk must be >= 64 Byte and a power of two");
+
   // Assumption: total memory needs to fit into N chunks exactly
   const bool is_seq_total_memory_chunkable =
       exec_mode == internal::Random || (total_memory_range % min_io_chunk_size) == 0;
