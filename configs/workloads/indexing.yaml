@@ -22,5 +22,6 @@ index_update:
     total_memory_range: 10G
     number_threads: 16
     number_operations: 50000000
+    persist_instruction: cache
     exec_mode: random
     write_ratio: 0.2
