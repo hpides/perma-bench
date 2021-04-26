@@ -4,7 +4,7 @@ logging:
     number_threads: [ 1, 2, 4, 8, 16, 32 ]
     # ~[168 mil ops, 84 mil ops, 42 mil ops, 21 mil ops, 10 mil ops]
     access_size: [ 64, 128, 256, 512, 1024 ]
-    persist_instruction: [ nocache, cache ]
+    persist_instruction: [ nocache, none ]
 
   args:
     total_memory_range: 10G
@@ -16,7 +16,7 @@ logging_partition:
     number_partitions: [ 1, 2, 4, 8 ]
     # [168 mil ops, 84 mil ops, 42 mil ops, 21 mil ops, 10 mil ops]
     access_size: [ 64, 128, 256, 512, 1024 ]
-    persist_instruction: [ nocache, cache ]
+    persist_instruction: [ nocache, none ]
 
   args:
     total_memory_range: 10G
