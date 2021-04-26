@@ -2,11 +2,11 @@
 page_propagation_write:
   matrix:
     number_threads: [ 1, 8, 16 ]
-    access_size: [ 512, 4096, 16384 ] # [512B, 4 KiB, 16 KiB]
-    random_distribution: [ uniform, zipf ]   # TODO: get good zipf alpha value
+    access_size: [ 512, 4096, 16384 ]
+    random_distribution: [ uniform, zipf ]
 
   args:
-    total_memory_range: 53687091200  # 50 GiB
+    total_memory_range: 50G
     number_operations: 10000000 # 10 million
     persist_instruction: nocache
     exec_mode: random
@@ -15,11 +15,11 @@ page_propagation_write:
 page_propagation_mixed:
   matrix:
     number_threads: [ 1, 8, 16 ]
-    access_size: [ 512, 4096, 16384 ] # [512B, 4 KiB, 16 KiB]
-    random_distribution: [ uniform, zipf ]   # TODO: get good zipf alpha value
+    access_size: [ 512, 4096, 16384 ]
+    random_distribution: [ uniform, zipf ]
 
   args:
-    total_memory_range: 53687091200  # 50 GiB
+    total_memory_range: 50G
     number_operations: 10000000 # 10 million
     persist_instruction: nocache
     exec_mode: random
