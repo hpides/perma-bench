@@ -1,8 +1,0 @@
-test_seq:
-  matrix:
-    number_threads: [1, 2, 4]
-    access_size: [256, 4096]
-  args:
-    total_memory_range: 64M
-    exec_mode: sequential
-    write_ratio: 0
