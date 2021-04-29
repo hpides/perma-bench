@@ -8,19 +8,19 @@ def plot(system_data, plot_dir):
 
     for system, data in sorted(system_data.items()):
         x_data, y_data = zip(*data)
-        ax.plot(x_data, y_data, label=system)
+        ax.plot(x_data, y_data, color=SYSTEM_COLOR[system], label=system)
 
     ax.set_xticks(x_data)
     ax.set_xticklabels(['64', '', '256', '512', '1024'])
     ax.set_xlabel("Access Size in Byte")
 
-    ax.grid(axis='y', which='major')
     ax.set_ylabel("Bandwidth (GB/s)")
     ax.set_ylim(0, 22)
 
     fig.legend(loc='upper center', bbox_to_anchor=(0.5, 1.13), ncol=5,
                frameon=False, columnspacing=1, handletextpad=0.3)
 
+    Y_GRID(ax)
     HIDE_BORDERS(ax)
 
     plot_path = os.path.join(plot_dir, "logging_partition")

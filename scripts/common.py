@@ -13,9 +13,19 @@ import matplotlib.pyplot as plt
 
 FS = 20
 MILLION = 1_000_000
-SINGLE_FIG_SIZE = (4, 3)
+SINGLE_FIG_WIDTH = 4
+SINGLE_FIG_HEIGHT = 3
+SINGLE_FIG_SIZE = (SINGLE_FIG_WIDTH, SINGLE_FIG_HEIGHT)
+DOUBLE_FIG_WIDTH = 2 * SINGLE_FIG_WIDTH
+DOUBLE_FIG_HEIGHT = SINGLE_FIG_HEIGHT
+DOUBLE_FIG_SIZE = (DOUBLE_FIG_WIDTH, DOUBLE_FIG_HEIGHT)
 PLOT_PATHS = []
 IMG_TYPES = ['.png',] #'.svg']
+
+SYSTEM_COLOR = {
+    'intel-128': "#0080FF",
+    'intel-256': "#303030",
+}
 
 
 def INIT_PLOT():
@@ -25,11 +35,16 @@ def INIT_PLOT():
 def PRINT_PLOT_PATHS():
     print(f"To view new plots, run:\n\topen {' '.join(PLOT_PATHS)}")
 
+
 def RESIZE_TICKS(ax, x=FS, y=FS):
     for tick in ax.xaxis.get_major_ticks():
         tick.label.set_fontsize(x)
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize(y)
+
+def Y_GRID(ax):
+    ax.grid(axis='y', which='major')
+    ax.set_axisbelow(True)
 
 def HIDE_BORDERS(ax, show_left=False):
     ax.spines['top'].set_visible(False)
