@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
   // Define command line args
   std::filesystem::path config_file = std::filesystem::current_path() / DEFAULT_WORKLOAD_PATH;
   app.add_option("-c,--config", config_file,
-                 "Path to the benchmark config YAML file(s) (default: " + std::string{DEFAULT_CONFIG_PATH} + ")")
+                 "Path to the benchmark config YAML file(s) (default: " + std::string{DEFAULT_WORKLOAD_PATH} + ")")
       ->check(CLI::ExistingPath);
 
   // Define result directory
