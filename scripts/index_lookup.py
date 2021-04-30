@@ -7,12 +7,17 @@ def plot_bw(system_data, ax):
     bar_width = 0.8
     for i, (system, data) in enumerate(sorted(system_data.items())):
         _, y_data = zip(*data)
+        y_data = y_data[0]
         ax.bar(i, y_data, width=bar_width,
                label=SYSTEM_NAME[system], **BAR(system))
+        if 'dram' in system:
+            ax.text(i, 46, int(y_data), ha='center',
+                    bbox=dict(facecolor='white', edgecolor='none', pad=0))
 
     ax.set_xticks([])
     ax.set_ylabel("Bandwidth (GB/s)")
-    ax.set_ylim(0, 100)
+    ax.set_ylim(0, 50)
+    ax.set_yticks(range(0,51, 10))
 
     HATCH_WIDTH()
     Y_GRID(ax)
@@ -68,6 +73,6 @@ if __name__ == '__main__':
                frameon=False, columnspacing=1, handletextpad=0.3)
     fig.tight_layout()
 
-    plot_path = os.path.join(plot_dir, "index_lookup")
+    plot_path = os.path.join(plot_dir, "index_lookup_performance")
     SAVE_PLOT(plot_path)
     PRINT_PLOT_PATHS()

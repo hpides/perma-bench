@@ -50,7 +50,7 @@ SYSTEM_NAME = {
     'intel-128':  'Intel-128',
     'intel-256':  'Intel-256',
     'intel-512':  'Intel-512',
-    'intel-dram': 'Intel-DRAM',
+    'intel-dram': 'DRAM',
     'hpe':        'HPE',
 }
 
