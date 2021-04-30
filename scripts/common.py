@@ -23,8 +23,35 @@ PLOT_PATHS = []
 IMG_TYPES = ['.png',] #'.svg']
 
 SYSTEM_COLOR = {
-    'intel-128': "#0080FF",
-    'intel-256': "#303030",
+    'intel-128':  '#a6cee3',
+    'intel-256':  '#1f78b4',
+    'intel-512':  '#b2df8a',
+    'intel-dram': '#33a02c',
+    'hpe':        '#fb9a99',
+}
+
+SYSTEM_MARKER = {
+    'intel-128':  '^',
+    'intel-256':  'v',
+    'intel-512':  'x',
+    'intel-dram': 'd',
+    'hpe':        'o',
+}
+
+SYSTEM_HATCH = {
+    'intel-128':  '\\\\',
+    'intel-256':  '//',
+    'intel-512':  '-',
+    'intel-dram': '/',
+    'hpe':        'X',
+}
+
+SYSTEM_NAME = {
+    'intel-128':  'Intel-128',
+    'intel-256':  'Intel-256',
+    'intel-512':  'Intel-512',
+    'intel-dram': 'Intel-DRAM',
+    'hpe':        'HPE',
 }
 
 
@@ -41,6 +68,9 @@ def RESIZE_TICKS(ax, x=FS, y=FS):
         tick.label.set_fontsize(x)
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize(y)
+
+def HATCH_WIDTH(width=4):
+    matplotlib.rcParams['hatch.linewidth'] = width
 
 def Y_GRID(ax):
     ax.grid(axis='y', which='major')

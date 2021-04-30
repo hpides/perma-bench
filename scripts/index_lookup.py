@@ -6,19 +6,18 @@ from common import *
 def plot_bw(system_data, plot_dir):
     fig, ax = plt.subplots(1, 1, figsize=SINGLE_FIG_SIZE)
 
-    bar_width = 0.8
+    bar_width = 0.8 / len(system_data)
     for i, (system, data) in enumerate(sorted(system_data.items())):
         _, y_data = zip(*data)
-        ax.bar(i, y_data, color=SYSTEM_COLOR[system], label=system)
+        ax.bar(i, y_data, width=bar_width, label=SYSTEM_NAME[system], color='white',
+              lw=3, edgecolor=SYSTEM_COLOR[system], hatch=SYSTEM_HATCH[system])
 
-    x_ticks = sorted(system_data.keys())
+    x_ticks = [SYSTEM_NAME[s] for s in sorted(system_data.keys())]
     ax.set_xticks(range(len(x_ticks)))
     ax.set_xticklabels(x_ticks)
     ax.set_ylabel("Bandwidth (GB/s)")
 
-    fig.legend(loc='upper center', bbox_to_anchor=(0.5, 1.13), ncol=5,
-               frameon=False, columnspacing=1, handletextpad=0.3)
-
+    HATCH_WIDTH()
     Y_GRID(ax)
     HIDE_BORDERS(ax)
 
@@ -38,8 +37,11 @@ def plot_lat(system_data_avg, system_data_99, plot_dir):
         _, y_data_avg = zip(*data_avg)
         _, y_data_99 = zip(*data_99)
         color = SYSTEM_COLOR[system]
-        ax.bar(0 + i * bar_width, y_data_avg, width=bar_width, color=color, label=system)
-        ax.bar(1 + i * bar_width, y_data_99, width=bar_width, color=color)
+        hatch = SYSTEM_HATCH[system]
+        ax.bar(0 + i * bar_width, y_data_avg, lw=3, label=SYSTEM_NAME[system],
+               hatch=hatch, color='white', width=bar_width, edgecolor=color)
+        ax.bar(1 + i * bar_width, y_data_99,  lw=4,
+               hatch=hatch, color='white', width=bar_width, edgecolor=color)
 
     x_ticks = ['AVG', '99%']
     ax.set_xticks([i + (bar_width / 2) for i in range(len(x_ticks))])
@@ -49,6 +51,7 @@ def plot_lat(system_data_avg, system_data_99, plot_dir):
     fig.legend(loc='upper center', bbox_to_anchor=(0.5, 1.13), ncol=5,
                frameon=False, columnspacing=1, handletextpad=0.3)
 
+    HATCH_WIDTH()
     Y_GRID(ax)
     HIDE_BORDERS(ax)
 
