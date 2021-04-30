@@ -8,8 +8,7 @@ def plot(system_data, plot_dir):
 
     for system, data in sorted(system_data.items()):
         x_data, y_data = zip(*data)
-        ax.plot(x_data, y_data, label=SYSTEM_NAME[system], lw=3, ms=10,
-                color=SYSTEM_COLOR[system], marker=SYSTEM_MARKER[system])
+        ax.plot(x_data, y_data, label=SYSTEM_NAME[system], **LINE(system))
 
     ax.set_xticks(x_data)
     ax.set_xticklabels(['64', '', '256', '512', '1024'])

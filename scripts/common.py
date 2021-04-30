@@ -20,7 +20,7 @@ DOUBLE_FIG_WIDTH = 2 * SINGLE_FIG_WIDTH
 DOUBLE_FIG_HEIGHT = SINGLE_FIG_HEIGHT
 DOUBLE_FIG_SIZE = (DOUBLE_FIG_WIDTH, DOUBLE_FIG_HEIGHT)
 PLOT_PATHS = []
-IMG_TYPES = ['.png',] #'.svg']
+IMG_TYPES = ['.png', '.svg']
 
 SYSTEM_COLOR = {
     'intel-128':  '#a6cee3',
@@ -62,6 +62,24 @@ def INIT_PLOT():
 def PRINT_PLOT_PATHS():
     print(f"To view new plots, run:\n\topen {' '.join(PLOT_PATHS)}")
 
+def BAR(system):
+    return {
+        "color": 'white',
+        "edgecolor": SYSTEM_COLOR[system],
+        "hatch": SYSTEM_HATCH[system],
+        "lw": 3
+    }
+
+def LINE(system):
+    return {
+        "lw": 3,
+        "ms": 10,
+        "color": SYSTEM_COLOR[system],
+        "marker": SYSTEM_MARKER[system]
+    }
+
+def BAR_X_TICKS_POS(bar_width, num_bars, num_xticks):
+    return [i - (bar_width / 2) + ((num_bars * bar_width) / 2) for i in range(num_xticks)]
 
 def RESIZE_TICKS(ax, x=FS, y=FS):
     for tick in ax.xaxis.get_major_ticks():
