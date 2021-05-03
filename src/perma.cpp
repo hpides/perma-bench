@@ -79,7 +79,8 @@ int main(int argc, char** argv) {
   init_numa(pmem_directory, numa_nodes, use_dram, ignore_numa);
 
   // Run the actual benchmarks after parsing and validating them.
-  spdlog::info("Running benchmarks on '{}' with config(s) from '{}'.", pmem_directory.string(), config_file.string());
+  const std::string run_location = use_dram ? "DRAM" : pmem_directory.string();
+  spdlog::info("Running benchmarks on '{}' with config(s) from '{}'.", run_location, config_file.string());
   spdlog::info("Writing results to '{}'.", result_path.string());
   BenchmarkSuite::run_benchmarks(pmem_directory, config_file, result_path);
 

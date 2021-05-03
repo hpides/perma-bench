@@ -233,7 +233,8 @@ char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::fil
     generate_read_data(pmem_data, config.total_memory_range);
   }
   if (config.write_ratio == 1 && config.prefault_file) {
-    prefault_file(pmem_data, config.total_memory_range);
+    const size_t page_size = config.is_pmem ? internal::PMEM_PAGE_SIZE : internal::DRAM_PAGE_SIZE;
+    prefault_file(pmem_data, config.total_memory_range, page_size);
   }
   return pmem_data;
 }
