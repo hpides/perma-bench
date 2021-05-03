@@ -85,9 +85,8 @@ void generate_read_data(char* addr, const uint64_t total_memory_range) {
   spdlog::info("Finished generating data.");
 }
 
-void prefault_file(char* addr, const uint64_t total_memory_range) {
+void prefault_file(char* addr, const uint64_t total_memory_range, const uint64_t page_size) {
   spdlog::debug("Prefaulting data.");
-  const size_t page_size = internal::PMEM_PAGE_SIZE;
   const size_t num_prefault_pages = total_memory_range / page_size;
   for (size_t prefault_offset = 0; prefault_offset < num_prefault_pages; ++prefault_offset) {
     addr[prefault_offset * page_size] = '\0';
