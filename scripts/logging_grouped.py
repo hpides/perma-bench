@@ -70,9 +70,7 @@ if __name__ == '__main__':
     plot_nocache(nocache_data, nocache_ax)
     plot_none(none_data, none_ax)
 
-    fig.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=5,
-               frameon=False, columnspacing=1, handletextpad=0.3)
-    fig.tight_layout()
+    FIG_LEGEND(fig)
 
     plot_path = os.path.join(plot_dir, "logging_grouped_performance")
     SAVE_PLOT(plot_path)

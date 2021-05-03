@@ -56,9 +56,7 @@ if __name__ == '__main__':
     plot_bw(bw_data, bw_ax)
     plot_lat(lat_data, lat_ax)
 
-    fig.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=5,
-               frameon=False, columnspacing=1, handletextpad=0.3)
-    fig.tight_layout()
+    FIG_LEGEND(fig)
 
     plot_path = os.path.join(plot_dir, "logging_partition_performance")
     SAVE_PLOT(plot_path)

@@ -100,6 +100,11 @@ def HIDE_BORDERS(ax, show_left=False):
     ax.spines['bottom'].set_visible(True)
     ax.spines['left'].set_visible(show_left)
 
+def FIG_LEGEND(fig):
+    fig.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=5,
+               frameon=False, columnspacing=1, handletextpad=0.3)
+    fig.tight_layout()
+
 
 def SAVE_PLOT(plot_path, img_types=None):
     if img_types is None:

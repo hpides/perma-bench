@@ -46,9 +46,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots(1, 1, figsize=DOUBLE_FIG_SIZE)
     plot_bw(bw_data, ax)
 
-    fig.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=5,
-               frameon=False, columnspacing=1, handletextpad=0.3)
-    fig.tight_layout()
+    FIG_LEGEND(fig)
 
     plot_path = os.path.join(plot_dir, "index_update_performance")
     SAVE_PLOT(plot_path)

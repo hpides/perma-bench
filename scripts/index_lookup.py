@@ -75,4 +75,8 @@ if __name__ == '__main__':
     plot_bw(bw_data, bw_ax)
     plot_lat(lat_data_avg, lat_data_99, lat_ax)
 
+    FIG_LEGEND(fig)
 
+    plot_path = os.path.join(plot_dir, "index_lookup_performance")
+    SAVE_PLOT(plot_path)
+    PRINT_PLOT_PATHS()
