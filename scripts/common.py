@@ -143,8 +143,8 @@ def get_runs(bms, config):
     return runs
 
 
-def get_runs_from_results(results, bm_name, filter_config):
-    bms = get_bms(results, bm_name)
+def get_runs_from_results(results, bm_name, filter_config, skip_dram=False):
+    bms = get_bms(results, bm_name, skip_dram)
     return get_runs(bms, filter_config)
 
 

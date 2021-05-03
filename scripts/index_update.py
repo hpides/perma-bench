@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from common import *
 
 def plot_bw(system_data, ax):
-    bars = sorted([k for k in system_data.keys() if 'dram' not in k])
+    bars = sorted(system_data.keys())
     num_bars = len(bars)
     bar_width = 0.8 / num_bars
 
@@ -24,7 +24,7 @@ def plot_bw(system_data, ax):
     ax.set_xlabel("# of Partitions")
 
     ax.set_ylabel("Bandwidth (GB/s)")
-    ax.set_ylim(0, 100)
+    ax.set_ylim(0, 110)
     ax.set_yticks(range(0, 101, 20))
 
     HATCH_WIDTH()
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     }
 
     result_path, plot_dir = INIT(sys.argv)
-    runs = get_runs_from_results(result_path, "index_update", filter_config)
+    runs = get_runs_from_results(result_path, "index_update", filter_config, skip_dram=True)
     bw_data = get_data_from_runs(runs, "number_partitions", "bandwidth", "read")
 
     fig, ax = plt.subplots(1, 1, figsize=DOUBLE_FIG_SIZE)
