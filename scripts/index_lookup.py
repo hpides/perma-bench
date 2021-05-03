@@ -11,13 +11,14 @@ def plot_bw(system_data, ax):
         ax.bar(i, y_data, width=bar_width,
                label=SYSTEM_NAME[system], **BAR(system))
         if 'dram' in system:
-            ax.text(i, 46, int(y_data), ha='center',
-                    bbox=dict(facecolor='white', edgecolor='none', pad=0))
+            ax.text(i + 0.25, 45.5, int(y_data), ha='center', color=SYSTEM_COLOR[system])
 
     ax.set_xticks([])
     ax.set_ylabel("Bandwidth (GB/s)")
-    ax.set_ylim(0, 50)
-    ax.set_yticks(range(0,51, 10))
+    ax.set_ylim(0, 45)
+    ax.set_yticks(range(0, 45, 10))
+
+    ax.set_title("a) Bandwidth")
 
     HATCH_WIDTH()
     Y_GRID(ax)
@@ -44,7 +45,12 @@ def plot_lat(system_data_avg, system_data_99, ax):
     x_ticks_pos = BAR_X_TICKS_POS(bar_width, num_bars, len(x_ticks))
     ax.set_xticks(x_ticks_pos)
     ax.set_xticklabels(x_ticks)
+
+    ax.set_ylim(0, 220)
+    ax.set_yticks(range(0, 221, 50))
+
     ax.set_ylabel("Latency (ns)")
+    ax.set_title("b) Latency")
 
     HATCH_WIDTH()
     Y_GRID(ax)
@@ -69,10 +75,4 @@ if __name__ == '__main__':
     plot_bw(bw_data, bw_ax)
     plot_lat(lat_data_avg, lat_data_99, lat_ax)
 
-    fig.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=5,
-               frameon=False, columnspacing=1, handletextpad=0.3)
-    fig.tight_layout()
 
-    plot_path = os.path.join(plot_dir, "index_lookup_performance")
-    SAVE_PLOT(plot_path)
-    PRINT_PLOT_PATHS()
