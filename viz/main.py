@@ -32,10 +32,6 @@ def valid_path(path):
 
 
 if __name__ == "__main__":
-    # check if python is running inside virtualenv or inside venv
-    if not (getattr(sys, 'real_prefix', None) or (getattr(sys, 'base_prefix', sys.prefix)) != sys.prefix):
-        sys.exit("Please run `source setup_viz.sh` once to setup the visualization environment.")
-
     # parse args + check for correctness and completeness of args
     parser = argparse.ArgumentParser()
     parser.add_argument("results", type=valid_path, help="path to the results directory")
@@ -52,11 +48,8 @@ if __name__ == "__main__":
     results = args.results
 
     # delete already existing png and html files
-    if args.delete:
-        if os.path.exists(output_dir):
-            shutil.rmtree(output_dir)
-        if os.path.exists(img_dir):
-            shutil.rmtree(img_dir)
+    if args.delete and os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
 
     # create outputs directories
     try:
