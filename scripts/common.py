@@ -117,9 +117,12 @@ def SAVE_PLOT(plot_path, img_types=None):
 # Benchmark Results
 #######################################
 
-def get_bms(results, bm_name):
+def get_bms(results, bm_name, skip_dram=False):
     bms = {}
     for system_results in os.listdir(results):
+        if skip_dram and "dram" in system_results:
+            continue
+
         with open(os.path.join(results, system_results)) as res_f:
             res_bms = json.loads(res_f.read())
             for res_bm in res_bms:
