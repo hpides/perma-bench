@@ -14,7 +14,7 @@ namespace perma::rw_ops {
 // https://youtu.be/nXaxk27zwlk?t=2441.
 #define KEEP(x) asm volatile("" : : "g"(x) : "memory")
 
-#define READ_SIMD_512(mem_addr, offset) _mm512_stream_load_si512((void*)(mem_addr + (offset * CACHE_LINE_SIZE)))
+#define READ_SIMD_512(mem_addr, offset) _mm512_load_si512((void*)((mem_addr) + ((offset)*CACHE_LINE_SIZE)))
 
 #define READ_MOV_512(mem_addr, offset) \
   asm volatile(                        \
@@ -27,33 +27,33 @@ namespace perma::rw_ops {
       "movq 6*8(%[addr]), %%r8  \n\t"  \
       "movq 7*8(%[addr]), %%r8  \n\t"  \
       :                                \
-      : [ addr ] "r"(mem_addr + (offset * CACHE_LINE_SIZE)))
+      : [ addr ] "r"((mem_addr) + ((offset)*CACHE_LINE_SIZE)))
 
 #define WRITE_SIMD_NT_512(mem_addr, offset, data) \
-  _mm512_stream_si512(reinterpret_cast<__m512i*>(mem_addr + (offset * CACHE_LINE_SIZE)), data)
+  _mm512_stream_si512(reinterpret_cast<__m512i*>((mem_addr) + ((offset)*CACHE_LINE_SIZE)), data)
 
 #define WRITE_SIMD_512(mem_addr, offset, data) \
-  _mm512_store_si512(reinterpret_cast<__m512i*>(mem_addr + (offset * CACHE_LINE_SIZE)), data)
+  _mm512_store_si512(reinterpret_cast<__m512i*>((mem_addr) + ((offset)*CACHE_LINE_SIZE)), data)
 
-#define WRITE_MOV_NT_512(mem_addr, offset)                                                             \
-  _mm_stream_pi((__m64*)(mem_addr + 0 * 8 + (offset * CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[0 * 8]); \
-  _mm_stream_pi((__m64*)(mem_addr + 1 * 8 + (offset * CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[1 * 8]); \
-  _mm_stream_pi((__m64*)(mem_addr + 2 * 8 + (offset * CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[2 * 8]); \
-  _mm_stream_pi((__m64*)(mem_addr + 3 * 8 + (offset * CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[3 * 8]); \
-  _mm_stream_pi((__m64*)(mem_addr + 4 * 8 + (offset * CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[4 * 8]); \
-  _mm_stream_pi((__m64*)(mem_addr + 5 * 8 + (offset * CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[5 * 8]); \
-  _mm_stream_pi((__m64*)(mem_addr + 6 * 8 + (offset * CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[6 * 8]); \
-  _mm_stream_pi((__m64*)(mem_addr + 7 * 8 + (offset * CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[7 * 8]);
+#define WRITE_MOV_NT_512(mem_addr, offset)                                                               \
+  _mm_stream_pi((__m64*)((mem_addr) + 0 * 8 + ((offset)*CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[0 * 8]); \
+  _mm_stream_pi((__m64*)((mem_addr) + 1 * 8 + ((offset)*CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[1 * 8]); \
+  _mm_stream_pi((__m64*)((mem_addr) + 2 * 8 + ((offset)*CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[2 * 8]); \
+  _mm_stream_pi((__m64*)((mem_addr) + 3 * 8 + ((offset)*CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[3 * 8]); \
+  _mm_stream_pi((__m64*)((mem_addr) + 4 * 8 + ((offset)*CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[4 * 8]); \
+  _mm_stream_pi((__m64*)((mem_addr) + 5 * 8 + ((offset)*CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[5 * 8]); \
+  _mm_stream_pi((__m64*)((mem_addr) + 6 * 8 + ((offset)*CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[6 * 8]); \
+  _mm_stream_pi((__m64*)((mem_addr) + 7 * 8 + ((offset)*CACHE_LINE_SIZE)), *(__m64*)&WRITE_DATA[7 * 8]);
 
-#define WRITE_MOV_512(mem_addr, offset)                                                  \
-  std::memcpy(mem_addr + (0 * 8) + (offset * CACHE_LINE_SIZE), WRITE_DATA + (0 * 8), 8); \
-  std::memcpy(mem_addr + (1 * 8) + (offset * CACHE_LINE_SIZE), WRITE_DATA + (1 * 8), 8); \
-  std::memcpy(mem_addr + (2 * 8) + (offset * CACHE_LINE_SIZE), WRITE_DATA + (2 * 8), 8); \
-  std::memcpy(mem_addr + (3 * 8) + (offset * CACHE_LINE_SIZE), WRITE_DATA + (3 * 8), 8); \
-  std::memcpy(mem_addr + (4 * 8) + (offset * CACHE_LINE_SIZE), WRITE_DATA + (4 * 8), 8); \
-  std::memcpy(mem_addr + (5 * 8) + (offset * CACHE_LINE_SIZE), WRITE_DATA + (5 * 8), 8); \
-  std::memcpy(mem_addr + (6 * 8) + (offset * CACHE_LINE_SIZE), WRITE_DATA + (6 * 8), 8); \
-  std::memcpy(mem_addr + (7 * 8) + (offset * CACHE_LINE_SIZE), WRITE_DATA + (7 * 8), 8);
+#define WRITE_MOV_512(mem_addr, offset)                                                    \
+  std::memcpy((mem_addr) + (0 * 8) + ((offset)*CACHE_LINE_SIZE), WRITE_DATA + (0 * 8), 8); \
+  std::memcpy((mem_addr) + (1 * 8) + ((offset)*CACHE_LINE_SIZE), WRITE_DATA + (1 * 8), 8); \
+  std::memcpy((mem_addr) + (2 * 8) + ((offset)*CACHE_LINE_SIZE), WRITE_DATA + (2 * 8), 8); \
+  std::memcpy((mem_addr) + (3 * 8) + ((offset)*CACHE_LINE_SIZE), WRITE_DATA + (3 * 8), 8); \
+  std::memcpy((mem_addr) + (4 * 8) + ((offset)*CACHE_LINE_SIZE), WRITE_DATA + (4 * 8), 8); \
+  std::memcpy((mem_addr) + (5 * 8) + ((offset)*CACHE_LINE_SIZE), WRITE_DATA + (5 * 8), 8); \
+  std::memcpy((mem_addr) + (6 * 8) + ((offset)*CACHE_LINE_SIZE), WRITE_DATA + (6 * 8), 8); \
+  std::memcpy((mem_addr) + (7 * 8) + ((offset)*CACHE_LINE_SIZE), WRITE_DATA + (7 * 8), 8);
 
 // Exactly 64 characters to write in one cache line.
 static const char WRITE_DATA[] __attribute__((aligned(64))) =

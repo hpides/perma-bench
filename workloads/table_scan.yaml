@@ -1,7 +1,7 @@
 # Represents the database workload table scan (sequential read)
 table_scan:
   matrix:
-    number_threads: [ 1, 2, 4, 8, 16, 32, 36 ]
+    number_threads: [ 1, 2, 4, 8, 16, 32 ]
     access_size: [ 64, 256, 4096, 16384, 65536 ]
 
   args:
