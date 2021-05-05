@@ -111,6 +111,13 @@ class MatrixJsonPlotter:
                 title_val = title_values[idx]
                 y_values_per_legend_category[title_val][cat].append(bm_results[idx])
 
+        # TODO: this is an incredibly nasty hack to solve the problem at hand!
+        is_mixed = y_value == "bandwidth_values"
+        if is_mixed:
+            cat_bw_vals = list(y_values_per_legend_category.values())[0]
+            bw_vals = list(cat_bw_vals.values())[0][0]
+            is_mixed = len(bw_vals) > 1
+
         # actual plot
         plot_titles = sorted(set(title_values))
         num_plots = len(plot_titles)
@@ -125,7 +132,20 @@ class MatrixJsonPlotter:
             y_vals = y_values_per_legend_category[title_val]
             bar_width = 0.8 / len(y_vals)
             for offset, cat in enumerate(y_vals.keys()):
-                rects = ax.bar(x_pos + (offset * bar_width), y_vals[cat], bar_width, label=cat)
+                ys = y_vals[cat]
+                if isinstance(ys[0], list):
+                    ys = [y[0] for y in ys]
+
+                label = cat if not is_mixed else f"{cat} read"
+                rects = ax.bar(x_pos + (offset * bar_width), ys, bar_width, label=label)
+
+                if is_mixed:
+                    ys_stacked = [y[1] for y in y_vals[cat]]
+                    rects_stacked = ax.bar(x_pos + (offset * bar_width), ys_stacked, width=bar_width,
+                                           color='white', hatch='//', edgecolor='black',
+                                           bottom=ys, label=f'{cat} read + write')
+                    for i, rect in enumerate(rects_stacked):
+                        rect.set_edgecolor(rects[i].get_facecolor())
 
                 # draw cross if y-value is null
                 for rect in rects:
@@ -188,6 +208,13 @@ class MatrixJsonPlotter:
                 x_values_per_legend_category[title_val][cat].append(x_values[idx])
                 y_values_per_legend_category[title_val][cat].append(bm_results[idx])
 
+        # TODO: this is an incredibly nasty hack to solve the problem at hand!
+        is_mixed = y_value == "bandwidth_values"
+        if is_mixed:
+            cat_bw_vals = list(y_values_per_legend_category.values())[0]
+            bw_vals = list(cat_bw_vals.values())[0][0]
+            is_mixed = len(bw_vals) > 1
+
         # actual plot
         num_plots = len(x_values_per_legend_category.keys())
         fig, axes = plt.subplots(1, num_plots, figsize=(num_plots * 4, 3))
@@ -199,7 +226,20 @@ class MatrixJsonPlotter:
             x_vals = x_values_per_legend_category[title_val]
             y_vals = y_values_per_legend_category[title_val]
             for cat in x_vals.keys():
-                ax.plot(x_vals[cat], y_vals[cat], "-o", label=cat)
+                label = cat if not is_mixed else f"{cat} read"
+
+                ys = y_vals[cat]
+                if isinstance(ys[0], list):
+                    ys = [y[0] for y in ys]
+
+                lines = ax.plot(x_vals[cat], ys, "-o", label=label)
+
+                if is_mixed:
+                    ys_stacked = [y[0] + y[1] for y in y_vals[cat]]
+                    stacked_lines = ax.plot(x_vals[cat], ys_stacked, marker="x", ls='--',
+                                            label=f'{cat} write')
+                    for i, line in enumerate(stacked_lines):
+                        line.set_color(lines[i].get_color())
 
             ax.set_ylabel("Average Latency (ns)" if y_value == "avg" else "Bandwidth (GB/s)")
             ax.set_xlabel(self.reader.get_arg_label(perm[0]))

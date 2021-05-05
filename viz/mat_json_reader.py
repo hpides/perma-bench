@@ -53,13 +53,13 @@ class MatrixJsonReader:
 
                     # create separate entries for bandwidth operations and values
                     if key == "bandwidth":
-                        bandwidth_op = list(fields.keys())[0]
-                        bandwidth_value = list(fields.values())[0]
+                        bandwidth_ops = list(fields.keys())
+                        bandwidth_values = list(fields.values())
                         if len(self.results["bandwidth_ops"]) <= i:
                             self.results["bandwidth_ops"].append(list())
                             self.results["bandwidth_values"].append(list())
-                        self.results["bandwidth_ops"][i].append(bandwidth_op)
-                        self.results["bandwidth_values"][i].append(bandwidth_value)
+                        self.results["bandwidth_ops"][i].append(bandwidth_ops)
+                        self.results["bandwidth_values"][i].append(bandwidth_values)
 
                     # create entry for each key in config or duration field
                     else:
