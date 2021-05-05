@@ -14,6 +14,7 @@ def plot_bw(system_data, ax):
 
     ax.set_ylabel("Bandwidth (GB/s)")
     ax.set_ylim(0, 25)
+    ax.set_yticks(range(0, 25, 5))
 
     ax.set_title("a) Bandwidth")
 
@@ -31,7 +32,8 @@ def plot_lat(system_data, ax):
     ax.set_xlabel("Access Size in Byte")
 
     ax.set_ylabel("Latency (ns)")
-    # ax.set_ylim(0, 22)
+    ax.set_ylim(0, 750)
+    ax.set_yticks(range(0, 750, 150))
 
     ax.set_title("b) Latency")
 

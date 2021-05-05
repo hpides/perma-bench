@@ -41,7 +41,7 @@ SYSTEM_MARKER = {
 SYSTEM_HATCH = {
     'intel-128':  '\\\\',
     'intel-256':  '//',
-    'intel-512':  '-',
+    'intel-512':  '\\',
     'intel-dram': '/',
     'hpe':        'X',
 }

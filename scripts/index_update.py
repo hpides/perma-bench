@@ -23,9 +23,9 @@ def plot_bw(system_data, ax):
     ax.set_xticklabels([1, 4, 16])
     ax.set_xlabel("# of Partitions")
 
-    ax.set_ylabel("Bandwidth (GB/s)")
-    ax.set_ylim(0, 110)
-    ax.set_yticks(range(0, 101, 20))
+    ax.set_ylabel("Latency (ns)")
+    ax.set_ylim(0, 1700)
+    ax.set_yticks(range(0, 1700, 300))
 
     HATCH_WIDTH()
     Y_GRID(ax)
@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     result_path, plot_dir = INIT(sys.argv)
     runs = get_runs_from_results(result_path, "index_update", filter_config, skip_dram=True)
-    bw_data = get_data_from_runs(runs, "number_partitions", "bandwidth", "read")
+    bw_data = get_data_from_runs(runs, "number_partitions", "duration", "avg")
 
     fig, ax = plt.subplots(1, 1, figsize=DOUBLE_FIG_SIZE)
     plot_bw(bw_data, ax)
