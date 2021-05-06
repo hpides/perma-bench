@@ -12,7 +12,7 @@
 namespace {
 
 #define CHECK_ARGUMENT(exp, txt) \
-  if (!exp) {                    \
+  if (!(exp)) {                  \
     spdlog::critical(txt);       \
     perma::crash_exit();         \
   }
