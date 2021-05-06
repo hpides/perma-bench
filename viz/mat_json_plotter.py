@@ -143,7 +143,7 @@ class MatrixJsonPlotter:
                     ys_stacked = [y[1] for y in y_vals[cat]]
                     rects_stacked = ax.bar(x_pos + (offset * bar_width), ys_stacked, width=bar_width,
                                            color='white', hatch='//', edgecolor='black',
-                                           bottom=ys, label=f'{cat} read + write')
+                                           bottom=ys, label=f'{cat} write')
                     for i, rect in enumerate(rects_stacked):
                         rect.set_edgecolor(rects[i].get_facecolor())
 
@@ -237,7 +237,7 @@ class MatrixJsonPlotter:
                 if is_mixed:
                     ys_stacked = [y[0] + y[1] for y in y_vals[cat]]
                     stacked_lines = ax.plot(x_vals[cat], ys_stacked, marker="x", ls='--',
-                                            label=f'{cat} write')
+                                            label=f'{cat} read + write')
                     for i, line in enumerate(stacked_lines):
                         line.set_color(lines[i].get_color())
 
