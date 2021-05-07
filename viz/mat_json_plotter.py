@@ -111,12 +111,7 @@ class MatrixJsonPlotter:
                 title_val = title_values[idx]
                 y_values_per_legend_category[title_val][cat].append(bm_results[idx])
 
-        # TODO: this is an incredibly nasty hack to solve the problem at hand!
-        is_mixed = y_value == "bandwidth_values"
-        if is_mixed:
-            cat_bw_vals = list(y_values_per_legend_category.values())[0]
-            bw_vals = list(cat_bw_vals.values())[0][0]
-            is_mixed = len(bw_vals) > 1
+        could_be_mixed = y_value == "bandwidth_values"
 
         # actual plot
         plot_titles = sorted(set(title_values))
@@ -135,6 +130,8 @@ class MatrixJsonPlotter:
                 ys = y_vals[cat]
                 if isinstance(ys[0], list):
                     ys = [y[0] for y in ys]
+
+                is_mixed = could_be_mixed and len(y_vals[cat][0]) > 1
 
                 label = cat if not is_mixed else f"{cat} read"
                 rects = ax.bar(x_pos + (offset * bar_width), ys, bar_width, label=label)
@@ -208,12 +205,7 @@ class MatrixJsonPlotter:
                 x_values_per_legend_category[title_val][cat].append(x_values[idx])
                 y_values_per_legend_category[title_val][cat].append(bm_results[idx])
 
-        # TODO: this is an incredibly nasty hack to solve the problem at hand!
-        is_mixed = y_value == "bandwidth_values"
-        if is_mixed:
-            cat_bw_vals = list(y_values_per_legend_category.values())[0]
-            bw_vals = list(cat_bw_vals.values())[0][0]
-            is_mixed = len(bw_vals) > 1
+        could_be_mixed = y_value == "bandwidth_values"
 
         # actual plot
         num_plots = len(x_values_per_legend_category.keys())
@@ -225,21 +217,19 @@ class MatrixJsonPlotter:
             ax = axes[i]
             x_vals = x_values_per_legend_category[title_val]
             y_vals = y_values_per_legend_category[title_val]
-            for cat in x_vals.keys():
-                label = cat if not is_mixed else f"{cat} read"
-
+            for cat_num, cat in enumerate(x_vals.keys()):
                 ys = y_vals[cat]
                 if isinstance(ys[0], list):
                     ys = [y[0] for y in ys]
 
+                is_mixed = could_be_mixed and len(y_vals[cat][0]) > 1
+                label = cat if not is_mixed else f"{cat} read"
                 lines = ax.plot(x_vals[cat], ys, "-o", label=label)
 
                 if is_mixed:
                     ys_stacked = [y[0] + y[1] for y in y_vals[cat]]
-                    stacked_lines = ax.plot(x_vals[cat], ys_stacked, marker="x", ls='--',
-                                            label=f'{cat} read + write')
-                    for i, line in enumerate(stacked_lines):
-                        line.set_color(lines[i].get_color())
+                    ax.plot(x_vals[cat], ys_stacked, marker="x", ls='--',
+                            label=f'{cat} read + write', color=lines[0].get_color())
 
             ax.set_ylabel("Average Latency (ns)" if y_value == "avg" else "Bandwidth (GB/s)")
             ax.set_xlabel(self.reader.get_arg_label(perm[0]))
