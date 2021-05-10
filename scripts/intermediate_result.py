@@ -52,8 +52,8 @@ def plot_lat(system_data, ax):
     ax.set_xticks(x_ticks_pos)
     ax.set_xticklabels(x_ticks)
 
-    ax.set_ylim(0, 800)
-    ax.set_yticks(range(0, 800, 150))
+    ax.set_ylim(0, 900)
+    ax.set_yticks(range(0, 1000, 150))
 
     ax.set_ylabel("Latency (ns)")
     ax.set_title("b) Latency")

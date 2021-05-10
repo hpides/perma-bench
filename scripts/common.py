@@ -22,18 +22,26 @@ DOUBLE_FIG_SIZE = (DOUBLE_FIG_WIDTH, DOUBLE_FIG_HEIGHT)
 PLOT_PATHS = []
 IMG_TYPES = ['.png', '.svg']
 
+# SYSTEM_COLOR = {
+#     'intel-128':  '#a6cee3',
+#     'intel-256':  '#1f78b4',
+#     'intel-2gen':  '#b2df8a',
+#     'intel-dram': '#33a02c',
+#     'hpe':        '#fb9a99',
+# }
+
 SYSTEM_COLOR = {
-    'intel-128':  '#a6cee3',
-    'intel-256':  '#1f78b4',
-    'intel-512':  '#b2df8a',
-    'intel-dram': '#33a02c',
-    'hpe':        '#fb9a99',
+    'intel-128':  '#a1dab4',
+    'intel-256':  '#378d54',
+    'intel-2gen': '#41b6c4',
+    'intel-dram': '#2c7fb8',
+    'hpe':        '#253494',
 }
 
 SYSTEM_MARKER = {
     'intel-128':  '^',
     'intel-256':  'v',
-    'intel-512':  'x',
+    'intel-2gen': 's',
     'intel-dram': 'd',
     'hpe':        'o',
 }
@@ -41,22 +49,25 @@ SYSTEM_MARKER = {
 SYSTEM_HATCH = {
     'intel-128':  '\\\\',
     'intel-256':  '//',
-    'intel-512':  '\\',
+    'intel-2gen': '\\',
     'intel-dram': '/',
-    'hpe':        'X',
+    'hpe':        'x',
 }
 
 SYSTEM_NAME = {
     'intel-128':  'Intel-128',
     'intel-256':  'Intel-256',
-    'intel-512':  'Intel-512',
+    'intel-2gen': 'Intel-Gen2',
     'intel-dram': 'DRAM',
     'hpe':        'HPE',
 }
 
 
 def INIT_PLOT():
-    matplotlib.rcParams.update({'font.size': FS})
+    matplotlib.rcParams.update({
+        'font.size': FS,
+        'svg.fonttype': 'none',
+    })
 
 
 def PRINT_PLOT_PATHS():
@@ -72,10 +83,12 @@ def BAR(system):
 
 def LINE(system):
     return {
-        "lw": 3,
+        "lw": 4,
         "ms": 10,
         "color": SYSTEM_COLOR[system],
-        "marker": SYSTEM_MARKER[system]
+        "marker": SYSTEM_MARKER[system],
+        "markeredgewidth": 1,
+        "markeredgecolor": 'black',
     }
 
 def BAR_X_TICKS_POS(bar_width, num_bars, num_xticks):
@@ -127,6 +140,8 @@ def get_bms(results, bm_name, skip_dram=False):
     for system_results in os.listdir(results):
         if skip_dram and "dram" in system_results:
             continue
+        if not system_results.endswith(".json"):
+            continue
 
         with open(os.path.join(results, system_results)) as res_f:
             res_bms = json.loads(res_f.read())
@@ -159,7 +174,7 @@ def get_data_from_runs(runs, x_attribute, y_type, y_attribute):
         d = data[system_name]
         for run in system_runs:
             x_val = run['config'][x_attribute]
-            y_val = run[y_type][y_attribute]
+            y_val = run[y_type].get(y_attribute, 0)
             d.append((x_val, y_val))
     return data
 

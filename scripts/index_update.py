@@ -21,11 +21,11 @@ def plot_bw(system_data, ax):
     xticks = BAR_X_TICKS_POS(bar_width, num_bars, num_xticks)
     ax.set_xticks(xticks)
     ax.set_xticklabels([1, 4, 16])
-    ax.set_xlabel("# of Partitions")
+    ax.set_xlabel("\# of Partitions")
 
     ax.set_ylabel("Latency (ns)")
-    ax.set_ylim(0, 1700)
-    ax.set_yticks(range(0, 1700, 300))
+    ax.set_ylim(0, 1800)
+    ax.set_yticks(range(0, 1800, 300))
 
     HATCH_WIDTH()
     Y_GRID(ax)
