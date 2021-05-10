@@ -327,7 +327,7 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
       }
 
       const auto run_time_in_sec = std::chrono::duration_cast<std::chrono::seconds>(end_ts - begin_ts).count();
-      if (config.run_time != -1 && run_time_in_sec >= config.run_time) {
+      if (!is_time_finished && run_time_in_sec >= config.run_time) {
         is_time_finished = true;
         break;
       }
