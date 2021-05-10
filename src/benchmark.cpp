@@ -267,10 +267,17 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
   std::vector<char*> op_addresses{ops_per_chunk};
   const auto begin_ts = std::chrono::high_resolution_clock::now();
   bool is_time_finished = false;
+
   while (!is_time_finished) {
     char* next_op_position = config.exec_mode == internal::Sequential_Desc
                                  ? thread_config.partition_start_addr - thread_partition_offset
                                  : thread_config.partition_start_addr + thread_partition_offset;
+
+    if (config.run_time == -1) {
+      // Only do one for loop iteration
+      is_time_finished = true;
+    }
+
     for (uint32_t io_chunk = 0; io_chunk < num_chunks; ++io_chunk) {
       for (size_t io_op = 0; io_op < ops_per_chunk; ++io_op) {
         switch (config.exec_mode) {
@@ -318,14 +325,12 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
       } else {
         thread_config.latencies->emplace_back(latency);
       }
+
       const auto run_time_in_sec = std::chrono::duration_cast<std::chrono::seconds>(end_ts - begin_ts).count();
       if (config.run_time != -1 && run_time_in_sec >= config.run_time) {
         is_time_finished = true;
         break;
       }
-    }
-    if (config.run_time == -1) {
-      is_time_finished = true;
     }
   }
 }
@@ -361,6 +366,10 @@ nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm
     if (bm_config.random_distribution == internal::Zipf) {
       config["zipf_alpha"] = bm_config.zipf_alpha;
     }
+  }
+
+  if (bm_config.run_time != -1) {
+    config["run_time"] = bm_config.run_time;
   }
 
   return config;
