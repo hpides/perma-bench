@@ -56,6 +56,7 @@ struct BenchmarkConfig {
   uint64_t total_memory_range = 10'737'418'240;  // 10 GiB
   uint32_t access_size = 256;
   uint64_t number_operations = 10'000'000;
+  uint64_t run_time = -1;
   internal::Mode exec_mode{internal::Mode::Sequential};
   internal::NumaPattern numa_pattern{internal::NumaPattern::Near};
 

@@ -254,9 +254,6 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
   assert(is_write_only || is_read_only || config.exec_mode == internal::Random);
 
   const size_t thread_partition_offset = thread_config.thread_num * config.access_size;
-  char* next_op_position = config.exec_mode == internal::Sequential_Desc
-                               ? thread_config.partition_start_addr - thread_partition_offset
-                               : thread_config.partition_start_addr + thread_partition_offset;
 
   std::random_device rnd_device;
   std::mt19937_64 rnd_generator{rnd_device()};
@@ -268,52 +265,72 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
   const size_t num_chunks = thread_config.num_ops / ops_per_chunk;
 
   std::vector<char*> op_addresses{ops_per_chunk};
-  for (uint32_t io_chunk = 0; io_chunk < num_chunks; ++io_chunk) {
-    for (size_t io_op = 0; io_op < ops_per_chunk; ++io_op) {
-      switch (config.exec_mode) {
-        case internal::Mode::Random: {
-          uint64_t random_value;
-          if (config.random_distribution == internal::RandomDistribution::Uniform) {
-            random_value = access_distribution(rnd_generator);
-          } else {
-            random_value = zipf(config.zipf_alpha, num_accesses_in_range);
+  const auto begin_ts = std::chrono::high_resolution_clock::now();
+  bool is_time_finished = false;
+
+  while (!is_time_finished) {
+    char* next_op_position = config.exec_mode == internal::Sequential_Desc
+                                 ? thread_config.partition_start_addr - thread_partition_offset
+                                 : thread_config.partition_start_addr + thread_partition_offset;
+
+    if (config.run_time == -1) {
+      // Only do one for loop iteration
+      is_time_finished = true;
+    }
+
+    for (uint32_t io_chunk = 0; io_chunk < num_chunks; ++io_chunk) {
+      for (size_t io_op = 0; io_op < ops_per_chunk; ++io_op) {
+        switch (config.exec_mode) {
+          case internal::Mode::Random: {
+            uint64_t random_value;
+            if (config.random_distribution == internal::RandomDistribution::Uniform) {
+              random_value = access_distribution(rnd_generator);
+            } else {
+              random_value = zipf(config.zipf_alpha, num_accesses_in_range);
+            }
+            op_addresses[io_op] = thread_config.partition_start_addr + (random_value * config.access_size);
+            is_read = !is_write_only && io_mode_distribution(rnd_generator);
+            break;
           }
-          op_addresses[io_op] = thread_config.partition_start_addr + (random_value * config.access_size);
-          is_read = !is_write_only && io_mode_distribution(rnd_generator);
-          break;
-        }
-        case internal::Mode::Sequential: {
-          op_addresses[io_op] = next_op_position;
-          next_op_position += ops_per_iteration;
-          break;
-        }
-        case internal::Mode::Sequential_Desc: {
-          op_addresses[io_op] = next_op_position;
-          next_op_position -= ops_per_iteration;
-          break;
+          case internal::Mode::Sequential: {
+            op_addresses[io_op] = next_op_position;
+            next_op_position += ops_per_iteration;
+            break;
+          }
+          case internal::Mode::Sequential_Desc: {
+            op_addresses[io_op] = next_op_position;
+            next_op_position -= ops_per_iteration;
+            break;
+          }
         }
       }
-    }
 
-    IoOperation operation = is_read ? IoOperation::ReadOp(op_addresses, config.access_size, config.data_instruction)
-                                    : IoOperation::WriteOp(op_addresses, config.access_size, config.data_instruction,
-                                                           config.persist_instruction);
+      IoOperation operation = is_read ? IoOperation::ReadOp(op_addresses, config.access_size, config.data_instruction)
+                                      : IoOperation::WriteOp(op_addresses, config.access_size, config.data_instruction,
+                                                             config.persist_instruction);
 
-    const auto start_ts = std::chrono::high_resolution_clock::now();
-    operation.run();
-    const auto end_ts = std::chrono::high_resolution_clock::now();
+      const auto start_ts = std::chrono::high_resolution_clock::now();
+      operation.run();
+      const auto end_ts = std::chrono::high_resolution_clock::now();
 
-    if (has_pause && ++current_pause_frequency_count >= config.pause_frequency &&
-        io_chunk < thread_config.num_ops - 1) {
-      IoOperation::PauseOp(config.pause_length_micros).run();
-      current_pause_frequency_count = 0;
-    }
+      if (has_pause && ++current_pause_frequency_count >= config.pause_frequency &&
+          io_chunk < thread_config.num_ops - 1) {
+        IoOperation::PauseOp(config.pause_length_micros).run();
+        current_pause_frequency_count = 0;
+      }
 
-    internal::Latency latency{static_cast<uint64_t>((end_ts - start_ts).count()), operation.op_type_};
-    if (config.raw_results) {
-      thread_config.raw_measurements->emplace_back(start_ts, latency);
-    } else {
-      thread_config.latencies->emplace_back(latency);
+      internal::Latency latency{static_cast<uint64_t>((end_ts - start_ts).count()), operation.op_type_};
+      if (config.raw_results) {
+        thread_config.raw_measurements->emplace_back(start_ts, latency);
+      } else {
+        thread_config.latencies->emplace_back(latency);
+      }
+
+      const auto run_time_in_sec = std::chrono::duration_cast<std::chrono::seconds>(end_ts - begin_ts).count();
+      if (!is_time_finished && run_time_in_sec >= config.run_time) {
+        is_time_finished = true;
+        break;
+      }
     }
   }
 }
@@ -349,6 +366,10 @@ nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm
     if (bm_config.random_distribution == internal::Zipf) {
       config["zipf_alpha"] = bm_config.zipf_alpha;
     }
+  }
+
+  if (bm_config.run_time != -1) {
+    config["run_time"] = bm_config.run_time;
   }
 
   return config;
@@ -481,6 +502,7 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_size_if_present(node, "access_size", ConfigEnums::scale_suffix_to_factor, &bm_config.access_size);
 
     num_found += get_if_present(node, "number_operations", &bm_config.number_operations);
+    num_found += get_if_present(node, "run_time", &bm_config.run_time);
     num_found += get_if_present(node, "write_ratio", &bm_config.write_ratio);
     num_found += get_if_present(node, "pause_frequency", &bm_config.pause_frequency);
     num_found += get_if_present(node, "pause_length_micros", &bm_config.pause_length_micros);
@@ -532,6 +554,10 @@ void BenchmarkConfig::validate() const {
   // Check if ratio is between one and zero
   const bool is_ratio_between_one_zero = 0 <= write_ratio && write_ratio <= 1;
   CHECK_ARGUMENT(is_ratio_between_one_zero, "Write ratio must be between 0 and 1");
+
+  // Check if runtime is at least one second
+  const bool is_at_least_one_second_or_default = run_time > 0 || run_time == -1;
+  CHECK_ARGUMENT(is_at_least_one_second_or_default, "Run time be at least 1 second");
 
   // Check if at least one thread
   const bool is_at_least_one_thread = number_threads > 0;
