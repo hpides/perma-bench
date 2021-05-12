@@ -10,7 +10,7 @@ set -e
 RESULT_DIR=$1
 PLOT_DIR=$2
 
-for script in scripts/plots/*.py
+for script in scripts/*.py
 do
     echo "Running $script..."
     python3 ${script} ${RESULT_DIR} ${PLOT_DIR} > /dev/null
