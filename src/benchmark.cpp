@@ -480,11 +480,23 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
   nlohmann::json bandwidth_results;
   if (total_read_duration > 0) {
     const uint64_t read_execution_time = total_read_duration / config.number_threads;
-    bandwidth_results["read"] = get_bandwidth(total_read_size, read_execution_time);
+    const double bandwidth = get_bandwidth(total_read_size, read_execution_time);
+    // We need to normalize the bandwidth here if we do not execute the same operation type 100% of the time.
+    // Otherwise, we strongly overestimate the bandwidth, as the operations are running only X% of the time but we
+    // logically scale it up to 100%. This will result in a slight underestimation, but not by much.
+    // This is a no-op if we run one op-type only.
+    const double normalized_bandwidth = bandwidth * (1 - config.write_ratio);
+    bandwidth_results["read"] = normalized_bandwidth;
   }
   if (total_write_duration > 0) {
     const uint64_t write_execution_time = total_write_duration / config.number_threads;
-    bandwidth_results["write"] = get_bandwidth(total_write_size, write_execution_time);
+    const double bandwidth = get_bandwidth(total_write_size, write_execution_time);
+    // We need to normalize the bandwidth here if we do not execute the same operation type 100% of the time.
+    // Otherwise, we strongly overestimate the bandwidth, as the operations are running only X% of the time but we
+    // logically scale it up to 100%. This will result in a slight underestimation, but not by much.
+    // This is a no-op if we run one op-type only.
+    const double normalized_bandwidth = bandwidth * config.write_ratio;
+    bandwidth_results["write"] = normalized_bandwidth;
   }
 
   result["bandwidth"] = bandwidth_results;

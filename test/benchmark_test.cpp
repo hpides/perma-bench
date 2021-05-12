@@ -693,8 +693,8 @@ TEST_F(BenchmarkTest, ResultsSingleThreadMixed) {
   ASSERT_JSON_TRUE(bandwidth_json, contains("write"));
   ASSERT_JSON_TRUE(bandwidth_json, at("read").is_number());
   ASSERT_JSON_TRUE(bandwidth_json, at("write").is_number());
-  EXPECT_NEAR(bandwidth_json.at("read").get<double>(), 4.76837, 0.1);
-  EXPECT_NEAR(bandwidth_json.at("write").get<double>(), 2.38419, 0.1);
+  EXPECT_NEAR(bandwidth_json.at("read").get<double>(), 2.384185, 0.1);
+  EXPECT_NEAR(bandwidth_json.at("write").get<double>(), 1.192095, 0.1);
 
   const nlohmann::json& duration_json = result_json["duration"];
   ASSERT_JSON_EQ(duration_json, size(), 12);
@@ -824,8 +824,8 @@ TEST_F(BenchmarkTest, ResultsMultiThreadMixed) {
   ASSERT_JSON_TRUE(bandwidth_json, contains("write"));
   ASSERT_JSON_TRUE(bandwidth_json, at("read").is_number());
   ASSERT_JSON_TRUE(bandwidth_json, at("write").is_number());
-  EXPECT_NEAR(bandwidth_json.at("read").get<double>(), 19.07, 0.1);
-  EXPECT_NEAR(bandwidth_json.at("write").get<double>(), 15.25, 0.1);
+  EXPECT_NEAR(bandwidth_json.at("read").get<double>(), 9.535, 0.1);
+  EXPECT_NEAR(bandwidth_json.at("write").get<double>(), 7.625, 0.1);
 
   const nlohmann::json& duration_json = result_json["duration"];
   ASSERT_JSON_EQ(duration_json, size(), 12);
