@@ -118,7 +118,7 @@ def SAVE_PLOT(plot_path, img_types=None):
     for img_type in img_types:
         img_path = f"{plot_path}{img_type}"
         PLOT_PATHS.append(img_path)
-        plt.savefig(img_path, bbox_inches='tight')
+        plt.savefig(img_path, bbox_inches='tight', dpi=300)
 
     plt.figure()
 

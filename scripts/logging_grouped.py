@@ -12,7 +12,7 @@ def plot_nocache(system_data, ax):
 
     ax.set_xticks(x_data)
     ax.set_xticklabels(['1', '', '4', '8', '16', '32'])
-    ax.set_xlabel("\# of Threads")
+    ax.set_xlabel("$\#$ of Threads")
 
     ax.set_ylabel("Bandwidth (GB/s)")
     ax.set_ylim(0, 35)
@@ -33,7 +33,7 @@ def plot_none(system_data, ax):
 
     ax.set_xticks(x_data)
     ax.set_xticklabels(['1', '', '4', '8', '16', '32'])
-    ax.set_xlabel("\# of Threads")
+    ax.set_xlabel("$\#$ of Threads")
 
     # ax.set_ylabel("Bandwidth (GB/s)")
     ax.set_ylim(0, 35)
