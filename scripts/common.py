@@ -22,14 +22,6 @@ DOUBLE_FIG_SIZE = (DOUBLE_FIG_WIDTH, DOUBLE_FIG_HEIGHT)
 PLOT_PATHS = []
 IMG_TYPES = ['.png', '.svg']
 
-# SYSTEM_COLOR = {
-#     'intel-128':  '#a6cee3',
-#     'intel-256':  '#1f78b4',
-#     'intel-2gen':  '#b2df8a',
-#     'intel-dram': '#33a02c',
-#     'hpe':        '#fb9a99',
-# }
-
 SYSTEM_COLOR = {
     'intel-128':  '#a1dab4',
     'intel-256':  '#378d54',

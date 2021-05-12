@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
 
-if [ $# -eq 0 ]
+if [ $# -ne 2 ]
 then
-    echo "Need to specify plot output directory!"
+    echo "Need to specify result and plot directory!"
     exit 1
 fi
 
 set -e
-PLOT_DIR=$1
+RESULT_DIR=$1
+PLOT_DIR=$2
 
-for script in scripts/*.py
+for script in scripts/plots/*.py
 do
     echo "Running $script..."
-    python3 ${script} results ${PLOT_DIR} > /dev/null
+    python3 ${script} ${RESULT_DIR} ${PLOT_DIR} > /dev/null
 done
 
 open ${PLOT_DIR}/*.png

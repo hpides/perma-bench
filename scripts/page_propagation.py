@@ -16,8 +16,8 @@ def plot_read(system_data, ax):
     ax.set_xlabel("Write Ratio")
 
     ax.set_ylabel("Bandwidth (GB/s)")
-    ax.set_ylim(0, 55)
-    ax.set_yticks(range(0, 55, 10))
+    ax.set_ylim(0, 35)
+    ax.set_yticks(range(0, 35, 10))
 
     ax.set_title("a) Read")
 
@@ -39,8 +39,8 @@ def plot_write(system_data, ax):
     ax.set_xlabel("Write Ratio")
 
     # ax.set_ylabel("writeency (ms)")
-    ax.set_ylim(0, 55)
-    ax.set_yticks(range(0, 55, 10))
+    ax.set_ylim(0, 35)
+    ax.set_yticks(range(0, 35, 10))
 
     ax.set_title("b) Write")
 
