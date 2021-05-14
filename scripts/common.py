@@ -145,6 +145,23 @@ def get_bms(results, bm_name, skip_dram=False):
     return bms
 
 
+def get_parallel_runs(bms, config):
+    runs = defaultdict(list)
+    for name, res_runs in bms.items():
+        for run in res_runs["benchmarks"]:
+            run_confs = run["configs"]
+
+            append = True
+            for single_bm_name, single_bm_conf in config.items():
+                if not all(run_confs[single_bm_name][conf_name] == conf_val for conf_name, conf_val in single_bm_conf.items()):
+                    append = False
+
+            if append:
+                runs[name].append(run)
+
+    return runs
+
+
 def get_runs(bms, config):
     runs = defaultdict(list)
     for name, res_runs in bms.items():
@@ -155,9 +172,27 @@ def get_runs(bms, config):
     return runs
 
 
-def get_runs_from_results(results, bm_name, filter_config, skip_dram=False):
+def get_runs_from_results(results, bm_name, filter_config, skip_dram=False, is_parallel=False):
     bms = get_bms(results, bm_name, skip_dram)
-    return get_runs(bms, filter_config)
+    if is_parallel:
+        return get_parallel_runs(bms, filter_config)
+    else:
+        return get_runs(bms, filter_config)
+
+
+def get_data_from_parallel_runs(runs, sub_bm_name_one, x_attribute_one, y_type_one,
+                                y_attribute_one, sub_bm_name_two, x_attribute_two, y_type_two, y_attribute_two):
+    data = defaultdict(list)
+    for system_name, system_runs in runs.items():
+        d = data[system_name]
+        for run in system_runs:
+            x_val_one = run['configs'][sub_bm_name_one][x_attribute_one]
+            x_val_two = run['configs'][sub_bm_name_two][x_attribute_two]
+            y_val_one = run['results'][sub_bm_name_one][y_type_one].get(y_attribute_one, 0)
+            y_val_two = run['results'][sub_bm_name_two][y_type_two].get(y_attribute_two, 0)
+            d.append(({sub_bm_name_one: (x_val_one, y_val_one)}, {sub_bm_name_two: (x_val_two, y_val_two)}))
+
+    return data
 
 
 def get_data_from_runs(runs, x_attribute, y_type, y_attribute):
