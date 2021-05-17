@@ -35,9 +35,9 @@ struct Latency {
 };
 
 struct alignas(16) Measurement {
-  Measurement(const std::chrono::high_resolution_clock::time_point start_ts, const Latency latency)
+  Measurement(const std::chrono::steady_clock::time_point start_ts, const Latency latency)
       : start_ts(start_ts), latency(latency){};
-  const std::chrono::high_resolution_clock::time_point start_ts;
+  const std::chrono::steady_clock::time_point start_ts;
   const Latency latency;
 };
 

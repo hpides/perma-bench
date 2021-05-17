@@ -265,7 +265,7 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
   const size_t num_chunks = thread_config.num_ops / ops_per_chunk;
 
   std::vector<char*> op_addresses{ops_per_chunk};
-  const auto begin_ts = std::chrono::high_resolution_clock::now();
+  const auto begin_ts = std::chrono::steady_clock::now();
   bool is_time_finished = false;
 
   while (!is_time_finished) {
@@ -309,9 +309,9 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
                                       : IoOperation::WriteOp(op_addresses, config.access_size, config.data_instruction,
                                                              config.persist_instruction);
 
-      const auto start_ts = std::chrono::high_resolution_clock::now();
+      const auto start_ts = std::chrono::steady_clock::now();
       operation.run();
-      const auto end_ts = std::chrono::high_resolution_clock::now();
+      const auto end_ts = std::chrono::steady_clock::now();
 
       if (has_pause && ++current_pause_frequency_count >= config.pause_frequency &&
           io_chunk < thread_config.num_ops - 1) {

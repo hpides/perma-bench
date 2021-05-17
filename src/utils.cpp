@@ -93,7 +93,7 @@ void prefault_file(char* addr, const uint64_t total_memory_range, const uint64_t
   }
 }
 
-uint64_t duration_to_nanoseconds(const std::chrono::high_resolution_clock::duration duration) {
+uint64_t duration_to_nanoseconds(const std::chrono::steady_clock::duration duration) {
   return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
 }
 
