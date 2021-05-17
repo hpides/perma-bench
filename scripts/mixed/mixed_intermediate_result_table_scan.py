@@ -1,9 +1,13 @@
+import sys
+import os
+sys.path.append(os.path.dirname(sys.path[0]))
+
 import numpy as np
 
 from common import *
 
 
-def plot_bw_heat(system_data, sub_bm, ax, sub_title, cmap='Blues', set_clabel=False):
+def plot_bw_heat(system_data, sub_bm, ax, sub_title, vmax, cmap='Blues', set_clabel=False):
 
     sub_bm_one_unique_values = []
     sub_bm_two_unique_values = []
@@ -34,14 +38,13 @@ def plot_bw_heat(system_data, sub_bm, ax, sub_title, cmap='Blues', set_clabel=Fa
     ax.set_xticklabels(sub_bm_two_unique_values)
     ax.set_yticklabels(sub_bm_one_unique_values)
 
-    ax.tick_params(top=True, bottom=False,
-                   labeltop=True, labelbottom=False)
+    ax.tick_params(top=False, bottom=True, labeltop=False, labelbottom=True)
     ax.set_title(sub_title)
     plt.setp(ax.get_xticklabels(), ha="center")
 
     ax.spines[:].set_visible(False)
 
-    hm = ax.imshow(data, cmap=cmap, interpolation="nearest")
+    hm = ax.imshow(data, cmap=cmap, interpolation="nearest", vmin=0, vmax=vmax)
     cbar = ax.figure.colorbar(hm, ax=ax)
     if set_clabel:
         cbar.ax.set_ylabel("Throughput GB/s", rotation=-90, va="bottom")
@@ -60,8 +63,13 @@ if __name__ == '__main__':
                                           "intermediate_result", "number_threads", "bandwidth", "write")
 
     fig, (bw_ax_one, bw_ax_two) = plt.subplots(1, 2, figsize=DOUBLE_FIG_SIZE)
-    plot_bw_heat(bw_data, "table_scan", bw_ax_one, "Table scan", 'YlOrRd')
-    plot_bw_heat(bw_data, "intermediate_result", bw_ax_two, "Intermediate result", 'BuGn', True)
+    plot_bw_heat(bw_data, "table_scan", bw_ax_one, "a) Table Scan", 40, 'YlOrRd')
+    plot_bw_heat(bw_data, "intermediate_result", bw_ax_two, "b) Intermediate Result", 10, 'BuGn', True)
+
+    bw_ax_one.set_xlabel("Result Threads")
+    bw_ax_two.set_xlabel("Result Threads")
+    bw_ax_one.set_ylabel("Scan Threads")
+    # bw_ax_two.set_ylabel("$\#$ Scan Threads")
 
     plot_path = os.path.join(plot_dir, "table_scan_intermediate_result_performance")
     SAVE_PLOT(plot_path)
