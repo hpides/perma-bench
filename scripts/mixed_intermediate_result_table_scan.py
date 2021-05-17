@@ -27,10 +27,10 @@ def plot_bw_heat(system_data, sub_bm, ax, sub_title, cmap='Blues', set_clabel=Fa
                 sub_bm_two_unique_values += [x_data_two]
 
     data = data.reshape((len(sub_bm_one_unique_values), len(sub_bm_two_unique_values)))
-    # We want to show all ticks...
+
     ax.set_xticks(np.arange(len(sub_bm_two_unique_values)))
     ax.set_yticks(np.arange(len(sub_bm_one_unique_values)))
-    # ... and label them with the respective list entries
+
     ax.set_xticklabels(sub_bm_two_unique_values)
     ax.set_yticklabels(sub_bm_one_unique_values)
 
@@ -41,9 +41,7 @@ def plot_bw_heat(system_data, sub_bm, ax, sub_title, cmap='Blues', set_clabel=Fa
 
     ax.spines[:].set_visible(False)
 
-    # save this plot inside a variable called hm
     hm = ax.imshow(data, cmap=cmap, interpolation="nearest")
-    # pass this heatmap object into plt.colorbar method.
     cbar = ax.figure.colorbar(hm, ax=ax)
     if set_clabel:
         cbar.ax.set_ylabel("Throughput GB/s", rotation=-90, va="bottom")
@@ -62,11 +60,8 @@ if __name__ == '__main__':
                                           "intermediate_result", "number_threads", "bandwidth", "write")
 
     fig, (bw_ax_one, bw_ax_two) = plt.subplots(1, 2, figsize=DOUBLE_FIG_SIZE)
-    # fig, (bw_ax, lat_ax) = plt.subplots(1, 2, figsize=DOUBLE_FIG_SIZE)
     plot_bw_heat(bw_data, "table_scan", bw_ax_one, "Table scan", 'YlOrRd')
     plot_bw_heat(bw_data, "intermediate_result", bw_ax_two, "Intermediate result", 'BuGn', True)
-
-    # FIG_LEGEND(fig)
 
     plot_path = os.path.join(plot_dir, "table_scan_intermediate_result_performance")
     SAVE_PLOT(plot_path)
