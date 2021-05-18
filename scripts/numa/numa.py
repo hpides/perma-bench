@@ -98,7 +98,6 @@ if __name__ == '__main__':
 
     bw_data_write = {}
     bw_data_read = {}
-    bw_data_none = {}
 
     bw_data_write['far'] = list(bw_data_write_far.values())[0]
     bw_data_read['far'] = list(bw_data_read_far.values())[0]
