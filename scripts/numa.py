@@ -34,7 +34,7 @@ def plot_read(system_data, ax):
 
     ax.plot(1, 0, color='white')
 
-    ax.set_xticks([0, 0.2, 0.5, 0.8, 1])
+    ax.set_xticks([0, 0.2, 0.4, 0.6, 0.8, 1])
     ax.set_xlabel("Write Ratio")
 
     ax.set_ylabel("Bandwidth (GB/s)")
@@ -53,7 +53,7 @@ def plot_write(system_data, ax):
         ax.plot(x_data, y_data, **NUMA_LINE(numa_pattern))
     ax.plot(0, 0, color='white')
 
-    ax.set_xticks([0, 0.2, 0.5, 0.8, 1])
+    ax.set_xticks([0, 0.2, 0.4, 0.6, 0.8, 1])
     ax.set_xlabel("Write Ratio")
 
     ax.set_ylim(0, 3)
