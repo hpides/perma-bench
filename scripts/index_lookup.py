@@ -25,29 +25,29 @@ def plot_bw(system_data, ax):
     HIDE_BORDERS(ax)
 
 
-def plot_lat(system_data_avg, system_data_99, ax):
+def plot_lat(system_data_avg, system_data_95, ax):
     bars = sorted(system_data_avg.keys())
     num_bars = len(bars)
     bar_width = 0.8 / num_bars
 
     for i, system in enumerate(bars):
         data_avg = system_data_avg[system]
-        data_99 = system_data_99[system]
+        data_95 = system_data_95[system]
         _, y_data_avg = zip(*data_avg)
-        _, y_data_99 = zip(*data_99)
+        _, y_data_95 = zip(*data_95)
         color = SYSTEM_COLOR[system]
         hatch = SYSTEM_HATCH[system]
         bar = BAR(system)
         ax.bar(0 + i * bar_width, y_data_avg, width=bar_width, **bar)
-        ax.bar(1 + i * bar_width, y_data_99,  width=bar_width, **bar)
+        ax.bar(1 + i * bar_width, y_data_95,  width=bar_width, **bar)
 
-    x_ticks = ['AVG', '$99\%$']
+    x_ticks = ['AVG', '$95\%$']
     x_ticks_pos = BAR_X_TICKS_POS(bar_width, num_bars, len(x_ticks))
     ax.set_xticks(x_ticks_pos)
     ax.set_xticklabels(x_ticks)
 
-    ax.set_ylim(0, 500)
-    ax.set_yticks(range(0, 221, 50))
+    ax.set_ylim(0, 230)
+    ax.set_yticks(range(0, 201, 50))
 
     ax.set_ylabel("Latency (ns)")
     ax.set_title("b) Latency")
@@ -68,12 +68,12 @@ if __name__ == '__main__':
     runs = get_runs_from_results(result_path, "index_lookup", filter_config)
     bw_data = get_data_from_runs(runs, "access_size", "bandwidth", "read")
     lat_data_avg = get_data_from_runs(runs, "access_size", "duration", "avg")
-    lat_data_99 = get_data_from_runs(runs, "access_size", "duration", "percentile_99")
+    lat_data_95 = get_data_from_runs(runs, "access_size", "duration", "percentile_95")
 
 
     fig, (bw_ax, lat_ax) = plt.subplots(1, 2, figsize=DOUBLE_FIG_SIZE)
     plot_bw(bw_data, bw_ax)
-    plot_lat(lat_data_avg, lat_data_99, lat_ax)
+    plot_lat(lat_data_avg, lat_data_95, lat_ax)
 
     FIG_LEGEND(fig)
 
