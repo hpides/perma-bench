@@ -1,0 +1,13 @@
+index_update:
+  matrix:
+    write_ratio: [0, 0.2, 0.4, 0.6, 0.8, 1]
+    numa_pattern: [near, far]
+
+  args:
+    total_memory_range: 10G
+    random_distribution: uniform
+    access_size: 64
+    number_threads: 16
+    number_operations: 50000000
+    persist_instruction: cache
+    exec_mode: random
