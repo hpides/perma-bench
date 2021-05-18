@@ -24,4 +24,10 @@ do
     python3 ${script} ${RESULT_DIR}/mixed ${PLOT_DIR} > /dev/null
 done
 
+for script in scripts/numa/*.py
+do
+    echo "Running $script..."
+    python3 ${script} ${RESULT_DIR}/numa ${PLOT_DIR} > /dev/null
+done
+
 open ${PLOT_DIR}/*.png
