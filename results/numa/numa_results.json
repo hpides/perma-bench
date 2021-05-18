@@ -3,7 +3,7 @@
     "benchmarks": [
       {
         "bandwidth": {
-          "read": 11.278228546095193
+          "read": 15.6910404097196
         },
         "config": {
           "access_size": 64,
@@ -22,23 +22,23 @@
           "write_ratio": 0.0
         },
         "duration": {
-          "avg": 84.05774590163935,
-          "lower_quartile": 79,
-          "max": 222,
-          "median": 91,
-          "min": 39,
-          "percentile_90": 101,
-          "percentile_95": 104,
-          "percentile_99": 110,
-          "percentile_999": 193,
-          "percentile_9999": 219,
-          "std_dev": 19.619338105703914,
-          "upper_quartile": 97
+          "avg": 60.27540983606557,
+          "lower_quartile": 54,
+          "max": 199,
+          "median": 61,
+          "min": 34,
+          "percentile_90": 67,
+          "percentile_95": 71,
+          "percentile_99": 106,
+          "percentile_999": 133,
+          "percentile_9999": 197,
+          "std_dev": 11.538085981250221,
+          "upper_quartile": 64
         }
       },
       {
         "bandwidth": {
-          "read": 1.9106832865881789
+          "read": 2.6670459397717194
         },
         "config": {
           "access_size": 64,
@@ -57,24 +57,24 @@
           "write_ratio": 0.0
         },
         "duration": {
-          "avg": 498.62790983606556,
-          "lower_quartile": 455,
-          "max": 10095,
-          "median": 496,
-          "min": 55,
-          "percentile_90": 647,
-          "percentile_95": 719,
-          "percentile_99": 791,
-          "percentile_999": 889,
-          "percentile_9999": 6579,
-          "std_dev": 167.90493953734963,
-          "upper_quartile": 544
+          "avg": 357.0783606557377,
+          "lower_quartile": 322,
+          "max": 8223,
+          "median": 355,
+          "min": 45,
+          "percentile_90": 429,
+          "percentile_95": 453,
+          "percentile_99": 505,
+          "percentile_999": 594,
+          "percentile_9999": 6347,
+          "std_dev": 105.31465269715504,
+          "upper_quartile": 392
         }
       },
       {
         "bandwidth": {
-          "read": 6.847144165498484,
-          "write": 0.6018779366347071
+          "read": 11.978069695684198,
+          "write": 0.6268684402271223
         },
         "config": {
           "access_size": 64,
@@ -94,24 +94,246 @@
           "write_ratio": 0.2
         },
         "duration": {
-          "avg": 152.9725819672131,
+          "avg": 111.40815573770492,
+          "lower_quartile": 61,
+          "max": 461,
+          "median": 65,
+          "min": 36,
+          "percentile_90": 304,
+          "percentile_95": 313,
+          "percentile_99": 327,
+          "percentile_999": 342,
+          "percentile_9999": 407,
+          "std_dev": 96.64924333259225,
+          "upper_quartile": 70
+        }
+      },
+      {
+        "bandwidth": {
+          "read": 3.792681809933582,
+          "write": 0.16284136240778077
+        },
+        "config": {
+          "access_size": 64,
+          "data_instruction": "simd",
+          "exec_mode": "random",
+          "memory_type": "pmem",
+          "min_io_chunk_size": 131072,
+          "numa_pattern": "far",
+          "number_operations": 50000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "pause_frequency": 0,
+          "persist_instruction": "cache",
+          "prefault_file": true,
+          "random_distribution": "uniform",
+          "total_memory_range": 10737418240,
+          "write_ratio": 0.2
+        },
+        "duration": {
+          "avg": 394.96495901639344,
+          "lower_quartile": 166,
+          "max": 12159,
+          "median": 219,
+          "min": 46,
+          "percentile_90": 1190,
+          "percentile_95": 1317,
+          "percentile_99": 1491,
+          "percentile_999": 1922,
+          "percentile_9999": 10439,
+          "std_dev": 434.13921338667194,
+          "upper_quartile": 300
+        }
+      },
+      {
+        "bandwidth": {
+          "read": 8.525695667794107,
+          "write": 1.2451673835926742
+        },
+        "config": {
+          "access_size": 64,
+          "data_instruction": "simd",
+          "exec_mode": "random",
+          "memory_type": "pmem",
+          "min_io_chunk_size": 131072,
+          "numa_pattern": "near",
+          "number_operations": 50000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "pause_frequency": 0,
+          "persist_instruction": "cache",
+          "prefault_file": true,
+          "random_distribution": "uniform",
+          "total_memory_range": 10737418240,
+          "write_ratio": 0.4
+        },
+        "duration": {
+          "avg": 161.14909836065573,
+          "lower_quartile": 64,
+          "max": 496,
+          "median": 69,
+          "min": 34,
+          "percentile_90": 317,
+          "percentile_95": 323,
+          "percentile_99": 337,
+          "percentile_999": 382,
+          "percentile_9999": 475,
+          "std_dev": 117.84190047425307,
+          "upper_quartile": 303
+        }
+      },
+      {
+        "bandwidth": {
+          "read": 4.780795895535884,
+          "write": 0.4877292758270915
+        },
+        "config": {
+          "access_size": 64,
+          "data_instruction": "simd",
+          "exec_mode": "random",
+          "memory_type": "pmem",
+          "min_io_chunk_size": 131072,
+          "numa_pattern": "far",
+          "number_operations": 50000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "pause_frequency": 0,
+          "persist_instruction": "cache",
+          "prefault_file": true,
+          "random_distribution": "uniform",
+          "total_memory_range": 10737418240,
+          "write_ratio": 0.4
+        },
+        "duration": {
+          "avg": 386.037131147541,
+          "lower_quartile": 101,
+          "max": 8215,
+          "median": 160,
+          "min": 47,
+          "percentile_90": 875,
+          "percentile_95": 952,
+          "percentile_99": 1097,
+          "percentile_999": 1227,
+          "percentile_9999": 4879,
+          "std_dev": 346.46214861735865,
+          "upper_quartile": 733
+        }
+      },
+      {
+        "bandwidth": {
+          "read": 5.753230383507467,
+          "write": 1.8556861077780802
+        },
+        "config": {
+          "access_size": 64,
+          "data_instruction": "simd",
+          "exec_mode": "random",
+          "memory_type": "pmem",
+          "min_io_chunk_size": 131072,
+          "numa_pattern": "near",
+          "number_operations": 50000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "pause_frequency": 0,
+          "persist_instruction": "cache",
+          "prefault_file": true,
+          "random_distribution": "uniform",
+          "total_memory_range": 10737418240,
+          "write_ratio": 0.6
+        },
+        "duration": {
+          "avg": 210.43725409836065,
+          "lower_quartile": 66,
+          "max": 517,
+          "median": 295,
+          "min": 34,
+          "percentile_90": 322,
+          "percentile_95": 328,
+          "percentile_99": 339,
+          "percentile_999": 354,
+          "percentile_9999": 486,
+          "std_dev": 119.58065011791817,
+          "upper_quartile": 312
+        }
+      },
+      {
+        "bandwidth": {
+          "read": 4.058285899382803,
+          "write": 0.9136709656125799
+        },
+        "config": {
+          "access_size": 64,
+          "data_instruction": "simd",
+          "exec_mode": "random",
+          "memory_type": "pmem",
+          "min_io_chunk_size": 131072,
+          "numa_pattern": "far",
+          "number_operations": 50000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "pause_frequency": 0,
+          "persist_instruction": "cache",
+          "prefault_file": true,
+          "random_distribution": "uniform",
+          "total_memory_range": 10737418240,
+          "write_ratio": 0.6
+        },
+        "duration": {
+          "avg": 414.4515573770492,
           "lower_quartile": 93,
-          "max": 2129,
-          "median": 123,
-          "min": 39,
-          "percentile_90": 311,
-          "percentile_95": 349,
-          "percentile_99": 394,
-          "percentile_999": 446,
-          "percentile_9999": 699,
-          "std_dev": 90.00839638824046,
-          "upper_quartile": 152
+          "max": 8447,
+          "median": 551,
+          "min": 47,
+          "percentile_90": 702,
+          "percentile_95": 746,
+          "percentile_99": 831,
+          "percentile_999": 1010,
+          "percentile_9999": 7927,
+          "std_dev": 289.3172956657535,
+          "upper_quartile": 633
         }
       },
       {
         "bandwidth": {
-          "read": 2.926046277969194,
-          "write": 0.12165202355084528
+          "read": 2.860274274378555,
+          "write": 2.4185529326163566
+        },
+        "config": {
+          "access_size": 64,
+          "data_instruction": "simd",
+          "exec_mode": "random",
+          "memory_type": "pmem",
+          "min_io_chunk_size": 131072,
+          "numa_pattern": "near",
+          "number_operations": 50000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "pause_frequency": 0,
+          "persist_instruction": "cache",
+          "prefault_file": true,
+          "random_distribution": "uniform",
+          "total_memory_range": 10737418240,
+          "write_ratio": 0.8
+        },
+        "duration": {
+          "avg": 265.44639344262293,
+          "lower_quartile": 294,
+          "max": 471,
+          "median": 311,
+          "min": 34,
+          "percentile_90": 331,
+          "percentile_95": 337,
+          "percentile_99": 352,
+          "percentile_999": 398,
+          "percentile_9999": 465,
+          "std_dev": 100.38029815399302,
+          "upper_quartile": 322
+        }
+      },
+      {
+        "bandwidth": {
+          "read": 2.4068167621983494,
+          "write": 1.4265737702820314
         },
         "config": {
           "access_size": 64,
@@ -120,6 +342,150 @@
           "memory_type": "pmem",
           "min_io_chunk_size": 131072,
           "numa_pattern": "far",
+          "number_operations": 50000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "pause_frequency": 0,
+          "persist_instruction": "cache",
+          "prefault_file": true,
+          "random_distribution": "uniform",
+          "total_memory_range": 10737418240,
+          "write_ratio": 0.8
+        },
+        "duration": {
+          "avg": 444.2041393442623,
+          "lower_quartile": 473,
+          "max": 6339,
+          "median": 516,
+          "min": 50,
+          "percentile_90": 587,
+          "percentile_95": 609,
+          "percentile_99": 660,
+          "percentile_999": 933,
+          "percentile_9999": 2873,
+          "std_dev": 193.87075339991188,
+          "upper_quartile": 551
+        }
+      },
+      {
+        "bandwidth": {
+          "write": 3.03904629144489
+        },
+        "config": {
+          "access_size": 64,
+          "data_instruction": "simd",
+          "exec_mode": "random",
+          "memory_type": "pmem",
+          "min_io_chunk_size": 131072,
+          "numa_pattern": "near",
+          "number_operations": 50000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "pause_frequency": 0,
+          "persist_instruction": "cache",
+          "prefault_file": true,
+          "random_distribution": "uniform",
+          "total_memory_range": 10737418240,
+          "write_ratio": 1.0
+        },
+        "duration": {
+          "avg": 313.30323770491805,
+          "lower_quartile": 305,
+          "max": 390,
+          "median": 313,
+          "min": 223,
+          "percentile_90": 330,
+          "percentile_95": 335,
+          "percentile_99": 344,
+          "percentile_999": 362,
+          "percentile_9999": 385,
+          "std_dev": 13.432016657392886,
+          "upper_quartile": 322
+        }
+      },
+      {
+        "bandwidth": {
+          "write": 1.9988185920034256
+        },
+        "config": {
+          "access_size": 64,
+          "data_instruction": "simd",
+          "exec_mode": "random",
+          "memory_type": "pmem",
+          "min_io_chunk_size": 131072,
+          "numa_pattern": "far",
+          "number_operations": 50000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "pause_frequency": 0,
+          "persist_instruction": "cache",
+          "prefault_file": true,
+          "random_distribution": "uniform",
+          "total_memory_range": 10737418240,
+          "write_ratio": 1.0
+        },
+        "duration": {
+          "avg": 476.61889344262295,
+          "lower_quartile": 466,
+          "max": 5895,
+          "median": 478,
+          "min": 299,
+          "percentile_90": 501,
+          "percentile_95": 507,
+          "percentile_99": 520,
+          "percentile_999": 537,
+          "percentile_9999": 2405,
+          "std_dev": 53.63122602861982,
+          "upper_quartile": 490
+        }
+      },
+      {
+        "bandwidth": {
+          "read": 2.704934480696012
+        },
+        "config": {
+          "access_size": 64,
+          "data_instruction": "simd",
+          "exec_mode": "random",
+          "memory_type": "pmem",
+          "min_io_chunk_size": 131072,
+          "numa_pattern": "none",
+          "number_operations": 50000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "pause_frequency": 0,
+          "prefault_file": true,
+          "random_distribution": "uniform",
+          "total_memory_range": 10737418240,
+          "write_ratio": 0.0
+        },
+        "duration": {
+          "avg": 352.0690163934426,
+          "lower_quartile": 303,
+          "max": 914,
+          "median": 341,
+          "min": 46,
+          "percentile_90": 442,
+          "percentile_95": 474,
+          "percentile_99": 569,
+          "percentile_999": 729,
+          "percentile_9999": 817,
+          "std_dev": 70.71170682877818,
+          "upper_quartile": 392
+        }
+      },
+      {
+        "bandwidth": {
+          "read": 4.110090815172531,
+          "write": 0.1737168201775886
+        },
+        "config": {
+          "access_size": 64,
+          "data_instruction": "simd",
+          "exec_mode": "random",
+          "memory_type": "pmem",
+          "min_io_chunk_size": 131072,
+          "numa_pattern": "none",
           "number_operations": 50000000,
           "number_partitions": 1,
           "number_threads": 16,
@@ -131,24 +497,24 @@
           "write_ratio": 0.2
         },
         "duration": {
-          "avg": 522.4190163934426,
-          "lower_quartile": 211,
-          "max": 12495,
-          "median": 283,
-          "min": 59,
-          "percentile_90": 1599,
-          "percentile_95": 1742,
-          "percentile_99": 1946,
-          "percentile_999": 2217,
-          "percentile_9999": 11935,
-          "std_dev": 576.5118269718121,
-          "upper_quartile": 398
+          "avg": 369.38790983606555,
+          "lower_quartile": 147,
+          "max": 2327,
+          "median": 202,
+          "min": 46,
+          "percentile_90": 1129,
+          "percentile_95": 1287,
+          "percentile_99": 1491,
+          "percentile_999": 1796,
+          "percentile_9999": 2061,
+          "std_dev": 390.6248139899045,
+          "upper_quartile": 297
         }
       },
       {
         "bandwidth": {
-          "read": 4.635218104203251,
-          "write": 1.0485366043935604
+          "read": 5.033945777115055,
+          "write": 0.5148469401711645
         },
         "config": {
           "access_size": 64,
@@ -156,7 +522,7 @@
           "exec_mode": "random",
           "memory_type": "pmem",
           "min_io_chunk_size": 131072,
-          "numa_pattern": "near",
+          "numa_pattern": "none",
           "number_operations": 50000000,
           "number_partitions": 1,
           "number_threads": 16,
@@ -168,24 +534,24 @@
           "write_ratio": 0.4
         },
         "duration": {
-          "avg": 218.4729918032787,
-          "lower_quartile": 119,
-          "max": 605,
-          "median": 152,
+          "avg": 360.8873770491803,
+          "lower_quartile": 95,
+          "max": 1534,
+          "median": 150,
           "min": 39,
-          "percentile_90": 399,
-          "percentile_95": 422,
-          "percentile_99": 461,
-          "percentile_999": 509,
-          "percentile_9999": 548,
-          "std_dev": 123.6626963448502,
-          "upper_quartile": 341
+          "percentile_90": 852,
+          "percentile_95": 944,
+          "percentile_99": 1112,
+          "percentile_999": 1315,
+          "percentile_9999": 1490,
+          "std_dev": 328.7903841998736,
+          "upper_quartile": 683
         }
       },
       {
         "bandwidth": {
-          "read": 3.7983667421381773,
-          "write": 0.35290854141715355
+          "read": 4.33724063103947,
+          "write": 0.996807635858481
         },
         "config": {
           "access_size": 64,
@@ -193,44 +559,7 @@
           "exec_mode": "random",
           "memory_type": "pmem",
           "min_io_chunk_size": 131072,
-          "numa_pattern": "far",
-          "number_operations": 50000000,
-          "number_partitions": 1,
-          "number_threads": 16,
-          "pause_frequency": 0,
-          "persist_instruction": "cache",
-          "prefault_file": true,
-          "random_distribution": "uniform",
-          "total_memory_range": 10737418240,
-          "write_ratio": 0.4
-        },
-        "duration": {
-          "avg": 519.3227459016393,
-          "lower_quartile": 128,
-          "max": 9975,
-          "median": 191,
-          "min": 58,
-          "percentile_90": 1189,
-          "percentile_95": 1278,
-          "percentile_99": 1446,
-          "percentile_999": 1650,
-          "percentile_9999": 8007,
-          "std_dev": 483.13014026599876,
-          "upper_quartile": 1023
-        }
-      },
-      {
-        "bandwidth": {
-          "read": 3.225346755218375,
-          "write": 1.4632754015203846
-        },
-        "config": {
-          "access_size": 64,
-          "data_instruction": "simd",
-          "exec_mode": "random",
-          "memory_type": "pmem",
-          "min_io_chunk_size": 131072,
-          "numa_pattern": "near",
+          "numa_pattern": "none",
           "number_operations": 50000000,
           "number_partitions": 1,
           "number_threads": 16,
@@ -242,24 +571,24 @@
           "write_ratio": 0.6
         },
         "duration": {
-          "avg": 281.61504098360655,
-          "lower_quartile": 125,
-          "max": 938,
-          "median": 343,
-          "min": 40,
-          "percentile_90": 441,
-          "percentile_95": 460,
-          "percentile_99": 493,
-          "percentile_999": 544,
-          "percentile_9999": 846,
-          "std_dev": 140.12723800584195,
-          "upper_quartile": 400
+          "avg": 376.7747950819672,
+          "lower_quartile": 84,
+          "max": 1079,
+          "median": 458,
+          "min": 42,
+          "percentile_90": 677,
+          "percentile_95": 728,
+          "percentile_99": 836,
+          "percentile_999": 998,
+          "percentile_9999": 1053,
+          "std_dev": 256.3349003296415,
+          "upper_quartile": 599
         }
       },
       {
         "bandwidth": {
-          "read": 3.067872529017622,
-          "write": 0.6432696243636938
+          "read": 2.5021569405328403,
+          "write": 1.5489865778160303
         },
         "config": {
           "access_size": 64,
@@ -267,44 +596,7 @@
           "exec_mode": "random",
           "memory_type": "pmem",
           "min_io_chunk_size": 131072,
-          "numa_pattern": "far",
-          "number_operations": 50000000,
-          "number_partitions": 1,
-          "number_threads": 16,
-          "pause_frequency": 0,
-          "persist_instruction": "cache",
-          "prefault_file": true,
-          "random_distribution": "uniform",
-          "total_memory_range": 10737418240,
-          "write_ratio": 0.6
-        },
-        "duration": {
-          "avg": 585.7115163934426,
-          "lower_quartile": 123,
-          "max": 16287,
-          "median": 788,
-          "min": 59,
-          "percentile_90": 996,
-          "percentile_95": 1054,
-          "percentile_99": 1158,
-          "percentile_999": 1297,
-          "percentile_9999": 12199,
-          "std_dev": 419.55919707590635,
-          "upper_quartile": 905
-        }
-      },
-      {
-        "bandwidth": {
-          "read": 1.7593424733792538,
-          "write": 1.9041461644121846
-        },
-        "config": {
-          "access_size": 64,
-          "data_instruction": "simd",
-          "exec_mode": "random",
-          "memory_type": "pmem",
-          "min_io_chunk_size": 131072,
-          "numa_pattern": "near",
+          "numa_pattern": "none",
           "number_operations": 50000000,
           "number_partitions": 1,
           "number_threads": 16,
@@ -316,24 +608,23 @@
           "write_ratio": 0.8
         },
         "duration": {
-          "avg": 341.19782786885247,
-          "lower_quartile": 337,
-          "max": 707,
-          "median": 381,
-          "min": 40,
-          "percentile_90": 455,
-          "percentile_95": 468,
-          "percentile_99": 493,
-          "percentile_999": 536,
-          "percentile_9999": 621,
-          "std_dev": 124.29551415696437,
-          "upper_quartile": 425
+          "avg": 408.18209016393445,
+          "lower_quartile": 323,
+          "max": 805,
+          "median": 486,
+          "min": 48,
+          "percentile_90": 568,
+          "percentile_95": 592,
+          "percentile_99": 646,
+          "percentile_999": 721,
+          "percentile_9999": 764,
+          "std_dev": 181.2027779042623,
+          "upper_quartile": 530
         }
       },
       {
         "bandwidth": {
-          "read": 1.7571102472536129,
-          "write": 0.9935920639958472
+          "write": 2.12346404906641
         },
         "config": {
           "access_size": 64,
@@ -341,43 +632,7 @@
           "exec_mode": "random",
           "memory_type": "pmem",
           "min_io_chunk_size": 131072,
-          "numa_pattern": "far",
-          "number_operations": 50000000,
-          "number_partitions": 1,
-          "number_threads": 16,
-          "pause_frequency": 0,
-          "persist_instruction": "cache",
-          "prefault_file": true,
-          "random_distribution": "uniform",
-          "total_memory_range": 10737418240,
-          "write_ratio": 0.8
-        },
-        "duration": {
-          "avg": 635.6873360655737,
-          "lower_quartile": 665,
-          "max": 10399,
-          "median": 744,
-          "min": 65,
-          "percentile_90": 847,
-          "percentile_95": 879,
-          "percentile_99": 941,
-          "percentile_999": 1258,
-          "percentile_9999": 8583,
-          "std_dev": 305.9030504892703,
-          "upper_quartile": 798
-        }
-      },
-      {
-        "bandwidth": {
-          "write": 2.2334718161829628
-        },
-        "config": {
-          "access_size": 64,
-          "data_instruction": "simd",
-          "exec_mode": "random",
-          "memory_type": "pmem",
-          "min_io_chunk_size": 131072,
-          "numa_pattern": "near",
+          "numa_pattern": "none",
           "number_operations": 50000000,
           "number_partitions": 1,
           "number_threads": 16,
@@ -389,54 +644,18 @@
           "write_ratio": 1.0
         },
         "duration": {
-          "avg": 426.49073770491805,
-          "lower_quartile": 391,
-          "max": 744,
-          "median": 427,
-          "min": 230,
-          "percentile_90": 490,
-          "percentile_95": 506,
-          "percentile_99": 535,
-          "percentile_999": 567,
-          "percentile_9999": 599,
-          "std_dev": 50.60012469478628,
-          "upper_quartile": 464
-        }
-      },
-      {
-        "bandwidth": {
-          "write": 1.4189574344668046
-        },
-        "config": {
-          "access_size": 64,
-          "data_instruction": "simd",
-          "exec_mode": "random",
-          "memory_type": "pmem",
-          "min_io_chunk_size": 131072,
-          "numa_pattern": "far",
-          "number_operations": 50000000,
-          "number_partitions": 1,
-          "number_threads": 16,
-          "pause_frequency": 0,
-          "persist_instruction": "cache",
-          "prefault_file": true,
-          "random_distribution": "uniform",
-          "total_memory_range": 10737418240,
-          "write_ratio": 1.0
-        },
-        "duration": {
-          "avg": 671.5953278688525,
-          "lower_quartile": 656,
-          "max": 14055,
-          "median": 675,
-          "min": 336,
-          "percentile_90": 710,
-          "percentile_95": 720,
-          "percentile_99": 741,
-          "percentile_999": 769,
-          "percentile_9999": 8503,
-          "std_dev": 177.25914347470007,
-          "upper_quartile": 693
+          "avg": 448.6129508196721,
+          "lower_quartile": 435,
+          "max": 545,
+          "median": 468,
+          "min": 254,
+          "percentile_90": 496,
+          "percentile_95": 503,
+          "percentile_99": 517,
+          "percentile_999": 529,
+          "percentile_9999": 541,
+          "std_dev": 58.01903754391461,
+          "upper_quartile": 484
         }
       }
     ],
