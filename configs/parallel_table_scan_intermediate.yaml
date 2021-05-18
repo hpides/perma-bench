@@ -1,0 +1,25 @@
+intermediate_result_table_scan_mixed:
+  parallel_benchmark:
+    # Represents the database workload table scan (sequential read)
+    table_scan:
+      matrix:
+        number_threads: [ 1, 4, 8, 16 ]
+
+      args:
+        access_size: 4096
+        exec_mode: sequential
+        total_memory_range: 50G
+        write_ratio: 0
+        run_time: 30
+
+    intermediate_result:
+      matrix:
+        number_threads: [ 1, 4, 8, 16 ]
+
+      args:
+        total_memory_range: 5G
+        persist_instruction: cache # [ cache, nocache, none ]
+        exec_mode: random
+        access_size: 256
+        write_ratio: 1
+        run_time: 30
