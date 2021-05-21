@@ -66,10 +66,10 @@ if __name__ == '__main__':
     plot_bw_heat(bw_data, "table_scan", bw_ax_one, "a) Table Scan", 40, 'YlOrRd')
     plot_bw_heat(bw_data, "intermediate_result", bw_ax_two, "b) Intermediate Result", 10, 'BuGn', True)
 
-    bw_ax_one.set_xlabel("Result Threads")
-    bw_ax_two.set_xlabel("Result Threads")
-    bw_ax_one.set_ylabel("Scan Threads")
-    # bw_ax_two.set_ylabel("$\#$ Scan Threads")
+    bw_ax_one.set_xlabel("\# Result Threads")
+    bw_ax_two.set_xlabel("\# Result Threads")
+    bw_ax_one.set_ylabel("\# Scan Threads")
+    # bw_ax_two.set_ylabel("\# Scan Threads")
 
     plot_path = os.path.join(plot_dir, "table_scan_intermediate_result_performance")
     SAVE_PLOT(plot_path)

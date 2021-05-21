@@ -12,13 +12,13 @@ def plot_nocache(system_data, ax):
 
     ax.set_xticks(x_data)
     ax.set_xticklabels(['1', '', '4', '8', '16', '32'])
-    ax.set_xlabel("$\#$ of Threads")
+    ax.set_xlabel("\# of Threads")
 
     ax.set_ylabel("Bandwidth (GB/s)")
     ax.set_ylim(0, 35)
     ax.set_yticks(range(0, 35, 10))
 
-    ax.set_title("a) persist = $\it{nocache}$")
+    ax.set_title("a) persist = $\it{NoCache}$")
 
     Y_GRID(ax)
     HIDE_BORDERS(ax)
@@ -33,13 +33,13 @@ def plot_none(system_data, ax):
 
     ax.set_xticks(x_data)
     ax.set_xticklabels(['1', '', '4', '8', '16', '32'])
-    ax.set_xlabel("$\#$ of Threads")
+    ax.set_xlabel("\# of Threads")
 
     # ax.set_ylabel("Bandwidth (GB/s)")
     ax.set_ylim(0, 35)
     ax.set_yticks(range(0, 35, 10))
 
-    ax.set_title("b) persist = $\it{none}$")
+    ax.set_title("b) persist = $\it{None}$")
 
     Y_GRID(ax)
     HIDE_BORDERS(ax)

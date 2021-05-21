@@ -41,7 +41,7 @@ def plot_lat(system_data_avg, system_data_95, ax):
         ax.bar(0 + i * bar_width, y_data_avg, width=bar_width, **bar)
         ax.bar(1 + i * bar_width, y_data_95,  width=bar_width, **bar)
 
-    x_ticks = ['AVG', '$95\%$']
+    x_ticks = ['AVG', '95th Percentile']
     x_ticks_pos = BAR_X_TICKS_POS(bar_width, num_bars, len(x_ticks))
     ax.set_xticks(x_ticks_pos)
     ax.set_xticklabels(x_ticks)

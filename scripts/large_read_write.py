@@ -19,7 +19,7 @@ def plot_scan(system_data, ax):
 
     ax.set_xticks(x_data)
     ax.set_xticklabels(['1', '', '4', '8', '16', '32'])
-    ax.set_xlabel("$\#$ of Threads")
+    ax.set_xlabel("\# of Threads")
 
     ax.set_ylabel("Bandwidth (GB/s)")
     ax.set_ylim(0, 55)
@@ -39,7 +39,7 @@ def plot_copy(system_data, ax):
             ax.text(16, 30, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
 
     ax.set_xticks(x_data)
-    ax.set_xlabel("$\#$ of Threads")
+    ax.set_xlabel("\# of Threads")
 
     # ax.set_ylabel("Bandwidth (GB/s)")
     ax.set_ylim(0, 55)

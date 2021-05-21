@@ -18,7 +18,11 @@ def plot_bw(system_data, ax):
         if 'dram' in system:
             ax.text(pos[-1], 16.5, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
 
-    x_ticks = x_data
+    x_ticks = ['Cache', 'NoCache', 'None']
+    assert len(x_ticks) == len(x_data)
+    assert all([x.lower() == custom_x.lower() for (x, custom_x) in zip(x_ticks, x_data)])
+    x_ticks = [f"$\it{x}$" for x in x_ticks]
+
     x_ticks_pos = BAR_X_TICKS_POS(bar_width, num_bars, len(x_ticks))
     ax.set_xticks(x_ticks_pos)
     ax.set_xticklabels(x_ticks)
@@ -47,7 +51,11 @@ def plot_lat(system_data, ax):
         pos = [x + (i * bar_width) for x in x_pos]
         ax.bar(pos, y_data, width=bar_width, **bar)
 
-    x_ticks = x_data
+    x_ticks = ['Cache', 'NoCache', 'None']
+    assert len(x_ticks) == len(x_data)
+    assert all([x.lower() == custom_x.lower() for (x, custom_x) in zip(x_ticks, x_data)])
+    x_ticks = [f"$\it{x}$" for x in x_ticks]
+
     x_ticks_pos = BAR_X_TICKS_POS(bar_width, num_bars, len(x_ticks))
     ax.set_xticks(x_ticks_pos)
     ax.set_xticklabels(x_ticks)
