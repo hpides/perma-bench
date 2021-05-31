@@ -8,6 +8,6 @@ index_update:
     random_distribution: uniform
     access_size: 64
     number_threads: 16
-    number_operations: 50000000
+    number_operations: 5000000000
     persist_instruction: cache
     exec_mode: random
