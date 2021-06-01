@@ -32,10 +32,10 @@ SYSTEM_COLOR = {
 
 SYSTEM_MARKER = {
     'intel-128':  '^',
-    'intel-256':  'v',
+    'intel-256':  'o',
     'intel-2gen': 's',
     'intel-dram': 'd',
-    'hpe':        'o',
+    'hpe':        'x',
 }
 
 SYSTEM_HATCH = {

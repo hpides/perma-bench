@@ -5,17 +5,6 @@ sys.path.append(os.path.dirname(sys.path[0]))
 from matplotlib.lines import Line2D
 from common import *
 
-NUMA_COLOR = {
-    'far':  '#253494',
-    'near':  '#41b6c4',
-    'none': '#378d54'
-}
-
-NUMA_MARKER = {
-    'far':  '^',
-    'near':  's',
-    'none':  'o',
-}
 
 NUMA_PATTERN = {
     'far':  'Far',
