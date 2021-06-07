@@ -33,7 +33,7 @@ In case you do not want to or can't install the development version, you can als
 using the `numactl` command line tool and disabling NUMA-awareness in PerMA-Bench via the `--no-numa` flag.
 You should pin the application to the nodes that are close to your mounted persistent memory filesystem for the best performance e.g., like this:
 
-```shel script
+```shell script
 $ numactl -N 0,1 ./perma-bench --path /path/to/pmem/filesystem --no-numa
 ```
 
