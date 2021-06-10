@@ -9,9 +9,18 @@ jobs:
     strategy:
       matrix:
         build-type: [Release, Debug]
+        compiler: gcc
+        gcc: [8, 9, 10]
+
 
     steps:
     - uses: actions/checkout@v2
+    - env:
+        CC:  gcc-${{matrix.gcc}}
+        CXX: gcc-${{matrix.gcc}}++
+
+    - name: Print Info
+      run: $CC --version && $CXX --version
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build
