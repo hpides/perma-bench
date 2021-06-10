@@ -17,8 +17,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Print Info
-      run: $CC --version && $CXX --version
+    - name: Get GCC Versions
+      run: |
+        sudo apt update
+        sudo apt install ${{CC}} ${{CXX}}
+        $CC --version && $CXX --version
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build
