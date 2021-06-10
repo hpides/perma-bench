@@ -21,7 +21,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMPILE_FLAGS}")
 
 add_library(perma STATIC ${SOURCES})
 add_dependencies(perma copy_configs)
-target_link_libraries(perma yaml-cpp hdr_histogram_static spdlog)
+target_link_libraries(perma yaml-cpp hdr_histogram_static spdlog stdc++fs)
 
 if (${NUMA_FOUND})
     target_link_libraries(perma ${NUMA_LIBRARIES})

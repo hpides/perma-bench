@@ -5,13 +5,23 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-20.04
+    env:
+      CC: gcc-${{matrix.gcc}}
+      CXX: g++-${{matrix.gcc}}
 
     strategy:
       matrix:
         build-type: [Release, Debug]
+        gcc: [8, 9, 10]
 
     steps:
     - uses: actions/checkout@v2
+
+    - name: Get GCC Versions
+      run: |
+        sudo apt update
+        sudo apt install $CC $CXX
+        $CC --version && $CXX --version
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{runner.workspace}}/build
