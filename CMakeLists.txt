@@ -57,8 +57,8 @@ else ()
 endif ()
 
 ################### NUMA ####################
-option(NUMA_INCLUDE_PATH "Path to custom NUMA include files" "")
-option(NUMA_LIBRARY_PATH "Path to custom NUMA library" "")
+set(NUMA_INCLUDE_PATH "" CACHE STRING "Path to custom NUMA include files")
+set(NUMA_LIBRARY_PATH "" CACHE STRING "Path to custom NUMA library")
 
 set(NUMA_INCLUDE_HINTS ${NUMA_INCLUDE_PATH} ${INCLUDE_HINTS})
 set(NUMA_LIB_HINTS ${NUMA_LIBRARY_PATH} ${PMDK_LIBRARY_PATH})
