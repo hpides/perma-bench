@@ -23,35 +23,39 @@ PLOT_PATHS = []
 IMG_TYPES = ['.png', '.svg']
 
 SYSTEM_COLOR = {
-    'intel-128':  '#a1dab4',
-    'intel-256':  '#378d54',
-    'intel-2gen': '#41b6c4',
-    'intel-dram': '#2c7fb8',
-    'hpe':        '#253494',
+    'intel-128':   '#a1dab4',
+    'intel-256':   '#378d54',
+    'intel-512':   '#41b6c4',
+    'intel-gen2':  '#2c7fb8',
+    'intel-zdram': '#253494',
+    'hpe':         '#0c1652',
 }
 
 SYSTEM_MARKER = {
-    'intel-128':  '^',
-    'intel-256':  'o',
-    'intel-2gen': 's',
-    'intel-dram': 'd',
-    'hpe':        'x',
+    'intel-128':   '^',
+    'intel-256':   'o',
+    'intel-512':   'd',
+    'intel-gen2':  's',
+    'intel-zdram': '*',
+    'hpe':         'x',
 }
 
 SYSTEM_HATCH = {
-    'intel-128':  '\\\\',
-    'intel-256':  '//',
-    'intel-2gen': '\\',
-    'intel-dram': '/',
-    'hpe':        'x',
+    'intel-128':   '\\\\',
+    'intel-256':   '//',
+    'intel-512':   '/',
+    'intel-gen2':  '\\',
+    'intel-zdram': '.',
+    'hpe':         'x',
 }
 
 SYSTEM_NAME = {
-    'intel-128':  'Intel-128',
-    'intel-256':  'Intel-256',
-    'intel-2gen': 'Intel-Gen2',
-    'intel-dram': 'DRAM',
-    'hpe':        'HPE',
+    'intel-128':   'I-128',
+    'intel-256':   'I-256',
+    'intel-512':   'I-512',
+    'intel-gen2':  'I-Gen2',
+    'intel-zdram': 'DRAM',
+    'hpe':         'HPE',
 }
 
 
@@ -106,7 +110,7 @@ def HIDE_BORDERS(ax, show_left=False):
     ax.spines['left'].set_visible(show_left)
 
 def FIG_LEGEND(fig):
-    fig.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=5,
+    fig.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=6,
                frameon=False, columnspacing=1, handletextpad=0.3)
     fig.tight_layout()
 
