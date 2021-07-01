@@ -15,8 +15,8 @@ def plot_bw(system_data, ax):
         bar = BAR(system)
         pos = [x + (i * bar_width) for x in x_pos]
         ax.bar(pos, y_data, width=bar_width, **bar, label=SYSTEM_NAME[system])
-        if 'dram' in system:
-            ax.text(pos[-1], 16.5, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
+        if 'dram' in system or 'hpe' in system:
+            ax.text(pos[-1], 19.5, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
 
     x_ticks = ['Cache', 'NoCache', 'None']
     assert len(x_ticks) == len(x_data)
@@ -28,8 +28,8 @@ def plot_bw(system_data, ax):
     ax.set_xticklabels(x_ticks)
     ax.set_ylabel("Bandwidth (GB/s)")
 
-    ax.set_ylim(0, 16)
-    ax.set_yticks(range(0, 16, 3))
+    ax.set_ylim(0, 19)
+    ax.set_yticks(range(0, 19, 3))
 
     ax.set_title("a) Bandwidth")
 
@@ -72,13 +72,14 @@ def plot_lat(system_data, ax):
 
 
 if __name__ == '__main__':
+    skip_dram = True
     filter_config = {
         "number_threads": 32,
         "total_memory_range": 1073741824
     }
 
     result_path, plot_dir = INIT(sys.argv)
-    runs = get_runs_from_results(result_path, "intermediate_result", filter_config)
+    runs = get_runs_from_results(result_path, "intermediate_result", filter_config, skip_dram=skip_dram)
     bw_data = get_data_from_runs(runs, "persist_instruction", "bandwidth", "write")
 
     lat_data = get_data_from_runs(runs, "persist_instruction", "duration", "avg")

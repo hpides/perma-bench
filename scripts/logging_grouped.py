@@ -9,14 +9,16 @@ def plot_nocache(system_data, ax):
         ax.plot(x_data, y_data, label=SYSTEM_NAME[system], **LINE(system))
         if 'dram' in system:
             ax.text(16, 30, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
+        if 'hpe' in system:
+            ax.text(12.5, 35, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
 
     ax.set_xticks(x_data)
     ax.set_xticklabels(['1', '', '4', '8', '16', '32'])
     ax.set_xlabel("\# of Threads")
 
     ax.set_ylabel("Bandwidth (GB/s)")
-    ax.set_ylim(0, 35)
-    ax.set_yticks(range(0, 35, 10))
+    ax.set_ylim(0, 41)
+    ax.set_yticks(range(0, 41, 10))
 
     ax.set_title("a) persist = $\it{NoCache}$")
 
@@ -36,8 +38,8 @@ def plot_none(system_data, ax):
     ax.set_xlabel("\# of Threads")
 
     # ax.set_ylabel("Bandwidth (GB/s)")
-    ax.set_ylim(0, 35)
-    ax.set_yticks(range(0, 35, 10))
+    ax.set_ylim(0, 41)
+    ax.set_yticks(range(0, 41, 10))
 
     ax.set_title("b) persist = $\it{None}$")
 
@@ -52,7 +54,7 @@ if __name__ == '__main__':
         "persist_instruction": "nocache",
     }
 
-    skip_dram = False
+    skip_dram = True
     result_path, plot_dir = INIT(sys.argv)
     nocache_runs = get_runs_from_results(result_path, "logging", nocache_filter_config, skip_dram=skip_dram)
     nocache_data = get_data_from_runs(nocache_runs, "number_threads", "bandwidth", "write")

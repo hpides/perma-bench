@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 
 FS = 20
 MILLION = 1_000_000
-SINGLE_FIG_WIDTH = 4
-SINGLE_FIG_HEIGHT = 3
+SINGLE_FIG_WIDTH = 5
+SINGLE_FIG_HEIGHT = 3.5
 SINGLE_FIG_SIZE = (SINGLE_FIG_WIDTH, SINGLE_FIG_HEIGHT)
 DOUBLE_FIG_WIDTH = 10
 DOUBLE_FIG_HEIGHT = 3.5
@@ -27,8 +27,8 @@ SYSTEM_COLOR = {
     'intel-256':   '#378d54',
     'intel-512':   '#41b6c4',
     'intel-gen2':  '#2c7fb8',
-    'intel-zdram': '#253494',
-    'hpe':         '#0c1652',
+    'nvdimm-hpe':  '#253494',
+    'zdram':       '#0c1652',
 }
 
 SYSTEM_MARKER = {
@@ -36,8 +36,8 @@ SYSTEM_MARKER = {
     'intel-256':   'o',
     'intel-512':   'd',
     'intel-gen2':  's',
-    'intel-zdram': '*',
-    'hpe':         'x',
+    'nvdimm-hpe':  'X',
+    'zdram':       '+',
 }
 
 SYSTEM_HATCH = {
@@ -45,8 +45,8 @@ SYSTEM_HATCH = {
     'intel-256':   '//',
     'intel-512':   '/',
     'intel-gen2':  '\\',
-    'intel-zdram': '.',
-    'hpe':         'x',
+    'nvdimm-hpe':  'x',
+    'zdram':       '.',
 }
 
 SYSTEM_NAME = {
@@ -54,8 +54,8 @@ SYSTEM_NAME = {
     'intel-256':   'I-256',
     'intel-512':   'I-512',
     'intel-gen2':  'I-Gen2',
-    'intel-zdram': 'DRAM',
-    'hpe':         'HPE',
+    'nvdimm-hpe':  'HPE',
+    'zdram':       'DRAM',
 }
 
 
@@ -131,7 +131,7 @@ def SAVE_PLOT(plot_path, img_types=None):
 # Benchmark Results
 #######################################
 
-def get_bms(results, bm_name, skip_dram=False):
+def get_bms(results, bm_name, skip_dram=True):
     bms = {}
     for system_results in os.listdir(results):
         if skip_dram and "dram" in system_results:
@@ -176,7 +176,7 @@ def get_runs(bms, config):
     return runs
 
 
-def get_runs_from_results(results, bm_name, filter_config, skip_dram=False, is_parallel=False):
+def get_runs_from_results(results, bm_name, filter_config, skip_dram=True, is_parallel=False):
     bms = get_bms(results, bm_name, skip_dram)
     if is_parallel:
         return get_parallel_runs(bms, filter_config)

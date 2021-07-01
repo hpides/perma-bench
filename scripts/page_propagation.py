@@ -7,8 +7,8 @@ def plot_read(system_data, ax):
     for system, data in sorted(system_data.items()):
         x_data, y_data = zip(*data[:-1])
         ax.plot(x_data, y_data, label=SYSTEM_NAME[system], **LINE(system))
-        # if 'dram' in system:
-            # ax.text(16, 30, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
+        if 'hpe' in system:
+            ax.text(0.37, 40, int(y_data[0]), ha='center', color=SYSTEM_COLOR[system])
 
     ax.plot(1, 0, color='white')
 
@@ -16,8 +16,8 @@ def plot_read(system_data, ax):
     ax.set_xlabel("Write Ratio")
 
     ax.set_ylabel("Bandwidth (GB/s)")
-    ax.set_ylim(0, 35)
-    ax.set_yticks(range(0, 35, 10))
+    ax.set_ylim(0, 45)
+    ax.set_yticks(range(0, 45, 10))
 
     ax.set_title("a) Read")
 
@@ -28,10 +28,9 @@ def plot_read(system_data, ax):
 def plot_write(system_data, ax):
     for system, data in sorted(system_data.items()):
         x_data, y_data = zip(*data[1:])
-        # y_data = [y / 1000 for y in y_data]
         ax.plot(x_data, y_data, **LINE(system))
-        # if 'dram' in system:
-            # ax.text(16, 30, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
+        if 'hpe' in system:
+            ax.text(0.63, 40, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
 
     ax.plot(0, 0, color='white')
 
@@ -39,8 +38,8 @@ def plot_write(system_data, ax):
     ax.set_xlabel("Write Ratio")
 
     # ax.set_ylabel("writeency (ms)")
-    ax.set_ylim(0, 35)
-    ax.set_yticks(range(0, 35, 10))
+    ax.set_ylim(0, 45)
+    ax.set_yticks(range(0, 45, 10))
 
     ax.set_title("b) Write")
 
@@ -56,7 +55,7 @@ if __name__ == '__main__':
 
     skip_dram = True
     result_path, plot_dir = INIT(sys.argv)
-    bms = get_bms(result_path, "page_propagation", skip_dram)
+    bms = get_bms(result_path, "page_propagation", skip_dram=skip_dram)
 
     runs = defaultdict(list)
     for name, res_runs in bms.items():

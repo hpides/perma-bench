@@ -42,7 +42,8 @@ def plot_bw_heat(system_data, sub_bm, ax, sub_title, vmax, cmap='Blues', set_cla
     ax.set_title(sub_title)
     plt.setp(ax.get_xticklabels(), ha="center")
 
-    ax.spines[:].set_visible(False)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
 
     hm = ax.imshow(data, cmap=cmap, interpolation="nearest", vmin=0, vmax=vmax)
     cbar = ax.figure.colorbar(hm, ax=ax)

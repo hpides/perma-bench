@@ -66,6 +66,7 @@ def plot_bw(system_data_read, system_data_write, ax, title):
 
 
 if __name__ == '__main__':
+    skip_dram = True
     filter_config = {
         # "access_size": 64,
         "number_partitions": 1,
@@ -73,7 +74,7 @@ if __name__ == '__main__':
     }
 
     result_path, plot_dir = INIT(sys.argv)
-    runs = get_runs_from_results(result_path, "index_update", filter_config, skip_dram=False)
+    runs = get_runs_from_results(result_path, "index_update", filter_config, skip_dram=skip_dram)
     avg_data = get_data_from_runs(runs, "access_size", "duration", "avg")
 
     bw_read_data = get_data_from_runs(runs, "access_size", "bandwidth", "read")

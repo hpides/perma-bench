@@ -10,8 +10,8 @@ def plot_bw(system_data, ax):
         y_data = y_data[0]
         ax.bar(i, y_data, width=bar_width,
                label=SYSTEM_NAME[system], **BAR(system))
-        if 'dram' in system:
-            ax.text(i + 0.25, 45.5, int(y_data), ha='center', color=SYSTEM_COLOR[system])
+        if 'dram' in system or 'hpe' in system:
+            ax.text(i + 0.2, 45.5, int(y_data), ha='center', color=SYSTEM_COLOR[system])
 
     ax.set_xticks([])
     ax.set_ylabel("Bandwidth (GB/s)")
@@ -58,6 +58,7 @@ def plot_lat(system_data_avg, system_data_95, ax):
 
 
 if __name__ == '__main__':
+    skip_dram = True
     filter_config = {
         "access_size": 256,
         "random_distribution": "uniform",
@@ -65,7 +66,7 @@ if __name__ == '__main__':
     }
 
     result_path, plot_dir = INIT(sys.argv)
-    runs = get_runs_from_results(result_path, "index_lookup", filter_config)
+    runs = get_runs_from_results(result_path, "index_lookup", filter_config, skip_dram=skip_dram)
     bw_data = get_data_from_runs(runs, "access_size", "bandwidth", "read")
     lat_data_avg = get_data_from_runs(runs, "access_size", "duration", "avg")
     lat_data_95 = get_data_from_runs(runs, "access_size", "duration", "percentile_95")
