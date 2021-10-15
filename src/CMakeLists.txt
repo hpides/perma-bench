@@ -7,6 +7,7 @@ set(
         benchmark_factory.hpp
         benchmark_suite.cpp
         benchmark_suite.hpp
+        fast_random.hpp
         io_operation.hpp
         numa.cpp
         numa.hpp

@@ -5,3 +5,4 @@ venv/
 viz/__pycache__/
 viz/html/*.html
 *.json
+output/

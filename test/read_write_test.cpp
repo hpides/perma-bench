@@ -12,7 +12,6 @@
 namespace perma {
 
 constexpr size_t TMP_FILE_SIZE = 131072;  // 128 KiB
-constexpr size_t ACCESS_SIZE = 512;       // 512 byte
 
 class ReadWriteTest : public ::testing::Test {
  protected:
@@ -35,20 +34,27 @@ class ReadWriteTest : public ::testing::Test {
     close(fd);
   }
 
-  template <class WriteFn>
-  void run_write_test(WriteFn write_fn) {
-    const size_t num_writes = TMP_FILE_SIZE / ACCESS_SIZE;
+  using MultiWriteFn = void(const std::vector<char*>&);
+  void run_multi_write_test(MultiWriteFn write_fn, const size_t access_size) {
+    const size_t num_writes = TMP_FILE_SIZE / access_size;
     const char* last_op = addr + TMP_FILE_SIZE;
     std::vector<char*> op_addresses{};
     op_addresses.reserve(num_writes);
 
-    for (char* write_addr = addr; write_addr < last_op; write_addr += ACCESS_SIZE) {
+    for (char* write_addr = addr; write_addr < last_op; write_addr += access_size) {
       op_addresses.emplace_back(write_addr);
     }
 
-    write_fn(op_addresses, ACCESS_SIZE);
+    write_fn(op_addresses);
     ASSERT_EQ(msync(addr, TMP_FILE_SIZE, MS_SYNC), 0);
     check_file_written(temp_file_, TMP_FILE_SIZE);
+  }
+
+  using SingleWriteFn = void(char*);
+  void run_single_write_test(SingleWriteFn write_fn, const size_t access_size) {
+    write_fn(addr);
+    ASSERT_EQ(msync(addr, access_size, MS_SYNC), 0);
+    check_file_written(temp_file_, TMP_FILE_SIZE, access_size);
   }
 
   std::filesystem::path temp_file_;
@@ -57,57 +63,37 @@ class ReadWriteTest : public ::testing::Test {
 };
 
 #ifdef HAS_AVX
-TEST_F(ReadWriteTest, SIMDNoneWrite_64) { run_write_test(rw_ops::simd_write_none); }
+TEST_F(ReadWriteTest, SingleSIMDNoneWrite_64) { run_single_write_test(rw_ops::simd_write_none_64, 64); }
+TEST_F(ReadWriteTest, SingleSIMDNoneWrite_128) { run_single_write_test(rw_ops::simd_write_none_128, 128); }
+TEST_F(ReadWriteTest, SingleSIMDNoneWrite_256) { run_single_write_test(rw_ops::simd_write_none_256, 256); }
+TEST_F(ReadWriteTest, SingleSIMDNoneWrite_512) { run_single_write_test(rw_ops::simd_write_none_512, 512); }
 
-TEST_F(ReadWriteTest, SIMDNoneWrite_128) { run_write_test(rw_ops::simd_write_none_128); }
-
-TEST_F(ReadWriteTest, SIMDNoneWrite_256) { run_write_test(rw_ops::simd_write_none_256); }
-
-TEST_F(ReadWriteTest, SIMDNoneWrite_512) { run_write_test(rw_ops::simd_write_none_512); }
-
-#ifdef HAS_CLWB
-TEST_F(ReadWriteTest, SIMDCacheLineWriteBackWrite_64) { run_write_test(rw_ops::simd_write_clwb); }
-
-TEST_F(ReadWriteTest, SIMDCacheLineWriteBackWrite_128) { run_write_test(rw_ops::simd_write_clwb_128); }
-
-TEST_F(ReadWriteTest, SIMDCacheLineWriteBackWrite_256) { run_write_test(rw_ops::simd_write_clwb_256); }
-
-TEST_F(ReadWriteTest, SIMDCacheLineWriteBackWrite_512) { run_write_test(rw_ops::simd_write_clwb_512); }
-#endif
-
-TEST_F(ReadWriteTest, SIMDNonTemporalWrite_64) { run_write_test(rw_ops::simd_write_nt); }
-
-TEST_F(ReadWriteTest, SIMDNonTemporalWrite_128) { run_write_test(rw_ops::simd_write_nt_128); }
-
-TEST_F(ReadWriteTest, SIMDNonTemporalWrite_256) { run_write_test(rw_ops::simd_write_nt_256); }
-
-TEST_F(ReadWriteTest, SIMDNonTemporalWrite_512) { run_write_test(rw_ops::simd_write_nt_512); }
-#endif
-
-TEST_F(ReadWriteTest, MOVNoneWrite_64) { run_write_test(rw_ops::mov_write_none); }
-
-TEST_F(ReadWriteTest, MOVNoneWrite_128) { run_write_test(rw_ops::mov_write_none_128); }
-
-TEST_F(ReadWriteTest, MOVNoneWrite_256) { run_write_test(rw_ops::mov_write_none_256); }
-
-TEST_F(ReadWriteTest, MOVNoneWrite_512) { run_write_test(rw_ops::mov_write_none_512); }
+TEST_F(ReadWriteTest, MultiSIMDNoneWrite_64) { run_multi_write_test(rw_ops::simd_write_none_64, 64); }
+TEST_F(ReadWriteTest, MultiSIMDNoneWrite_128) { run_multi_write_test(rw_ops::simd_write_none_128, 128); }
+TEST_F(ReadWriteTest, MultiSIMDNoneWrite_256) { run_multi_write_test(rw_ops::simd_write_none_256, 256); }
+TEST_F(ReadWriteTest, MultiSIMDNoneWrite_512) { run_multi_write_test(rw_ops::simd_write_none_512, 512); }
 
 #ifdef HAS_CLWB
-TEST_F(ReadWriteTest, MOVCacheLineWriteBackWrite_64) { run_write_test(rw_ops::mov_write_clwb); }
+TEST_F(ReadWriteTest, SingleSIMDClwbWrite_64) { run_single_write_test(rw_ops::simd_write_clwb_64, 64); }
+TEST_F(ReadWriteTest, SingleSIMDClwbWrite_128) { run_single_write_test(rw_ops::simd_write_clwb_128, 128); }
+TEST_F(ReadWriteTest, SingleSIMDClwbWrite_256) { run_single_write_test(rw_ops::simd_write_clwb_256, 256); }
+TEST_F(ReadWriteTest, SingleSIMDClwbWrite_512) { run_single_write_test(rw_ops::simd_write_clwb_512, 512); }
 
-TEST_F(ReadWriteTest, MOVCacheLineWriteBackWrite_128) { run_write_test(rw_ops::mov_write_clwb_128); }
-
-TEST_F(ReadWriteTest, MOVCacheLineWriteBackWrite_256) { run_write_test(rw_ops::mov_write_clwb_256); }
-
-TEST_F(ReadWriteTest, MOVCacheLineWriteBackWrite_512) { run_write_test(rw_ops::mov_write_clwb_512); }
+TEST_F(ReadWriteTest, MultiSIMDClwbWrite_64) { run_multi_write_test(rw_ops::simd_write_clwb_64, 64); }
+TEST_F(ReadWriteTest, MultiSIMDClwbWrite_128) { run_multi_write_test(rw_ops::simd_write_clwb_128, 128); }
+TEST_F(ReadWriteTest, MultiSIMDClwbWrite_256) { run_multi_write_test(rw_ops::simd_write_clwb_256, 256); }
+TEST_F(ReadWriteTest, MultiSIMDClwbWrite_512) { run_multi_write_test(rw_ops::simd_write_clwb_512, 512); }
 #endif
 
-TEST_F(ReadWriteTest, MOVNonTemporalWrite_64) { run_write_test(rw_ops::mov_write_nt); }
+TEST_F(ReadWriteTest, SingleSIMDNonTemporalWrite_64) { run_single_write_test(rw_ops::simd_write_nt_64, 64); }
+TEST_F(ReadWriteTest, SingleSIMDNonTemporalWrite_128) { run_single_write_test(rw_ops::simd_write_nt_128, 128); }
+TEST_F(ReadWriteTest, SingleSIMDNonTemporalWrite_256) { run_single_write_test(rw_ops::simd_write_nt_256, 256); }
+TEST_F(ReadWriteTest, SingleSIMDNonTemporalWrite_512) { run_single_write_test(rw_ops::simd_write_nt_512, 512); }
 
-TEST_F(ReadWriteTest, MOVNonTemporalWrite_128) { run_write_test(rw_ops::mov_write_nt_128); }
-
-TEST_F(ReadWriteTest, MOVNonTemporalWrite_256) { run_write_test(rw_ops::mov_write_nt_256); }
-
-TEST_F(ReadWriteTest, MOVNonTemporalWrite_512) { run_write_test(rw_ops::mov_write_nt_512); }
+TEST_F(ReadWriteTest, MultiSIMDNonTemporalWrite_64) { run_multi_write_test(rw_ops::simd_write_nt_64, 64); }
+TEST_F(ReadWriteTest, MultiSIMDNonTemporalWrite_128) { run_multi_write_test(rw_ops::simd_write_nt_128, 128); }
+TEST_F(ReadWriteTest, MultiSIMDNonTemporalWrite_256) { run_multi_write_test(rw_ops::simd_write_nt_256, 256); }
+TEST_F(ReadWriteTest, MultiSIMDNonTemporalWrite_512) { run_multi_write_test(rw_ops::simd_write_nt_512, 512); }
+#endif
 
 }  // namespace perma

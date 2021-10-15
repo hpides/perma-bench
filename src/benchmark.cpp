@@ -7,6 +7,7 @@
 #include <thread>
 #include <utility>
 
+#include "fast_random.hpp"
 #include "numa.hpp"
 
 namespace {
@@ -138,7 +139,6 @@ struct ConfigEnums {
   static const std::unordered_map<std::string, bool> str_to_mem_type;
   static const std::unordered_map<std::string, internal::Mode> str_to_mode;
   static const std::unordered_map<std::string, internal::NumaPattern> str_to_numa_pattern;
-  static const std::unordered_map<std::string, internal::DataInstruction> str_to_data_instruction;
   static const std::unordered_map<std::string, internal::PersistInstruction> str_to_persist_instruction;
   static const std::unordered_map<std::string, internal::RandomDistribution> str_to_random_distribution;
 
@@ -156,9 +156,6 @@ const std::unordered_map<std::string, internal::Mode> ConfigEnums::str_to_mode{
 
 const std::unordered_map<std::string, internal::NumaPattern> ConfigEnums::str_to_numa_pattern{
     {"near", internal::NumaPattern::Near}, {"far", internal::NumaPattern::Far}};
-
-const std::unordered_map<std::string, internal::DataInstruction> ConfigEnums::str_to_data_instruction{
-    {"simd", internal::DataInstruction::SIMD}, {"mov", internal::DataInstruction::MOV}};
 
 const std::unordered_map<std::string, internal::PersistInstruction> ConfigEnums::str_to_persist_instruction{
     {"nocache", internal::PersistInstruction::NoCache},
@@ -239,9 +236,17 @@ char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::fil
   return pmem_data;
 }
 
+void Benchmark::run_custom_ops_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config) {
+  // TODO
+}
+
 void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config) {
   if (config.numa_pattern == internal::NumaPattern::Far) {
     set_to_far_cpus();
+  }
+
+  if (config.exec_mode == internal::Mode::Custom) {
+    return run_custom_ops_in_thread(thread_config, config);
   }
 
   const size_t ops_per_iteration = thread_config.num_threads_per_partition * config.access_size;
@@ -305,9 +310,9 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
         }
       }
 
-      IoOperation operation = is_read ? IoOperation::ReadOp(op_addresses, config.access_size, config.data_instruction)
-                                      : IoOperation::WriteOp(op_addresses, config.access_size, config.data_instruction,
-                                                             config.persist_instruction);
+      IoOperation operation = is_read
+                                  ? IoOperation::ReadOp(op_addresses, config.access_size)
+                                  : IoOperation::WriteOp(op_addresses, config.access_size, config.persist_instruction);
 
       const auto start_ts = std::chrono::steady_clock::now();
       operation.run();
@@ -346,7 +351,6 @@ nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm
   config["number_partitions"] = bm_config.number_partitions;
   config["number_threads"] = bm_config.number_threads;
   config["numa_pattern"] = get_enum_as_string(ConfigEnums::str_to_numa_pattern, bm_config.numa_pattern);
-  config["data_instruction"] = get_enum_as_string(ConfigEnums::str_to_data_instruction, bm_config.data_instruction);
   config["prefault_file"] = bm_config.prefault_file;
   config["min_io_chunk_size"] = bm_config.min_io_chunk_size;
 
@@ -386,7 +390,6 @@ const std::vector<std::vector<ThreadRunConfig>>& Benchmark::get_thread_configs()
 const std::vector<std::unique_ptr<BenchmarkResult>>& Benchmark::get_benchmark_results() const { return results_; }
 
 std::vector<bool> Benchmark::owns_pmem_files() const { return owns_pmem_files_; }
-
 nlohmann::json Benchmark::get_json_config(uint8_t config_index) {
   return get_benchmark_config_as_json(configs_[config_index]);
 }
@@ -529,8 +532,6 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_enum_if_present(node, "numa_pattern", ConfigEnums::str_to_numa_pattern, &bm_config.numa_pattern);
     num_found += get_enum_if_present(node, "random_distribution", ConfigEnums::str_to_random_distribution,
                                      &bm_config.random_distribution);
-    num_found += get_enum_if_present(node, "data_instruction", ConfigEnums::str_to_data_instruction,
-                                     &bm_config.data_instruction);
     num_found += get_enum_if_present(node, "persist_instruction", ConfigEnums::str_to_persist_instruction,
                                      &bm_config.persist_instruction);
 

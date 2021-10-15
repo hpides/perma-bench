@@ -63,7 +63,6 @@ struct BenchmarkConfig {
   internal::RandomDistribution random_distribution{internal::RandomDistribution::Uniform};
   double zipf_alpha = 0.9;
 
-  internal::DataInstruction data_instruction{internal::DataInstruction::SIMD};
   internal::PersistInstruction persist_instruction{internal::PersistInstruction::NoCache};
 
   double write_ratio = 0.0;
@@ -179,6 +178,7 @@ class Benchmark {
 
   static char* create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& data_file);
 
+  static void run_custom_ops_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
   static void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
 
   static nlohmann::json get_benchmark_config_as_json(const BenchmarkConfig& bm_config);
