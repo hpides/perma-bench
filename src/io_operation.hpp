@@ -23,6 +23,18 @@ enum NumaPattern : uint8_t { Near, Far };
 
 }  // namespace internal
 
+struct CustomOp {
+  internal::OpType type;
+  size_t size;
+  internal::PersistInstruction persist = internal::None;
+
+  static CustomOp from_string(const std::string& str);
+  static std::vector<CustomOp> all_from_string(const std::string& str);
+  static std::string all_to_string(const std::vector<CustomOp>& ops);
+  static std::string to_string(const CustomOp& op);
+  friend std::ostream& operator<<(std::ostream& os, const CustomOp& op);
+};
+
 class IoOperation {
   friend class Benchmark;
 
@@ -145,56 +157,72 @@ class IoOperation {
   const internal::PersistInstruction persist_instruction_;
 };
 
-struct ChainedOperation {
-  internal::OpType type;
-  size_t access_size;
-  char* range_start;
-  size_t range_size;
-  internal::PersistInstruction persist_instruction;
-  ChainedOperation* next = nullptr;
-  size_t range_mask = range_size - 1;
+class ChainedOperation {
+ public:
+  ChainedOperation(const CustomOp& op, char* range_start, size_t range_size)
+      : range_start_(range_start),
+        access_size_(op.size),
+        range_size_(range_size),
+        end_padding_(range_size_ - access_size_),
+        align_(-access_size_),
+        type_(op.type),
+        persist_instruction_(op.persist) {}
 
   void run(char* addr) {
     char* next_addr = addr;
-    if (type == internal::OpType::Read) {
+
+    if (type_ == internal::OpType::Read) {
       next_addr = run_read(addr);
     } else {
       run_write(addr);
     }
 
-    if (next) {
-      return next->run(next_addr);
+    if (next_) {
+      return next_->run(next_addr);
     }
   }
 
-  char* run_read(char* addr) {
+  inline char* get_random_address(char* addr) {
+    const uint64_t base = (uint64_t)addr;
+    const uint64_t random_offset = base + lehmer64();
+    const uint64_t offset_in_range = random_offset % end_padding_;
+    const uint64_t aligned_offset = offset_in_range & align_;
+    return range_start_ + aligned_offset;
+  }
+
+  void set_next(ChainedOperation* next) { next_ = next; }
+
+ private:
+  inline char* run_read(char* addr) {
+    char* random_addr = get_random_address(addr);
+
     __m512i read_value;
-    switch (access_size) {
+    switch (access_size_) {
       case 64:
-        read_value = rw_ops::simd_read_64(addr);
+        read_value = rw_ops::simd_read_64(random_addr);
         break;
       case 128:
-        read_value = rw_ops::simd_read_128(addr);
+        read_value = rw_ops::simd_read_128(random_addr);
         break;
       case 256:
-        read_value = rw_ops::simd_read_256(addr);
+        read_value = rw_ops::simd_read_256(random_addr);
         break;
       case 512:
-        read_value = rw_ops::simd_read_512(addr);
+        read_value = rw_ops::simd_read_512(random_addr);
         break;
       default:
-        read_value = rw_ops::simd_read(addr, access_size);
+        read_value = rw_ops::simd_read(random_addr, access_size_);
     }
     // Read from both ends to avoid narrowing of the 512 Bit instruction.
     uint64_t read_addr = read_value[0] + read_value[7];
-    return range_start + ((read_addr + lehmer64()) & range_mask);
+    return (char*)read_addr;
   }
 
-  void run_write(char* addr) {
-    switch (persist_instruction) {
+  inline void run_write(char* addr) {
+    switch (persist_instruction_) {
 #ifdef HAS_CLWB
       case internal::PersistInstruction::Cache: {
-        switch (access_size) {
+        switch (access_size_) {
           case 64:
             return rw_ops::simd_write_clwb_64(addr);
           case 128:
@@ -204,12 +232,12 @@ struct ChainedOperation {
           case 512:
             return rw_ops::simd_write_clwb_512(addr);
           default:
-            return rw_ops::simd_write_clwb(addr, access_size);
+            return rw_ops::simd_write_clwb(addr, access_size_);
         }
       }
 #endif
       case internal::PersistInstruction::NoCache: {
-        switch (access_size) {
+        switch (access_size_) {
           case 64:
             return rw_ops::simd_write_nt_64(addr);
           case 128:
@@ -219,11 +247,11 @@ struct ChainedOperation {
           case 512:
             return rw_ops::simd_write_nt_512(addr);
           default:
-            return rw_ops::simd_write_nt(addr, access_size);
+            return rw_ops::simd_write_nt(addr, access_size_);
         }
       }
       case internal::PersistInstruction::None: {
-        switch (access_size) {
+        switch (access_size_) {
           case 64:
             return rw_ops::simd_write_none_64(addr);
           case 128:
@@ -233,11 +261,21 @@ struct ChainedOperation {
           case 512:
             return rw_ops::simd_write_none_512(addr);
           default:
-            return rw_ops::simd_write_none(addr, access_size);
+            return rw_ops::simd_write_none(addr, access_size_);
         }
       }
     }
   }
+
+ private:
+  char* range_start_;
+  size_t access_size_;
+  size_t range_size_;
+  size_t align_;
+  size_t end_padding_;
+  ChainedOperation* next_ = nullptr;
+  internal::OpType type_;
+  internal::PersistInstruction persist_instruction_;
 };
 
 }  // namespace perma

@@ -484,8 +484,6 @@ inline void simd_read(const std::vector<char*>& addresses, const size_t access_s
   KEEP(&x);
 }
 
-inline void write_data(char* from, const char* to) {
-  return simd_write_data_range(from, to);
-}
+inline void write_data(char* from, const char* to) { return simd_write_data_range(from, to); }
 
 }  // namespace perma::rw_ops

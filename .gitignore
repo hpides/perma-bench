@@ -6,3 +6,4 @@ viz/__pycache__/
 viz/html/*.html
 *.json
 output/
+test.yaml

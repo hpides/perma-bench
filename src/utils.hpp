@@ -25,6 +25,11 @@ void setPMEM_MAP_FLAGS(int flags);
 
 }  // namespace internal
 
+class PermaException : public std::exception {
+ public:
+  const char* what() const noexcept override { return "Execution failed. Check logs for more details."; }
+};
+
 char* map_file(const std::filesystem::path& file, bool is_dram, size_t expected_length);
 char* create_file(const std::filesystem::path& file, bool is_dram, size_t length);
 
