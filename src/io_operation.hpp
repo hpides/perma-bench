@@ -177,6 +177,8 @@ class ChainedOperation {
       current_addr = get_random_address(dependent_addr);
       dependent_addr = run_read(current_addr);
     } else {
+      // TODO: remove again!
+      current_addr = get_random_address(dependent_addr);
       run_write(current_addr);
     }
 

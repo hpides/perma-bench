@@ -66,10 +66,10 @@ std::vector<CustomOp> CustomOp::all_from_string(const std::string& str) {
     ops.emplace_back(from_string(op_str));
   }
 
-  if (ops[0].type != internal::Read) {
-    spdlog::error("First custom operation must be a read");
-    crash_exit();
-  }
+//  if (ops[0].type != internal::Read) {
+//    spdlog::error("First custom operation must be a read");
+//    crash_exit();
+//  }
 
   return ops;
 }
