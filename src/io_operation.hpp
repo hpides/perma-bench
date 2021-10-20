@@ -163,11 +163,10 @@ class IoOperation {
 
 class ChainedOperation {
  public:
-  ChainedOperation(const CustomOp& op, char* range_start, size_t range_size)
+  ChainedOperation(const CustomOp& op, char* range_start, const size_t range_size)
       : range_start_(range_start),
         access_size_(op.size),
         range_size_(range_size),
-        end_padding_(range_size_ - access_size_),
         align_(-access_size_),
         type_(op.type),
         persist_instruction_(op.persist) {}
@@ -188,7 +187,7 @@ class ChainedOperation {
   inline char* get_random_address(char* addr) {
     const uint64_t base = (uint64_t)addr;
     const uint64_t random_offset = base + lehmer64();
-    const uint64_t offset_in_range = random_offset % end_padding_;
+    const uint64_t offset_in_range = random_offset % range_size_;
     const uint64_t aligned_offset = offset_in_range & align_;
     return range_start_ + aligned_offset;
   }
@@ -277,14 +276,13 @@ class ChainedOperation {
   }
 
  private:
-  char* range_start_;
-  size_t access_size_;
-  size_t range_size_;
-  size_t align_;
-  size_t end_padding_;
+  char* const range_start_;
+  const size_t access_size_;
+  const size_t range_size_;
+  const size_t align_;
   ChainedOperation* next_ = nullptr;
-  internal::OpType type_;
-  internal::PersistInstruction persist_instruction_;
+  const internal::OpType type_;
+  const internal::PersistInstruction persist_instruction_;
 };
 
 }  // namespace perma
