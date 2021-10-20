@@ -31,7 +31,7 @@ if (${HAS_AVX})
     add_definitions("-DHAS_AVX")
     message(STATUS "System supports AVX-512.")
 else ()
-    message(FATAL_ERROR "System does not support AVX-512.")
+    message(WARNING "System does not support AVX-512. This is only okay for CI builds.")
 endif ()
 
 ##################### CLWB ####################
