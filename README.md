@@ -18,7 +18,7 @@ $ make -j
 $ ./perma-bench --path /path/to/pmem/filesystem
 ```
 
-This will create a `results` directory containing a JSON file with all benchmark resutls in it.
+This will create a `results` directory containing a JSON file with all benchmark results in it.
 
 ### Build Options
 In the following, we describe which build options you can provide for PerMA-Bench and how to configure them.
