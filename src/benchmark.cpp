@@ -265,7 +265,7 @@ void Benchmark::run_custom_ops_in_thread(const ThreadRunConfig& thread_config, c
   ChainedOperation& start_op = operation_chain[0];
   auto start_ts = std::chrono::steady_clock::now();
   for (size_t iteration = 0; iteration < thread_config.num_ops; ++iteration) {
-    start_op.run(start_addr);
+    start_op.run(start_addr, start_addr);
   }
   auto end_ts = std::chrono::steady_clock::now();
   auto duration = (end_ts - start_ts).count();
