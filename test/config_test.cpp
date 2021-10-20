@@ -291,57 +291,57 @@ TEST_F(ConfigTest, CheckDefaultConfig) { bm_config.validate(); }
 
 TEST_F(ConfigTest, InvalidHighReadWriteRatio) {
   bm_config.write_ratio = 1.1;
-  EXPECT_DEATH(bm_config.validate(), "");
+  EXPECT_THROW(bm_config.validate(), PermaException);
   check_log_for_critical("must be between");
 }
 
 TEST_F(ConfigTest, InvalidLowReadWriteRatio) {
   bm_config.write_ratio = -1.0;
-  EXPECT_DEATH(bm_config.validate(), "");
+  EXPECT_THROW(bm_config.validate(), PermaException);
   check_log_for_critical("must be between");
 }
 
 TEST_F(ConfigTest, InvalidSmallAccessSize) {
   bm_config.access_size = 32;
-  EXPECT_DEATH(bm_config.validate(), "");
+  EXPECT_THROW(bm_config.validate(), PermaException);
   check_log_for_critical("at least 64-byte");
 }
 
 TEST_F(ConfigTest, InvalidPowerAccessSize) {
   bm_config.access_size = 100;
-  EXPECT_DEATH(bm_config.validate(), "");
+  EXPECT_THROW(bm_config.validate(), PermaException);
   check_log_for_critical("power of 2");
 }
 
 TEST_F(ConfigTest, InvalidMemoryRangeAccessSizeMultiple) {
   bm_config.total_memory_range = 100000;
-  EXPECT_DEATH(bm_config.validate(), "");
+  EXPECT_THROW(bm_config.validate(), PermaException);
   check_log_for_critical("multiple of access size");
 }
 
 TEST_F(ConfigTest, InvalidNumberThreads) {
   bm_config.number_threads = 0;
-  EXPECT_DEATH(bm_config.validate(), "");
+  EXPECT_THROW(bm_config.validate(), PermaException);
   check_log_for_critical("threads must be");
 }
 
 TEST_F(ConfigTest, InvalidNumberPartitions) {
   bm_config.number_partitions = 0;
-  EXPECT_DEATH(bm_config.validate(), "");
+  EXPECT_THROW(bm_config.validate(), PermaException);
   check_log_for_critical("partitions must be");
 }
 
 TEST_F(ConfigTest, InvalidThreadPartitionRatio) {
   bm_config.number_partitions = 2;
   bm_config.number_threads = 1;
-  EXPECT_DEATH(bm_config.validate(), "");
+  EXPECT_THROW(bm_config.validate(), PermaException);
   check_log_for_critical("threads must be a multiple of number partitions");
 }
 
 TEST_F(ConfigTest, BadNumberPartitionSplit) {
   bm_config.number_threads = 36;
   bm_config.number_partitions = 36;
-  EXPECT_DEATH(bm_config.validate(), "");
+  EXPECT_THROW(bm_config.validate(), PermaException);
   check_log_for_critical("evenly divisible into");
 }
 
