@@ -60,10 +60,11 @@ struct BenchmarkConfig {
   internal::Mode exec_mode{internal::Mode::Sequential};
   internal::NumaPattern numa_pattern{internal::NumaPattern::Near};
 
+  std::vector<CustomOp> custom_operations;
+
   internal::RandomDistribution random_distribution{internal::RandomDistribution::Uniform};
   double zipf_alpha = 0.9;
 
-  internal::DataInstruction data_instruction{internal::DataInstruction::SIMD};
   internal::PersistInstruction persist_instruction{internal::PersistInstruction::NoCache};
 
   double write_ratio = 0.0;
@@ -93,11 +94,13 @@ struct ThreadRunConfig {
   const size_t num_ops;
   std::vector<internal::Measurement>* raw_measurements;
   std::vector<internal::Latency>* latencies;
+  uint64_t* custom_op_duration;
   const BenchmarkConfig& config;
 
   ThreadRunConfig(char* partition_start_addr, const size_t partition_size, const size_t num_threads_per_partition,
                   const size_t thread_num, const size_t num_ops, std::vector<internal::Measurement>* raw_measurements,
-                  std::vector<internal::Latency>* latencies, const BenchmarkConfig& config)
+                  std::vector<internal::Latency>* latencies, uint64_t* custom_op_duration,
+                  const BenchmarkConfig& config)
       : partition_start_addr(partition_start_addr),
         partition_size(partition_size),
         num_threads_per_partition(num_threads_per_partition),
@@ -105,6 +108,7 @@ struct ThreadRunConfig {
         num_ops(num_ops),
         raw_measurements(raw_measurements),
         latencies(latencies),
+        custom_op_duration(custom_op_duration),
         config(config) {}
 };
 
@@ -113,9 +117,11 @@ struct BenchmarkResult {
   ~BenchmarkResult();
 
   nlohmann::json get_result_as_json() const;
+  nlohmann::json get_custom_results_as_json() const;
 
   std::vector<std::vector<internal::Measurement>> raw_measurements;
   std::vector<std::vector<internal::Latency>> latencies;
+  std::vector<uint64_t> custom_operation_durations;
   hdr_histogram* latency_hdr = nullptr;
   const BenchmarkConfig config;
 };
@@ -179,6 +185,7 @@ class Benchmark {
 
   static char* create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& data_file);
 
+  static void run_custom_ops_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
   static void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
 
   static nlohmann::json get_benchmark_config_as_json(const BenchmarkConfig& bm_config);

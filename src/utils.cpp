@@ -180,10 +180,7 @@ double rand_val() {
   return ((double)x / m);
 }
 
-void crash_exit() {
-  spdlog::error("Terminating due to a critical error. See logs above for more details.");
-  exit(1);
-}
+void crash_exit() { throw PermaException(); }
 
 std::string get_time_string() {
   auto now = std::chrono::system_clock::now();

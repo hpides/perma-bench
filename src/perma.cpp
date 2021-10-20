@@ -82,7 +82,16 @@ int main(int argc, char** argv) {
   const std::string run_location = use_dram ? "DRAM" : pmem_directory.string();
   spdlog::info("Running benchmarks on '{}' with config(s) from '{}'.", run_location, config_file.string());
   spdlog::info("Writing results to '{}'.", result_path.string());
-  BenchmarkSuite::run_benchmarks(pmem_directory, config_file, result_path);
+
+  try {
+    BenchmarkSuite::run_benchmarks(pmem_directory, config_file, result_path);
+  } catch (const PermaException& e) {
+    // Clean up files before exiting
+    if (!use_dram) {
+      std::filesystem::remove_all(pmem_directory / "*");
+    }
+    throw e;
+  }
 
   return 0;
 }

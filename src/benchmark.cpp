@@ -7,6 +7,7 @@
 #include <thread>
 #include <utility>
 
+#include "fast_random.hpp"
 #include "numa.hpp"
 
 namespace {
@@ -138,7 +139,6 @@ struct ConfigEnums {
   static const std::unordered_map<std::string, bool> str_to_mem_type;
   static const std::unordered_map<std::string, internal::Mode> str_to_mode;
   static const std::unordered_map<std::string, internal::NumaPattern> str_to_numa_pattern;
-  static const std::unordered_map<std::string, internal::DataInstruction> str_to_data_instruction;
   static const std::unordered_map<std::string, internal::PersistInstruction> str_to_persist_instruction;
   static const std::unordered_map<std::string, internal::RandomDistribution> str_to_random_distribution;
 
@@ -152,13 +152,11 @@ const std::unordered_map<std::string, internal::Mode> ConfigEnums::str_to_mode{
     {"sequential", internal::Mode::Sequential},
     {"sequential_asc", internal::Mode::Sequential},
     {"sequential_desc", internal::Mode::Sequential_Desc},
-    {"random", internal::Mode::Random}};
+    {"random", internal::Mode::Random},
+    {"custom", internal::Mode::Custom}};
 
 const std::unordered_map<std::string, internal::NumaPattern> ConfigEnums::str_to_numa_pattern{
     {"near", internal::NumaPattern::Near}, {"far", internal::NumaPattern::Far}};
-
-const std::unordered_map<std::string, internal::DataInstruction> ConfigEnums::str_to_data_instruction{
-    {"simd", internal::DataInstruction::SIMD}, {"mov", internal::DataInstruction::MOV}};
 
 const std::unordered_map<std::string, internal::PersistInstruction> ConfigEnums::str_to_persist_instruction{
     {"nocache", internal::PersistInstruction::NoCache},
@@ -186,7 +184,9 @@ internal::BenchmarkType Benchmark::get_benchmark_type() const { return benchmark
 void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
                               std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config) {
   const size_t num_total_range_ops = config.total_memory_range / config.access_size;
-  const size_t num_operations = (config.exec_mode == internal::Random) ? config.number_operations : num_total_range_ops;
+  const size_t num_operations = (config.exec_mode == internal::Random || config.exec_mode == internal::Custom)
+                                    ? config.number_operations
+                                    : num_total_range_ops;
   const size_t num_ops_per_thread = num_operations / config.number_threads;
 
   pool.reserve(config.number_threads);
@@ -196,6 +196,10 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, st
     result->raw_measurements.resize(config.number_threads);
   } else {
     result->latencies.resize(config.number_threads);
+  }
+
+  if (config.exec_mode == internal::Custom) {
+    result->custom_operation_durations.resize(config.number_threads);
   }
 
   const uint16_t num_threads_per_partition = config.number_threads / config.number_partitions;
@@ -216,7 +220,7 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, st
       }
       thread_config.emplace_back(partition_start, partition_size, num_threads_per_partition, thread_num,
                                  num_ops_per_thread, &result->raw_measurements[index], &result->latencies[index],
-                                 config);
+                                 &result->custom_operation_durations[index], config);
     }
   }
 }
@@ -239,9 +243,42 @@ char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::fil
   return pmem_data;
 }
 
+void Benchmark::run_custom_ops_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config) {
+  const std::vector<CustomOp>& operations = config.custom_operations;
+  const size_t num_ops = operations.size();
+
+  std::vector<ChainedOperation> operation_chain;
+  operation_chain.reserve(num_ops);
+
+  for (size_t i = 0; i < num_ops; ++i) {
+    const CustomOp& op = operations[i];
+    operation_chain.emplace_back(op, thread_config.partition_start_addr, thread_config.partition_size);
+    if (i > 0) {
+      operation_chain[i - 1].set_next(&operation_chain[i]);
+    }
+  }
+
+  const size_t seed = std::chrono::steady_clock::now().time_since_epoch().count() * (thread_config.thread_num) + 1;
+  lehmer64_seed(seed);
+  char* start_addr = (char*)seed;
+
+  ChainedOperation& start_op = operation_chain[0];
+  auto start_ts = std::chrono::steady_clock::now();
+  for (size_t iteration = 0; iteration < thread_config.num_ops; ++iteration) {
+    start_op.run(start_addr);
+  }
+  auto end_ts = std::chrono::steady_clock::now();
+  auto duration = (end_ts - start_ts).count();
+  *thread_config.custom_op_duration = duration;
+}
+
 void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config) {
   if (config.numa_pattern == internal::NumaPattern::Far) {
     set_to_far_cpus();
+  }
+
+  if (config.exec_mode == internal::Custom) {
+    return run_custom_ops_in_thread(thread_config, config);
   }
 
   const size_t ops_per_iteration = thread_config.num_threads_per_partition * config.access_size;
@@ -251,7 +288,7 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
   const bool has_pause = config.pause_frequency > 0;
   size_t current_pause_frequency_count = 0;
   bool is_read = is_read_only;
-  assert(is_write_only || is_read_only || config.exec_mode == internal::Random);
+  assert(is_write_only || is_read_only || config.exec_mode == internal::Random || config.exec_mode == internal::Custom);
 
   const size_t thread_partition_offset = thread_config.thread_num * config.access_size;
 
@@ -305,9 +342,9 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
         }
       }
 
-      IoOperation operation = is_read ? IoOperation::ReadOp(op_addresses, config.access_size, config.data_instruction)
-                                      : IoOperation::WriteOp(op_addresses, config.access_size, config.data_instruction,
-                                                             config.persist_instruction);
+      IoOperation operation = is_read
+                                  ? IoOperation::ReadOp(op_addresses, config.access_size)
+                                  : IoOperation::WriteOp(op_addresses, config.access_size, config.persist_instruction);
 
       const auto start_ts = std::chrono::steady_clock::now();
       operation.run();
@@ -339,33 +376,40 @@ nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm
   nlohmann::json config;
   config["memory_type"] = get_enum_as_string(ConfigEnums::str_to_mem_type, bm_config.is_pmem);
   config["total_memory_range"] = bm_config.total_memory_range;
-  config["access_size"] = bm_config.access_size;
   config["exec_mode"] = get_enum_as_string(ConfigEnums::str_to_mode, bm_config.exec_mode);
-  config["write_ratio"] = bm_config.write_ratio;
-  config["pause_frequency"] = bm_config.pause_frequency;
   config["number_partitions"] = bm_config.number_partitions;
   config["number_threads"] = bm_config.number_threads;
   config["numa_pattern"] = get_enum_as_string(ConfigEnums::str_to_numa_pattern, bm_config.numa_pattern);
-  config["data_instruction"] = get_enum_as_string(ConfigEnums::str_to_data_instruction, bm_config.data_instruction);
   config["prefault_file"] = bm_config.prefault_file;
-  config["min_io_chunk_size"] = bm_config.min_io_chunk_size;
 
-  if (bm_config.pause_frequency > 0) {
-    config["pause_length_micros"] = bm_config.pause_length_micros;
+  if (bm_config.exec_mode != internal::Custom) {
+    config["access_size"] = bm_config.access_size;
+    config["write_ratio"] = bm_config.write_ratio;
+    config["pause_frequency"] = bm_config.pause_frequency;
+    config["min_io_chunk_size"] = bm_config.min_io_chunk_size;
+
+    if (bm_config.pause_frequency > 0) {
+      config["pause_length_micros"] = bm_config.pause_length_micros;
+    }
+
+    if (bm_config.write_ratio > 0) {
+      config["persist_instruction"] =
+          get_enum_as_string(ConfigEnums::str_to_persist_instruction, bm_config.persist_instruction);
+    }
   }
 
-  if (bm_config.write_ratio > 0) {
-    config["persist_instruction"] =
-        get_enum_as_string(ConfigEnums::str_to_persist_instruction, bm_config.persist_instruction);
-  }
-
-  if (bm_config.exec_mode == internal::Mode::Random) {
+  if (bm_config.exec_mode == internal::Random) {
     config["number_operations"] = bm_config.number_operations;
     config["random_distribution"] =
         get_enum_as_string(ConfigEnums::str_to_random_distribution, bm_config.random_distribution);
     if (bm_config.random_distribution == internal::Zipf) {
       config["zipf_alpha"] = bm_config.zipf_alpha;
     }
+  }
+
+  if (bm_config.exec_mode == internal::Custom) {
+    config["number_operations"] = bm_config.number_operations;
+    config["custom_operations"] = CustomOp::all_to_string(bm_config.custom_operations);
   }
 
   if (bm_config.run_time != -1) {
@@ -386,7 +430,6 @@ const std::vector<std::vector<ThreadRunConfig>>& Benchmark::get_thread_configs()
 const std::vector<std::unique_ptr<BenchmarkResult>>& Benchmark::get_benchmark_results() const { return results_; }
 
 std::vector<bool> Benchmark::owns_pmem_files() const { return owns_pmem_files_; }
-
 nlohmann::json Benchmark::get_json_config(uint8_t config_index) {
   return get_benchmark_config_as_json(configs_[config_index]);
 }
@@ -409,6 +452,10 @@ BenchmarkResult::~BenchmarkResult() {
 }
 
 nlohmann::json BenchmarkResult::get_result_as_json() const {
+  if (config.exec_mode == internal::Custom) {
+    return get_custom_results_as_json();
+  }
+
   nlohmann::json result;
   nlohmann::json result_points = nlohmann::json::array();
 
@@ -422,7 +469,6 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
   assert(!raw_measurements.empty() || !latencies.empty());
   const bool is_raw = config.raw_results;
   const size_t num_ops = is_raw ? raw_measurements[0].size() : latencies[0].size();
-  assert(num_ops > 0);
   const uint64_t data_size = config.access_size;
   const uint64_t num_ops_per_chunk = std::max(config.min_io_chunk_size / data_size, 1ul);
   const uint64_t chunk_size = std::max(config.min_io_chunk_size, data_size);
@@ -505,6 +551,23 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
   return result;
 }
 
+nlohmann::json BenchmarkResult::get_custom_results_as_json() const {
+  nlohmann::json result;
+
+  uint64_t total_duration = 0;
+  for (uint64_t thread_id = 0; thread_id < config.number_threads; ++thread_id) {
+    total_duration += custom_operation_durations[thread_id];
+  }
+  const double avg_duration_ns = (double)total_duration / config.number_threads;
+  const double avg_duration = avg_duration_ns / internal::NANOSECONDS_IN_SECONDS;
+  const double ops_per_sec = config.number_operations / avg_duration;
+
+  result["avg_duration_sec"] = avg_duration;
+  result["ops_per_second"] = ops_per_sec;
+
+  return result;
+}
+
 BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
   BenchmarkConfig bm_config{};
   size_t num_found = 0;
@@ -529,10 +592,15 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_enum_if_present(node, "numa_pattern", ConfigEnums::str_to_numa_pattern, &bm_config.numa_pattern);
     num_found += get_enum_if_present(node, "random_distribution", ConfigEnums::str_to_random_distribution,
                                      &bm_config.random_distribution);
-    num_found += get_enum_if_present(node, "data_instruction", ConfigEnums::str_to_data_instruction,
-                                     &bm_config.data_instruction);
     num_found += get_enum_if_present(node, "persist_instruction", ConfigEnums::str_to_persist_instruction,
                                      &bm_config.persist_instruction);
+
+    std::string custom_ops;
+    const bool has_custom_ops = get_if_present(node, "custom_operations", &custom_ops);
+    if (has_custom_ops) {
+      bm_config.custom_operations = CustomOp::all_from_string(custom_ops);
+      num_found++;
+    }
 
     if (num_found != node.size()) {
       for (YAML::const_iterator entry = node.begin(); entry != node.end(); ++entry) {
@@ -590,10 +658,10 @@ void BenchmarkConfig::validate() const {
                  "Total memory range must be evenly divisible into number of partitions. "
                  "Most likely you can fix this by using 2^x partitions.");
 
-  // Assumption: number_operations should only be set for random access. It is ignored in sequential IO.
-  const bool is_number_operations_set_random =
-      number_operations == BenchmarkConfig{}.number_operations || exec_mode == internal::Random;
-  CHECK_ARGUMENT(is_number_operations_set_random, "Number of operations should only be set for random access");
+  // Assumption: number_operations should only be set for random/custom access. It is ignored in sequential IO.
+  const bool is_number_operations_set_random = number_operations == BenchmarkConfig{}.number_operations ||
+                                               (exec_mode == internal::Random || exec_mode == internal::Custom);
+  CHECK_ARGUMENT(is_number_operations_set_random, "Number of operations should only be set for random/custom access");
 
   // Assumption: sequential access does not make sense if we mix reads and writes
   const bool is_mixed_workload_random = (write_ratio == 1 || write_ratio == 0) || exec_mode == internal::Random;
@@ -605,7 +673,7 @@ void BenchmarkConfig::validate() const {
 
   // Assumption: total memory needs to fit into N chunks exactly
   const bool is_seq_total_memory_chunkable =
-      exec_mode == internal::Random || (total_memory_range % min_io_chunk_size) == 0;
+      (exec_mode == internal::Random || exec_mode == internal::Custom) || (total_memory_range % min_io_chunk_size) == 0;
   CHECK_ARGUMENT(is_seq_total_memory_chunkable,
                  "Total file size needs to be multiple of " + std::to_string(min_io_chunk_size));
 
@@ -622,6 +690,12 @@ void BenchmarkConfig::validate() const {
 
   const bool is_far_numa_node_available = numa_pattern == internal::NumaPattern::Near || has_far_numa_nodes();
   CHECK_ARGUMENT(is_far_numa_node_available, "Cannot run far NUMA node benchmark without far NUMA nodes.");
+
+  const bool has_custom_ops = exec_mode != internal::Mode::Custom || !custom_operations.empty();
+  CHECK_ARGUMENT(has_custom_ops, "Must specify custom_operations for custom execution.");
+
+  const bool has_no_custom_ops = exec_mode == internal::Mode::Custom || custom_operations.empty();
+  CHECK_ARGUMENT(has_no_custom_ops, "Cannot specify custom_operations for non-custom execution.");
 }
 
 }  // namespace perma

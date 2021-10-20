@@ -19,6 +19,9 @@ endif ()
 set(INCLUDE_HINTS ${CMAKE_INCLUDE_PATH} "/usr/include" "/usr/local/include")
 set(LIB_HINTS "/usr/local/lib64" "/usr/local/lib" "/usr/lib" "/usr/lib64")
 
+# CI
+option(IS_CI_BUILD "Set true if this is a CI build.")
+
 ##################### AVX ####################
 # Use this short program to check if AVX-512 is supported. For now, we only use AVX-512 or not.
 # This might need to be adapted in the future to support different SSE/AVX instructions.
@@ -31,7 +34,11 @@ if (${HAS_AVX})
     add_definitions("-DHAS_AVX")
     message(STATUS "System supports AVX-512.")
 else ()
-    message(STATUS "System does not support AVX-512.")
+    if (${IS_CI_BUILD})
+        message(STATUS "System does not supports AVX-512. This is okay only in a CI build.")
+    else ()
+        message(FATAL_ERROR "System does not support AVX-512.")
+    endif ()
 endif ()
 
 ##################### CLWB ####################
