@@ -84,6 +84,7 @@ class IoOperation {
         persist_instruction_{persist_instruction} {}
 
   void run_read() {
+#ifdef HAS_AVX
     switch (access_size_) {
       case 64:
         return rw_ops::simd_read_64(op_addresses_);
@@ -96,9 +97,11 @@ class IoOperation {
       default:
         return rw_ops::simd_read(op_addresses_, access_size_);
     }
+#endif
   }
 
   void run_write() {
+#ifdef HAS_AVX
     switch (persist_instruction_) {
 #ifdef HAS_CLWB
       case internal::PersistInstruction::Cache: {
@@ -145,6 +148,7 @@ class IoOperation {
         }
       }
     }
+#endif
   }
 
   // The order here is important. At the moment, we can fit this into 16 Byte. Reorder with care.
@@ -194,6 +198,7 @@ class ChainedOperation {
 
  private:
   inline char* run_read(char* addr) {
+#ifdef HAS_AVX
     char* random_addr = get_random_address(addr);
 
     __m512i read_value;
@@ -216,9 +221,14 @@ class ChainedOperation {
     // Read from both ends to avoid narrowing of the 512 Bit instruction.
     uint64_t read_addr = read_value[0] + read_value[7];
     return (char*)read_addr;
+#else
+    // This is only to stop the compiler complaining about a missing return
+    return addr;
+#endif
   }
 
   inline void run_write(char* addr) {
+#ifdef HAS_AVX
     switch (persist_instruction_) {
 #ifdef HAS_CLWB
       case internal::PersistInstruction::Cache: {
@@ -265,6 +275,7 @@ class ChainedOperation {
         }
       }
     }
+#endif
   }
 
  private:

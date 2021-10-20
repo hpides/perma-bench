@@ -43,6 +43,7 @@ TEST_F(BenchmarkTest, CreateParallelBenchmark) {
                                     "/tmp/foo/bar1", "/tmp/foo/bar2"));
 }
 
+#ifdef HAS_AVX
 TEST_F(BenchmarkTest, CreateSingleNewDataFile) {
   base_config_.write_ratio = 1;
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
@@ -974,5 +975,6 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadMixed) {
 
   check_file_written(bm.get_pmem_files()[1], total_size);
 }
+#endif
 
 }  // namespace perma

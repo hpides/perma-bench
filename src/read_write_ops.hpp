@@ -62,6 +62,8 @@ inline void sfence_barrier() { _mm_sfence(); }
  */
 inline void no_barrier() {}
 
+#ifdef HAS_AVX
+
 inline void simd_write_data_range(char* from, const char* to) {
   __m512i* data = (__m512i*)(WRITE_DATA);
   for (char* mem_addr = from; mem_addr < to; mem_addr += CACHE_LINE_SIZE) {
@@ -484,6 +486,12 @@ inline void simd_read(const std::vector<char*>& addresses, const size_t access_s
   KEEP(&x);
 }
 
-inline void write_data(char* from, const char* to) { return simd_write_data_range(from, to); }
+#endif
+
+inline void write_data(char* from, const char* to) {
+#ifdef HAS_AVX
+  return simd_write_data_range(from, to);
+#endif
+}
 
 }  // namespace perma::rw_ops

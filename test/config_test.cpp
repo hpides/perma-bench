@@ -38,6 +38,9 @@ class ConfigTest : public ::testing::Test {
   void TearDown() override { std::ofstream empty_log(test_logger_path, std::ostream::trunc); }
 
   static void check_log_for_critical(const std::string& expected_msg) {
+    // Make sure content is written to the log file
+    spdlog::default_logger()->flush();
+
     std::stringstream raw_log_content;
     std::ifstream log_checker(test_logger_path);
     raw_log_content << log_checker.rdbuf();
