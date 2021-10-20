@@ -250,22 +250,29 @@ void Benchmark::run_custom_ops_in_thread(const ThreadRunConfig& thread_config, c
   std::vector<ChainedOperation> operation_chain;
   operation_chain.reserve(num_ops);
 
+  // Determine maximum access size to ensure that operations don't write beyond the end of the range.
+  size_t max_access_size = 0;
+  for (const CustomOp& op : operations) {
+    max_access_size = std::max(op.size, max_access_size);
+  }
+  const size_t aligned_range_size = thread_config.partition_size - max_access_size;
+
   for (size_t i = 0; i < num_ops; ++i) {
     const CustomOp& op = operations[i];
-    operation_chain.emplace_back(op, thread_config.partition_start_addr, thread_config.partition_size);
+    operation_chain.emplace_back(op, thread_config.partition_start_addr, aligned_range_size);
     if (i > 0) {
       operation_chain[i - 1].set_next(&operation_chain[i]);
     }
   }
 
-  const size_t seed = std::chrono::steady_clock::now().time_since_epoch().count() * (thread_config.thread_num) + 1;
+  const size_t seed = std::chrono::steady_clock::now().time_since_epoch().count() * (thread_config.thread_num + 1);
   lehmer64_seed(seed);
   char* start_addr = (char*)seed;
 
   ChainedOperation& start_op = operation_chain[0];
   auto start_ts = std::chrono::steady_clock::now();
   for (size_t iteration = 0; iteration < thread_config.num_ops; ++iteration) {
-    start_op.run(start_addr);
+    start_op.run(start_addr, start_addr);
   }
   auto end_ts = std::chrono::steady_clock::now();
   auto duration = (end_ts - start_ts).count();

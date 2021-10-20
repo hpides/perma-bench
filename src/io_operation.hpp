@@ -163,33 +163,31 @@ class IoOperation {
 
 class ChainedOperation {
  public:
-  ChainedOperation(const CustomOp& op, char* range_start, size_t range_size)
+  ChainedOperation(const CustomOp& op, char* range_start, const size_t range_size)
       : range_start_(range_start),
         access_size_(op.size),
         range_size_(range_size),
-        end_padding_(range_size_ - access_size_),
         align_(-access_size_),
         type_(op.type),
         persist_instruction_(op.persist) {}
 
-  void run(char* addr) {
-    char* next_addr = addr;
-
+  void run(char* current_addr, char* dependent_addr) {
     if (type_ == internal::OpType::Read) {
-      next_addr = run_read(addr);
+      current_addr = get_random_address(dependent_addr);
+      dependent_addr = run_read(current_addr);
     } else {
-      run_write(addr);
+      run_write(current_addr);
     }
 
     if (next_) {
-      return next_->run(next_addr);
+      return next_->run(current_addr, dependent_addr);
     }
   }
 
   inline char* get_random_address(char* addr) {
     const uint64_t base = (uint64_t)addr;
     const uint64_t random_offset = base + lehmer64();
-    const uint64_t offset_in_range = random_offset % end_padding_;
+    const uint64_t offset_in_range = random_offset % range_size_;
     const uint64_t aligned_offset = offset_in_range & align_;
     return range_start_ + aligned_offset;
   }
@@ -199,28 +197,27 @@ class ChainedOperation {
  private:
   inline char* run_read(char* addr) {
 #ifdef HAS_AVX
-    char* random_addr = get_random_address(addr);
-
     __m512i read_value;
     switch (access_size_) {
       case 64:
-        read_value = rw_ops::simd_read_64(random_addr);
+        read_value = rw_ops::simd_read_64(addr);
         break;
       case 128:
-        read_value = rw_ops::simd_read_128(random_addr);
+        read_value = rw_ops::simd_read_128(addr);
         break;
       case 256:
-        read_value = rw_ops::simd_read_256(random_addr);
+        read_value = rw_ops::simd_read_256(addr);
         break;
       case 512:
-        read_value = rw_ops::simd_read_512(random_addr);
+        read_value = rw_ops::simd_read_512(addr);
         break;
       default:
-        read_value = rw_ops::simd_read(random_addr, access_size_);
+        read_value = rw_ops::simd_read(addr, access_size_);
     }
-    // Read from both ends to avoid narrowing of the 512 Bit instruction.
-    uint64_t read_addr = read_value[0] + read_value[7];
-    return (char*)read_addr;
+
+    // Make sure the compiler does not optimize the load away.
+    KEEP(&read_value);
+    return (char*)read_value[0];
 #else
     // This is only to stop the compiler complaining about a missing return
     return addr;
@@ -279,14 +276,13 @@ class ChainedOperation {
   }
 
  private:
-  char* range_start_;
-  size_t access_size_;
-  size_t range_size_;
-  size_t align_;
-  size_t end_padding_;
+  char* const range_start_;
+  const size_t access_size_;
+  const size_t range_size_;
+  const size_t align_;
   ChainedOperation* next_ = nullptr;
-  internal::OpType type_;
-  internal::PersistInstruction persist_instruction_;
+  const internal::OpType type_;
+  const internal::PersistInstruction persist_instruction_;
 };
 
 }  // namespace perma

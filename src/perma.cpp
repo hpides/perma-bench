@@ -5,6 +5,17 @@
 #include "benchmark_suite.hpp"
 #include "numa.hpp"
 
+namespace {
+
+std::string empty_directory(const std::string& path) {
+  if (!std::filesystem::is_empty(path)) {
+    return "PMem benchmark directory '" + path + "' must be empty.";
+  }
+  return "";
+}
+
+}  // namespace
+
 using namespace perma;
 
 constexpr auto DEFAULT_WORKLOAD_PATH = "workloads";
@@ -48,10 +59,12 @@ int main(int argc, char** argv) {
   // Path to PMem directory
   std::filesystem::path pmem_directory;
   auto path_opt =
-      app.add_option("-p,--path", pmem_directory,
-                     "Path to persistent memory directory in which to perform the benchmarks, e.g., /mnt/pmem1/")
+      app.add_option(
+             "-p,--path", pmem_directory,
+             "Path to empty persistent memory directory in which to perform the benchmarks, e.g., /mnt/pmem1/perma")
           ->default_str("")
-          ->check(CLI::ExistingDirectory);
+          ->check(CLI::ExistingDirectory)
+          ->check(empty_directory);
 
   // Flag if DRAM should be used
   bool use_dram;
@@ -61,14 +74,14 @@ int main(int argc, char** argv) {
   dram_flg->excludes(path_opt);
   // Do not allow dram flag to be set if path is set
   path_opt->excludes(dram_flg);
-  // Do not allow to skip initialization of numa and setting numa nodes
+  // Do not allow skipping initialization of numa and setting numa nodes
   ignore_numa_opt->excludes(numa_opt);
   numa_opt->excludes(ignore_numa_opt);
 
   try {
     app.parse(argc, argv);
     if (path_opt->empty() && dram_flg->empty()) {
-      throw CLI::RequiredError("Either --path or --dram");
+      throw CLI::RequiredError("Must specify either --path or --dram");
     }
   } catch (const CLI::ParseError& e) {
     app.failure_message(CLI::FailureMessage::help);
