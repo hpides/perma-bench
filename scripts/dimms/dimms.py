@@ -5,10 +5,10 @@ sys.path.append(os.path.dirname(sys.path[0]))
 from common import *
 
 DIMM_COLOR = {
-    'dimm1': '#a1dab4',
-    'dimm2': '#378d54',
-    'dimm4': '#41b6c4',
-    'dimm6': '#2c7fb8',
+    'dimm1': '#fecc5c', # '#a1dab4',
+    'dimm2': '#fd8d3c', # '#378d54',
+    'dimm4': '#f03b20', # '#41b6c4',
+    'dimm6': '#bd0026', # '#2c7fb8',
 }
 
 DIMM_HATCH = {

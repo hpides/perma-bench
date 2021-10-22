@@ -5,11 +5,11 @@ sys.path.append(os.path.dirname(sys.path[0]))
 from common import *
 
 SPEED_COLOR = {
-    "speed2133":      '#a1dab4',
-    "speed2400":      '#378d54',
-    "speed2666":      '#41b6c4',
-    "speed2133-dram": '#2c7fb8',
-    "speed2666-dram": '#2c7fb8',
+    "speed2133":      '#fecc5c',
+    "speed2400":      '#fd8d3c',
+    "speed2666":      '#f03b20',
+    "speed2133-dram": '#bd0026',
+    "speed2666-dram": '#bd0026',
 }
 
 SPEED_NAME = {
