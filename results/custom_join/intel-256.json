@@ -1,0 +1,382 @@
+[
+  {
+    "benchmarks": [
+      {
+        "avg_duration_sec": 34.685076253,
+        "config": {
+          "custom_operations": "r64,w64_cache,w64_cache",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 1,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 2883084.33490472
+      },
+      {
+        "avg_duration_sec": 34.175623752,
+        "config": {
+          "custom_operations": "r256,w64_cache,w64_cache",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 1,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 2926062.175943398
+      },
+      {
+        "avg_duration_sec": 42.708330607,
+        "config": {
+          "custom_operations": "r1024,w64_cache,w64_cache",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 1,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 2341463.564104043
+      },
+      {
+        "avg_duration_sec": 4.613478646,
+        "config": {
+          "custom_operations": "r64,w64_cache,w64_cache",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 8,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 21675617.830528483
+      },
+      {
+        "avg_duration_sec": 4.585307704,
+        "config": {
+          "custom_operations": "r256,w64_cache,w64_cache",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 8,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 21808787.20805691
+      },
+      {
+        "avg_duration_sec": 6.293570406,
+        "config": {
+          "custom_operations": "r1024,w64_cache,w64_cache",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 8,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 15889231.954037506
+      },
+      {
+        "avg_duration_sec": 2.652916844875,
+        "config": {
+          "custom_operations": "r64,w64_cache,w64_cache",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 37694359.01965174
+      },
+      {
+        "avg_duration_sec": 2.692217755,
+        "config": {
+          "custom_operations": "r256,w64_cache,w64_cache",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 37144097.95206183
+      },
+      {
+        "avg_duration_sec": 5.884754761625,
+        "config": {
+          "custom_operations": "r1024,w64_cache,w64_cache",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 16993061.57192968
+      },
+      {
+        "avg_duration_sec": 2.7127883368125,
+        "config": {
+          "custom_operations": "r64,w64_cache,w64_cache",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 32,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 36862440.99585707
+      },
+      {
+        "avg_duration_sec": 2.60123986453125,
+        "config": {
+          "custom_operations": "r256,w64_cache,w64_cache",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 32,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 38443206.01246063
+      },
+      {
+        "avg_duration_sec": 6.2608476838125,
+        "config": {
+          "custom_operations": "r1024,w64_cache,w64_cache",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 32,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 15972278.044481302
+      }
+    ],
+    "bm_name": "join_build",
+    "bm_type": "single",
+    "matrix_args": [
+      "custom_operations",
+      "number_threads"
+    ]
+  },
+  {
+    "benchmarks": [
+      {
+        "avg_duration_sec": 30.250209958,
+        "config": {
+          "custom_operations": "r128",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 200000000,
+          "number_partitions": 1,
+          "number_threads": 1,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 6611524.35892789
+      },
+      {
+        "avg_duration_sec": 45.469216222,
+        "config": {
+          "custom_operations": "r512",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 200000000,
+          "number_partitions": 1,
+          "number_threads": 1,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 4398580.327919337
+      },
+      {
+        "avg_duration_sec": 52.077253863,
+        "config": {
+          "custom_operations": "r2048",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 200000000,
+          "number_partitions": 1,
+          "number_threads": 1,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 3840448.2795145344
+      },
+      {
+        "avg_duration_sec": 4.041274427875,
+        "config": {
+          "custom_operations": "r128",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 200000000,
+          "number_partitions": 1,
+          "number_threads": 8,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 49489338.96210677
+      },
+      {
+        "avg_duration_sec": 6.16755315775,
+        "config": {
+          "custom_operations": "r512",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 200000000,
+          "number_partitions": 1,
+          "number_threads": 8,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 32427770.768166754
+      },
+      {
+        "avg_duration_sec": 7.24341907125,
+        "config": {
+          "custom_operations": "r2048",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 200000000,
+          "number_partitions": 1,
+          "number_threads": 8,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 27611270.041495185
+      },
+      {
+        "avg_duration_sec": 2.1524936240625,
+        "config": {
+          "custom_operations": "r128",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 200000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 92915490.0921522
+      },
+      {
+        "avg_duration_sec": 3.4800831110625,
+        "config": {
+          "custom_operations": "r512",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 200000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 57469891.84374342
+      },
+      {
+        "avg_duration_sec": 4.2732756314375004,
+        "config": {
+          "custom_operations": "r2048",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 200000000,
+          "number_partitions": 1,
+          "number_threads": 16,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 46802504.03897335
+      },
+      {
+        "avg_duration_sec": 1.59364669228125,
+        "config": {
+          "custom_operations": "r128",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 200000000,
+          "number_partitions": 1,
+          "number_threads": 32,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 125498330.94668363
+      },
+      {
+        "avg_duration_sec": 2.80468848675,
+        "config": {
+          "custom_operations": "r512",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 200000000,
+          "number_partitions": 1,
+          "number_threads": 32,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 71309167.11244278
+      },
+      {
+        "avg_duration_sec": 3.57243891575,
+        "config": {
+          "custom_operations": "r2048",
+          "exec_mode": "custom",
+          "memory_type": "pmem",
+          "numa_pattern": "near",
+          "number_operations": 200000000,
+          "number_partitions": 1,
+          "number_threads": 32,
+          "prefault_file": true,
+          "total_memory_range": 10737418240
+        },
+        "ops_per_second": 55984162.28147372
+      }
+    ],
+    "bm_name": "join_probe",
+    "bm_type": "single",
+    "matrix_args": [
+      "custom_operations",
+      "number_threads"
+    ]
+  }
+]

@@ -1,0 +1,33 @@
+Results for Dash-Ex:
+====================
+
+16 threads, 100 mio prefill, fixed size 8B/8B
+- 100 mio inserts
+- 100 mio lookups (positive)
+
+JOIN BUILD:
+===========
+Intel-256:
+    avg  read GB/s: 5.3
+    avg write GB/s: 3.2
+    inserts/s:      13550466
+    time in s:      7.379819
+
+Intel-128:
+    avg  read GB/s: 4.5
+    avg write GB/s: 2.4
+    inserts/s:      10324116
+    time s:         9.686059
+
+
+JOIN PROBE:
+===========
+Intel-256:
+    avg read GB/s: 14.6
+    gets/s:        47271039
+    time in s:     2.115460
+
+Intel-128:
+    avg read GB/s: 12.5
+    gets/s:        38587320
+    time in s:     2.591525

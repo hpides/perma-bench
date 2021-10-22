@@ -4,32 +4,35 @@ sys.path.append(os.path.dirname(sys.path[0]))
 
 from common import *
 
-DIMM_COLOR = {
-    'dimm1': '#a1dab4',
-    'dimm2': '#378d54',
-    'dimm4': '#41b6c4',
-    'dimm6': '#2c7fb8',
+SPEED_COLOR = {
+    "speed2133":      '#a1dab4',
+    "speed2400":      '#378d54',
+    "speed2666":      '#41b6c4',
+    "speed2133-dram": '#2c7fb8',
+    "speed2666-dram": '#2c7fb8',
 }
 
-DIMM_HATCH = {
-    'dimm1': '\\\\',
-    'dimm2': '//',
-    'dimm4': '/',
-    'dimm6': '\\',
+SPEED_NAME = {
+    "speed2133": '2133',
+    "speed2400": '2400',
+    "speed2666": '2666',
+    "speed2133-dram": '2133-DRAM',
+    "speed2666-dram": '2666-DRAM',
 }
 
-DIMM_NAME = {
-    'dimm1': "1 DIMM",
-    'dimm2': "2 DIMMs",
-    'dimm4': "4 DIMMs",
-    'dimm6': "6 DIMMs",
+SPEED_HATCH = {
+    "speed2133": '\\\\',
+    "speed2400": '//',
+    "speed2666": '\\',
+    "speed2133-dram": '//',
+    "speed2666-dram": 'x',
 }
 
-def DIMM_BAR(dimm):
+def SPEED_BAR(system):
     return {
         "color": 'white',
-        "edgecolor": DIMM_COLOR[dimm],
-        "hatch": DIMM_HATCH[dimm],
+        "edgecolor": SPEED_COLOR[system],
+        "hatch": SPEED_HATCH[system],
         "lw": 3
     }
 
@@ -45,10 +48,11 @@ def plot_dimms(scan_data, logging_data, index_data, ax):
         for i, system in enumerate(bars):
             data = system_data[system]
             y_data = data[-1][1]
+            # print(f"{system}: {y_data}")
             pos = x_pos[offset] + (i * bar_width)
-            bar = ax.bar(pos, y_data, width=bar_width, **DIMM_BAR(system))
+            bar = ax.bar(pos, y_data, width=bar_width, **SPEED_BAR(system))
             if label:
-                label = DIMM_NAME[system]
+                label = SPEED_NAME[system]
                 bar.set_label(label)
 
     plot_bm(scan_data, 0, label=True)
@@ -56,7 +60,7 @@ def plot_dimms(scan_data, logging_data, index_data, ax):
     plot_bm(index_data, 2)
 
     ax.set_xticks(BAR_X_TICKS_POS(bar_width, num_bars, num_xticks))
-    ax.set_xticklabels(["Table Scan", "Logging", "Index Lookup"])
+    ax.set_xticklabels(["Table\nScan", "Logging", "Index\nLookup"])
 
     ax.set_ylim(0, 45)
     ax.set_yticks(range(0, 45, 10))
@@ -65,21 +69,22 @@ def plot_dimms(scan_data, logging_data, index_data, ax):
 
 
 if __name__ == '__main__':
+    skip_dram = True
     result_path, plot_dir = INIT(sys.argv)
 
     scan_config = {"access_size": 16384}
-    scan_runs = get_runs_from_results(result_path, "table_scan_partitioned", scan_config)
+    scan_runs = get_runs_from_results(result_path, "table_scan_partitioned", scan_config, skip_dram=skip_dram)
     scan_data = get_data_from_runs(scan_runs, "number_threads", "bandwidth", "read")
 
     logging_config = {"access_size": 512, "persist_instruction": "nocache"}
-    logging_runs = get_runs_from_results(result_path, "logging_partition", logging_config)
+    logging_runs = get_runs_from_results(result_path, "logging_partition", logging_config, skip_dram=skip_dram)
     logging_data = get_data_from_runs(logging_runs, "number_partitions", "bandwidth", "write")
 
     index_config = {"access_size": 256, "random_distribution": "uniform"}
-    index_runs = get_runs_from_results(result_path, "index_lookup", index_config)
+    index_runs = get_runs_from_results(result_path, "index_lookup", index_config, skip_dram=skip_dram)
     index_data = get_data_from_runs(index_runs, "number_partitions", "bandwidth", "read")
 
-    fig, ax = plt.subplots(1, 1, figsize=DOUBLE_FIG_SIZE)
+    fig, ax = plt.subplots(1, 1, figsize=SINGLE_FIG_SIZE)
     plot_dimms(scan_data, logging_data, index_data, ax)
 
     HATCH_WIDTH()
@@ -87,6 +92,6 @@ if __name__ == '__main__':
     Y_GRID(ax)
     HIDE_BORDERS(ax)
 
-    plot_path = os.path.join(plot_dir, "dimm_performance")
+    plot_path = os.path.join(plot_dir, "speed_performance")
     SAVE_PLOT(plot_path)
     PRINT_PLOT_PATHS()

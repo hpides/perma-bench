@@ -43,8 +43,8 @@ SYSTEM_MARKER = {
 SYSTEM_HATCH = {
     'intel-128':   '\\\\',
     'intel-256':   '//',
-    'intel-512':   '/',
-    'intel-gen2':  '\\',
+    'intel-512':   '\\',
+    'intel-gen2':  '/',
     'nvdimm-hpe':  'x',
     'zdram':       '.',
 }
@@ -148,7 +148,6 @@ def get_bms(results, bm_name, skip_dram=True):
                     break
     return bms
 
-
 def get_parallel_runs(bms, config):
     runs = defaultdict(list)
     for name, res_runs in bms.items():
@@ -199,13 +198,16 @@ def get_data_from_parallel_runs(runs, sub_bm_name_one, x_attribute_one, y_type_o
     return data
 
 
-def get_data_from_runs(runs, x_attribute, y_type, y_attribute):
+def get_data_from_runs(runs, x_attribute, y_type, y_attribute=None):
     data = defaultdict(list)
     for system_name, system_runs in runs.items():
         d = data[system_name]
         for run in system_runs:
             x_val = run['config'][x_attribute]
-            y_val = run[y_type].get(y_attribute, 0)
+            if y_attribute is None:
+                y_val = run[y_type]
+            else:
+                y_val = run[y_type].get(y_attribute, 0)
             d.append((x_val, y_val))
     return data
 

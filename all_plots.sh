@@ -30,4 +30,22 @@ do
     python3 ${script} ${RESULT_DIR}/numa ${PLOT_DIR} > /dev/null
 done
 
+for script in scripts/dimms/*.py
+do
+    echo "Running $script..."
+    python3 ${script} ${RESULT_DIR}/dimms ${PLOT_DIR} > /dev/null
+done
+
+for script in scripts/speed/*.py
+do
+    echo "Running $script..."
+    python3 ${script} ${RESULT_DIR}/speed ${PLOT_DIR} > /dev/null
+done
+
+for script in scripts/custom_join/*.py
+do
+    echo "Running $script..."
+    python3 ${script} ${RESULT_DIR}/custom_join ${PLOT_DIR} > /dev/null
+done
+
 open ${PLOT_DIR}/*.png
