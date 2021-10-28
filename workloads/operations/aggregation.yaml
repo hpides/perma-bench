@@ -1,0 +1,19 @@
+# Represent a (hash-) aggregation operation.
+
+# The aggregation is inspired by the PMem hash-index Dash (Lu et al., PVLDB 13(8), 2020).
+# Dash has 256 Byte buckets and performs two stores for each insert. As the persistence
+# of the intermediate index is not important, we omit the flush/barrier after inserting.
+# We use a 2 GB memory range to represent the small structure.
+aggregation:
+  matrix:
+    number_threads: [1, 4, 8, 16]
+    # Represent bucket sizes 64, 256, 1024
+    custom_operations:
+      - "r64,w64_none"
+      - "r256,w128_none"
+      - "r1024,w128_none"
+
+  args:
+    total_memory_range: 2G
+    number_operations: 100000000
+    exec_mode: custom

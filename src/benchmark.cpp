@@ -184,9 +184,10 @@ internal::BenchmarkType Benchmark::get_benchmark_type() const { return benchmark
 void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
                               std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config) {
   const size_t num_total_range_ops = config.total_memory_range / config.access_size;
-  const size_t num_operations = (config.exec_mode == internal::Random || config.exec_mode == internal::Custom)
-                                    ? config.number_operations
-                                    : num_total_range_ops;
+  const size_t num_operations =
+      (config.exec_mode == internal::Mode::Random || config.exec_mode == internal::Mode::Custom)
+          ? config.number_operations
+          : num_total_range_ops;
   const size_t num_ops_per_thread = num_operations / config.number_threads;
 
   pool.reserve(config.number_threads);
@@ -198,7 +199,7 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, st
     result->latencies.resize(config.number_threads);
   }
 
-  if (config.exec_mode == internal::Custom) {
+  if (config.exec_mode == internal::Mode::Custom) {
     result->custom_operation_durations.resize(config.number_threads);
   }
 
@@ -207,7 +208,7 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, st
 
   for (uint16_t partition_num = 0; partition_num < config.number_partitions; partition_num++) {
     char* partition_start =
-        (config.exec_mode == internal::Sequential_Desc)
+        (config.exec_mode == internal::Mode::Sequential_Desc)
             ? pmem_data + ((config.number_partitions - partition_num) * partition_size) - config.access_size
             : partition_start = pmem_data + (partition_num * partition_size);
 
@@ -271,9 +272,29 @@ void Benchmark::run_custom_ops_in_thread(const ThreadRunConfig& thread_config, c
 
   ChainedOperation& start_op = operation_chain[0];
   auto start_ts = std::chrono::steady_clock::now();
-  for (size_t iteration = 0; iteration < thread_config.num_ops; ++iteration) {
-    start_op.run(start_addr, start_addr);
+
+  if (config.latency_sample_frequency == 0) {
+    // We don't want the sampling code overhead if we don't want to sample the latency
+    for (size_t iteration = 0; iteration < thread_config.num_ops; ++iteration) {
+      start_op.run(start_addr, start_addr);
+    }
+  } else {
+    // Latency sampling requested, measure the latency every x iterations.
+    const uint64_t freq = config.latency_sample_frequency;
+    // Start at 1 to avoid measuring latency of first request.
+    for (size_t iteration = 1; iteration <= thread_config.num_ops; ++iteration) {
+      if (iteration % freq == 0) {
+        auto op_start = std::chrono::steady_clock::now();
+        start_op.run(start_addr, start_addr);
+        auto op_end = std::chrono::steady_clock::now();
+        thread_config.latencies->emplace_back(static_cast<uint64_t>((op_end - op_start).count()),
+                                              internal::OpType::Custom);
+      } else {
+        start_op.run(start_addr, start_addr);
+      }
+    }
   }
+
   auto end_ts = std::chrono::steady_clock::now();
   auto duration = (end_ts - start_ts).count();
   *thread_config.custom_op_duration = duration;
@@ -284,7 +305,7 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
     set_to_far_cpus();
   }
 
-  if (config.exec_mode == internal::Custom) {
+  if (config.exec_mode == internal::Mode::Custom) {
     return run_custom_ops_in_thread(thread_config, config);
   }
 
@@ -295,7 +316,8 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
   const bool has_pause = config.pause_frequency > 0;
   size_t current_pause_frequency_count = 0;
   bool is_read = is_read_only;
-  assert(is_write_only || is_read_only || config.exec_mode == internal::Random || config.exec_mode == internal::Custom);
+  assert(is_write_only || is_read_only || config.exec_mode == internal::Mode::Random ||
+         config.exec_mode == internal::Mode::Custom);
 
   const size_t thread_partition_offset = thread_config.thread_num * config.access_size;
 
@@ -313,7 +335,7 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
   bool is_time_finished = false;
 
   while (!is_time_finished) {
-    char* next_op_position = config.exec_mode == internal::Sequential_Desc
+    char* next_op_position = config.exec_mode == internal::Mode::Sequential_Desc
                                  ? thread_config.partition_start_addr - thread_partition_offset
                                  : thread_config.partition_start_addr + thread_partition_offset;
 
@@ -389,7 +411,7 @@ nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm
   config["numa_pattern"] = get_enum_as_string(ConfigEnums::str_to_numa_pattern, bm_config.numa_pattern);
   config["prefault_file"] = bm_config.prefault_file;
 
-  if (bm_config.exec_mode != internal::Custom) {
+  if (bm_config.exec_mode != internal::Mode::Custom) {
     config["access_size"] = bm_config.access_size;
     config["write_ratio"] = bm_config.write_ratio;
     config["pause_frequency"] = bm_config.pause_frequency;
@@ -405,16 +427,16 @@ nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm
     }
   }
 
-  if (bm_config.exec_mode == internal::Random) {
+  if (bm_config.exec_mode == internal::Mode::Random) {
     config["number_operations"] = bm_config.number_operations;
     config["random_distribution"] =
         get_enum_as_string(ConfigEnums::str_to_random_distribution, bm_config.random_distribution);
-    if (bm_config.random_distribution == internal::Zipf) {
+    if (bm_config.random_distribution == internal::RandomDistribution::Zipf) {
       config["zipf_alpha"] = bm_config.zipf_alpha;
     }
   }
 
-  if (bm_config.exec_mode == internal::Custom) {
+  if (bm_config.exec_mode == internal::Mode::Custom) {
     config["number_operations"] = bm_config.number_operations;
     config["custom_operations"] = CustomOp::all_to_string(bm_config.custom_operations);
   }
@@ -459,7 +481,7 @@ BenchmarkResult::~BenchmarkResult() {
 }
 
 nlohmann::json BenchmarkResult::get_result_as_json() const {
-  if (config.exec_mode == internal::Custom) {
+  if (config.exec_mode == internal::Mode::Custom) {
     return get_custom_results_as_json();
   }
 
@@ -491,17 +513,17 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
       const uint64_t avg_duration = duration / num_ops_per_chunk;
 
       const internal::OpType op_type = latency.op_type;
-      if (op_type == internal::Pause && is_raw) {
+      if (op_type == internal::OpType::Pause && is_raw) {
         result_points += {{"type", "pause"}, {"length", duration}, {"thread_id", thread_num}};
         continue;
       }
 
       hdr_record_value(latency_hdr, avg_duration);
 
-      if (op_type == internal::Read) {
+      if (op_type == internal::OpType::Read) {
         total_read_size += chunk_size;
         total_read_duration += duration;
-      } else if (op_type == internal::Write) {
+      } else if (op_type == internal::OpType::Write) {
         total_write_size += chunk_size;
         total_write_duration += duration;
       } else {
@@ -515,7 +537,7 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
         const uint64_t bandwidth = chunk_size / (duration / static_cast<double>(internal::NANOSECONDS_IN_SECONDS));
         const double bandwidth_gib = bandwidth / static_cast<double>(internal::BYTE_IN_GIGABYTE);
 
-        result_points += {{"type", op_type == internal::Write ? "write" : "read"},
+        result_points += {{"type", op_type == internal::OpType::Write ? "write" : "read"},
                           {"latency", duration},
                           {"bandwidth", bandwidth_gib},
                           {"data_size", chunk_size},
@@ -572,6 +594,15 @@ nlohmann::json BenchmarkResult::get_custom_results_as_json() const {
   result["avg_duration_sec"] = avg_duration;
   result["ops_per_second"] = ops_per_sec;
 
+  if (config.latency_sample_frequency != 0) {
+    for (const std::vector<internal::Latency>& thread_latencies : latencies) {
+      for (const internal::Latency& latency : thread_latencies) {
+        hdr_record_value(latency_hdr, latency.duration);
+      }
+    }
+    result["duration"] = hdr_histogram_to_json(latency_hdr);
+  }
+
   return result;
 }
 
@@ -594,6 +625,7 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_if_present(node, "raw_results", &bm_config.raw_results);
     num_found += get_if_present(node, "prefault_file", &bm_config.prefault_file);
     num_found += get_if_present(node, "min_io_chunk_size", &bm_config.min_io_chunk_size);
+    num_found += get_if_present(node, "latency_sample_frequency", &bm_config.latency_sample_frequency);
 
     num_found += get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_mode, &bm_config.exec_mode);
     num_found += get_enum_if_present(node, "numa_pattern", ConfigEnums::str_to_numa_pattern, &bm_config.numa_pattern);
@@ -666,12 +698,13 @@ void BenchmarkConfig::validate() const {
                  "Most likely you can fix this by using 2^x partitions.");
 
   // Assumption: number_operations should only be set for random/custom access. It is ignored in sequential IO.
-  const bool is_number_operations_set_random = number_operations == BenchmarkConfig{}.number_operations ||
-                                               (exec_mode == internal::Random || exec_mode == internal::Custom);
+  const bool is_number_operations_set_random =
+      number_operations == BenchmarkConfig{}.number_operations ||
+      (exec_mode == internal::Mode::Random || exec_mode == internal::Mode::Custom);
   CHECK_ARGUMENT(is_number_operations_set_random, "Number of operations should only be set for random/custom access");
 
   // Assumption: sequential access does not make sense if we mix reads and writes
-  const bool is_mixed_workload_random = (write_ratio == 1 || write_ratio == 0) || exec_mode == internal::Random;
+  const bool is_mixed_workload_random = (write_ratio == 1 || write_ratio == 0) || exec_mode == internal::Mode::Random;
   CHECK_ARGUMENT(is_mixed_workload_random, "Mixed read/write workloads only supported for random execution.");
 
   // Assumption: min_io_chunk size must be a power of two
@@ -680,7 +713,8 @@ void BenchmarkConfig::validate() const {
 
   // Assumption: total memory needs to fit into N chunks exactly
   const bool is_seq_total_memory_chunkable =
-      (exec_mode == internal::Random || exec_mode == internal::Custom) || (total_memory_range % min_io_chunk_size) == 0;
+      (exec_mode == internal::Mode::Random || exec_mode == internal::Mode::Custom) ||
+      (total_memory_range % min_io_chunk_size) == 0;
   CHECK_ARGUMENT(is_seq_total_memory_chunkable,
                  "Total file size needs to be multiple of " + std::to_string(min_io_chunk_size));
 
@@ -703,6 +737,9 @@ void BenchmarkConfig::validate() const {
 
   const bool has_no_custom_ops = exec_mode == internal::Mode::Custom || custom_operations.empty();
   CHECK_ARGUMENT(has_no_custom_ops, "Cannot specify custom_operations for non-custom execution.");
+
+  const bool latency_sample_is_custom = exec_mode == internal::Mode::Custom || latency_sample_frequency == 0;
+  CHECK_ARGUMENT(latency_sample_is_custom, "Latency sampling can only be used with custom operations.");
 }
 
 }  // namespace perma

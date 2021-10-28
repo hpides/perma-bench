@@ -16,9 +16,9 @@ CustomOp CustomOp::from_string(const std::string& str) {
   CustomOp op;
   char type_char = str[0];
   if (type_char == 'r') {
-    op.type = internal::Read;
+    op.type = internal::OpType::Read;
   } else if (type_char == 'w') {
-    op.type = internal::Write;
+    op.type = internal::OpType::Write;
   } else {
     spdlog::error("Unknown type char: {}", type_char);
     crash_exit();
@@ -33,18 +33,18 @@ CustomOp CustomOp::from_string(const std::string& str) {
     crash_exit();
   }
 
-  if (op.type == internal::Write) {
+  if (op.type == internal::OpType::Write) {
     if (delim_pos == str.length()) {
       spdlog::error("Custom write op must end with '_<persist_instruction>', e.g., w64_cache");
       crash_exit();
     }
     std::string persist_str = str.substr(delim_pos + 1, str.length());
     if (persist_str == "none") {
-      op.persist = internal::None;
+      op.persist = internal::PersistInstruction::None;
     } else if (persist_str == "cache") {
-      op.persist = internal::Cache;
+      op.persist = internal::PersistInstruction::Cache;
     } else if (persist_str == "nocache") {
-      op.persist = internal::NoCache;
+      op.persist = internal::PersistInstruction::NoCache;
     } else {
       spdlog::error("Could not parse persist instruction in '{}'", persist_str);
       crash_exit();
@@ -66,7 +66,7 @@ std::vector<CustomOp> CustomOp::all_from_string(const std::string& str) {
     ops.emplace_back(from_string(op_str));
   }
 
-  if (ops[0].type != internal::Read) {
+  if (ops[0].type != internal::OpType::Read) {
     spdlog::error("First custom operation must be a read");
     crash_exit();
   }
@@ -76,15 +76,15 @@ std::vector<CustomOp> CustomOp::all_from_string(const std::string& str) {
 
 std::string CustomOp::to_string(const CustomOp& op) {
   std::stringstream out;
-  char type_str = op.type == internal::Read ? 'r' : 'w';
+  char type_str = op.type == internal::OpType::Read ? 'r' : 'w';
   out << type_str << op.size;
-  if (op.type == internal::Write) {
+  if (op.type == internal::OpType::Write) {
     out << '_';
-    if (op.persist == internal::None) {
+    if (op.persist == internal::PersistInstruction::None) {
       out << "none";
-    } else if (op.persist == internal::Cache) {
+    } else if (op.persist == internal::PersistInstruction::Cache) {
       out << "cache";
-    } else if (op.persist == internal::NoCache) {
+    } else if (op.persist == internal::PersistInstruction::NoCache) {
       out << "nocache";
     }
   }

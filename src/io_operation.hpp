@@ -12,27 +12,27 @@ namespace perma {
 
 namespace internal {
 
-enum Mode : uint8_t { Sequential, Sequential_Desc, Random, Custom };
-enum RandomDistribution : uint8_t { Uniform, Zipf };
+enum class Mode : uint8_t { Sequential, Sequential_Desc, Random, Custom };
 
-enum PersistInstruction : uint8_t { Cache, NoCache, None };
+enum class RandomDistribution : uint8_t { Uniform, Zipf };
 
-enum OpType : uint8_t { Read, Write, Pause };
+enum class PersistInstruction : uint8_t { Cache, NoCache, None };
 
-enum NumaPattern : uint8_t { Near, Far };
+enum class OpType : uint8_t { Read, Write, Pause, Custom };
+
+enum class NumaPattern : uint8_t { Near, Far };
 
 }  // namespace internal
 
 struct CustomOp {
   internal::OpType type;
   size_t size;
-  internal::PersistInstruction persist = internal::None;
+  internal::PersistInstruction persist = internal::PersistInstruction::None;
 
   static CustomOp from_string(const std::string& str);
   static std::vector<CustomOp> all_from_string(const std::string& str);
   static std::string all_to_string(const std::vector<CustomOp>& ops);
   static std::string to_string(const CustomOp& op);
-  friend std::ostream& operator<<(std::ostream& os, const CustomOp& op);
 };
 
 class IoOperation {
@@ -41,13 +41,13 @@ class IoOperation {
  public:
   inline void run() {
     switch (op_type_) {
-      case (internal::Read): {
+      case (internal::OpType::Read): {
         return run_read();
       }
-      case (internal::Write): {
+      case (internal::OpType::Write): {
         return run_write();
       }
-      case (internal::Pause): {
+      case (internal::OpType::Pause): {
         return std::this_thread::sleep_for(std::chrono::microseconds(duration_));
       }
       default: {
@@ -56,23 +56,23 @@ class IoOperation {
     }
   }
 
-  inline bool is_active() const { return op_type_ != internal::Pause; }
-  inline bool is_read() const { return op_type_ == internal::Read; }
-  inline bool is_write() const { return op_type_ == internal::Write; }
-  inline bool is_pause() const { return op_type_ == internal::Pause; }
+  inline bool is_active() const { return op_type_ != internal::OpType::Pause; }
+  inline bool is_read() const { return op_type_ == internal::OpType::Read; }
+  inline bool is_write() const { return op_type_ == internal::OpType::Write; }
+  inline bool is_pause() const { return op_type_ == internal::OpType::Pause; }
 
   static IoOperation ReadOp(const std::vector<char*>& op_addresses, uint32_t access_size) {
-    return IoOperation{op_addresses, access_size, internal::Read, internal::None};
+    return IoOperation{op_addresses, access_size, internal::OpType::Read, internal::PersistInstruction::None};
   }
 
   static IoOperation WriteOp(const std::vector<char*>& op_addresses, uint32_t access_size,
                              internal::PersistInstruction persist_instruction) {
-    return IoOperation{op_addresses, access_size, internal::Write, persist_instruction};
+    return IoOperation{op_addresses, access_size, internal::OpType::Write, persist_instruction};
   }
 
   static IoOperation PauseOp(uint32_t duration) {
     static std::vector<char*> op_addresses{};
-    return IoOperation{op_addresses, duration, internal::Pause, internal::None};
+    return IoOperation{op_addresses, duration, internal::OpType::Pause, internal::PersistInstruction::None};
   }
 
  private:
@@ -171,7 +171,7 @@ class ChainedOperation {
         type_(op.type),
         persist_instruction_(op.persist) {}
 
-  void run(char* current_addr, char* dependent_addr) {
+  inline void run(char* current_addr, char* dependent_addr) {
     if (type_ == internal::OpType::Read) {
       current_addr = get_random_address(dependent_addr);
       dependent_addr = run_read(current_addr);

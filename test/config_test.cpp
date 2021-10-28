@@ -97,6 +97,7 @@ TEST_F(ConfigTest, SingleDecodeSequential) {
   EXPECT_EQ(bm_config.prefault_file, bm_config_default.prefault_file);
   EXPECT_EQ(bm_config.numa_pattern, bm_config_default.numa_pattern);
   EXPECT_EQ(bm_config.run_time, bm_config_default.run_time);
+  EXPECT_EQ(bm_config.latency_sample_frequency, bm_config_default.latency_sample_frequency);
 }
 
 TEST_F(ConfigTest, DecodeRandom) {
@@ -126,6 +127,7 @@ TEST_F(ConfigTest, DecodeRandom) {
   EXPECT_EQ(bm_config.numa_pattern, bm_config_default.numa_pattern);
   EXPECT_EQ(bm_config.min_io_chunk_size, bm_config_default.min_io_chunk_size);
   EXPECT_EQ(bm_config.run_time, bm_config_default.run_time);
+  EXPECT_EQ(bm_config.latency_sample_frequency, bm_config_default.latency_sample_frequency);
 }
 
 TEST_F(ConfigTest, ParallelDecodeSequentialRandom) {
@@ -160,6 +162,7 @@ TEST_F(ConfigTest, ParallelDecodeSequentialRandom) {
   EXPECT_EQ(bm_config.pause_length_micros, bm_config_default.pause_length_micros);
   EXPECT_EQ(bm_config.numa_pattern, bm_config_default.numa_pattern);
   EXPECT_EQ(bm_config.run_time, bm_config_default.run_time);
+  EXPECT_EQ(bm_config.latency_sample_frequency, bm_config_default.latency_sample_frequency);
 
   bm_config = par_benchmarks.at(0).get_benchmark_configs()[1];
 
@@ -182,6 +185,7 @@ TEST_F(ConfigTest, ParallelDecodeSequentialRandom) {
   EXPECT_EQ(bm_config.numa_pattern, bm_config_default.numa_pattern);
   EXPECT_EQ(bm_config.min_io_chunk_size, bm_config_default.min_io_chunk_size);
   EXPECT_EQ(bm_config.run_time, bm_config_default.run_time);
+  EXPECT_EQ(bm_config.latency_sample_frequency, bm_config_default.latency_sample_frequency);
 }
 
 TEST_F(ConfigTest, DecodeMatrix) {
@@ -225,6 +229,7 @@ TEST_F(ConfigTest, DecodeMatrix) {
     EXPECT_EQ(config.numa_pattern, bm_config_default.numa_pattern);
     EXPECT_EQ(config.min_io_chunk_size, bm_config_default.min_io_chunk_size);
     EXPECT_EQ(config.run_time, bm_config_default.run_time);
+    EXPECT_EQ(bm_config.latency_sample_frequency, bm_config_default.latency_sample_frequency);
   }
 }
 
@@ -271,6 +276,7 @@ TEST_F(ConfigTest, ParallelDecodeMatrix) {
     EXPECT_EQ(config_one.numa_pattern, bm_config_default.numa_pattern);
     EXPECT_EQ(config_one.min_io_chunk_size, bm_config_default.min_io_chunk_size);
     EXPECT_EQ(config_one.run_time, bm_config_default.run_time);
+    EXPECT_EQ(config_one.latency_sample_frequency, bm_config_default.latency_sample_frequency);
 
     EXPECT_EQ(config_two.total_memory_range, 10737418240);
     EXPECT_EQ(config_two.exec_mode, internal::Mode::Sequential);
@@ -287,6 +293,7 @@ TEST_F(ConfigTest, ParallelDecodeMatrix) {
     EXPECT_EQ(config_two.numa_pattern, bm_config_default.numa_pattern);
     EXPECT_EQ(config_two.min_io_chunk_size, bm_config_default.min_io_chunk_size);
     EXPECT_EQ(config_two.run_time, bm_config_default.run_time);
+    EXPECT_EQ(config_two.latency_sample_frequency, bm_config_default.latency_sample_frequency);
   }
 }
 
@@ -346,6 +353,26 @@ TEST_F(ConfigTest, BadNumberPartitionSplit) {
   bm_config.number_partitions = 36;
   EXPECT_THROW(bm_config.validate(), PermaException);
   check_log_for_critical("evenly divisible into");
+}
+
+TEST_F(ConfigTest, MissingCustomOps) {
+  bm_config.exec_mode = internal::Mode::Custom;
+  EXPECT_THROW(bm_config.validate(), PermaException);
+  check_log_for_critical("Must specify custom_operations");
+}
+
+TEST_F(ConfigTest, RandomCustomOps) {
+  bm_config.exec_mode = internal::Mode::Random;
+  bm_config.custom_operations = {CustomOp{.type = internal::OpType::Read, .size = 64}};
+  EXPECT_THROW(bm_config.validate(), PermaException);
+  check_log_for_critical("Cannot specify custom_operations");
+}
+
+TEST_F(ConfigTest, BadLatencySample) {
+  bm_config.exec_mode = internal::Mode::Random;
+  bm_config.latency_sample_frequency = 100;
+  EXPECT_THROW(bm_config.validate(), PermaException);
+  check_log_for_critical("Latency sampling can only");
 }
 
 }  // namespace perma
