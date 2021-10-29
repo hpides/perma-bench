@@ -46,7 +46,7 @@ CustomOp CustomOp::from_string(const std::string& str) {
     } else if (persist_str == "nocache") {
       op.persist = internal::PersistInstruction::NoCache;
     } else {
-      spdlog::error("Could not parse persist instruction in '{}'", persist_str);
+      spdlog::error("Could not parse the persist instruction in write op: '{}'", persist_str);
       crash_exit();
     }
   }
