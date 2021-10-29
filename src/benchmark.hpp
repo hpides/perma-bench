@@ -61,6 +61,7 @@ struct BenchmarkConfig {
   internal::NumaPattern numa_pattern{internal::NumaPattern::Near};
 
   std::vector<CustomOp> custom_operations;
+  uint64_t latency_sample_frequency = 0;
 
   internal::RandomDistribution random_distribution{internal::RandomDistribution::Uniform};
   double zipf_alpha = 0.9;

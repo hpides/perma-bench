@@ -191,7 +191,7 @@ std::vector<BenchmarkConfig> BenchmarkFactory::create_benchmark_matrix(const std
 std::vector<YAML::Node> BenchmarkFactory::get_config_files(const std::filesystem::path& config_file_path) {
   std::vector<std::filesystem::path> config_files{};
   if (std::filesystem::is_directory(config_file_path)) {
-    for (const std::filesystem::path& config_file : std::filesystem::directory_iterator(config_file_path)) {
+    for (const std::filesystem::path& config_file : std::filesystem::recursive_directory_iterator(config_file_path)) {
       if (config_file.extension() == internal::CONFIG_FILE_EXTENSION) {
         config_files.push_back(config_file);
       }
