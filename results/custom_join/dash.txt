@@ -1,6 +1,8 @@
 Results for Dash-Ex:
 ====================
 
+command: numactl -N 0 ./test_pmem -op=insert -t=16 -p 100000000 -n 100000000
+
 16 threads, 100 mio prefill, fixed size 8B/8B
 - 100 mio inserts
 - 100 mio lookups (positive)
