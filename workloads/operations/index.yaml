@@ -39,17 +39,18 @@ primary_index_update:
     exec_mode: custom
 
 # We represent a range scan via a random lookup to a start position, followed by
-# 100 / node_capacity additional random reads for the scan, as nodes are not in
-# continuous memory. As above, a random lookup for all node sizes requires 3 hops.
-# For 256 Byte nodes, we need 6 extra reads, for 512 Byte 3 extra, and 2 extra for
+# 100 / (0.75 * node_capacity) additional random reads for the scan, as nodes are not
+# in continuous memory. As above, a random lookup for all node sizes requires 3 hops.
+# As the leaves are not fully packed, we assume a filling degree of 75%.
+# For 256 Byte nodes, we need 8 extra reads, for 512 Byte 4 extra, and 2 extra for
 # 1024 Byte nodes.
 primary_index_range_scan:
   matrix:
     number_threads: [ 1, 8, 16, 32 ]
     # Representing 256, 512, 1024 Byte nodes.
     custom_operations:
-      - "r512,r512,r512,r512,r512,r512"
-      - "r256,r256,r256,r256,r256,r256,r256,r256,r256"
+      - "r512,r512,r512,r512,r512,r512,r512"
+      - "r256,r256,r256,r256,r256,r256,r256,r256,r256,r256,r256"
       - "r1024,r1024,r1024,r1024,r1024,"
 
   args:
