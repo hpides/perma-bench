@@ -1,0 +1,136 @@
+diff --git a/concurrent_pmdk/Makefile b/concurrent_pmdk/Makefile
+index db09d01..d8ff0f0 100644
+--- a/concurrent_pmdk/Makefile
++++ b/concurrent_pmdk/Makefile
+@@ -1,17 +1,17 @@
+ .PHONY: all clean
+ .DEFAULT_GOAL := all
+ 
+-LIBS=-lrt -lm -pthread -lpmemobj
+-INCLUDES=-I./include
+-CFLAGS=-O0 -std=c++11 -g
++LIBS=-L/scratch/pmem/pmdk1.10/lib/ -lrt -lm -pthread -lpmemobj
++INCLUDES=-I./include -I/scratch/pmem/pmdk1.10/include
++CFLAGS=-O3 -std=c++17 -march=native
+ 
+ output = btree_concurrent btree_concurrent_mixed
+ 
+ all: main
+ 
+ main: src/test.cpp
+-	g++ $(CFLAGS) -o btree_concurrent src/test.cpp $(LIBS) -DCONCURRENT
+-	g++ $(CFLAGS) -o btree_concurrent_mixed src/test.cpp $(LIBS) -DCONCURRENT -DMIXED
++	g++ $(CFLAGS) $(INCLUDES) -o btree_concurrent src/test.cpp $(LIBS) -DCONCURRENT
++#	g++ $(CFLAGS) -o btree_concurrent_mixed src/test.cpp $(LIBS) -DCONCURRENT -DMIXED
+ 
+ clean: 
+ 	rm $(output)
+diff --git a/concurrent_pmdk/src/test.cpp b/concurrent_pmdk/src/test.cpp
+index 12efd0b..9348b59 100644
+--- a/concurrent_pmdk/src/test.cpp
++++ b/concurrent_pmdk/src/test.cpp
+@@ -1,5 +1,8 @@
+ #include "btree.h"
+ 
++#include <random>
++#include <filesystem>
++
+ /*
+  *  *file_exists -- checks if file exists
+  *   */
+@@ -47,8 +50,8 @@ int main(int argc, char **argv) {
+   PMEMobjpool *pop;
+ 
+   if (file_exists(persistent_path) != 0) {
+-    pop = pmemobj_create(persistent_path, "btree", 8000000000,
+-                         0666); // make 1GB memory pool
++    pop = pmemobj_create(persistent_path, "btree", 16000000000,
++                         0666); // make 16GB memory pool
+     bt = POBJ_ROOT(pop, btree);
+     D_RW(bt)->constructor(pop);
+   } else {
+@@ -58,20 +61,27 @@ int main(int argc, char **argv) {
+ 
+   struct timespec start, end, tmp;
+ 
++    std::random_device dev;
++    std::mt19937 rng(dev());
++    std::uniform_int_distribution<std::mt19937::result_type> rand_keys(1,UINT64_MAX);
++
+   // Reading data
+   entry_key_t *keys = new entry_key_t[numData];
++  for (size_t i = 0; i < numData; ++i) {
++    keys[i] = rand_keys(rng);
++  }
+ 
+-  ifstream ifs;
+-  ifs.open(input_path);
++//  ifstream ifs;
++//  ifs.open(input_path);
+ 
+-  if (!ifs) {
+-    cout << "input loading error!" << endl;
+-  }
++//  if (!ifs) {
++//    cout << "input loading error!" << endl;
++//  }
+ 
+-  for (int i = 0; i < numData; ++i) {
+-    ifs >> keys[i];
+-  }
+-  ifs.close();
++//  for (int i = 0; i < numData; ++i) {
++//    ifs >> keys[i];
++//  }
++//  ifs.close();
+ 
+   clock_gettime(CLOCK_MONOTONIC, &start);
+ 
+@@ -122,6 +132,40 @@ int main(int argc, char **argv) {
+   clear_cache();
+   futures.clear();
+ 
++  // Scan
++  const size_t key_distance = UINT64_MAX / half_num_data;
++  clock_gettime(CLOCK_MONOTONIC, &start);
++
++  for (int tid = 0; tid < n_threads; tid++) {
++    int from = data_per_thread * tid;
++    int to = (tid == n_threads - 1) ? half_num_data : from + data_per_thread;
++
++    auto f = async(launch::async,
++                   [&bt, &keys, key_distance](int from, int to) {
++                     std::array<uint64_t, 1000> scan_data;
++                     for (int i = from; i < to; ++i) {
++                       auto range_start = keys[i];
++                       auto range_end = range_start + (100 * key_distance);
++                       D_RW(bt)->btree_search_range(range_start, range_end, scan_data.data());
++                     }
++                   },
++                   from, to);
++    futures.push_back(move(f));
++  }
++  for (auto &&f : futures)
++    if (f.valid())
++      f.get();
++
++  clock_gettime(CLOCK_MONOTONIC, &end);
++  elapsedTime =
++      (end.tv_sec - start.tv_sec) * 1000000000 + (end.tv_nsec - start.tv_nsec);
++  cout << "Concurrent scanning with " << n_threads
++       << " threads (usec) : " << elapsedTime / 1000 << endl;
++
++  clear_cache();
++  futures.clear();
++
++
+   // Insert
+   clock_gettime(CLOCK_MONOTONIC, &start);
+ 
+@@ -214,5 +258,6 @@ int main(int argc, char **argv) {
+   delete[] keys;
+ 
+   pmemobj_close(pop);
++  std::filesystem::remove(persistent_path);
+   return 0;
+ }

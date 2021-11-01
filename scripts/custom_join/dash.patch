@@ -1,0 +1,43 @@
+diff --git a/src/test_pmem.cpp b/src/test_pmem.cpp
+index 820c3bf..959d852 100644
+--- a/src/test_pmem.cpp
++++ b/src/test_pmem.cpp
+@@ -4,7 +4,7 @@
+ #include <immintrin.h>
+ #include <sys/time.h>
+ #include <unistd.h>
+-
++#include <filesystem>
+ #include <atomic>
+ #include <chrono>
+ #include <condition_variable>
+@@ -23,7 +23,7 @@
+ #include "lh_finger.h"
+ #include "libpmemobj.h"
+ 
+-std::string pool_name = "/mnt/pmem0/";
++std::string pool_name = "/mnt/pmem1/dash/";
+ DEFINE_string(index, "dash-ex",
+               "the index to evaluate:dash-ex/dash-lh/cceh/level");
+ DEFINE_string(k, "fixed", "the type of stored keys: fixed/variable");
+@@ -85,14 +85,6 @@ struct range {
+ };
+ 
+ void set_affinity(uint32_t idx) {
+-  cpu_set_t my_set;
+-  CPU_ZERO(&my_set);
+-  if (idx < 24) {
+-    CPU_SET(idx, &my_set);
+-  } else {
+-    CPU_SET(idx + 24, &my_set);
+-  }
+-  sched_setaffinity(0, sizeof(cpu_set_t), &my_set);
+ }
+ 
+ template <class T>
+@@ -1226,4 +1218,5 @@ int main(int argc, char *argv[]) {
+     std::cout << "Variable-length key = " << var_length << std::endl;
+     Run<string_key *>();
+   }
++  std::filesystem::remove_all(pool_name + "*");
+ }
