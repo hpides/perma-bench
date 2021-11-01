@@ -68,15 +68,15 @@ def plot_update(system_data, ax):
     plot_data(system_data, ax, offset=0)
     plot_data(FF_UPDATE, ax, offset=1)
 
-    ax.set_ylim(0, 12)
-    ax.set_yticks(range(0, 12, 5))
+    ax.set_ylim(0, 10)
+    ax.set_yticks(range(0, 10, 3))
     ax.set_title("b) Update")
 
 def plot_scan(system_data, ax):
     plot_data(system_data, ax, offset=0)
     plot_data(FF_SCAN, ax, offset=1)
 
-    ax.set_ylim(0, 7)
+    ax.set_ylim(0, 6)
     ax.set_yticks(range(0, 7, 2))
     ax.set_title("c) Scan")
 
@@ -86,15 +86,15 @@ if __name__ == '__main__':
     result_path, plot_dir = INIT(sys.argv)
 
     lookup_config = {"custom_operations": "r512,r512,r512"}
-    lookup_runs = get_runs_from_results(result_path, "index_lookup", lookup_config, skip_dram=skip_dram)
+    lookup_runs = get_runs_from_results(result_path, "primary_index_lookup", lookup_config, skip_dram=skip_dram)
     lookup_data = get_data_from_runs(lookup_runs, "number_threads", "ops_per_second")
 
     update_config = {"custom_operations": "r512,r512,r512,w64_cache,w64_cache,w64_cache,w64_cache"}
-    update_runs = get_runs_from_results(result_path, "index_update", update_config, skip_dram=skip_dram)
+    update_runs = get_runs_from_results(result_path, "primary_index_update", update_config, skip_dram=skip_dram)
     update_data = get_data_from_runs(update_runs, "number_threads", "ops_per_second")
 
-    scan_config = {"custom_operations": "r512,r512,r512,r512,r512,r512"}
-    scan_runs = get_runs_from_results(result_path, "index_range_scan", scan_config, skip_dram=skip_dram)
+    scan_config = {"custom_operations": "r512,r512,r512,r512,r512,r512,r512"}
+    scan_runs = get_runs_from_results(result_path, "primary_index_range_scan", scan_config, skip_dram=skip_dram)
     scan_data = get_data_from_runs(scan_runs, "number_threads", "ops_per_second")
 
     fig, axes = plt.subplots(1, 3, figsize=DOUBLE_FIG_SIZE)

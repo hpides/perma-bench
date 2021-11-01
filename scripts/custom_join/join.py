@@ -63,8 +63,8 @@ def plot_join_probe(system_data, ax):
     plot_data(system_data, ax, offset=0)
     plot_data(DASH_PROBE, ax, offset=1)
 
-    ax.set_ylim(0, 60)
-    ax.set_yticks(range(0, 61, 10))
+    ax.set_ylim(0, 50)
+    ax.set_yticks(range(0, 51, 10))
     ax.set_title("b) Join Probe")
 
 
