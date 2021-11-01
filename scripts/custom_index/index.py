@@ -48,7 +48,7 @@ def plot_data(system_data, ax, offset=0, label=False):
 
         if i == 1:
             diff = int((y_data / first_bar_y) * 100)
-            ax.text(pos, y_data + 0.2, f"{diff}\%", ha="center", size=FS - 8)
+            ax.text(pos + 0.05, y_data + 0.2, f"{diff}\%", ha="center", size=FS - 8)
 
     ax.set_xticks(BAR_X_TICKS_POS(bar_width, num_bars, num_xticks))
     ax.set_xticklabels(["PerMA", "F+F"])

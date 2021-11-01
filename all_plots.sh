@@ -18,34 +18,21 @@ do
     python3 ${script} ${RESULT_DIR} ${PLOT_DIR} > /dev/null
 done
 
-for script in scripts/mixed/*.py
-do
-    echo "Running $script..."
-    python3 ${script} ${RESULT_DIR}/mixed ${PLOT_DIR} > /dev/null
-done
+run_skript_dir() {
+    local skript_dir=$1
+    for script in scripts/$skript_dir/*.py
+    do
+        echo "Running $script..."
+        python3 ${script} ${RESULT_DIR}/$skript_dir ${PLOT_DIR} > /dev/null
+    done
+}
 
-for script in scripts/numa/*.py
-do
-    echo "Running $script..."
-    python3 ${script} ${RESULT_DIR}/numa ${PLOT_DIR} > /dev/null
-done
-
-for script in scripts/dimms/*.py
-do
-    echo "Running $script..."
-    python3 ${script} ${RESULT_DIR}/dimms ${PLOT_DIR} > /dev/null
-done
-
-for script in scripts/speed/*.py
-do
-    echo "Running $script..."
-    python3 ${script} ${RESULT_DIR}/speed ${PLOT_DIR} > /dev/null
-done
-
-for script in scripts/custom_join/*.py
-do
-    echo "Running $script..."
-    python3 ${script} ${RESULT_DIR}/custom_join ${PLOT_DIR} > /dev/null
-done
+run_skript_dir mixed
+run_skript_dir numa
+run_skript_dir dimms
+run_skript_dir speed
+run_skript_dir custom_join
+run_skript_dir custom_index
+run_skript_dir latency
 
 open ${PLOT_DIR}/*.png
