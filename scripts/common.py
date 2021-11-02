@@ -111,7 +111,9 @@ def HIDE_BORDERS(ax, show_left=False):
 
 def FIG_LEGEND(fig):
     fig.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=6,
-               frameon=False, columnspacing=1, handletextpad=0.3)
+               frameon=False, columnspacing=1, handletextpad=0.3
+               #, borderpad=0.1, labelspacing=0.1, handlelength=1.8
+              )
     fig.tight_layout()
 
 

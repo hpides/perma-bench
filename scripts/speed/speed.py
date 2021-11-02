@@ -60,7 +60,7 @@ def plot_dimms(scan_data, logging_data, index_data, ax):
     plot_bm(index_data, 2)
 
     ax.set_xticks(BAR_X_TICKS_POS(bar_width, num_bars, num_xticks))
-    ax.set_xticklabels(["Table\nScan", "Logging", "Index\nLookup"])
+    ax.set_xticklabels(["Table\nScan", "Log-\nging", "Index\nLookup"])
 
     ax.set_ylim(0, 45)
     ax.set_yticks(range(0, 45, 10))
