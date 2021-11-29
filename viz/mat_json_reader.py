@@ -16,8 +16,15 @@ class MatrixJsonReader:
         self.results = defaultdict(list)
         benchmarks = list()
 
-        # set main fields of each benchmark
+        # Remove all custom operation benchmarks
+        clean_bms = []
         for bm in json_obj:
+            if "ops_per_second" in bm["benchmarks"][0]:
+                continue
+            clean_bms.append(bm)
+
+        # set main fields of each benchmark
+        for bm in clean_bms:
             self.results["bm_name"].append(bm["bm_name"])
 
             # add empty list to matrix_args if benchmark has none
