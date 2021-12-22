@@ -1,0 +1,126 @@
+import sys
+import matplotlib.pyplot as plt
+
+from common import *
+
+def plot_cache_ops(system_data, ax, ops, add_label=True):
+    num_bars = len(system_data)
+    bar_width = 0.8 / num_bars
+    x_pos = range(len(ops))
+
+    for i, (system, data) in enumerate(sorted(system_data.items())):
+        x_data, y_data = zip(*data)
+        color = SYSTEM_COLOR[system]
+        hatch = SYSTEM_HATCH[system]
+        bar = BAR(system)
+        pos = [x + (i * bar_width) for x in x_pos]
+        label = SYSTEM_NAME[system] if add_label else ""
+        ax.bar(pos, y_data, width=bar_width, **bar, label=label)
+        if 'dram' in system or 'hpe' in system:
+            ax.text(pos[-1] - 0.5, 19.5, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
+
+    x_ticks = ops
+    assert len(x_ticks) == len(x_data)
+    assert all([x.lower() == custom_x.lower() for (x, custom_x) in zip(x_ticks, x_data)])
+    x_ticks = [f"$\it{x}$" for x in x_ticks]
+
+    x_ticks_pos = BAR_X_TICKS_POS(bar_width, num_bars, len(x_ticks))
+    ax.set_xticks(x_ticks_pos)
+    ax.set_xticklabels(x_ticks)
+
+
+def plot_seq(system_data, ax):
+    ops = ['NoCache', 'None']
+    num_bars = len(system_data)
+    bar_width = 0.8 / num_bars
+    x_pos = range(len(ops))
+
+    for i, (system, data) in enumerate(sorted(system_data.items())):
+        x_data, y_data = zip(*data)
+        color = SYSTEM_COLOR[system]
+        hatch = SYSTEM_HATCH[system]
+        bar = BAR(system)
+        pos = [x + (i * bar_width) for x in x_pos]
+        ax.bar(pos, y_data, width=bar_width, **bar, label=SYSTEM_NAME[system])
+        if 'hpe' in system:
+            ax.text(pos[0] + 0.2, 23, int(y_data[0]), ha='center', color=SYSTEM_COLOR[system])
+            ax.text(pos[1], 26.3, int(y_data[1]), ha='center', color=SYSTEM_COLOR[system])
+
+    x_ticks = ops
+    assert len(x_ticks) == len(x_data)
+    assert all([x.lower() == custom_x.lower() for (x, custom_x) in zip(x_ticks, x_data)])
+    x_ticks = [f"$\it{x}$" for x in x_ticks]
+
+    x_ticks_pos = BAR_X_TICKS_POS(bar_width, num_bars, len(x_ticks))
+    ax.set_xticks(x_ticks_pos)
+    ax.set_xticklabels(x_ticks)
+
+    ax.set_ylabel("Bandwidth (GB/s)")
+
+    ax.set_ylim(0, 26)
+    ax.set_yticks(range(0, 26, 5))
+
+    ax.set_title("a) Logging")
+
+
+def plot_random(system_data, ax):
+    ops = ['Cache', 'NoCache', 'None']
+    num_bars = len(system_data)
+    bar_width = 0.8 / num_bars
+    x_pos = range(len(ops))
+
+    for i, (system, data) in enumerate(sorted(system_data.items())):
+        x_data, y_data = zip(*data)
+        color = SYSTEM_COLOR[system]
+        hatch = SYSTEM_HATCH[system]
+        bar = BAR(system)
+        pos = [x + (i * bar_width) for x in x_pos]
+        ax.bar(pos, y_data, width=bar_width, **bar)
+        if 'hpe' in system:
+            for x, y in enumerate(y_data):
+                ax.text(pos[x] - 0.25, 8, int(y), ha='center', color=SYSTEM_COLOR[system])
+
+    x_ticks = ops
+    assert len(x_ticks) == len(x_data)
+    assert all([x.lower() == custom_x.lower() for (x, custom_x) in zip(x_ticks, x_data)])
+    x_ticks = [f"$\it{x}$" for x in x_ticks]
+
+    x_ticks_pos = BAR_X_TICKS_POS(bar_width, num_bars, len(x_ticks))
+    ax.set_xticks(x_ticks_pos)
+    ax.set_xticklabels(x_ticks)
+
+    ax.set_ylim(0, 9)
+    ax.set_yticks(range(0, 9, 2))
+
+    ax.set_title("b) Intermediate Result")
+
+
+
+if __name__ == '__main__':
+    skip_dram = True
+    result_path, plot_dir = INIT(sys.argv)
+
+    sequential_config = {"access_size": 512, "number_threads": 32}
+    sequential_runs = get_runs_from_results(result_path, "logging", sequential_config, skip_dram=skip_dram)
+    sequential_data = get_data_from_runs(sequential_runs, "persist_instruction", "bandwidth", "write")
+
+    random_config = {"number_threads": 32, "total_memory_range": 1073741824}
+    random_runs = get_runs_from_results(result_path, "intermediate_result", random_config, skip_dram=skip_dram)
+    random_data = get_data_from_runs(random_runs, "persist_instruction", "bandwidth", "write")
+
+    fig, axes = plt.subplots(1, 2, figsize=DOUBLE_FIG_SIZE)
+    (seq_ax, random_ax) = axes
+
+    plot_seq(sequential_data, seq_ax)
+    plot_random(random_data, random_ax)
+
+    for ax in axes:
+        Y_GRID(ax)
+        HIDE_BORDERS(ax)
+
+    HATCH_WIDTH()
+    FIG_LEGEND(fig)
+
+    plot_path = os.path.join(plot_dir, "write_cache_op_performance")
+    SAVE_PLOT(plot_path)
+    PRINT_PLOT_PATHS()

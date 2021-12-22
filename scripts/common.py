@@ -37,7 +37,7 @@ SYSTEM_MARKER = {
     'intel-512':   'd',
     'intel-gen2':  's',
     'nvdimm-hpe':  'X',
-    'zdram':       '+',
+    'zdram':       'x',
 }
 
 SYSTEM_HATCH = {

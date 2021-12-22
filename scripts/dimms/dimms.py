@@ -42,14 +42,23 @@ def plot_dimms(scan_data, logging_data, index_data, ax):
     x_pos = range(num_xticks)
 
     def plot_bm(system_data, offset, label=False):
+        base_y = 0
+
         for i, system in enumerate(bars):
             data = system_data[system]
             y_data = data[-1][1]
+            if i == 0:
+                base_y = y_data
+
             pos = x_pos[offset] + (i * bar_width)
             bar = ax.bar(pos, y_data, width=bar_width, **DIMM_BAR(system))
             if label:
                 label = DIMM_NAME[system]
                 bar.set_label(label)
+
+            if y_data == base_y: diff_str = "1x"
+            else: diff_str = f"{(y_data / base_y):0.1f}x"
+            ax.text(pos - 0.01, y_data + 1, diff_str, ha='center', color=DIMM_COLOR[system])
 
     plot_bm(scan_data, 0, label=True)
     plot_bm(logging_data, 1)
