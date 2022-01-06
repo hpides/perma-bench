@@ -32,14 +32,14 @@ def plot_data(system_data, ax, label=False):
     ax.set_xticks(BAR_X_TICKS_POS(bar_width, num_bars, num_xticks))
 
 
-def plot_lookup(system_data, ax):
+def plot_lookup(system_data, ax, label=True):
     filtered_data = {}
     for sys, data in system_data.items():
         f_data = [d for d in data if "256" in d[0]]
         filtered_data[sys] = f_data
 
-    plot_data(filtered_data, ax, label=True)
-    ax.set_xticklabels(["Read", "RW: $\it{None}$", "RW: $\it{Cache}$", "RW: $\it{NoCache}$"])
+    plot_data(filtered_data, ax, label=label)
+    ax.set_xticklabels(["Read", "RW:$\it{None}$", "RW:$\it{Cache}$", "RW:$\it{NoCache}$"])
 
     # ax.set_ylim(0, 18)
     # ax.set_yticks(range(0, 17, 5))
@@ -73,6 +73,7 @@ if __name__ == '__main__':
     latency_config = {"number_threads": 16}
     latency_runs = get_runs_from_results(result_path, "operation_latency", latency_config, skip_dram=skip_dram)
     latency_data = get_data_from_runs(latency_runs, "custom_operations", "duration", "avg")
+    tail_latency_data = get_data_from_runs(latency_runs, "custom_operations", "duration", "percentile_99")
 
     read_config = {"custom_operations": "r256"}
     read_runs = get_runs_from_results(result_path, "operation_latency", read_config, skip_dram=skip_dram)
@@ -82,17 +83,34 @@ if __name__ == '__main__':
     write_runs = get_runs_from_results(result_path, "operation_latency", write_config, skip_dram=skip_dram)
     write_data = get_data_from_runs(write_runs, "number_threads", "duration", "avg")
 
+    tail_latency_config = {"number_threads": 16}
+    tail_latency_runs = get_runs_from_results(result_path, "operation_latency", tail_latency_config, skip_dram=skip_dram)
+
+
     ###########################
     # Overall Operations
     ###########################
-    latency_fig, latency_ax = plt.subplots(1, 1, figsize=DOUBLE_FIG_SIZE)
+    # latency_fig, axes = plt.subplots(2, 1, figsize=(DOUBLE_FIG_WIDTH, 1.5 * DOUBLE_FIG_HEIGHT))
+    # (latency_ax, tail_latency_ax) = axes
+    latency_fig, axes = plt.subplots(1, 1, figsize=DOUBLE_FIG_SIZE)
+    latency_ax = axes
 
     plot_lookup(latency_data, latency_ax)
+    # plot_lookup(tail_latency_data, tail_latency_ax, label=False)
+
+    # latency_ax.set_title("a) Average Latency")
+    latency_ax.set_ylim(0, 1950)
+    latency_ax.set_yticks(range(0, 1900, 300))
+
+    # tail_latency_ax.set_title("b) 99th-Percentile Latency")
+    # tail_latency_ax.set_ylim(0, 8500)
+    # tail_latency_ax.set_yticks(range(0, 8001, 2000))
 
     HATCH_WIDTH()
     FIG_LEGEND(latency_fig)
-    Y_GRID(latency_ax)
-    HIDE_BORDERS(latency_ax)
+    for ax in [axes]:
+        Y_GRID(ax)
+        HIDE_BORDERS(ax)
 
     plot_path = os.path.join(plot_dir, "custom_latency")
     SAVE_PLOT(plot_path)
