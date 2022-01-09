@@ -19,6 +19,10 @@ Intel-128:
     inserts/s: 4926986
     time s:    20.296384
 
+Intel-512:
+    inserts/s: 5306726
+    time s:    18.844007
+
 
 Lookup:
 =======
@@ -30,6 +34,10 @@ Intel-128:
     gets/s:    10989166
     time in s: 9.099871
 
+Intel-512:
+    get/s:     11831716
+    time in s: 8.451859
+
 
 Scan:
 =====
@@ -40,3 +48,7 @@ Intel-256:
 Intel-128:
     scans/s:   2897120
     time in s: 34.517029
+
+Intel-512:
+    scans/s:   3154291
+    time in s: 31.702845
