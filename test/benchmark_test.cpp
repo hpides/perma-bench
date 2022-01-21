@@ -294,7 +294,6 @@ TEST_F(BenchmarkTest, RunSingeThreadRead) {
     EXPECT_EQ(latency.op_type, internal::OpType::Read);
     EXPECT_GE(latency.duration, 0);
   }
-  ASSERT_EQ(result.raw_measurements.size(), 0);
 }
 
 TEST_F(BenchmarkTest, RunSingeThreadReadDRAM) {
@@ -324,7 +323,6 @@ TEST_F(BenchmarkTest, RunSingeThreadReadDRAM) {
     EXPECT_EQ(latency.op_type, internal::OpType::Read);
     EXPECT_GE(latency.duration, 0);
   }
-  ASSERT_EQ(result.raw_measurements.size(), 0);
 }
 
 TEST_F(BenchmarkTest, RunSingleThreadWrite) {
@@ -354,7 +352,6 @@ TEST_F(BenchmarkTest, RunSingleThreadWrite) {
     EXPECT_EQ(latency.op_type, internal::OpType::Write);
     EXPECT_GE(latency.duration, 0);
   }
-  ASSERT_EQ(result.raw_measurements.size(), 0);
 
   check_file_written(bm.get_pmem_files()[0], total_size);
 }
@@ -387,7 +384,6 @@ TEST_F(BenchmarkTest, RunSingleThreadWriteDRAM) {
     EXPECT_EQ(latency.op_type, internal::OpType::Write);
     EXPECT_GE(latency.duration, 0);
   }
-  ASSERT_EQ(result.raw_measurements.size(), 0);
 }
 
 TEST_F(BenchmarkTest, RunSingeThreadMixed) {
@@ -418,7 +414,6 @@ TEST_F(BenchmarkTest, RunSingeThreadMixed) {
     EXPECT_TRUE(latency.op_type == internal::OpType::Write || latency.op_type == internal::OpType::Read);
     EXPECT_GE(latency.duration, 0);
   }
-  ASSERT_EQ(result.raw_measurements.size(), 0);
 }
 
 TEST_F(BenchmarkTest, RunMultiThreadRead) {
@@ -448,7 +443,6 @@ TEST_F(BenchmarkTest, RunMultiThreadRead) {
       EXPECT_GE(latency.duration, 0);
     }
   }
-  ASSERT_EQ(result.raw_measurements.size(), 0);
 }
 
 TEST_F(BenchmarkTest, RunMultiThreadWrite) {
@@ -479,7 +473,6 @@ TEST_F(BenchmarkTest, RunMultiThreadWrite) {
       EXPECT_GE(latency.duration, 0);
     }
   }
-  ASSERT_EQ(result.raw_measurements.size(), 0);
 
   check_file_written(bm.get_pmem_files()[0], total_size);
 }
@@ -512,7 +505,6 @@ TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
       EXPECT_GE(latency.duration, 0);
     }
   }
-  ASSERT_EQ(result.raw_measurements.size(), 0);
 }
 
 TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
@@ -544,45 +536,9 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
       EXPECT_GE(latency.duration, 0);
     }
   }
-  ASSERT_EQ(result.raw_measurements.size(), 0);
 
   check_file_written(bm.get_pmem_files()[0], total_size);
 }
-
-TEST_F(BenchmarkTest, RunMultiThreadWriteRaw) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 512;
-  const size_t num_chunks = 128;
-  const size_t num_ops = num_chunks * ops_per_chunk;
-  const size_t num_threads = 16;
-  const size_t total_size = 512 * num_ops;
-  base_config_.number_threads = num_threads;
-  base_config_.raw_results = true;
-  base_config_.access_size = 512;
-  base_config_.write_ratio = 0;
-  base_config_.total_memory_range = total_size;
-  base_results_.reserve(1);
-  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
-  SingleBenchmark bm{bm_name_, base_config_, base_results_};
-  bm.create_data_file();
-  bm.set_up();
-  bm.run();
-
-  const BenchmarkResult& result = *bm.get_benchmark_results()[0];
-
-  const std::vector<std::vector<internal::Measurement>>& all_measurements = result.raw_measurements;
-  ASSERT_EQ(all_measurements.size(), num_threads);
-  for (const std::vector<internal::Measurement>& measurements : all_measurements) {
-    ASSERT_EQ(measurements.size(), num_chunks / num_threads);
-    for (const internal::Measurement measurement : measurements) {
-      EXPECT_EQ(measurement.latency.op_type, internal::OpType::Read);
-      EXPECT_GE(measurement.latency.duration, 0);
-    }
-  }
-  ASSERT_EQ(result.latencies.size(), 0);
-
-  check_file_written(bm.get_pmem_files()[0], total_size);
-}
-
 
 TEST_F(BenchmarkTest, ResultsSingleThreadRead) {
   const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
@@ -603,22 +559,14 @@ TEST_F(BenchmarkTest, ResultsSingleThreadRead) {
   bm_result.latencies.emplace_back(latencies);
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  ASSERT_JSON_EQ(result_json, size(), 2);
+  ASSERT_JSON_EQ(result_json, size(), 1);
   ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
-  ASSERT_JSON_TRUE(result_json, contains("duration"));
 
   const nlohmann::json& bandwidth_json = result_json["bandwidth"];
   ASSERT_JSON_EQ(bandwidth_json, size(), 1);
   ASSERT_JSON_TRUE(bandwidth_json, contains("read"));
   ASSERT_JSON_TRUE(bandwidth_json, at("read").is_number());
   EXPECT_NEAR(bandwidth_json.at("read").get<double>(), 2.38419, 0.1);
-
-  const nlohmann::json& duration_json = result_json["duration"];
-  ASSERT_JSON_EQ(duration_json, size(), 12);
-  ASSERT_JSON_TRUE(duration_json, contains("avg"));
-  ASSERT_JSON_TRUE(duration_json, contains("median"));
-  EXPECT_EQ(duration_json.at("avg").get<double>(), 100.0);
-  EXPECT_EQ(duration_json.at("median").get<double>(), 100.0);
 }
 
 TEST_F(BenchmarkTest, ResultsSingleThreadWrite) {
@@ -640,22 +588,14 @@ TEST_F(BenchmarkTest, ResultsSingleThreadWrite) {
   bm_result.latencies.emplace_back(latencies);
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  ASSERT_JSON_EQ(result_json, size(), 2);
+  ASSERT_JSON_EQ(result_json, size(), 1);
   ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
-  ASSERT_JSON_TRUE(result_json, contains("duration"));
 
   const nlohmann::json& bandwidth_json = result_json["bandwidth"];
   ASSERT_JSON_EQ(bandwidth_json, size(), 1);
   ASSERT_JSON_TRUE(bandwidth_json, contains("write"));
   ASSERT_JSON_TRUE(bandwidth_json, at("write").is_number());
   EXPECT_NEAR(bandwidth_json.at("write").get<double>(), 2.38419, 0.1);
-
-  const nlohmann::json& duration_json = result_json["duration"];
-  ASSERT_JSON_EQ(duration_json, size(), 12);
-  ASSERT_JSON_TRUE(duration_json, contains("avg"));
-  ASSERT_JSON_TRUE(duration_json, contains("median"));
-  EXPECT_EQ(duration_json.at("avg").get<double>(), 100.0);
-  EXPECT_EQ(duration_json.at("median").get<double>(), 100.0);
 }
 
 TEST_F(BenchmarkTest, ResultsSingleThreadMixed) {
@@ -683,9 +623,8 @@ TEST_F(BenchmarkTest, ResultsSingleThreadMixed) {
   bm_result.latencies.emplace_back(latencies);
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  ASSERT_JSON_EQ(result_json, size(), 2);
+  ASSERT_JSON_EQ(result_json, size(), 1);
   ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
-  ASSERT_JSON_TRUE(result_json, contains("duration"));
 
   const nlohmann::json& bandwidth_json = result_json["bandwidth"];
   ASSERT_JSON_EQ(bandwidth_json, size(), 2);
@@ -695,15 +634,6 @@ TEST_F(BenchmarkTest, ResultsSingleThreadMixed) {
   ASSERT_JSON_TRUE(bandwidth_json, at("write").is_number());
   EXPECT_NEAR(bandwidth_json.at("read").get<double>(), 2.384185, 0.1);
   EXPECT_NEAR(bandwidth_json.at("write").get<double>(), 1.192095, 0.1);
-
-  const nlohmann::json& duration_json = result_json["duration"];
-  ASSERT_JSON_EQ(duration_json, size(), 12);
-  ASSERT_JSON_TRUE(duration_json, contains("avg"));
-  ASSERT_JSON_TRUE(duration_json, contains("median"));
-  ASSERT_JSON_TRUE(duration_json, contains("std_dev"));
-  EXPECT_EQ(duration_json.at("avg").get<double>(), 150.0);
-  EXPECT_EQ(duration_json.at("median").get<double>(), 100.0);
-  EXPECT_EQ(duration_json.at("std_dev").get<double>(), 50.0);
 }
 
 TEST_F(BenchmarkTest, ResultsMultiThreadRead) {
@@ -728,22 +658,14 @@ TEST_F(BenchmarkTest, ResultsMultiThreadRead) {
   }
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  ASSERT_JSON_EQ(result_json, size(), 2);
+  ASSERT_JSON_EQ(result_json, size(), 1);
   ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
-  ASSERT_JSON_TRUE(result_json, contains("duration"));
 
   const nlohmann::json& bandwidth_json = result_json["bandwidth"];
   ASSERT_JSON_EQ(bandwidth_json, size(), 1);
   ASSERT_JSON_TRUE(bandwidth_json, contains("read"));
   ASSERT_JSON_TRUE(bandwidth_json, at("read").is_number());
   EXPECT_NEAR(bandwidth_json.at("read").get<double>(), 33.1712, 0.1);
-
-  const nlohmann::json& duration_json = result_json["duration"];
-  ASSERT_JSON_EQ(duration_json, size(), 12);
-  ASSERT_JSON_TRUE(duration_json, contains("avg"));
-  ASSERT_JSON_TRUE(duration_json, contains("median"));
-  EXPECT_EQ(duration_json.at("avg").get<double>(), 115.0);
-  EXPECT_EQ(duration_json.at("median").get<double>(), 110.0);
 }
 
 TEST_F(BenchmarkTest, ResultsMultiThreadWrite) {
@@ -768,22 +690,14 @@ TEST_F(BenchmarkTest, ResultsMultiThreadWrite) {
   }
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  ASSERT_JSON_EQ(result_json, size(), 2);
+  ASSERT_JSON_EQ(result_json, size(), 1);
   ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
-  ASSERT_JSON_TRUE(result_json, contains("duration"));
 
   const nlohmann::json& bandwidth_json = result_json["bandwidth"];
   ASSERT_JSON_EQ(bandwidth_json, size(), 1);
   ASSERT_JSON_TRUE(bandwidth_json, contains("write"));
   ASSERT_JSON_TRUE(bandwidth_json, at("write").is_number());
   EXPECT_NEAR(bandwidth_json.at("write").get<double>(), 28.2570, 0.1);
-
-  const nlohmann::json& duration_json = result_json["duration"];
-  ASSERT_JSON_EQ(duration_json, size(), 12);
-  ASSERT_JSON_TRUE(duration_json, contains("avg"));
-  ASSERT_JSON_TRUE(duration_json, contains("median"));
-  EXPECT_EQ(duration_json.at("avg").get<double>(), 135.0);
-  EXPECT_EQ(duration_json.at("median").get<double>(), 130.0);
 }
 
 TEST_F(BenchmarkTest, ResultsMultiThreadMixed) {
@@ -814,9 +728,8 @@ TEST_F(BenchmarkTest, ResultsMultiThreadMixed) {
   }
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  ASSERT_JSON_EQ(result_json, size(), 2);
+  ASSERT_JSON_EQ(result_json, size(), 1);
   ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
-  ASSERT_JSON_TRUE(result_json, contains("duration"));
 
   const nlohmann::json& bandwidth_json = result_json["bandwidth"];
   ASSERT_JSON_EQ(bandwidth_json, size(), 2);
@@ -826,15 +739,6 @@ TEST_F(BenchmarkTest, ResultsMultiThreadMixed) {
   ASSERT_JSON_TRUE(bandwidth_json, at("write").is_number());
   EXPECT_NEAR(bandwidth_json.at("read").get<double>(), 9.535, 0.1);
   EXPECT_NEAR(bandwidth_json.at("write").get<double>(), 7.625, 0.1);
-
-  const nlohmann::json& duration_json = result_json["duration"];
-  ASSERT_JSON_EQ(duration_json, size(), 12);
-  ASSERT_JSON_TRUE(duration_json, contains("avg"));
-  ASSERT_JSON_TRUE(duration_json, contains("median"));
-  ASSERT_JSON_TRUE(duration_json, contains("std_dev"));
-  EXPECT_EQ(duration_json.at("avg").get<double>(), 450.0);
-  EXPECT_EQ(duration_json.at("median").get<double>(), 400.0);
-  EXPECT_EQ(duration_json.at("std_dev").get<double>(), 50.0);
 }
 
 TEST_F(BenchmarkTest, ResultsParallelSingleThreadRead) {
@@ -875,8 +779,6 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadRead) {
     EXPECT_EQ(latency.op_type, internal::OpType::Read);
     EXPECT_GE(latency.duration, 0);
   }
-  ASSERT_EQ(result_one.raw_measurements.size(), 0);
-  ASSERT_EQ(result_two.raw_measurements.size(), 0);
 }
 
 TEST_F(BenchmarkTest, ResultsParallelSingleThreadWrite) {
@@ -919,8 +821,6 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadWrite) {
     EXPECT_EQ(latency.op_type, internal::OpType::Write);
     EXPECT_GE(latency.duration, 0);
   }
-  ASSERT_EQ(result_one.raw_measurements.size(), 0);
-  ASSERT_EQ(result_two.raw_measurements.size(), 0);
 
   check_file_written(bm.get_pmem_files()[0], total_size);
   check_file_written(bm.get_pmem_files()[1], total_size);
@@ -969,8 +869,6 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadMixed) {
     EXPECT_EQ(latency.op_type, internal::OpType::Write);
     EXPECT_GE(latency.duration, 0);
   }
-  ASSERT_EQ(result_one.raw_measurements.size(), 0);
-  ASSERT_EQ(result_two.raw_measurements.size(), 0);
 
   check_file_written(bm.get_pmem_files()[1], total_size);
 }

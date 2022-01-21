@@ -7,3 +7,4 @@ viz/html/*.html
 *.json
 output/
 test.yaml
+intel-*/

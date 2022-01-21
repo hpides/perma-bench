@@ -192,12 +192,7 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, st
 
   pool.reserve(config.number_threads);
   thread_config.reserve(config.number_threads);
-
-  if (config.raw_results) {
-    result->raw_measurements.resize(config.number_threads);
-  } else {
-    result->latencies.resize(config.number_threads);
-  }
+  result->latencies.resize(config.number_threads);
 
   if (config.exec_mode == internal::Mode::Custom) {
     result->custom_operation_durations.resize(config.number_threads);
@@ -214,13 +209,9 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, st
 
     for (uint16_t thread_num = 0; thread_num < num_threads_per_partition; thread_num++) {
       const uint32_t index = thread_num + (partition_num * num_threads_per_partition);
-      if (config.raw_results) {
-        result->raw_measurements[index].reserve(num_ops_per_thread);
-      } else {
-        result->latencies[index].reserve(num_ops_per_thread);
-      }
+      result->latencies[index].reserve(num_ops_per_thread);
       thread_config.emplace_back(partition_start, partition_size, num_threads_per_partition, thread_num,
-                                 num_ops_per_thread, &result->raw_measurements[index], &result->latencies[index],
+                                 num_ops_per_thread, &result->latencies[index],
                                  &result->custom_operation_durations[index], config);
     }
   }
@@ -386,11 +377,7 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
       }
 
       internal::Latency latency{static_cast<uint64_t>((end_ts - start_ts).count()), operation.op_type_};
-      if (config.raw_results) {
-        thread_config.raw_measurements->emplace_back(start_ts, latency);
-      } else {
-        thread_config.latencies->emplace_back(latency);
-      }
+      thread_config.latencies->emplace_back(latency);
 
       const auto run_time_in_sec = std::chrono::duration_cast<std::chrono::seconds>(end_ts - begin_ts).count();
       if (!is_time_finished && run_time_in_sec >= config.run_time) {
@@ -474,8 +461,6 @@ BenchmarkResult::~BenchmarkResult() {
     hdr_close(latency_hdr);
   }
 
-  raw_measurements.clear();
-  raw_measurements.shrink_to_fit();
   latencies.clear();
   latencies.shrink_to_fit();
 }
@@ -485,6 +470,11 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
     return get_custom_results_as_json();
   }
 
+  if (latencies.empty()) {
+    spdlog::info("No result data collected!");
+    crash_exit();
+  }
+
   nlohmann::json result;
   nlohmann::json result_points = nlohmann::json::array();
 
@@ -492,34 +482,20 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
   uint64_t total_write_size = 0;
   uint64_t total_read_duration = 0;
   uint64_t total_write_duration = 0;
-  const std::vector<internal::Measurement> dummy_measurements{};
-  const std::vector<internal::Latency> dummy_latencies{};
 
-  assert(!raw_measurements.empty() || !latencies.empty());
-  const bool is_raw = config.raw_results;
-  const size_t num_ops = is_raw ? raw_measurements[0].size() : latencies[0].size();
+  const size_t num_ops = latencies[0].size();
   const uint64_t data_size = config.access_size;
   const uint64_t num_ops_per_chunk = std::max(config.min_io_chunk_size / data_size, 1ul);
   const uint64_t chunk_size = std::max(config.min_io_chunk_size, data_size);
 
   for (uint16_t thread_num = 0; thread_num < config.number_threads; thread_num++) {
-    const std::vector<internal::Measurement>& thread_measurements =
-        is_raw ? raw_measurements[thread_num] : dummy_measurements;
-    const std::vector<internal::Latency>& thread_latencies = is_raw ? dummy_latencies : latencies[thread_num];
+    const std::vector<internal::Latency>& thread_latencies = latencies[thread_num];
 
     for (size_t io_chunk = 0; io_chunk < num_ops; ++io_chunk) {
-      internal::Latency latency = is_raw ? thread_measurements[io_chunk].latency : thread_latencies[io_chunk];
+      internal::Latency latency = thread_latencies[io_chunk];
       const uint64_t duration = latency.duration;
-      const uint64_t avg_duration = duration / num_ops_per_chunk;
 
       const internal::OpType op_type = latency.op_type;
-      if (op_type == internal::OpType::Pause && is_raw) {
-        result_points += {{"type", "pause"}, {"length", duration}, {"thread_id", thread_num}};
-        continue;
-      }
-
-      hdr_record_value(latency_hdr, avg_duration);
-
       if (op_type == internal::OpType::Read) {
         total_read_size += chunk_size;
         total_read_duration += duration;
@@ -529,31 +505,12 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
       } else {
         throw std::runtime_error{"Unknown IO operation in results"};
       }
-
-      if (is_raw) {
-        const internal::Measurement measurement = thread_measurements[io_chunk];
-        const uint64_t start_ts = duration_to_nanoseconds(measurement.start_ts.time_since_epoch());
-        const uint64_t end_ts = start_ts + duration;
-        const uint64_t bandwidth = chunk_size / (duration / static_cast<double>(internal::NANOSECONDS_IN_SECONDS));
-        const double bandwidth_gib = bandwidth / static_cast<double>(internal::BYTE_IN_GIGABYTE);
-
-        result_points += {{"type", op_type == internal::OpType::Write ? "write" : "read"},
-                          {"latency", duration},
-                          {"bandwidth", bandwidth_gib},
-                          {"data_size", chunk_size},
-                          {"start_timestamp", start_ts},
-                          {"end_timestamp", end_ts},
-                          {"thread_id", thread_num}};
-      }
     }
-  }
-
-  if (is_raw) {
-    result["raw_results"] = result_points;
   }
 
   nlohmann::json bandwidth_results;
   if (total_read_duration > 0) {
+    // TODO(#165): Remove this at some point
     const uint64_t read_execution_time = total_read_duration / config.number_threads;
     const double bandwidth = get_bandwidth(total_read_size, read_execution_time);
     // We need to normalize the bandwidth here if we do not execute the same operation type 100% of the time.
@@ -564,6 +521,7 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
     bandwidth_results["read"] = normalized_bandwidth;
   }
   if (total_write_duration > 0) {
+    // TODO(#165): Remove this at some point
     const uint64_t write_execution_time = total_write_duration / config.number_threads;
     const double bandwidth = get_bandwidth(total_write_size, write_execution_time);
     // We need to normalize the bandwidth here if we do not execute the same operation type 100% of the time.
@@ -575,8 +533,6 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
   }
 
   result["bandwidth"] = bandwidth_results;
-  result["duration"] = hdr_histogram_to_json(latency_hdr);
-
   return result;
 }
 
@@ -622,7 +578,6 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_if_present(node, "number_partitions", &bm_config.number_partitions);
     num_found += get_if_present(node, "number_threads", &bm_config.number_threads);
     num_found += get_if_present(node, "zipf_alpha", &bm_config.zipf_alpha);
-    num_found += get_if_present(node, "raw_results", &bm_config.raw_results);
     num_found += get_if_present(node, "prefault_file", &bm_config.prefault_file);
     num_found += get_if_present(node, "min_io_chunk_size", &bm_config.min_io_chunk_size);
     num_found += get_if_present(node, "latency_sample_frequency", &bm_config.latency_sample_frequency);
