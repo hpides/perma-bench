@@ -30,36 +30,38 @@ static constexpr size_t CACHE_LINE_SIZE = 64;
 
 // FLush and barrier operations are from https://github.com/pmem/pmdk/tree/master/src/libpmem2
 
-typedef void flush_fn(const void*, const size_t);
+typedef void flush_fn(char*, const size_t);
+typedef void barrier_fn();
 
-/*
- * flush the CPU cache using clwb.
- */
+/** flush the cache line using clwb. */
 #ifdef HAS_CLWB
-inline void flush_clwb(const void* addr, const size_t len) {
-  uintptr_t uptr;
-
-  for (uptr = (uintptr_t)addr; uptr < (uintptr_t)addr + len; uptr += CACHE_LINE_SIZE) {
-    asm volatile(".byte 0x66; xsaveopt %0" : "+m"(*(volatile char*)(uptr)));
+inline void flush_clwb(char* addr, const size_t len) {
+  const char* end_addr = addr + len;
+  for (char* current_cl = addr; current_cl < end_addr; current_cl += CACHE_LINE_SIZE) {
+    _mm_clwb(current_cl);
   }
 }
 #endif
 
-/*
- * non-temporal hints used by avx-512f instructions.
- */
-inline void no_flush(const void* addr, const size_t len) {}
+/** flush the cache line using clflushopt. */
+#ifdef HAS_CLFLUSHOPT
+inline void flush_clflushopt(char* addr, const size_t len) {
+  const char* end_addr = addr + len;
+  for (char* current_cl = addr; current_cl < end_addr; current_cl += CACHE_LINE_SIZE) {
+    _mm_clflushopt(current_cl);
+  }
+}
+#endif
 
-typedef void barrier_fn();
+/** no explicit cache line flush is used. */
+inline void no_flush(char* addr, const size_t len) {}
 
-/*
- * use sfence to guarantee strong memory order on x86. Earlier store operations cannot be reordered beyond this point.
+/* use sfence to guarantee strong memory order on x86.
+ * Earlier store operations cannot be reordered beyond this point.
  */
 inline void sfence_barrier() { _mm_sfence(); }
 
-/*
- * no memory order is guaranteed.
- */
+/** no memory order is guaranteed. */
 inline void no_barrier() {}
 
 #ifdef HAS_AVX
@@ -207,6 +209,45 @@ inline void simd_write_clwb_64(const std::vector<char*>& addresses) {
 
 inline void simd_write_clwb(const std::vector<char*>& addresses, const size_t access_size) {
   simd_write(addresses, access_size, flush_clwb, sfence_barrier);
+}
+#endif
+
+/**
+ * #####################################################
+ * STORE + CLFLUSH OPERATIONS
+ * #####################################################
+ */
+#ifdef HAS_CLFLUSHOPT
+inline void simd_write_clflushopt_512(char* addr) { simd_write_512(addr, flush_clflushopt, sfence_barrier); }
+
+inline void simd_write_clflushopt_256(char* addr) { simd_write_256(addr, flush_clflushopt, sfence_barrier); }
+
+inline void simd_write_clflushopt_128(char* addr) { simd_write_128(addr, flush_clflushopt, sfence_barrier); }
+
+inline void simd_write_clflushopt_64(char* addr) { simd_write_64(addr, flush_clflushopt, sfence_barrier); }
+
+inline void simd_write_clflushopt(char* addr, const size_t access_size) {
+  simd_write(addr, access_size, flush_clflushopt, sfence_barrier);
+}
+
+inline void simd_write_clflushopt_512(const std::vector<char*>& addresses) {
+  simd_write_512(addresses, flush_clflushopt, sfence_barrier);
+}
+
+inline void simd_write_clflushopt_256(const std::vector<char*>& addresses) {
+  simd_write_256(addresses, flush_clflushopt, sfence_barrier);
+}
+
+inline void simd_write_clflushopt_128(const std::vector<char*>& addresses) {
+  simd_write_128(addresses, flush_clflushopt, sfence_barrier);
+}
+
+inline void simd_write_clflushopt_64(const std::vector<char*>& addresses) {
+  simd_write_64(addresses, flush_clflushopt, sfence_barrier);
+}
+
+inline void simd_write_clflushopt(const std::vector<char*>& addresses, const size_t access_size) {
+  simd_write(addresses, access_size, flush_clflushopt, sfence_barrier);
 }
 #endif
 

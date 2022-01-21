@@ -3,6 +3,7 @@ project(perma-bench)
 
 include(ExternalProject)
 include(FetchContent)
+include(CheckCXXSourceCompiles)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -pthread")
@@ -41,26 +42,31 @@ else ()
     endif ()
 endif ()
 
-##################### CLWB ####################
+# Backup of actual required flags
+set(BASE_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
 
-set(clwb_prog "
-#include <cpuid.h>
-int main() {
-  unsigned cpuinfo[4] = {0};
-  __cpuid_count(0x0, 0x0, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
-  if (cpuinfo[0] < 0x7) {
-    return 1;
-  }
-  __cpuid_count(0x7, 0x0, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
-  return (cpuinfo[1] & (1 << 24)) == 0; }")
-set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -mclwb")
-check_c_source_runs("${clwb_prog}" HAS_CLWB)
+##################### CLWB ####################
+set(clwb_prog "#include <immintrin.h>\n int main() { _mm_clwb((void*)0); return 0; }")
+set(CMAKE_REQUIRED_FLAGS "${BASE_CMAKE_REQUIRED_FLAGS} -mclwb")
+check_cxx_source_compiles("${clwb_prog}" HAS_CLWB)
 if (${HAS_CLWB})
     # Set HAS_CLWB so we can use it to enable all explicit CLWB instructions.
     add_definitions("-DHAS_CLWB")
     message(STATUS "System supports CLWB.")
 else ()
     message(STATUS "System does not support CLWB.")
+endif ()
+
+##################### CLFLUSHOPT ####################
+set(clflush_prog "#include <immintrin.h>\n int main() { _mm_clflushopt((void*)0); return 0; }")
+set(CMAKE_REQUIRED_FLAGS "${BASE_CMAKE_REQUIRED_FLAGS} -mclflushopt")
+check_cxx_source_compiles("${clflush_prog}" HAS_CLFLUSHOPT)
+if (${HAS_CLFLUSHOPT})
+    # Set HAS_CLFLUSHOPT so we can use it to enable all explicit CLFLUSHOPT instructions.
+    add_definitions("-DHAS_CLFLUSHOPT")
+    message(STATUS "System supports CLFLUSHOPT.")
+else ()
+    message(STATUS "System does not support CLFLUSHOPT.")
 endif ()
 
 ################### NUMA ####################

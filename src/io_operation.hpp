@@ -16,7 +16,7 @@ enum class Mode : uint8_t { Sequential, Sequential_Desc, Random, Custom };
 
 enum class RandomDistribution : uint8_t { Uniform, Zipf };
 
-enum class PersistInstruction : uint8_t { Cache, NoCache, None };
+enum class PersistInstruction : uint8_t { Cache, CacheInvalidate, NoCache, None };
 
 enum class OpType : uint8_t { Read, Write, Pause, Custom };
 
@@ -116,6 +116,22 @@ class IoOperation {
             return rw_ops::simd_write_clwb_512(op_addresses_);
           default:
             return rw_ops::simd_write_clwb(op_addresses_, access_size_);
+        }
+      }
+#endif
+#ifdef HAS_CLFLUSHOPT
+      case internal::PersistInstruction::CacheInvalidate: {
+        switch (access_size_) {
+          case 64:
+            return rw_ops::simd_write_clflushopt_64(op_addresses_);
+          case 128:
+            return rw_ops::simd_write_clflushopt_128(op_addresses_);
+          case 256:
+            return rw_ops::simd_write_clflushopt_256(op_addresses_);
+          case 512:
+            return rw_ops::simd_write_clflushopt_512(op_addresses_);
+          default:
+            return rw_ops::simd_write_clflushopt(op_addresses_, access_size_);
         }
       }
 #endif
@@ -240,6 +256,22 @@ class ChainedOperation {
             return rw_ops::simd_write_clwb_512(addr);
           default:
             return rw_ops::simd_write_clwb(addr, access_size_);
+        }
+      }
+#endif
+#ifdef HAS_CLFLUSHOPT
+      case internal::PersistInstruction::CacheInvalidate: {
+        switch (access_size_) {
+          case 64:
+            return rw_ops::simd_write_clflushopt_64(addr);
+          case 128:
+            return rw_ops::simd_write_clflushopt_128(addr);
+          case 256:
+            return rw_ops::simd_write_clflushopt_256(addr);
+          case 512:
+            return rw_ops::simd_write_clflushopt_512(addr);
+          default:
+            return rw_ops::simd_write_clflushopt(addr, access_size_);
         }
       }
 #endif

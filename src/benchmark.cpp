@@ -161,6 +161,7 @@ const std::unordered_map<std::string, internal::NumaPattern> ConfigEnums::str_to
 const std::unordered_map<std::string, internal::PersistInstruction> ConfigEnums::str_to_persist_instruction{
     {"nocache", internal::PersistInstruction::NoCache},
     {"cache", internal::PersistInstruction::Cache},
+    {"cache_inv", internal::PersistInstruction::CacheInvalidate},
     {"none", internal::PersistInstruction::None}};
 
 const std::unordered_map<std::string, internal::RandomDistribution> ConfigEnums::str_to_random_distribution{
