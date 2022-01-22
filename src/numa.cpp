@@ -12,13 +12,13 @@
 
 namespace perma {
 
-namespace internal {
+namespace {
 
 static const size_t NUMA_FAR_DISTANCE = 20;
 
 static bool IGNORE_NUMA = false;
 
-}  // namespace internal
+}  // namespace
 
 void log_numa_nodes(const std::vector<uint64_t>& nodes) {
   const std::string used_nodes_str = std::accumulate(
@@ -31,12 +31,12 @@ std::vector<uint64_t> auto_detect_numa(const std::filesystem::path& pmem_dir, co
                                        const bool is_dram) {
 #ifndef HAS_NUMA
   spdlog::critical("Cannot detect numa nodes without NUMA support.");
-  crash_exit();
+  utils::crash_exit();
 #else
-  const std::filesystem::path temp_file = generate_random_file_name(pmem_dir);
+  const std::filesystem::path temp_file = utils::generate_random_file_name(pmem_dir);
   // Create random 2 MiB file
   const size_t temp_size = 2u * (1024u * 1024u);
-  char* pmem_data = create_file(temp_file, is_dram, temp_size);
+  char* pmem_data = utils::create_file(temp_file, is_dram, temp_size);
   rw_ops::write_data(pmem_data, pmem_data + temp_size);
 
   int numa_node = -1;
@@ -57,7 +57,7 @@ std::vector<uint64_t> auto_detect_numa(const std::filesystem::path& pmem_dir, co
   for (int other_node = 0; other_node < num_numa_nodes; ++other_node) {
     const size_t numa_dist = numa_distance(numa_node, other_node);
     spdlog::trace("NUMA-Distance: {} -> {} = {}", numa_node, other_node, numa_dist);
-    if (numa_dist < internal::NUMA_FAR_DISTANCE) {
+    if (numa_dist < NUMA_FAR_DISTANCE) {
       // This should cover all NUMA nodes that are close, i.e. self = 10, close = 11.
       allowed_numa_nodes.push_back(other_node);
     }
@@ -75,13 +75,13 @@ std::vector<uint64_t> auto_detect_numa(const std::filesystem::path& pmem_dir, co
 void set_numa_nodes(const std::vector<uint64_t>& nodes, const size_t num_numa_nodes) {
 #ifndef HAS_NUMA
   spdlog::critical("Cannot set numa nodes without NUMA support.");
-  crash_exit();
+  utils::crash_exit();
 #else
   bitmask* numa_nodes = numa_bitmask_alloc(num_numa_nodes);
   for (uint64_t node : nodes) {
     if (node >= num_numa_nodes) {
       spdlog::critical("Given numa node too large! (given: {}, max: {})", node, num_numa_nodes - 1);
-      crash_exit();
+      utils::crash_exit();
     }
     numa_bitmask_setbit(numa_nodes, node);
   }
@@ -95,7 +95,7 @@ void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t
                const bool ignore_numa) {  // TODO: handle numa for dram
 
   if (ignore_numa) {
-    internal::IGNORE_NUMA = true;
+    IGNORE_NUMA = true;
     spdlog::info("NUMA is ignored in this run.");
     return;
   }
@@ -103,7 +103,7 @@ void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t
 #ifndef HAS_NUMA
   if (!arg_nodes.empty()) {
     spdlog::critical("Cannot explicitly set numa nodes without NUMA support.");
-    crash_exit();
+    utils::crash_exit();
   }
 
   // Don't do anything, as we don't have NUMA support.
@@ -121,7 +121,7 @@ void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t
     // User specified numa nodes via the command line. No need to auto-detect.
     if (num_numa_nodes < arg_nodes.size()) {
       spdlog::critical("More numa nodes specified than detected on server.");
-      crash_exit();
+      utils::crash_exit();
     }
     spdlog::info("Setting NUMA nodes according to command line arguments.");
     log_numa_nodes(arg_nodes);
@@ -142,7 +142,8 @@ void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t
 
 std::vector<uint64_t> get_far_nodes() {
 #ifndef HAS_NUMA
-  throw std::runtime_error("Running far numa pattern benchmark without NUMA-awareness.");
+  spdlog::critical("Running far numa pattern benchmark without NUMA-awareness.");
+  utils::crash_exit();
 #else
   const size_t num_numa_nodes = numa_num_configured_nodes();
   bitmask* init_node_mask = numa_get_run_node_mask();
@@ -164,7 +165,7 @@ std::vector<uint64_t> get_far_nodes() {
     // Check for each possible far NUMA node if it is far to every node that is set
     for (uint64_t set_node : set_numa_nodes) {
       const size_t numa_dist = numa_distance(possible_far_node, set_node);
-      if (numa_dist < internal::NUMA_FAR_DISTANCE) {
+      if (numa_dist < NUMA_FAR_DISTANCE) {
         // This should cover all NUMA nodes that are close, i.e., bigger than self = 10 and close = 11.
         found_far_node = false;
         break;
@@ -183,9 +184,9 @@ std::vector<uint64_t> get_far_nodes() {
 }
 
 void set_to_far_cpus() {
-  if (internal::IGNORE_NUMA) {
+  if (IGNORE_NUMA) {
     spdlog::critical("Setting far NUMA nodes when running in no-numa mode.");
-    crash_exit();
+    utils::crash_exit();
   }
 #ifndef HAS_NUMA
   throw std::runtime_error("Running far numa pattern benchmark without NUMA-awareness.");
@@ -195,9 +196,9 @@ void set_to_far_cpus() {
 }
 
 bool has_far_numa_nodes() {
-  if (internal::IGNORE_NUMA) {
+  if (IGNORE_NUMA) {
     spdlog::critical("Checking far NUMA nodes when running in no-numa mode.");
-    crash_exit();
+    utils::crash_exit();
   }
 #ifndef HAS_NUMA
   return false;

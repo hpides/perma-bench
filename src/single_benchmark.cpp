@@ -23,7 +23,7 @@ bool SingleBenchmark::run() {
   // wait for all threads
   for (std::thread& thread : pool) {
     if (thread_error) {
-      print_segfault_error();
+      utils::print_segfault_error();
       return false;
     }
     thread.join();
@@ -59,15 +59,14 @@ nlohmann::json SingleBenchmark::get_result_as_json() {
 
 SingleBenchmark::SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config,
                                  std::vector<std::unique_ptr<BenchmarkResult>>& results)
-    : Benchmark(benchmark_name, internal::BenchmarkType::Single,
-                std::vector<std::filesystem::path>{generate_random_file_name(config.pmem_directory)},
+    : Benchmark(benchmark_name, BenchmarkType::Single,
+                std::vector<std::filesystem::path>{utils::generate_random_file_name(config.pmem_directory)},
                 std::vector<bool>{true}, std::vector<BenchmarkConfig>{config}, std::move(results)) {}
 
 SingleBenchmark::SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config,
                                  std::vector<std::unique_ptr<BenchmarkResult>>& results,
                                  std::filesystem::path pmem_file)
-    : Benchmark(benchmark_name, internal::BenchmarkType::Single,
-                std::vector<std::filesystem::path>{std::move(pmem_file)}, std::vector<bool>{false},
-                std::vector<BenchmarkConfig>{config}, std::move(results)) {}
+    : Benchmark(benchmark_name, BenchmarkType::Single, std::vector<std::filesystem::path>{std::move(pmem_file)},
+                std::vector<bool>{false}, std::vector<BenchmarkConfig>{config}, std::move(results)) {}
 
 }  // namespace perma

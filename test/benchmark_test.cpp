@@ -21,7 +21,7 @@ class BenchmarkTest : public ::testing::Test {
     base_config_.pmem_directory = temp_dir_;
     base_config_.total_memory_range = TEST_FILE_SIZE;
 
-    internal::setPMEM_MAP_FLAGS(MAP_SHARED);
+    utils::setPMEM_MAP_FLAGS(MAP_SHARED);
   }
 
   BenchmarkConfig base_config_{};
@@ -45,7 +45,7 @@ TEST_F(BenchmarkTest, CreateParallelBenchmark) {
 
 #ifdef HAS_AVX
 TEST_F(BenchmarkTest, CreateSingleNewDataFile) {
-  base_config_.write_ratio = 1;
+  base_config_.operation = Operation::Write;
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
   const std::filesystem::path pmem_file = bm.get_pmem_files()[0];
 
@@ -61,7 +61,7 @@ TEST_F(BenchmarkTest, CreateSingleNewDataFile) {
 }
 
 TEST_F(BenchmarkTest, CreateParallelNewDataFile) {
-  base_config_.write_ratio = 1;
+  base_config_.operation = Operation::Write;
   ParallelBenchmark bm{bm_name_, "sub_bm_1", "sub_bm_2", base_config_, base_config_, base_results_};
   const std::filesystem::path pmem_file_one = bm.get_pmem_files()[0];
   const std::filesystem::path pmem_file_two = bm.get_pmem_files()[1];
@@ -84,10 +84,10 @@ TEST_F(BenchmarkTest, CreateParallelNewDataFile) {
 }
 
 TEST_F(BenchmarkTest, CreateExistingDataFile) {
-  base_config_.write_ratio = 1;
+  base_config_.operation = Operation::Write;
 
   const std::string test_string = "test123456789";
-  const std::filesystem::path existing_pmem_file = generate_random_file_name(temp_dir_);
+  const std::filesystem::path existing_pmem_file = utils::generate_random_file_name(temp_dir_);
   std::ofstream temp_stream{existing_pmem_file, std::ios::out};
   temp_stream << test_string << std::endl;
   temp_stream.flush();
@@ -115,7 +115,7 @@ TEST_F(BenchmarkTest, CreateExistingDataFile) {
 }
 
 TEST_F(BenchmarkTest, CreateSingleReadDataFile) {
-  base_config_.write_ratio = 0;
+  base_config_.operation = Operation::Read;
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
   const std::filesystem::path pmem_file = bm.get_pmem_files()[0];
 
@@ -138,7 +138,7 @@ TEST_F(BenchmarkTest, CreateSingleReadDataFile) {
 }
 
 TEST_F(BenchmarkTest, CreateParallelReadDataFile) {
-  base_config_.write_ratio = 0;
+  base_config_.operation = Operation::Read;
   ParallelBenchmark bm{bm_name_, "sub_bm_1", "sub_bm_2", base_config_, base_config_, base_results_};
   const std::filesystem::path pmem_file_one = bm.get_pmem_files()[0];
   const std::filesystem::path pmem_file_two = bm.get_pmem_files()[1];
@@ -171,9 +171,9 @@ TEST_F(BenchmarkTest, CreateParallelReadDataFile) {
 }
 
 TEST_F(BenchmarkTest, CreateParallelReadDataFileMixed) {
-  base_config_.write_ratio = 0;
+  base_config_.operation = Operation::Read;
   BenchmarkConfig base_config_two = base_config_;
-  base_config_two.write_ratio = 1;
+  base_config_two.operation = Operation::Write;
   ParallelBenchmark bm{bm_name_, "sub_bm_1", "sub_bm_2", base_config_two, base_config_, base_results_};
   const std::filesystem::path pmem_file = bm.get_pmem_files()[1];
 
@@ -215,7 +215,7 @@ TEST_F(BenchmarkTest, SetUpSingleThread) {
   EXPECT_EQ(thread_config.partition_start_addr, bm.get_pmem_data()[0]);
   EXPECT_EQ(&thread_config.config, &bm.get_benchmark_configs()[0]);
 
-  const std::vector<std::vector<internal::Latency>>& latencies = bm.get_benchmark_results()[0]->latencies;
+  const std::vector<std::vector<Latency>>& latencies = bm.get_benchmark_results()[0]->latencies;
   ASSERT_EQ(latencies.size(), 1);
   EXPECT_EQ(thread_config.latencies->data(), latencies[0].data());
 
@@ -251,7 +251,7 @@ TEST_F(BenchmarkTest, SetUpMultiThread) {
   EXPECT_EQ(thread_config2.partition_start_addr, bm.get_pmem_data()[0] + partition_size);
   EXPECT_EQ(thread_config3.partition_start_addr, bm.get_pmem_data()[0] + partition_size);
 
-  const std::vector<std::vector<internal::Latency>>& latencies = bm.get_benchmark_results()[0]->latencies;
+  const std::vector<std::vector<Latency>>& latencies = bm.get_benchmark_results()[0]->latencies;
   ASSERT_EQ(latencies.size(), num_threads);
   EXPECT_EQ(thread_config0.latencies->data(), latencies[0].data());
   EXPECT_EQ(thread_config1.latencies->data(), latencies[1].data());
@@ -274,7 +274,7 @@ TEST_F(BenchmarkTest, RunSingeThreadRead) {
   const size_t num_ops = num_chunks * ops_per_chunk;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  base_config_.write_ratio = 0;
+  base_config_.operation = Operation::Read;
   base_config_.total_memory_range = 256 * num_ops;
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
@@ -285,13 +285,13 @@ TEST_F(BenchmarkTest, RunSingeThreadRead) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), 1);
-  const std::vector<internal::Latency>& latencies = all_latencies[0];
+  const std::vector<Latency>& latencies = all_latencies[0];
 
   ASSERT_EQ(latencies.size(), num_chunks);
-  for (const internal::Latency latency : latencies) {
-    EXPECT_EQ(latency.op_type, internal::OpType::Read);
+  for (const Latency latency : latencies) {
+    EXPECT_EQ(latency.op_type, Operation::Read);
     EXPECT_GE(latency.duration, 0);
   }
 }
@@ -302,7 +302,7 @@ TEST_F(BenchmarkTest, RunSingeThreadReadDRAM) {
   const size_t num_ops = num_chunks * ops_per_chunk;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  base_config_.write_ratio = 0;
+  base_config_.operation = Operation::Read;
   base_config_.total_memory_range = 256 * num_ops;
   base_config_.is_pmem = false;
   base_results_.reserve(1);
@@ -314,13 +314,13 @@ TEST_F(BenchmarkTest, RunSingeThreadReadDRAM) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), 1);
-  const std::vector<internal::Latency>& latencies = all_latencies[0];
+  const std::vector<Latency>& latencies = all_latencies[0];
 
   ASSERT_EQ(latencies.size(), num_chunks);
-  for (const internal::Latency latency : latencies) {
-    EXPECT_EQ(latency.op_type, internal::OpType::Read);
+  for (const Latency latency : latencies) {
+    EXPECT_EQ(latency.op_type, Operation::Read);
     EXPECT_GE(latency.duration, 0);
   }
 }
@@ -332,7 +332,7 @@ TEST_F(BenchmarkTest, RunSingleThreadWrite) {
   const size_t total_size = 256 * num_ops;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  base_config_.write_ratio = 1;
+  base_config_.operation = Operation::Write;
   base_config_.total_memory_range = total_size;
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
@@ -343,13 +343,13 @@ TEST_F(BenchmarkTest, RunSingleThreadWrite) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), 1);
-  const std::vector<internal::Latency>& latencies = all_latencies[0];
+  const std::vector<Latency>& latencies = all_latencies[0];
 
   ASSERT_EQ(latencies.size(), num_chunks);
-  for (const internal::Latency latency : latencies) {
-    EXPECT_EQ(latency.op_type, internal::OpType::Write);
+  for (const Latency latency : latencies) {
+    EXPECT_EQ(latency.op_type, Operation::Write);
     EXPECT_GE(latency.duration, 0);
   }
 
@@ -363,7 +363,7 @@ TEST_F(BenchmarkTest, RunSingleThreadWriteDRAM) {
   const size_t total_size = 256 * num_ops;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  base_config_.write_ratio = 1;
+  base_config_.operation = Operation::Write;
   base_config_.total_memory_range = total_size;
   base_config_.is_pmem = false;
   base_results_.reserve(1);
@@ -375,26 +375,28 @@ TEST_F(BenchmarkTest, RunSingleThreadWriteDRAM) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), 1);
-  const std::vector<internal::Latency>& latencies = all_latencies[0];
+  const std::vector<Latency>& latencies = all_latencies[0];
 
   ASSERT_EQ(latencies.size(), num_chunks);
-  for (const internal::Latency latency : latencies) {
-    EXPECT_EQ(latency.op_type, internal::OpType::Write);
+  for (const Latency latency : latencies) {
+    EXPECT_EQ(latency.op_type, Operation::Write);
     EXPECT_GE(latency.duration, 0);
   }
 }
 
-TEST_F(BenchmarkTest, RunSingeThreadMixed) {
+// TODO(#167): Change "mixed" to DRAM/PMem
+TEST_F(BenchmarkTest, DISABLED_RunSingeThreadMixed) {
   const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
   const size_t num_chunks = 8;
   const size_t num_ops = num_chunks * ops_per_chunk;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  base_config_.write_ratio = 0.5;
+  // TODO: change
+  //  base_config_.write_ratio = 0.5;
   base_config_.number_operations = num_ops;
-  base_config_.exec_mode = internal::Mode::Random;
+  base_config_.exec_mode = Mode::Random;
   base_config_.total_memory_range = 256 * num_ops;
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
@@ -405,13 +407,13 @@ TEST_F(BenchmarkTest, RunSingeThreadMixed) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), 1);
-  const std::vector<internal::Latency>& latencies = all_latencies[0];
+  const std::vector<Latency>& latencies = all_latencies[0];
 
   ASSERT_EQ(latencies.size(), num_chunks);
-  for (const internal::Latency latency : latencies) {
-    EXPECT_TRUE(latency.op_type == internal::OpType::Write || latency.op_type == internal::OpType::Read);
+  for (const Latency latency : latencies) {
+    EXPECT_TRUE(latency.op_type == Operation::Write || latency.op_type == Operation::Read);
     EXPECT_GE(latency.duration, 0);
   }
 }
@@ -423,7 +425,7 @@ TEST_F(BenchmarkTest, RunMultiThreadRead) {
   const size_t num_threads = 4;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 1024;
-  base_config_.write_ratio = 0;
+  base_config_.operation = Operation::Read;
   base_config_.total_memory_range = 1024 * num_ops;
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
@@ -434,12 +436,12 @@ TEST_F(BenchmarkTest, RunMultiThreadRead) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), num_threads);
-  for (const std::vector<internal::Latency>& latencies : all_latencies) {
+  for (const std::vector<Latency>& latencies : all_latencies) {
     ASSERT_EQ(latencies.size(), num_chunks / num_threads);
-    for (const internal::Latency latency : latencies) {
-      EXPECT_EQ(latency.op_type, internal::OpType::Read);
+    for (const Latency latency : latencies) {
+      EXPECT_EQ(latency.op_type, Operation::Read);
       EXPECT_GE(latency.duration, 0);
     }
   }
@@ -453,7 +455,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWrite) {
   const size_t total_size = 512 * num_ops;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 512;
-  base_config_.write_ratio = 0;
+  base_config_.operation = Operation::Read;
   base_config_.total_memory_range = total_size;
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
@@ -464,12 +466,12 @@ TEST_F(BenchmarkTest, RunMultiThreadWrite) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), num_threads);
-  for (const std::vector<internal::Latency>& latencies : all_latencies) {
+  for (const std::vector<Latency>& latencies : all_latencies) {
     ASSERT_EQ(latencies.size(), num_chunks / num_threads);
-    for (const internal::Latency latency : latencies) {
-      EXPECT_EQ(latency.op_type, internal::OpType::Read);
+    for (const Latency latency : latencies) {
+      EXPECT_EQ(latency.op_type, Operation::Read);
       EXPECT_GE(latency.duration, 0);
     }
   }
@@ -484,9 +486,9 @@ TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
   const size_t num_threads = 4;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 1024;
-  base_config_.write_ratio = 0;
+  base_config_.operation = Operation::Read;
   base_config_.total_memory_range = 1024 * num_ops;
-  base_config_.exec_mode = internal::Mode::Sequential_Desc;
+  base_config_.exec_mode = Mode::Sequential_Desc;
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
@@ -496,12 +498,12 @@ TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), num_threads);
-  for (const std::vector<internal::Latency>& latencies : all_latencies) {
+  for (const std::vector<Latency>& latencies : all_latencies) {
     ASSERT_EQ(latencies.size(), num_chunks / num_threads);
-    for (const internal::Latency latency : latencies) {
-      EXPECT_EQ(latency.op_type, internal::OpType::Read);
+    for (const Latency latency : latencies) {
+      EXPECT_EQ(latency.op_type, Operation::Read);
       EXPECT_GE(latency.duration, 0);
     }
   }
@@ -515,9 +517,9 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
   const size_t total_size = 512 * num_ops;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 512;
-  base_config_.write_ratio = 0;
+  base_config_.operation = Operation::Read;
   base_config_.total_memory_range = total_size;
-  base_config_.exec_mode = internal::Mode::Sequential_Desc;
+  base_config_.exec_mode = Mode::Sequential_Desc;
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
@@ -527,12 +529,12 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<internal::Latency>>& all_latencies = result.latencies;
+  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
   ASSERT_EQ(all_latencies.size(), num_threads);
-  for (const std::vector<internal::Latency>& latencies : all_latencies) {
+  for (const std::vector<Latency>& latencies : all_latencies) {
     ASSERT_EQ(latencies.size(), num_chunks / num_threads);
-    for (const internal::Latency latency : latencies) {
-      EXPECT_EQ(latency.op_type, internal::OpType::Read);
+    for (const Latency latency : latencies) {
+      EXPECT_EQ(latency.op_type, Operation::Read);
       EXPECT_GE(latency.duration, 0);
     }
   }
@@ -547,14 +549,14 @@ TEST_F(BenchmarkTest, ResultsSingleThreadRead) {
   const size_t total_size = 256 * num_ops;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  base_config_.write_ratio = 0;
+  base_config_.operation = Operation::Read;
   base_config_.total_memory_range = total_size;
 
   BenchmarkResult bm_result{base_config_};
-  std::vector<internal::Latency> latencies{};
+  std::vector<Latency> latencies{};
   latencies.reserve(num_ops);
   for (size_t i = 0; i < num_ops; ++i) {
-    latencies.emplace_back(ops_per_chunk * 100, internal::OpType::Read);
+    latencies.emplace_back(ops_per_chunk * 100, Operation::Read);
   }
   bm_result.latencies.emplace_back(latencies);
 
@@ -576,14 +578,14 @@ TEST_F(BenchmarkTest, ResultsSingleThreadWrite) {
   const size_t total_size = 256 * num_ops;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  base_config_.write_ratio = 1;
+  base_config_.operation = Operation::Write;
   base_config_.total_memory_range = total_size;
 
   BenchmarkResult bm_result{base_config_};
-  std::vector<internal::Latency> latencies{};
+  std::vector<Latency> latencies{};
   latencies.reserve(num_ops);
   for (size_t i = 0; i < num_ops; ++i) {
-    latencies.emplace_back(ops_per_chunk * 100, internal::OpType::Write);
+    latencies.emplace_back(ops_per_chunk * 100, Operation::Write);
   }
   bm_result.latencies.emplace_back(latencies);
 
@@ -598,7 +600,8 @@ TEST_F(BenchmarkTest, ResultsSingleThreadWrite) {
   EXPECT_NEAR(bandwidth_json.at("write").get<double>(), 2.38419, 0.1);
 }
 
-TEST_F(BenchmarkTest, ResultsSingleThreadMixed) {
+// TODO(#167): Change "mixed" to DRAM/PMem
+TEST_F(BenchmarkTest, DISABLED_ResultsSingleThreadMixed) {
   const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 512;
   const size_t num_chunks = 8;
   const size_t num_ops = num_chunks * ops_per_chunk;
@@ -606,18 +609,19 @@ TEST_F(BenchmarkTest, ResultsSingleThreadMixed) {
   base_config_.number_operations = num_ops;
   base_config_.number_threads = 1;
   base_config_.access_size = 512;
-  base_config_.write_ratio = 0.5;
+  // TODO: change
+  //   base_config_.write_ratio = 0.5;
   base_config_.total_memory_range = total_size;
-  base_config_.exec_mode = internal::Mode::Random;
+  base_config_.exec_mode = Mode::Random;
 
   BenchmarkResult bm_result{base_config_};
-  std::vector<internal::Latency> latencies{};
+  std::vector<Latency> latencies{};
   latencies.reserve(num_ops);
   for (size_t i = 0; i < num_ops; ++i) {
     if (i % 2 == 0) {
-      latencies.emplace_back(200 * ops_per_chunk, internal::OpType::Write);
+      latencies.emplace_back(200 * ops_per_chunk, Operation::Write);
     } else {
-      latencies.emplace_back(100 * ops_per_chunk, internal::OpType::Read);
+      latencies.emplace_back(100 * ops_per_chunk, Operation::Read);
     }
   }
   bm_result.latencies.emplace_back(latencies);
@@ -645,14 +649,14 @@ TEST_F(BenchmarkTest, ResultsMultiThreadRead) {
   const size_t total_size = 1024 * num_ops;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 1024;
-  base_config_.write_ratio = 0;
+  base_config_.operation = Operation::Read;
   base_config_.total_memory_range = total_size;
 
   BenchmarkResult bm_result{base_config_};
   for (size_t thread = 0; thread < num_threads; ++thread) {
-    std::vector<internal::Latency> latencies{};
+    std::vector<Latency> latencies{};
     for (size_t i = 0; i < num_ops_per_thread; ++i) {
-      latencies.emplace_back((100 + (thread * 10)) * ops_per_chunk, internal::OpType::Read);
+      latencies.emplace_back((100 + (thread * 10)) * ops_per_chunk, Operation::Read);
     }
     bm_result.latencies.emplace_back(latencies);
   }
@@ -677,14 +681,14 @@ TEST_F(BenchmarkTest, ResultsMultiThreadWrite) {
   const size_t total_size = 512 * num_ops;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 512;
-  base_config_.write_ratio = 1;
+  base_config_.operation = Operation::Write;
   base_config_.total_memory_range = total_size;
 
   BenchmarkResult bm_result{base_config_};
   for (size_t thread = 0; thread < num_threads; ++thread) {
-    std::vector<internal::Latency> latencies{};
+    std::vector<Latency> latencies{};
     for (size_t i = 0; i < num_ops_per_thread; ++i) {
-      latencies.emplace_back((100 + (thread * 10)) * ops_per_chunk, internal::OpType::Write);
+      latencies.emplace_back((100 + (thread * 10)) * ops_per_chunk, Operation::Write);
     }
     bm_result.latencies.emplace_back(latencies);
   }
@@ -700,7 +704,8 @@ TEST_F(BenchmarkTest, ResultsMultiThreadWrite) {
   EXPECT_NEAR(bandwidth_json.at("write").get<double>(), 28.2570, 0.1);
 }
 
-TEST_F(BenchmarkTest, ResultsMultiThreadMixed) {
+// TODO(#167): Change "mixed" to DRAM/PMem
+TEST_F(BenchmarkTest, DISABLED_ResultsMultiThreadMixed) {
   const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 512;
   const size_t num_chunks = 64;
   const size_t num_ops = num_chunks * ops_per_chunk;
@@ -710,18 +715,19 @@ TEST_F(BenchmarkTest, ResultsMultiThreadMixed) {
   base_config_.number_threads = num_threads;
   base_config_.number_operations = num_ops;
   base_config_.access_size = 512;
-  base_config_.write_ratio = 0.5;
+  // TODO: change
+  //   base_config_.write_ratio = 0.5;
   base_config_.total_memory_range = total_size;
-  base_config_.exec_mode = internal::Mode::Random;
+  base_config_.exec_mode = Mode::Random;
 
   BenchmarkResult bm_result{base_config_};
   for (size_t thread = 0; thread < num_threads; ++thread) {
-    std::vector<internal::Latency> latencies{};
+    std::vector<Latency> latencies{};
     for (size_t i = 0; i < num_ops_per_thread; ++i) {
       if (i % 2 == 0) {
-        latencies.emplace_back(500 * ops_per_chunk, internal::OpType::Write);
+        latencies.emplace_back(500 * ops_per_chunk, Operation::Write);
       } else {
-        latencies.emplace_back(400 * ops_per_chunk, internal::OpType::Read);
+        latencies.emplace_back(400 * ops_per_chunk, Operation::Read);
       }
     }
     bm_result.latencies.emplace_back(latencies);
@@ -747,7 +753,7 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadRead) {
   const size_t num_ops = num_chunks * ops_per_chunk;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  base_config_.write_ratio = 0;
+  base_config_.operation = Operation::Read;
   base_config_.total_memory_range = 256 * num_ops;
   base_results_.reserve(2);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
@@ -761,22 +767,22 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadRead) {
   const BenchmarkResult& result_one = *bm.get_benchmark_results()[0];
   const BenchmarkResult& result_two = *bm.get_benchmark_results()[1];
 
-  const std::vector<std::vector<internal::Latency>>& all_latencies_one = result_one.latencies;
-  const std::vector<std::vector<internal::Latency>>& all_latencies_two = result_two.latencies;
+  const std::vector<std::vector<Latency>>& all_latencies_one = result_one.latencies;
+  const std::vector<std::vector<Latency>>& all_latencies_two = result_two.latencies;
 
   ASSERT_EQ(all_latencies_one.size(), 1);
   ASSERT_EQ(all_latencies_two.size(), 1);
-  const std::vector<internal::Latency>& latencies_one = all_latencies_one[0];
-  const std::vector<internal::Latency>& latencies_two = all_latencies_two[0];
+  const std::vector<Latency>& latencies_one = all_latencies_one[0];
+  const std::vector<Latency>& latencies_two = all_latencies_two[0];
 
   ASSERT_EQ(latencies_one.size(), num_chunks);
   ASSERT_EQ(latencies_two.size(), num_chunks);
-  for (const internal::Latency latency : latencies_one) {
-    EXPECT_EQ(latency.op_type, internal::OpType::Read);
+  for (const Latency latency : latencies_one) {
+    EXPECT_EQ(latency.op_type, Operation::Read);
     EXPECT_GE(latency.duration, 0);
   }
-  for (const internal::Latency latency : latencies_two) {
-    EXPECT_EQ(latency.op_type, internal::OpType::Read);
+  for (const Latency latency : latencies_two) {
+    EXPECT_EQ(latency.op_type, Operation::Read);
     EXPECT_GE(latency.duration, 0);
   }
 }
@@ -788,7 +794,7 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadWrite) {
   const size_t total_size = 256 * num_ops;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  base_config_.write_ratio = 1;
+  base_config_.operation = Operation::Write;
   base_config_.total_memory_range = total_size;
   base_results_.reserve(2);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
@@ -802,23 +808,23 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadWrite) {
   const BenchmarkResult& result_one = *bm.get_benchmark_results()[0];
   const BenchmarkResult& result_two = *bm.get_benchmark_results()[1];
 
-  const std::vector<std::vector<internal::Latency>>& all_latencies_one = result_one.latencies;
-  const std::vector<std::vector<internal::Latency>>& all_latencies_two = result_two.latencies;
+  const std::vector<std::vector<Latency>>& all_latencies_one = result_one.latencies;
+  const std::vector<std::vector<Latency>>& all_latencies_two = result_two.latencies;
 
   ASSERT_EQ(all_latencies_one.size(), 1);
   ASSERT_EQ(all_latencies_two.size(), 1);
 
-  const std::vector<internal::Latency>& latencies_one = all_latencies_one[0];
-  const std::vector<internal::Latency>& latencies_two = all_latencies_two[0];
+  const std::vector<Latency>& latencies_one = all_latencies_one[0];
+  const std::vector<Latency>& latencies_two = all_latencies_two[0];
 
   ASSERT_EQ(latencies_one.size(), num_chunks);
   ASSERT_EQ(latencies_two.size(), num_chunks);
-  for (const internal::Latency latency : latencies_one) {
-    EXPECT_EQ(latency.op_type, internal::OpType::Write);
+  for (const Latency latency : latencies_one) {
+    EXPECT_EQ(latency.op_type, Operation::Write);
     EXPECT_GE(latency.duration, 0);
   }
-  for (const internal::Latency latency : latencies_two) {
-    EXPECT_EQ(latency.op_type, internal::OpType::Write);
+  for (const Latency latency : latencies_two) {
+    EXPECT_EQ(latency.op_type, Operation::Write);
     EXPECT_GE(latency.duration, 0);
   }
 
@@ -836,8 +842,8 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadMixed) {
   base_config_.total_memory_range = total_size;
   BenchmarkConfig bm_config_read = base_config_;
   BenchmarkConfig bm_config_write = base_config_;
-  bm_config_read.write_ratio = 0;
-  bm_config_write.write_ratio = 1;
+  bm_config_read.operation = Operation::Read;
+  bm_config_write.operation = Operation::Write;
   base_results_.reserve(2);
   base_results_.push_back(std::make_unique<BenchmarkResult>(bm_config_read));
   base_results_.push_back(std::make_unique<BenchmarkResult>(bm_config_write));
@@ -850,23 +856,23 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadMixed) {
   const BenchmarkResult& result_one = *bm.get_benchmark_results()[0];
   const BenchmarkResult& result_two = *bm.get_benchmark_results()[1];
 
-  const std::vector<std::vector<internal::Latency>>& all_latencies_one = result_one.latencies;
-  const std::vector<std::vector<internal::Latency>>& all_latencies_two = result_two.latencies;
+  const std::vector<std::vector<Latency>>& all_latencies_one = result_one.latencies;
+  const std::vector<std::vector<Latency>>& all_latencies_two = result_two.latencies;
 
   ASSERT_EQ(all_latencies_one.size(), 1);
   ASSERT_EQ(all_latencies_two.size(), 1);
 
-  const std::vector<internal::Latency>& latencies_one = all_latencies_one[0];
-  const std::vector<internal::Latency>& latencies_two = all_latencies_two[0];
+  const std::vector<Latency>& latencies_one = all_latencies_one[0];
+  const std::vector<Latency>& latencies_two = all_latencies_two[0];
 
   ASSERT_EQ(latencies_one.size(), num_chunks);
   ASSERT_EQ(latencies_two.size(), num_chunks);
-  for (const internal::Latency latency : latencies_one) {
-    EXPECT_EQ(latency.op_type, internal::OpType::Read);
+  for (const Latency latency : latencies_one) {
+    EXPECT_EQ(latency.op_type, Operation::Read);
     EXPECT_GE(latency.duration, 0);
   }
-  for (const internal::Latency latency : latencies_two) {
-    EXPECT_EQ(latency.op_type, internal::OpType::Write);
+  for (const Latency latency : latencies_two) {
+    EXPECT_EQ(latency.op_type, Operation::Write);
     EXPECT_GE(latency.duration, 0);
   }
 

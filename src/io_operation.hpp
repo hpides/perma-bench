@@ -3,6 +3,7 @@
 #include <thread>
 #include <vector>
 
+#include "benchmark_config.hpp"
 #include "fast_random.hpp"
 #include "read_write_ops.hpp"
 #include "spdlog/spdlog.h"
@@ -10,74 +11,27 @@
 
 namespace perma {
 
-namespace internal {
-
-enum class Mode : uint8_t { Sequential, Sequential_Desc, Random, Custom };
-
-enum class RandomDistribution : uint8_t { Uniform, Zipf };
-
-enum class PersistInstruction : uint8_t { Cache, NoCache, None };
-
-enum class OpType : uint8_t { Read, Write, Pause, Custom };
-
-enum class NumaPattern : uint8_t { Near, Far };
-
-}  // namespace internal
-
-struct CustomOp {
-  internal::OpType type;
-  size_t size;
-  internal::PersistInstruction persist = internal::PersistInstruction::None;
-
-  static CustomOp from_string(const std::string& str);
-  static std::vector<CustomOp> all_from_string(const std::string& str);
-  static std::string all_to_string(const std::vector<CustomOp>& ops);
-  static std::string to_string(const CustomOp& op);
-};
-
 class IoOperation {
   friend class Benchmark;
 
  public:
-  inline void run() {
-    switch (op_type_) {
-      case (internal::OpType::Read): {
-        return run_read();
-      }
-      case (internal::OpType::Write): {
-        return run_write();
-      }
-      case (internal::OpType::Pause): {
-        return std::this_thread::sleep_for(std::chrono::microseconds(duration_));
-      }
-      default: {
-        throw std::runtime_error("Unknown OpType!");
-      }
-    }
-  }
+  inline void run() { return (op_type_ == Operation::Read) ? run_read() : run_write(); }
 
-  inline bool is_active() const { return op_type_ != internal::OpType::Pause; }
-  inline bool is_read() const { return op_type_ == internal::OpType::Read; }
-  inline bool is_write() const { return op_type_ == internal::OpType::Write; }
-  inline bool is_pause() const { return op_type_ == internal::OpType::Pause; }
+  inline bool is_read() const { return op_type_ == Operation::Read; }
+  inline bool is_write() const { return op_type_ == Operation::Write; }
 
   static IoOperation ReadOp(const std::vector<char*>& op_addresses, uint32_t access_size) {
-    return IoOperation{op_addresses, access_size, internal::OpType::Read, internal::PersistInstruction::None};
+    return IoOperation{op_addresses, access_size, Operation::Read, PersistInstruction::None};
   }
 
   static IoOperation WriteOp(const std::vector<char*>& op_addresses, uint32_t access_size,
-                             internal::PersistInstruction persist_instruction) {
-    return IoOperation{op_addresses, access_size, internal::OpType::Write, persist_instruction};
-  }
-
-  static IoOperation PauseOp(uint32_t duration) {
-    static std::vector<char*> op_addresses{};
-    return IoOperation{op_addresses, duration, internal::OpType::Pause, internal::PersistInstruction::None};
+                             PersistInstruction persist_instruction) {
+    return IoOperation{op_addresses, access_size, Operation::Write, persist_instruction};
   }
 
  private:
-  IoOperation(const std::vector<char*>& op_addresses, uint32_t access_size, internal::OpType op_type,
-              internal::PersistInstruction persist_instruction)
+  IoOperation(const std::vector<char*>& op_addresses, uint32_t access_size, Operation op_type,
+              PersistInstruction persist_instruction)
       : op_addresses_{op_addresses},
         access_size_{access_size},
         op_type_{op_type},
@@ -104,7 +58,7 @@ class IoOperation {
 #ifdef HAS_AVX
     switch (persist_instruction_) {
 #ifdef HAS_CLWB
-      case internal::PersistInstruction::Cache: {
+      case PersistInstruction::Cache: {
         switch (access_size_) {
           case 64:
             return rw_ops::simd_write_clwb_64(op_addresses_);
@@ -119,7 +73,7 @@ class IoOperation {
         }
       }
 #endif
-      case internal::PersistInstruction::NoCache: {
+      case PersistInstruction::NoCache: {
         switch (access_size_) {
           case 64:
             return rw_ops::simd_write_nt_64(op_addresses_);
@@ -133,7 +87,7 @@ class IoOperation {
             return rw_ops::simd_write_nt(op_addresses_, access_size_);
         }
       }
-      case internal::PersistInstruction::None: {
+      case PersistInstruction::None: {
         switch (access_size_) {
           case 64:
             return rw_ops::simd_write_none_64(op_addresses_);
@@ -157,8 +111,8 @@ class IoOperation {
     const uint32_t access_size_;
     const uint32_t duration_;
   };
-  const internal::OpType op_type_;
-  const internal::PersistInstruction persist_instruction_;
+  const Operation op_type_;
+  const PersistInstruction persist_instruction_;
 };
 
 class ChainedOperation {
@@ -172,7 +126,7 @@ class ChainedOperation {
         persist_instruction_(op.persist) {}
 
   inline void run(char* current_addr, char* dependent_addr) {
-    if (type_ == internal::OpType::Read) {
+    if (type_ == Operation::Read) {
       current_addr = get_random_address(dependent_addr);
       dependent_addr = run_read(current_addr);
     } else {
@@ -228,7 +182,7 @@ class ChainedOperation {
 #ifdef HAS_AVX
     switch (persist_instruction_) {
 #ifdef HAS_CLWB
-      case internal::PersistInstruction::Cache: {
+      case PersistInstruction::Cache: {
         switch (access_size_) {
           case 64:
             return rw_ops::simd_write_clwb_64(addr);
@@ -243,7 +197,7 @@ class ChainedOperation {
         }
       }
 #endif
-      case internal::PersistInstruction::NoCache: {
+      case PersistInstruction::NoCache: {
         switch (access_size_) {
           case 64:
             return rw_ops::simd_write_nt_64(addr);
@@ -257,7 +211,7 @@ class ChainedOperation {
             return rw_ops::simd_write_nt(addr, access_size_);
         }
       }
-      case internal::PersistInstruction::None: {
+      case PersistInstruction::None: {
         switch (access_size_) {
           case 64:
             return rw_ops::simd_write_none_64(addr);
@@ -281,8 +235,8 @@ class ChainedOperation {
   const size_t range_size_;
   const size_t align_;
   ChainedOperation* next_ = nullptr;
-  const internal::OpType type_;
-  const internal::PersistInstruction persist_instruction_;
+  const Operation type_;
+  const PersistInstruction persist_instruction_;
 };
 
 }  // namespace perma

@@ -3,6 +3,8 @@ set(
 
         benchmark.cpp
         benchmark.hpp
+        benchmark_config.cpp
+        benchmark_config.hpp
         benchmark_factory.cpp
         benchmark_factory.hpp
         benchmark_suite.cpp

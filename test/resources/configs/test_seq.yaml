@@ -4,7 +4,5 @@ test_seq:
     total_memory_range: 64M
     exec_mode: sequential
     number_threads: 2
-    pause_frequency: 1024
-    pause_length_micros: 10
-    write_ratio: 0
+    operation: read
     min_io_chunk_size: 16384

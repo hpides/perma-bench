@@ -1,7 +1,6 @@
 #pragma once
 
 #include <hdr_histogram.h>
-#include <yaml-cpp/yaml.h>
 
 #include <filesystem>
 #include <json.hpp>
@@ -15,67 +14,23 @@
 
 namespace perma {
 
-namespace internal {
-
-// We assume 2^30 for GB and not 10^9
-static constexpr size_t BYTE_IN_GIGABYTE = 1024u * 1024 * 1024;
-static constexpr size_t NANOSECONDS_IN_SECONDS = 1e9;
-
 struct Latency {
   Latency() : data{-1u} {}
-  Latency(const uint64_t latency, const internal::OpType op_type) : duration{latency}, op_type{op_type} {};
+  Latency(const uint64_t latency, const Operation op_type) : duration{latency}, op_type{op_type} {};
 
   union {
     const uint64_t data;
     struct {
       const uint64_t duration : 62;
-      const internal::OpType op_type : 2;
+      const Operation op_type : 2;
     };
   };
 };
 
 enum BenchmarkType { Single, Parallel };
 
-}  // namespace internal
-
-struct BenchmarkConfig {
-  // This field is required and has no default value,
-  // i.e., it must be set as a command line argument.
-  std::string pmem_directory{};
-  std::vector<std::string> matrix_args{};
-  bool is_pmem = true;
-
-  // The values below here actually define the benchmark and are not just used for meta-information.
-  uint64_t total_memory_range = 10'737'418'240;  // 10 GiB
-  uint32_t access_size = 256;
-  uint64_t number_operations = 10'000'000;
-  uint64_t run_time = -1;
-  internal::Mode exec_mode{internal::Mode::Sequential};
-  internal::NumaPattern numa_pattern{internal::NumaPattern::Near};
-
-  std::vector<CustomOp> custom_operations;
-  uint64_t latency_sample_frequency = 0;
-
-  internal::RandomDistribution random_distribution{internal::RandomDistribution::Uniform};
-  double zipf_alpha = 0.9;
-
-  internal::PersistInstruction persist_instruction{internal::PersistInstruction::NoCache};
-
-  double write_ratio = 0.0;
-
-  uint64_t pause_frequency = 0;
-  uint64_t pause_length_micros = 1000;  // 1 ms
-
-  uint16_t number_partitions = 1;
-
-  uint16_t number_threads = 1;
-
-  bool prefault_file = true;
-
-  uint64_t min_io_chunk_size = 128 * 1024u;  // 128 KiB
-
-  static BenchmarkConfig decode(YAML::Node& raw_config_data);
-  void validate() const;
+struct BenchmarkEnums {
+  static const std::unordered_map<std::string, BenchmarkType> str_to_benchmark_type;
 };
 
 struct ThreadRunConfig {
@@ -84,12 +39,12 @@ struct ThreadRunConfig {
   const size_t num_threads_per_partition;
   const size_t thread_num;
   const size_t num_ops;
-  std::vector<internal::Latency>* latencies;
+  std::vector<Latency>* latencies;
   uint64_t* custom_op_duration;
   const BenchmarkConfig& config;
 
   ThreadRunConfig(char* partition_start_addr, const size_t partition_size, const size_t num_threads_per_partition,
-                  const size_t thread_num, const size_t num_ops, std::vector<internal::Latency>* latencies,
+                  const size_t thread_num, const size_t num_ops, std::vector<Latency>* latencies,
                   uint64_t* custom_op_duration, const BenchmarkConfig& config)
       : partition_start_addr(partition_start_addr),
         partition_size(partition_size),
@@ -108,7 +63,7 @@ struct BenchmarkResult {
   nlohmann::json get_result_as_json() const;
   nlohmann::json get_custom_results_as_json() const;
 
-  std::vector<std::vector<internal::Latency>> latencies;
+  std::vector<std::vector<Latency>> latencies;
   std::vector<uint64_t> custom_operation_durations;
   hdr_histogram* latency_hdr = nullptr;
   const BenchmarkConfig config;
@@ -116,9 +71,9 @@ struct BenchmarkResult {
 
 class Benchmark {
  public:
-  Benchmark(std::string benchmark_name, internal::BenchmarkType benchmark_type,
-            std::vector<std::filesystem::path> pmem_files, std::vector<bool> owns_pmem_files,
-            std::vector<BenchmarkConfig> configs, std::vector<std::unique_ptr<BenchmarkResult>> results)
+  Benchmark(std::string benchmark_name, BenchmarkType benchmark_type, std::vector<std::filesystem::path> pmem_files,
+            std::vector<bool> owns_pmem_files, std::vector<BenchmarkConfig> configs,
+            std::vector<std::unique_ptr<BenchmarkResult>> results)
       : benchmark_name_{std::move(benchmark_name)},
         benchmark_type_{benchmark_type},
         pmem_files_{std::move(pmem_files)},
@@ -157,7 +112,7 @@ class Benchmark {
 
   /** Return the type of the benchmark. */
   std::string benchmark_type_as_str() const;
-  internal::BenchmarkType get_benchmark_type() const;
+  BenchmarkType get_benchmark_type() const;
 
   const std::vector<BenchmarkConfig>& get_benchmark_configs() const;
   const std::vector<std::filesystem::path>& get_pmem_files() const;
@@ -179,7 +134,7 @@ class Benchmark {
   static nlohmann::json get_benchmark_config_as_json(const BenchmarkConfig& bm_config);
 
   const std::string benchmark_name_;
-  const internal::BenchmarkType benchmark_type_;
+  const BenchmarkType benchmark_type_;
 
   std::vector<std::filesystem::path> pmem_files_;
   std::vector<bool> owns_pmem_files_;

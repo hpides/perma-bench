@@ -25,7 +25,7 @@ bool ParallelBenchmark::run() {
   for (std::vector<std::thread>& pool : pools_) {
     for (std::thread& thread : pool) {
       if (thread_error) {
-        print_segfault_error();
+        utils::print_segfault_error();
         return false;
       }
       thread.join();
@@ -72,9 +72,9 @@ ParallelBenchmark::ParallelBenchmark(const std::string& benchmark_name, std::str
                                      std::string second_benchmark_name, const BenchmarkConfig& first_config,
                                      const BenchmarkConfig& second_config,
                                      std::vector<std::unique_ptr<BenchmarkResult>>& results)
-    : Benchmark(benchmark_name, internal::BenchmarkType::Parallel,
-                std::vector<std::filesystem::path>{generate_random_file_name(first_config.pmem_directory),
-                                                   generate_random_file_name(second_config.pmem_directory)},
+    : Benchmark(benchmark_name, BenchmarkType::Parallel,
+                std::vector<std::filesystem::path>{utils::generate_random_file_name(first_config.pmem_directory),
+                                                   utils::generate_random_file_name(second_config.pmem_directory)},
                 std::vector<bool>{true, true}, std::vector<BenchmarkConfig>{first_config, second_config},
                 std::move(results)),
       benchmark_name_one_{std::move(first_benchmark_name)},
@@ -85,9 +85,9 @@ ParallelBenchmark::ParallelBenchmark(const std::string& benchmark_name, std::str
                                      const BenchmarkConfig& second_config,
                                      std::vector<std::unique_ptr<BenchmarkResult>>& results,
                                      std::filesystem::path pmem_file_first)
-    : Benchmark(benchmark_name, internal::BenchmarkType::Parallel,
+    : Benchmark(benchmark_name, BenchmarkType::Parallel,
                 std::vector<std::filesystem::path>{std::move(pmem_file_first),
-                                                   generate_random_file_name(second_config.pmem_directory)},
+                                                   utils::generate_random_file_name(second_config.pmem_directory)},
                 std::vector<bool>{false, true}, std::vector<BenchmarkConfig>{first_config, second_config},
                 std::move(results)),
       benchmark_name_one_{std::move(first_benchmark_name)},
@@ -98,7 +98,7 @@ ParallelBenchmark::ParallelBenchmark(const std::string& benchmark_name, std::str
                                      const BenchmarkConfig& second_config,
                                      std::vector<std::unique_ptr<BenchmarkResult>>& results,
                                      std::filesystem::path pmem_file_first, std::filesystem::path pmem_file_second)
-    : Benchmark(benchmark_name, internal::BenchmarkType::Parallel,
+    : Benchmark(benchmark_name, BenchmarkType::Parallel,
                 std::vector<std::filesystem::path>{std::move(pmem_file_first), std::move(pmem_file_second)},
                 std::vector<bool>{false, false}, std::vector<BenchmarkConfig>{first_config, second_config},
                 std::move(results)),

@@ -9,12 +9,12 @@
 #include "gtest/gtest.h"
 #include "json.hpp"
 
-namespace perma {
+namespace perma::utils {
 
 using namespace testing;
 namespace fs = std::filesystem;
 
-constexpr auto FILE_SIZE = 8388608u;  // 8 MiB
+constexpr size_t FILE_SIZE = 8 * (1024u * 1024);  // 8 MiB
 
 class UtilsTest : public ::testing::Test {
  protected:
@@ -32,7 +32,7 @@ class UtilsTest : public ::testing::Test {
     tmp_file_name_read = file_name_read;
     fs::resize_file(file_name_read, FILE_SIZE);
 
-    internal::setPMEM_MAP_FLAGS(MAP_SHARED);
+    setPMEM_MAP_FLAGS(MAP_SHARED);
   }
 
   void TearDown() override {
@@ -149,4 +149,4 @@ TEST_F(UtilsTest, AddToResultFile) {
   fs::remove(config_path);
 }
 
-}  // namespace perma
+}  // namespace perma::utils
