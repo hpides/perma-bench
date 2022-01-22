@@ -266,7 +266,7 @@ nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm
 
   if (bm_config.exec_mode != Mode::Custom) {
     config["access_size"] = bm_config.access_size;
-    config["write_ratio"] = get_enum_as_string(ConfigEnums::str_to_operation, bm_config.operation);
+    config["operation"] = get_enum_as_string(ConfigEnums::str_to_operation, bm_config.operation);
     config["min_io_chunk_size"] = bm_config.min_io_chunk_size;
 
     if (bm_config.operation == Operation::Write) {
