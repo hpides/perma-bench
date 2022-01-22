@@ -56,8 +56,8 @@ inline void flush_clflushopt(char* addr, const size_t len) {
 /** no explicit cache line flush is used. */
 inline void no_flush(char* addr, const size_t len) {}
 
-/* use sfence to guarantee strong memory order on x86.
- * Earlier store operations cannot be reordered beyond this point.
+/** 
+ * Use sfence to guarantee strong memory order on x86. Earlier store operations cannot be reordered beyond this point.
  */
 inline void sfence_barrier() { _mm_sfence(); }
 
