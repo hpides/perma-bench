@@ -12,7 +12,7 @@ enum class Mode : uint8_t { Sequential, Sequential_Desc, Random, Custom };
 
 enum class RandomDistribution : uint8_t { Uniform, Zipf };
 
-enum class PersistInstruction : uint8_t { Cache, NoCache, None };
+enum class PersistInstruction : uint8_t { Cache, CacheInvalidate, NoCache, None };
 
 enum class Operation : uint8_t { Read, Write };
 

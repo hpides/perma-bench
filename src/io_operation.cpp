@@ -86,9 +86,9 @@ std::string CustomOp::to_string(const CustomOp& op) {
       out << "none";
     } else if (op.persist == PersistInstruction::Cache) {
       out << "cache";
-    } else if (op.persist == internal::PersistInstruction::CacheInvalidate) {
+    } else if (op.persist == PersistInstruction::CacheInvalidate) {
       out << "cache_inv";
-    } else if (op.persist == internal::PersistInstruction::NoCache) {
+    } else if (op.persist == PersistInstruction::NoCache) {
       out << "nocache";
     }
   }

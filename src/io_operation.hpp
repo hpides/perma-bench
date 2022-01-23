@@ -74,7 +74,7 @@ class IoOperation {
       }
 #endif
 #ifdef HAS_CLFLUSHOPT
-      case internal::PersistInstruction::CacheInvalidate: {
+      case PersistInstruction::CacheInvalidate: {
         switch (access_size_) {
           case 64:
             return rw_ops::simd_write_clflushopt_64(op_addresses_);
@@ -89,7 +89,7 @@ class IoOperation {
         }
       }
 #endif
-      case internal::PersistInstruction::NoCache: {
+      case PersistInstruction::NoCache: {
         switch (access_size_) {
           case 64:
             return rw_ops::simd_write_nt_64(op_addresses_);
@@ -214,7 +214,7 @@ class ChainedOperation {
       }
 #endif
 #ifdef HAS_CLFLUSHOPT
-      case internal::PersistInstruction::CacheInvalidate: {
+      case PersistInstruction::CacheInvalidate: {
         switch (access_size_) {
           case 64:
             return rw_ops::simd_write_clflushopt_64(addr);
@@ -229,7 +229,7 @@ class ChainedOperation {
         }
       }
 #endif
-      case internal::PersistInstruction::NoCache: {
+      case PersistInstruction::NoCache: {
         switch (access_size_) {
           case 64:
             return rw_ops::simd_write_nt_64(addr);
