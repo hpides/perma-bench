@@ -375,11 +375,13 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
 
   nlohmann::json bandwidth_results;
   if (total_read_duration > 0) {
+    // TODO(#165): Remove this at some point
     const uint64_t read_execution_time = total_read_duration / config.number_threads;
     const double bandwidth = get_bandwidth(total_read_size, read_execution_time);
     bandwidth_results["read"] = bandwidth;
   }
   if (total_write_duration > 0) {
+    // TODO(#165): Remove this at some point
     const uint64_t write_execution_time = total_write_duration / config.number_threads;
     const double bandwidth = get_bandwidth(total_write_size, write_execution_time);
     bandwidth_results["write"] = bandwidth;

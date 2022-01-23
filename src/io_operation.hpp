@@ -73,7 +73,23 @@ class IoOperation {
         }
       }
 #endif
-      case PersistInstruction::NoCache: {
+#ifdef HAS_CLFLUSHOPT
+      case internal::PersistInstruction::CacheInvalidate: {
+        switch (access_size_) {
+          case 64:
+            return rw_ops::simd_write_clflushopt_64(op_addresses_);
+          case 128:
+            return rw_ops::simd_write_clflushopt_128(op_addresses_);
+          case 256:
+            return rw_ops::simd_write_clflushopt_256(op_addresses_);
+          case 512:
+            return rw_ops::simd_write_clflushopt_512(op_addresses_);
+          default:
+            return rw_ops::simd_write_clflushopt(op_addresses_, access_size_);
+        }
+      }
+#endif
+      case internal::PersistInstruction::NoCache: {
         switch (access_size_) {
           case 64:
             return rw_ops::simd_write_nt_64(op_addresses_);
@@ -197,7 +213,23 @@ class ChainedOperation {
         }
       }
 #endif
-      case PersistInstruction::NoCache: {
+#ifdef HAS_CLFLUSHOPT
+      case internal::PersistInstruction::CacheInvalidate: {
+        switch (access_size_) {
+          case 64:
+            return rw_ops::simd_write_clflushopt_64(addr);
+          case 128:
+            return rw_ops::simd_write_clflushopt_128(addr);
+          case 256:
+            return rw_ops::simd_write_clflushopt_256(addr);
+          case 512:
+            return rw_ops::simd_write_clflushopt_512(addr);
+          default:
+            return rw_ops::simd_write_clflushopt(addr, access_size_);
+        }
+      }
+#endif
+      case internal::PersistInstruction::NoCache: {
         switch (access_size_) {
           case 64:
             return rw_ops::simd_write_nt_64(addr);
