@@ -43,6 +43,8 @@ CustomOp CustomOp::from_string(const std::string& str) {
       op.persist = internal::PersistInstruction::None;
     } else if (persist_str == "cache") {
       op.persist = internal::PersistInstruction::Cache;
+    } else if (persist_str == "cache_inv") {
+      op.persist = internal::PersistInstruction::CacheInvalidate;
     } else if (persist_str == "nocache") {
       op.persist = internal::PersistInstruction::NoCache;
     } else {
@@ -84,6 +86,8 @@ std::string CustomOp::to_string(const CustomOp& op) {
       out << "none";
     } else if (op.persist == internal::PersistInstruction::Cache) {
       out << "cache";
+    } else if (op.persist == internal::PersistInstruction::CacheInvalidate) {
+      out << "cache_inv";
     } else if (op.persist == internal::PersistInstruction::NoCache) {
       out << "nocache";
     }
