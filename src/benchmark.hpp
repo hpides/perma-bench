@@ -34,13 +34,6 @@ struct Latency {
   };
 };
 
-struct alignas(16) Measurement {
-  Measurement(const std::chrono::steady_clock::time_point start_ts, const Latency latency)
-      : start_ts(start_ts), latency(latency){};
-  const std::chrono::steady_clock::time_point start_ts;
-  const Latency latency;
-};
-
 enum BenchmarkType { Single, Parallel };
 
 }  // namespace internal
@@ -77,8 +70,6 @@ struct BenchmarkConfig {
 
   uint16_t number_threads = 1;
 
-  bool raw_results = false;
-
   bool prefault_file = true;
 
   uint64_t min_io_chunk_size = 128 * 1024u;  // 128 KiB
@@ -93,21 +84,18 @@ struct ThreadRunConfig {
   const size_t num_threads_per_partition;
   const size_t thread_num;
   const size_t num_ops;
-  std::vector<internal::Measurement>* raw_measurements;
   std::vector<internal::Latency>* latencies;
   uint64_t* custom_op_duration;
   const BenchmarkConfig& config;
 
   ThreadRunConfig(char* partition_start_addr, const size_t partition_size, const size_t num_threads_per_partition,
-                  const size_t thread_num, const size_t num_ops, std::vector<internal::Measurement>* raw_measurements,
-                  std::vector<internal::Latency>* latencies, uint64_t* custom_op_duration,
-                  const BenchmarkConfig& config)
+                  const size_t thread_num, const size_t num_ops, std::vector<internal::Latency>* latencies,
+                  uint64_t* custom_op_duration, const BenchmarkConfig& config)
       : partition_start_addr(partition_start_addr),
         partition_size(partition_size),
         num_threads_per_partition(num_threads_per_partition),
         thread_num(thread_num),
         num_ops(num_ops),
-        raw_measurements(raw_measurements),
         latencies(latencies),
         custom_op_duration(custom_op_duration),
         config(config) {}
@@ -120,7 +108,6 @@ struct BenchmarkResult {
   nlohmann::json get_result_as_json() const;
   nlohmann::json get_custom_results_as_json() const;
 
-  std::vector<std::vector<internal::Measurement>> raw_measurements;
   std::vector<std::vector<internal::Latency>> latencies;
   std::vector<uint64_t> custom_operation_durations;
   hdr_histogram* latency_hdr = nullptr;
