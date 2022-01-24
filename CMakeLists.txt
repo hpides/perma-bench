@@ -111,7 +111,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(yaml_cpp)
 
 ##################### JSON ####################
-set(JSON_VERSION v3.9.1)
+set(JSON_VERSION v3.10.5)
 set(JSON_DOWNLOAD_PATH https://github.com/nlohmann/json/releases/download/${JSON_VERSION}/json.hpp)
 set(JSON_DIR ${CMAKE_CURRENT_BINARY_DIR}/json)
 set(JSON_INCLUDE_PATH ${JSON_DIR}/json.hpp)
@@ -131,12 +131,12 @@ FetchContent_MakeAvailable(hdr_histogram)
 FetchContent_Declare(
         spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG v1.8.1
+        GIT_TAG v1.9.2
 )
 FetchContent_MakeAvailable(spdlog)
 
 ################### CLI11 ####################
-set(CLI11_VERSION v1.9.1)
+set(CLI11_VERSION v2.1.2)
 set(CLI11_DOWNLOAD_PATH https://github.com/CLIUtils/CLI11/releases/download/${CLI11_VERSION}/CLI11.hpp)
 set(CLI11_DIR ${CMAKE_CURRENT_BINARY_DIR}/cli11)
 set(CLI11_INCLUDE_PATH ${CLI11_DIR}/CLI11.hpp)
