@@ -15,7 +15,20 @@ class IoOperation {
   friend class Benchmark;
 
  public:
-  inline void run() { return (op_type_ == Operation::Read) ? run_read() : run_write(); }
+  inline void run() {
+    switch (op_type_) {
+      case Operation::Read: {
+        return run_read();
+      }
+      case Operation::Write: {
+        return run_write();
+      }
+      default: {
+        spdlog::critical("Invalid operation: {}", op_type_);
+        utils::crash_exit();
+      }
+    }
+  }
 
   inline bool is_read() const { return op_type_ == Operation::Read; }
   inline bool is_write() const { return op_type_ == Operation::Write; }

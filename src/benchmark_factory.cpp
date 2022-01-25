@@ -34,7 +34,7 @@ std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const st
           // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
           std::vector<std::unique_ptr<BenchmarkResult>> results{};
           results.push_back(std::make_unique<BenchmarkResult>(bm));
-          if (bm.contains_write_op() > 0) {
+          if (bm.contains_write_op()) {
             benchmarks.emplace_back(name, bm, results);
           } else {
             benchmarks.emplace_back(name, bm, results, pmem_data_file);
@@ -92,7 +92,7 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
           std::vector<std::unique_ptr<BenchmarkResult>> results{};
 
           // Reorder benchmarks if only the first benchmark is read-only and the second writing
-          if (!config_one.contains_write_op() && config_two.contains_write_op() > 0) {
+          if (!config_one.contains_write_op() && config_two.contains_write_op()) {
             results.push_back(std::move(std::make_unique<BenchmarkResult>(config_one)));
             results.push_back(std::move(std::make_unique<BenchmarkResult>(config_two)));
           } else {

@@ -228,7 +228,7 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
             break;
           }
           default: {
-            spdlog::error("Illegal state. Cannot be in `run_in_thread()` with different mode.");
+            spdlog::error("Illegal state. Cannot be in `run_in_thread()` with different mode: {}.", config.exec_mode);
             utils::crash_exit();
           }
         }

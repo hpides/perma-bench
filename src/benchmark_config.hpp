@@ -51,7 +51,7 @@ struct BenchmarkConfig {
   uint16_t number_threads = 1;
 
   /** Alternative measure to end a benchmark by letting is run for `run_time` seconds. */
-  uint64_t run_time = -1;
+  uint64_t run_time = UINT64_MAX;
 
   /** Type of memory access operation to perform, i.e., read or write. */
   Operation operation = Operation::Read;
