@@ -8,7 +8,7 @@ logging:
   args:
     total_memory_range: 30G
     exec_mode: sequential
-    write_ratio: 1
+    operation: write
 
 logging_partition:
   matrix:
@@ -20,4 +20,4 @@ logging_partition:
     total_memory_range: 30G
     number_threads: 8
     exec_mode: sequential
-    write_ratio: 1
+    operation: write

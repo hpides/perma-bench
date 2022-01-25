@@ -9,9 +9,7 @@
 
 #include "json.hpp"
 
-namespace perma {
-
-namespace internal {
+namespace perma::utils {
 
 static constexpr size_t NUM_UTIL_THREADS = 4;                  // Should be a power of two
 static constexpr size_t PMEM_PAGE_SIZE = 2 * (1024ul * 1024);  // 2 MiB persistent memory page size
@@ -22,8 +20,6 @@ static int PMEM_MAP_FLAGS = MAP_SHARED_VALIDATE | MAP_SYNC;
 static int DRAM_MAP_FLAGS = MAP_SHARED | MAP_ANONYMOUS;
 
 void setPMEM_MAP_FLAGS(int flags);
-
-}  // namespace internal
 
 class PermaException : public std::exception {
  public:
@@ -53,4 +49,4 @@ std::filesystem::path create_result_file(const std::filesystem::path& result_dir
                                          const std::filesystem::path& config_path);
 void write_benchmark_results(const std::filesystem::path& result_path, const nlohmann::json& results);
 
-}  // namespace perma
+}  // namespace perma::utils

@@ -7,7 +7,7 @@ parallel_test:
         number_threads: 16
         persist_instruction: nocache
         exec_mode: sequential
-        write_ratio: 1
+        operation: write
 
     buffer_read:
       args:
@@ -16,4 +16,4 @@ parallel_test:
         number_threads: 8
         total_memory_range: 10g # 10 GiB
         number_operations: 10000000
-        write_ratio: 0
+        operation: read

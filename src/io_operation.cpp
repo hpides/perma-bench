@@ -10,18 +10,18 @@ namespace perma {
 CustomOp CustomOp::from_string(const std::string& str) {
   if (str.empty()) {
     spdlog::error("Custom operation cannot be empty!");
-    crash_exit();
+    utils::crash_exit();
   }
 
   CustomOp op;
   char type_char = str[0];
   if (type_char == 'r') {
-    op.type = internal::OpType::Read;
+    op.type = Operation::Read;
   } else if (type_char == 'w') {
-    op.type = internal::OpType::Write;
+    op.type = Operation::Write;
   } else {
     spdlog::error("Unknown type char: {}", type_char);
-    crash_exit();
+    utils::crash_exit();
   }
 
   const size_t delim_pos = str.find('_');
@@ -30,26 +30,26 @@ CustomOp CustomOp::from_string(const std::string& str) {
 
   if ((op.size & (op.size - 1)) != 0) {
     spdlog::error("Access size of custom operation must be power of 2. Got {}", op.size);
-    crash_exit();
+    utils::crash_exit();
   }
 
-  if (op.type == internal::OpType::Write) {
+  if (op.type == Operation::Write) {
     if (delim_pos == str.length()) {
       spdlog::error("Custom write op must end with '_<persist_instruction>', e.g., w64_cache");
-      crash_exit();
+      utils::crash_exit();
     }
     std::string persist_str = str.substr(delim_pos + 1, str.length());
     if (persist_str == "none") {
-      op.persist = internal::PersistInstruction::None;
+      op.persist = PersistInstruction::None;
     } else if (persist_str == "cache") {
-      op.persist = internal::PersistInstruction::Cache;
+      op.persist = PersistInstruction::Cache;
     } else if (persist_str == "cache_inv") {
-      op.persist = internal::PersistInstruction::CacheInvalidate;
+      op.persist = PersistInstruction::CacheInvalidate;
     } else if (persist_str == "nocache") {
-      op.persist = internal::PersistInstruction::NoCache;
+      op.persist = PersistInstruction::NoCache;
     } else {
       spdlog::error("Could not parse the persist instruction in write op: '{}'", persist_str);
-      crash_exit();
+      utils::crash_exit();
     }
   }
   return op;
@@ -58,7 +58,7 @@ CustomOp CustomOp::from_string(const std::string& str) {
 std::vector<CustomOp> CustomOp::all_from_string(const std::string& str) {
   if (str.empty()) {
     spdlog::error("Custom operations cannot be empty!");
-    crash_exit();
+    utils::crash_exit();
   }
 
   std::vector<CustomOp> ops;
@@ -68,9 +68,9 @@ std::vector<CustomOp> CustomOp::all_from_string(const std::string& str) {
     ops.emplace_back(from_string(op_str));
   }
 
-  if (ops[0].type != internal::OpType::Read) {
+  if (ops[0].type != Operation::Read) {
     spdlog::error("First custom operation must be a read");
-    crash_exit();
+    utils::crash_exit();
   }
 
   return ops;
@@ -78,17 +78,17 @@ std::vector<CustomOp> CustomOp::all_from_string(const std::string& str) {
 
 std::string CustomOp::to_string(const CustomOp& op) {
   std::stringstream out;
-  char type_str = op.type == internal::OpType::Read ? 'r' : 'w';
+  char type_str = op.type == Operation::Read ? 'r' : 'w';
   out << type_str << op.size;
-  if (op.type == internal::OpType::Write) {
+  if (op.type == Operation::Write) {
     out << '_';
-    if (op.persist == internal::PersistInstruction::None) {
+    if (op.persist == PersistInstruction::None) {
       out << "none";
-    } else if (op.persist == internal::PersistInstruction::Cache) {
+    } else if (op.persist == PersistInstruction::Cache) {
       out << "cache";
-    } else if (op.persist == internal::PersistInstruction::CacheInvalidate) {
+    } else if (op.persist == PersistInstruction::CacheInvalidate) {
       out << "cache_inv";
-    } else if (op.persist == internal::PersistInstruction::NoCache) {
+    } else if (op.persist == PersistInstruction::NoCache) {
       out << "nocache";
     }
   }

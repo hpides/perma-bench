@@ -13,9 +13,9 @@
 #include "json.hpp"
 #include "read_write_ops.hpp"
 
-namespace perma {
+namespace perma::utils {
 
-void internal::setPMEM_MAP_FLAGS(const int flags) { internal::PMEM_MAP_FLAGS = flags; }
+void setPMEM_MAP_FLAGS(const int flags) { PMEM_MAP_FLAGS = flags; }
 
 char* map_file(const std::filesystem::path& file, const bool is_dram, size_t expected_length) {
   uint64_t fd = -1;
@@ -26,9 +26,9 @@ char* map_file(const std::filesystem::path& file, const bool is_dram, size_t exp
     if (fd == -1) {
       throw std::runtime_error{"Could not open file: " + file.string()};
     }
-    flags = internal::PMEM_MAP_FLAGS;
+    flags = PMEM_MAP_FLAGS;
   } else {
-    flags = internal::DRAM_MAP_FLAGS;
+    flags = DRAM_MAP_FLAGS;
   }
 
   void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, flags, fd, 0);
@@ -67,17 +67,17 @@ std::filesystem::path generate_random_file_name(const std::filesystem::path& bas
 }
 
 void generate_read_data(char* addr, const uint64_t total_memory_range) {
-  spdlog::info("Generating {} GB of random data to read.", total_memory_range / internal::ONE_GB);
+  spdlog::info("Generating {} GB of random data to read.", total_memory_range / ONE_GB);
   std::vector<std::thread> thread_pool;
-  thread_pool.reserve(internal::NUM_UTIL_THREADS - 1);
-  uint64_t thread_memory_range = total_memory_range / internal::NUM_UTIL_THREADS;
-  for (uint8_t thread_count = 0; thread_count < internal::NUM_UTIL_THREADS - 1; thread_count++) {
+  thread_pool.reserve(NUM_UTIL_THREADS - 1);
+  uint64_t thread_memory_range = total_memory_range / NUM_UTIL_THREADS;
+  for (uint8_t thread_count = 0; thread_count < NUM_UTIL_THREADS - 1; thread_count++) {
     char* from = addr + thread_count * thread_memory_range;
     const char* to = addr + (thread_count + 1) * thread_memory_range;
     thread_pool.emplace_back(rw_ops::write_data, from, to);
   }
 
-  rw_ops::write_data(addr + (internal::NUM_UTIL_THREADS - 1) * thread_memory_range, addr + total_memory_range);
+  rw_ops::write_data(addr + (NUM_UTIL_THREADS - 1) * thread_memory_range, addr + total_memory_range);
 
   // wait for all threads
   for (std::thread& thread : thread_pool) {
@@ -196,7 +196,7 @@ std::filesystem::path create_result_file(const std::filesystem::path& result_dir
   const bool created = std::filesystem::create_directories(result_dir, ec);
   if (!created && ec) {
     spdlog::critical("Could not create result directory! Error: {}", ec.message());
-    perma::crash_exit();
+    utils::crash_exit();
   }
 
   std::string file_name;
@@ -208,7 +208,7 @@ std::filesystem::path create_result_file(const std::filesystem::path& result_dir
     file_name = config_dir_name.concat(result_suffix);
   } else {
     spdlog::critical("Unexpected config file type for '{}'.", config_path.string());
-    perma::crash_exit();
+    utils::crash_exit();
   }
 
   std::filesystem::path result_path = result_dir / file_name;
@@ -226,7 +226,7 @@ void write_benchmark_results(const std::filesystem::path& result_path, const nlo
   if (!all_results.is_array()) {
     previous_result_file.close();
     spdlog::critical("Result file '{}' is corrupted! Content must be a valid JSON array.", result_path.string());
-    perma::crash_exit();
+    utils::crash_exit();
   }
 
   all_results.push_back(results);
@@ -242,4 +242,4 @@ void print_segfault_error() {
       "with your configuration and system information so that we can try to fix this.");
 }
 
-}  // namespace perma
+}  // namespace perma::utils

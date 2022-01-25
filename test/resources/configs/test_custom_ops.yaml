@@ -1,0 +1,12 @@
+test_custom_ops:
+  matrix:
+    custom_operations:
+      - "r64,w64_nocache,r128"
+      - "r256,w256_none"
+      - "r1024,w128_cache"
+
+  args:
+    number_threads: 16
+    total_memory_range: 2G
+    number_operations: 100000000
+    exec_mode: custom

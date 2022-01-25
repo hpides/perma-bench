@@ -29,12 +29,12 @@ std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const st
       YAML::Node bm_matrix = raw_bm_args["matrix"];
       if (bm_matrix) {
         std::vector<BenchmarkConfig> matrix = create_benchmark_matrix(pmem_directory, bm_args, bm_matrix);
-        const std::filesystem::path pmem_data_file = generate_random_file_name(pmem_directory);
+        const std::filesystem::path pmem_data_file = utils::generate_random_file_name(pmem_directory);
         for (BenchmarkConfig& bm : matrix) {
           // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
           std::vector<std::unique_ptr<BenchmarkResult>> results{};
           results.push_back(std::make_unique<BenchmarkResult>(bm));
-          if (bm.write_ratio > 0) {
+          if (bm.contains_write_op()) {
             benchmarks.emplace_back(name, bm, results);
           } else {
             benchmarks.emplace_back(name, bm, results, pmem_data_file);
@@ -83,8 +83,8 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
       par_it++;
       parse_yaml_node(pmem_directory, bm_two_configs, par_it, unique_name_two);
 
-      const std::filesystem::path pmem_data_file_one = generate_random_file_name(pmem_directory);
-      const std::filesystem::path pmem_data_file_two = generate_random_file_name(pmem_directory);
+      const std::filesystem::path pmem_data_file_one = utils::generate_random_file_name(pmem_directory);
+      const std::filesystem::path pmem_data_file_two = utils::generate_random_file_name(pmem_directory);
       // Build cartesian product of both benchmarks
       for (const BenchmarkConfig& config_one : bm_one_configs) {
         for (const BenchmarkConfig& config_two : bm_two_configs) {
@@ -92,7 +92,7 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
           std::vector<std::unique_ptr<BenchmarkResult>> results{};
 
           // Reorder benchmarks if only the first benchmark is read-only and the second writing
-          if (config_one.write_ratio == 0 && config_two.write_ratio > 0) {
+          if (!config_one.contains_write_op() && config_two.contains_write_op()) {
             results.push_back(std::move(std::make_unique<BenchmarkResult>(config_one)));
             results.push_back(std::move(std::make_unique<BenchmarkResult>(config_two)));
           } else {
@@ -100,12 +100,12 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
             results.push_back(std::move(std::make_unique<BenchmarkResult>(config_one)));
           }
 
-          if (config_one.write_ratio > 0 && config_two.write_ratio > 0) {
+          if (config_one.contains_write_op() && config_two.contains_write_op()) {
             benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results);
-          } else if (config_one.write_ratio > 0) {
+          } else if (config_one.contains_write_op()) {
             benchmarks.emplace_back(name, unique_name_two, unique_name_one, config_two, config_one, results,
                                     pmem_data_file_two);
-          } else if (config_two.write_ratio > 0) {
+          } else if (config_two.contains_write_op()) {
             benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results,
                                     pmem_data_file_one);
           } else {
@@ -155,9 +155,9 @@ std::vector<BenchmarkConfig> BenchmarkFactory::create_benchmark_matrix(const std
                                                                               YAML::Node& current_config) {
     YAML::Node current_values = node_iterator->second;
     if (node_iterator == matrix_args.end() || current_values.IsNull()) {
-      // End of matrix recursion
+      // End of matrix recursion.
       // We need to copy here to keep the tags clean in the YAML.
-      // Otherwise everything is 'visited' after the first iteration and decoding fails.
+      // Otherwise, everything is 'visited' after the first iteration and decoding fails.
       YAML::Node clean_config = YAML::Clone(current_config);
 
       BenchmarkConfig final_config = BenchmarkConfig::decode(clean_config);
@@ -192,7 +192,7 @@ std::vector<YAML::Node> BenchmarkFactory::get_config_files(const std::filesystem
   std::vector<std::filesystem::path> config_files{};
   if (std::filesystem::is_directory(config_file_path)) {
     for (const std::filesystem::path& config_file : std::filesystem::recursive_directory_iterator(config_file_path)) {
-      if (config_file.extension() == internal::CONFIG_FILE_EXTENSION) {
+      if (config_file.extension() == CONFIG_FILE_EXTENSION) {
         config_files.push_back(config_file);
       }
     }

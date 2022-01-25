@@ -6,9 +6,7 @@
 
 namespace perma {
 
-namespace internal {
-static const std::string CONFIG_FILE_EXTENSION = ".yaml";
-}  // namespace internal
+static constexpr auto CONFIG_FILE_EXTENSION = ".yaml";
 
 class BenchmarkFactory {
  public:

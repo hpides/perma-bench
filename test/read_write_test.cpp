@@ -16,7 +16,7 @@ constexpr size_t TMP_FILE_SIZE = 131072;  // 128 KiB
 class ReadWriteTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    temp_file_ = generate_random_file_name(std::filesystem::temp_directory_path());
+    temp_file_ = utils::generate_random_file_name(std::filesystem::temp_directory_path());
 
     std::ofstream temp_stream{temp_file_};
     temp_stream.close();
