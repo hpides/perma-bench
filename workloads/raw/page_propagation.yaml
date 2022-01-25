@@ -7,7 +7,7 @@ page_propagation:
     write_ratio: [ 0, 0.2, 0.5, 0.8, 1 ]
 
   args:
-    total_memory_range: 50G
+    memory_range: 50G
     number_operations: 10000000 # 10 million
     persist_instruction: nocache
     exec_mode: random

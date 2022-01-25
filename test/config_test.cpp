@@ -82,7 +82,7 @@ TEST_F(ConfigTest, SingleDecodeSequential) {
 
   BenchmarkConfig bm_config_default{};
 
-  EXPECT_EQ(bm_config.total_memory_range, 67108864);
+  EXPECT_EQ(bm_config.memory_range, 67108864);
   EXPECT_EQ(bm_config.access_size, 256);
   EXPECT_EQ(bm_config.exec_mode, Mode::Sequential);
 
@@ -118,7 +118,7 @@ TEST_F(ConfigTest, DecodeRandom) {
 
   EXPECT_EQ(bm_config.operation, Operation::Write);
 
-  EXPECT_EQ(bm_config.total_memory_range, bm_config_default.total_memory_range);
+  EXPECT_EQ(bm_config.memory_range, bm_config_default.memory_range);
   EXPECT_EQ(bm_config.access_size, bm_config_default.access_size);
   EXPECT_EQ(bm_config.number_operations, bm_config_default.number_operations);
   EXPECT_EQ(bm_config.persist_instruction, bm_config_default.persist_instruction);
@@ -145,7 +145,7 @@ TEST_F(ConfigTest, ParallelDecodeSequentialRandom) {
 
   BenchmarkConfig bm_config_default{};
 
-  EXPECT_EQ(bm_config.total_memory_range, 10737418240);
+  EXPECT_EQ(bm_config.memory_range, 10737418240);
   EXPECT_EQ(bm_config.access_size, 4096);
   EXPECT_EQ(bm_config.exec_mode, Mode::Random);
   EXPECT_EQ(bm_config.number_operations, 10000000);
@@ -165,7 +165,7 @@ TEST_F(ConfigTest, ParallelDecodeSequentialRandom) {
 
   bm_config = par_benchmarks.at(0).get_benchmark_configs()[1];
 
-  EXPECT_EQ(bm_config.total_memory_range, 10737418240);
+  EXPECT_EQ(bm_config.memory_range, 10737418240);
   EXPECT_EQ(bm_config.access_size, 256);
   EXPECT_EQ(bm_config.exec_mode, Mode::Sequential);
   EXPECT_EQ(bm_config.persist_instruction, PersistInstruction::NoCache);
@@ -212,7 +212,7 @@ TEST_F(ConfigTest, DecodeMatrix) {
     const BenchmarkConfig& config = bm.get_benchmark_configs()[0];
 
     // Other args are identical for all configs
-    EXPECT_EQ(config.total_memory_range, 536870912);
+    EXPECT_EQ(config.memory_range, 536870912);
     EXPECT_EQ(config.exec_mode, Mode::Sequential);
     EXPECT_EQ(config.operation, Operation::Read);
     EXPECT_EQ(config.number_operations, bm_config_default.number_operations);
@@ -263,7 +263,7 @@ TEST_F(ConfigTest, DecodeCustomOperationsMatrix) {
     const BenchmarkConfig& config = bm.get_benchmark_configs()[0];
 
     // Other args are identical for all configs
-    EXPECT_EQ(config.total_memory_range, 2147483648);
+    EXPECT_EQ(config.memory_range, 2147483648);
     EXPECT_EQ(config.exec_mode, Mode::Custom);
     EXPECT_EQ(config.number_operations, 100000000);
     EXPECT_EQ(config.number_threads, 16);
@@ -307,7 +307,7 @@ TEST_F(ConfigTest, ParallelDecodeMatrix) {
     const BenchmarkConfig& config_two = bm.get_benchmark_configs()[1];
 
     // Other args are identical for all configs
-    EXPECT_EQ(config_one.total_memory_range, 10737418240);
+    EXPECT_EQ(config_one.memory_range, 10737418240);
     EXPECT_EQ(config_one.access_size, 4096);
     EXPECT_EQ(config_one.exec_mode, Mode::Random);
     EXPECT_EQ(config_one.number_operations, 10000000);
@@ -322,7 +322,7 @@ TEST_F(ConfigTest, ParallelDecodeMatrix) {
     EXPECT_EQ(config_one.run_time, bm_config_default.run_time);
     EXPECT_EQ(config_one.latency_sample_frequency, bm_config_default.latency_sample_frequency);
 
-    EXPECT_EQ(config_two.total_memory_range, 10737418240);
+    EXPECT_EQ(config_two.memory_range, 10737418240);
     EXPECT_EQ(config_two.exec_mode, Mode::Sequential);
     EXPECT_EQ(config_two.operation, Operation::Write);
     EXPECT_EQ(config_two.number_threads, 16);
@@ -354,7 +354,7 @@ TEST_F(ConfigTest, InvalidPowerAccessSize) {
 }
 
 TEST_F(ConfigTest, InvalidMemoryRangeAccessSizeMultiple) {
-  bm_config.total_memory_range = 100000;
+  bm_config.memory_range = 100000;
   EXPECT_THROW(bm_config.validate(), PermaException);
   check_log_for_critical("multiple of access size");
 }

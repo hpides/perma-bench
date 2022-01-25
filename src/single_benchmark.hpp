@@ -9,9 +9,10 @@ namespace perma {
 class SingleBenchmark : public Benchmark {
  public:
   SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config,
-                  std::vector<std::unique_ptr<BenchmarkResult>>& results);
+                  std::vector<std::unique_ptr<BenchmarkResult>>& results, std::filesystem::path dram_file);
   SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config,
-                  std::vector<std::unique_ptr<BenchmarkResult>>& results, std::filesystem::path pmem_file);
+                  std::vector<std::unique_ptr<BenchmarkResult>>& results, std::filesystem::path dram_file,
+                  std::filesystem::path pmem_file);
 
   SingleBenchmark(SingleBenchmark&& other) = default;
   SingleBenchmark(const SingleBenchmark& other) = delete;
@@ -26,7 +27,7 @@ class SingleBenchmark : public Benchmark {
    * This is probably the first method to be called so that a virtual
    * address space is available to generate the IO addresses.
    */
-  void create_data_file() override;
+  void create_data_files() override;
 
   /** Create all the IO addresses ahead of time to avoid unnecessary ops during the actual benchmark. */
   void set_up() override;

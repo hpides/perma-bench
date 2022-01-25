@@ -7,6 +7,6 @@ test_custom_ops:
 
   args:
     number_threads: 16
-    total_memory_range: 2G
+    memory_range: 2G
     number_operations: 100000000
     exec_mode: custom

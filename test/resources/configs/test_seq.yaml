@@ -1,7 +1,7 @@
 test_seq:
   args:
     access_size: 256
-    total_memory_range: 64M
+    memory_range: 64M
     exec_mode: sequential
     number_threads: 2
     operation: read

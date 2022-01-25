@@ -6,7 +6,7 @@ table_scan:
 
   args:
     exec_mode: sequential
-    total_memory_range: 50G
+    memory_range: 50G
     operation: read
 
 table_scan_partitioned:
@@ -15,7 +15,7 @@ table_scan_partitioned:
     access_size: [ 64, 256, 4096, 16384, 65536 ]
 
   args:
-      number_threads: 32
-      exec_mode: sequential
-      total_memory_range: 50G
-      operation: read
+    number_threads: 32
+    exec_mode: sequential
+    memory_range: 50G
+    operation: read

@@ -14,6 +14,6 @@ aggregation:
       - "r1024,w128_none"
 
   args:
-    total_memory_range: 2G
+    memory_range: 2G
     number_operations: 100000000
     exec_mode: custom

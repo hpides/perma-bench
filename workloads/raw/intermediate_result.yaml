@@ -1,7 +1,7 @@
 intermediate_result:
   matrix:
     number_threads: [ 1, 2, 4, 8, 16, 32 ]
-    total_memory_range: [ 10G, 1G, 100M ]
+    memory_range: [ 10G, 1G, 100M ]
     persist_instruction: [ cache, nocache, none ]
 
   args:

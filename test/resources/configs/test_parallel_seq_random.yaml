@@ -2,7 +2,7 @@ parallel_test:
   parallel_benchmark:
     logging:
       args:
-        total_memory_range: 10G  # 10 GiB
+        memory_range: 10G  # 10 GiB
         access_size: 256
         number_threads: 16
         persist_instruction: nocache
@@ -14,6 +14,6 @@ parallel_test:
         exec_mode: random
         access_size: 4k
         number_threads: 8
-        total_memory_range: 10g # 10 GiB
+        memory_range: 10g # 10 GiB
         number_operations: 10000000
         operation: read

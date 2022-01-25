@@ -106,7 +106,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
       printed_info = true;
     }
 
-    benchmark.create_data_file();
+    benchmark.create_data_files();
     benchmark.set_up();
     const bool success = benchmark.run();
     previous_bm = &benchmark;

@@ -30,23 +30,25 @@ std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const st
       if (bm_matrix) {
         std::vector<BenchmarkConfig> matrix = create_benchmark_matrix(pmem_directory, bm_args, bm_matrix);
         const std::filesystem::path pmem_data_file = utils::generate_random_file_name(pmem_directory);
+        const std::filesystem::path dram_data_file = utils::generate_random_file_name("");
         for (BenchmarkConfig& bm : matrix) {
           // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
           std::vector<std::unique_ptr<BenchmarkResult>> results{};
           results.push_back(std::make_unique<BenchmarkResult>(bm));
           if (bm.contains_write_op()) {
-            benchmarks.emplace_back(name, bm, results);
+            benchmarks.emplace_back(name, bm, results, dram_data_file);
           } else {
-            benchmarks.emplace_back(name, bm, results, pmem_data_file);
+            benchmarks.emplace_back(name, bm, results, dram_data_file, pmem_data_file);
           }
         }
       } else {
+        const std::filesystem::path dram_data_file = utils::generate_random_file_name("");
         BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args);
         bm_config.pmem_directory = pmem_directory;
         bm_config.is_pmem = pmem_directory != "";
         std::vector<std::unique_ptr<BenchmarkResult>> results{};
         results.push_back(std::make_unique<BenchmarkResult>(bm_config));
-        benchmarks.emplace_back(name, bm_config, results);
+        benchmarks.emplace_back(name, bm_config, results, dram_data_file);
       }
     }
   }
@@ -85,6 +87,7 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
 
       const std::filesystem::path pmem_data_file_one = utils::generate_random_file_name(pmem_directory);
       const std::filesystem::path pmem_data_file_two = utils::generate_random_file_name(pmem_directory);
+      const std::filesystem::path dram_data_file = utils::generate_random_file_name("");
       // Build cartesian product of both benchmarks
       for (const BenchmarkConfig& config_one : bm_one_configs) {
         for (const BenchmarkConfig& config_two : bm_two_configs) {
@@ -101,16 +104,17 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
           }
 
           if (config_one.contains_write_op() && config_two.contains_write_op()) {
-            benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results);
+            benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results,
+                                    dram_data_file);
           } else if (config_one.contains_write_op()) {
             benchmarks.emplace_back(name, unique_name_two, unique_name_one, config_two, config_one, results,
-                                    pmem_data_file_two);
+                                    dram_data_file, pmem_data_file_two);
           } else if (config_two.contains_write_op()) {
             benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results,
-                                    pmem_data_file_one);
+                                    dram_data_file, pmem_data_file_one);
           } else {
             benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two, results,
-                                    pmem_data_file_one, pmem_data_file_two);
+                                    dram_data_file, pmem_data_file_one, pmem_data_file_two);
           }
         }
       }
