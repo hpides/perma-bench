@@ -118,9 +118,9 @@ class Benchmark {
   std::string benchmark_type_as_str() const;
   BenchmarkType get_benchmark_type() const;
 
-  const std::filesystem::path& get_pmem_file(const uint8_t index) const;
+  const std::filesystem::path& get_pmem_file(uint8_t index) const;
   std::vector<char*> get_pmem_data() const;
-  bool owns_pmem_file(const uint8_t index) const;
+  bool owns_pmem_file(uint8_t index) const;
   std::vector<char*> get_dram_data() const;
 
   const std::vector<BenchmarkConfig>& get_benchmark_configs() const;

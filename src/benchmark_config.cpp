@@ -100,6 +100,7 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
                                      &bm_config.dram_memory_range);
     num_found += get_size_if_present(node, "access_size", ConfigEnums::scale_suffix_to_factor, &bm_config.access_size);
 
+    num_found += get_if_present(node, "dram_ratio", &bm_config.dram_ratio);
     num_found += get_if_present(node, "number_operations", &bm_config.number_operations);
     num_found += get_if_present(node, "run_time", &bm_config.run_time);
     num_found += get_if_present(node, "number_partitions", &bm_config.number_partitions);
@@ -156,7 +157,16 @@ void BenchmarkConfig::validate() const {
   // Check if DRAM memory range is multiple of access size
   const bool is_dram_memory_range_multiple_of_access_size =
       dram_memory_range == 0 || (dram_memory_range % access_size) == 0;
-  CHECK_ARGUMENT(is_memory_range_multiple_of_access_size, "DRAM memory range must be a multiple of access size or 0.");
+  CHECK_ARGUMENT(is_dram_memory_range_multiple_of_access_size,
+                 "DRAM memory range must be a multiple of access size or 0.");
+
+  // Check if DRAM ratio is greater and equal to 0 and smaller than 1
+  const bool is_dram_ratio_valid = 0.0 <= dram_ratio && dram_ratio < 1.0;
+  CHECK_ARGUMENT(is_dram_ratio_valid, "DRAM ratio must be at least 0 and smaller than 1.");
+
+  // Check if DRAM ratio only contains single decimal, i.e, 0.1, 0.2, or 0.8
+  const bool is_only_one_decimal = (static_cast<int>(dram_ratio * 10) / 10.0) == dram_ratio;
+  CHECK_ARGUMENT(is_only_one_decimal, "DRAM ratio must only contain one decimal.");
 
   // Check if runtime is at least one second
   const bool is_at_least_one_second_or_default = run_time > 0 || run_time == -1;

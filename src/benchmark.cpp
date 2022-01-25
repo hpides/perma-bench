@@ -266,6 +266,7 @@ nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm
 
   if (bm_config.is_hybrid) {
     config["dram_memory_range"] = bm_config.dram_memory_range;
+    config["dram_ratio"] = bm_config.dram_ratio;
   }
 
   if (bm_config.exec_mode != Mode::Custom) {
