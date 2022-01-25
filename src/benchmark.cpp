@@ -93,22 +93,21 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, st
   }
 }
 
-char* Benchmark::create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& data_file,
-                                         const uint64_t memory_range, const bool is_dram) {
-  if (std::filesystem::exists(data_file)) {
+char* Benchmark::create_single_data_file(const BenchmarkConfig& config, const MemoryRegion& memory_region) {
+  if (std::filesystem::exists(memory_region.pmem_file)) {
     // Data was already generated. Only re-map it.
-    return utils::map_file(data_file, is_dram, memory_range);
+    return utils::map_file(memory_region.pmem_file, !config.is_pmem, config.memory_range);
   }
 
-  char* file_data = utils::create_file(data_file, is_dram, memory_range);
+  char* file_data = utils::create_file(memory_region.pmem_file, !config.is_pmem, config.memory_range);
   if (config.contains_read_op()) {
     // If we read data in this benchmark, we need to generate it first.
-    utils::generate_read_data(file_data, memory_range);
+    utils::generate_read_data(file_data, config.memory_range);
   }
 
   if (config.contains_write_op() && config.prefault_file) {
-    const size_t page_size = is_dram ? utils::DRAM_PAGE_SIZE : utils::PMEM_PAGE_SIZE;
-    utils::prefault_file(file_data, memory_range, page_size);
+    const size_t page_size = config.is_pmem ? utils::PMEM_PAGE_SIZE : utils::DRAM_PAGE_SIZE;
+    utils::prefault_file(file_data, config.memory_range, page_size);
   }
   return file_data;
 }
@@ -259,12 +258,15 @@ nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm
   nlohmann::json config;
   config["memory_type"] = get_enum_as_string(ConfigEnums::str_to_mem_type, bm_config.is_pmem);
   config["memory_range"] = bm_config.memory_range;
-  config["dram_memory_range"] = bm_config.dram_memory_range;
   config["exec_mode"] = get_enum_as_string(ConfigEnums::str_to_mode, bm_config.exec_mode);
   config["number_partitions"] = bm_config.number_partitions;
   config["number_threads"] = bm_config.number_threads;
   config["numa_pattern"] = get_enum_as_string(ConfigEnums::str_to_numa_pattern, bm_config.numa_pattern);
   config["prefault_file"] = bm_config.prefault_file;
+
+  if (bm_config.is_hybrid) {
+    config["dram_memory_range"] = bm_config.dram_memory_range;
+  }
 
   if (bm_config.exec_mode != Mode::Custom) {
     config["access_size"] = bm_config.access_size;
@@ -300,7 +302,11 @@ nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm
 
 const std::vector<BenchmarkConfig>& Benchmark::get_benchmark_configs() const { return configs_; }
 
-const std::vector<std::filesystem::path>& Benchmark::get_pmem_files() const { return pmem_files_; }
+const std::filesystem::path& Benchmark::get_pmem_file(const uint8_t index) const {
+  return memory_regions_[index].pmem_file;
+}
+
+bool Benchmark::owns_pmem_file(const uint8_t index) const { return memory_regions_[index].owns_pmem_file; }
 
 std::vector<char*> Benchmark::get_pmem_data() const { return pmem_data_; }
 
@@ -309,8 +315,6 @@ std::vector<char*> Benchmark::get_dram_data() const { return dram_data_; }
 const std::vector<std::vector<ThreadRunConfig>>& Benchmark::get_thread_configs() const { return thread_configs_; }
 
 const std::vector<std::unique_ptr<BenchmarkResult>>& Benchmark::get_benchmark_results() const { return results_; }
-
-std::vector<bool> Benchmark::owns_pmem_files() const { return owns_pmem_files_; }
 
 nlohmann::json Benchmark::get_json_config(uint8_t config_index) {
   return get_benchmark_config_as_json(configs_[config_index]);

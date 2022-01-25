@@ -98,6 +98,7 @@ struct BenchmarkConfig {
   /** These fields are set internally and do not represent user-facing options. */
   std::vector<std::string> matrix_args{};
   bool is_pmem = true;
+  bool is_hybrid = false;
 
   static BenchmarkConfig decode(YAML::Node& raw_config_data);
   void validate() const;

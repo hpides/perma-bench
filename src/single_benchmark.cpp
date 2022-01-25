@@ -33,9 +33,9 @@ bool SingleBenchmark::run() {
 }
 
 void SingleBenchmark::create_data_files() {
-  pmem_data_.push_back(
-      create_single_data_file(configs_[0], pmem_files_[0], configs_[0].memory_range, !configs_[0].is_pmem));
-  dram_data_.push_back(create_single_data_file(configs_[0], dram_files_[0], configs_[0].dram_memory_range, true));
+  pmem_data_.push_back(create_single_data_file(configs_[0], memory_regions_[0]));
+  // Reuse pmem_file_name as it is ignored for dram
+  dram_data_.push_back(utils::map_file(memory_regions_[0].pmem_file, true, configs_[0].dram_memory_range));
 }
 
 void SingleBenchmark::set_up() {
@@ -54,8 +54,8 @@ void SingleBenchmark::tear_down(const bool force) {
     munmap(dram_data_[0], configs_[0].dram_memory_range);
     dram_data_[0] = nullptr;
   }
-  if (configs_[0].is_pmem && (!owns_pmem_files_.empty() && (owns_pmem_files_[0] || force))) {
-    std::filesystem::remove(pmem_files_[0]);
+  if (configs_[0].is_pmem && (!memory_regions_.empty() && (memory_regions_[0].owns_pmem_file || force))) {
+    std::filesystem::remove(memory_regions_[0].pmem_file);
   }
 }
 
@@ -67,18 +67,17 @@ nlohmann::json SingleBenchmark::get_result_as_json() {
 }
 
 SingleBenchmark::SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config,
-                                 std::vector<std::unique_ptr<BenchmarkResult>>& results,
-                                 std::filesystem::path dram_file)
-    : Benchmark(benchmark_name, BenchmarkType::Single,
-                std::vector<std::filesystem::path>{utils::generate_random_file_name(config.pmem_directory)},
-                std::vector<std::filesystem::path>{std::move(dram_file)}, std::vector<bool>{true},
-                std::vector<BenchmarkConfig>{config}, std::move(results)) {}
+                                 std::vector<std::unique_ptr<BenchmarkResult>>& results)
+    : Benchmark(
+          benchmark_name, BenchmarkType::Single,
+          std::vector<MemoryRegion>{{utils::generate_random_file_name(config.pmem_directory), true, config.is_hybrid}},
+          std::vector<BenchmarkConfig>{config}, std::move(results)) {}
 
 SingleBenchmark::SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config,
                                  std::vector<std::unique_ptr<BenchmarkResult>>& results,
-                                 std::filesystem::path dram_file, std::filesystem::path pmem_file)
-    : Benchmark(benchmark_name, BenchmarkType::Single, std::vector<std::filesystem::path>{std::move(pmem_file)},
-                std::vector<std::filesystem::path>{std::move(dram_file)}, std::vector<bool>{false},
+                                 std::filesystem::path pmem_file)
+    : Benchmark(benchmark_name, BenchmarkType::Single,
+                std::vector<MemoryRegion>{{std::move(pmem_file), false, config.is_hybrid}},
                 std::vector<BenchmarkConfig>{config}, std::move(results)) {}
 
 }  // namespace perma

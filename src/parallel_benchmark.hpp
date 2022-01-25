@@ -13,8 +13,7 @@ class ParallelBenchmark : public Benchmark {
    */
   ParallelBenchmark(const std::string& benchmark_name, std::string first_benchmark_name,
                     std::string second_benchmark_name, const BenchmarkConfig& first_config,
-                    const BenchmarkConfig& second_config, std::vector<std::unique_ptr<BenchmarkResult>>& results,
-                    std::filesystem::path dram_file);
+                    const BenchmarkConfig& second_config, std::vector<std::unique_ptr<BenchmarkResult>>& results);
 
   /**
    * Constructor for one writing benchmark and one read-only benchmark.
@@ -23,7 +22,7 @@ class ParallelBenchmark : public Benchmark {
   ParallelBenchmark(const std::string& benchmark_name, std::string first_benchmark_name,
                     std::string second_benchmark_name, const BenchmarkConfig& first_config,
                     const BenchmarkConfig& second_config, std::vector<std::unique_ptr<BenchmarkResult>>& results,
-                    std::filesystem::path dram_file, std::filesystem::path pmem_file_first);
+                    std::filesystem::path pmem_file_first);
 
   /**
    * Constructor for two read-only benchmarks.
@@ -32,8 +31,7 @@ class ParallelBenchmark : public Benchmark {
   ParallelBenchmark(const std::string& benchmark_name, std::string first_benchmark_name,
                     std::string second_benchmark_name, const BenchmarkConfig& first_config,
                     const BenchmarkConfig& second_config, std::vector<std::unique_ptr<BenchmarkResult>>& results,
-                    std::filesystem::path dram_file, std::filesystem::path pmem_file_first,
-                    std::filesystem::path pmem_file_second);
+                    std::filesystem::path pmem_file_first, std::filesystem::path pmem_file_second);
 
   ParallelBenchmark(ParallelBenchmark&& other) = default;
   ParallelBenchmark(const ParallelBenchmark& other) = delete;

@@ -14,6 +14,12 @@
 
 namespace perma {
 
+struct MemoryRegion {
+  const std::filesystem::path pmem_file;
+  const bool owns_pmem_file;
+  const bool is_dram;
+};
+
 struct Latency {
   Latency() : data{-1u} {}
   Latency(const uint64_t latency, const Operation op_type) : duration{latency}, op_type{op_type} {};
@@ -71,14 +77,11 @@ struct BenchmarkResult {
 
 class Benchmark {
  public:
-  Benchmark(std::string benchmark_name, BenchmarkType benchmark_type, std::vector<std::filesystem::path> pmem_files,
-            std::vector<std::filesystem::path> dram_files, std::vector<bool> owns_pmem_files,
+  Benchmark(std::string benchmark_name, BenchmarkType benchmark_type, std::vector<MemoryRegion> memory_regions,
             std::vector<BenchmarkConfig> configs, std::vector<std::unique_ptr<BenchmarkResult>> results)
       : benchmark_name_{std::move(benchmark_name)},
         benchmark_type_{benchmark_type},
-        pmem_files_{std::move(pmem_files)},
-        dram_files_{std::move(dram_files)},
-        owns_pmem_files_{std::move(owns_pmem_files)},
+        memory_regions_{std::move(memory_regions)},
         configs_{std::move(configs)},
         results_{std::move(results)} {}
 
@@ -115,9 +118,9 @@ class Benchmark {
   std::string benchmark_type_as_str() const;
   BenchmarkType get_benchmark_type() const;
 
-  const std::vector<std::filesystem::path>& get_pmem_files() const;
+  const std::filesystem::path& get_pmem_file(const uint8_t index) const;
   std::vector<char*> get_pmem_data() const;
-  std::vector<bool> owns_pmem_files() const;
+  bool owns_pmem_file(const uint8_t index) const;
   std::vector<char*> get_dram_data() const;
 
   const std::vector<BenchmarkConfig>& get_benchmark_configs() const;
@@ -129,8 +132,7 @@ class Benchmark {
   static void single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
                             std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config);
 
-  static char* create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& data_file,
-                                       const uint64_t memory_range, const bool is_dram);
+  char* create_single_data_file(const BenchmarkConfig& config, const MemoryRegion& memory_region);
 
   static void run_custom_ops_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
   static void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
@@ -140,11 +142,8 @@ class Benchmark {
   const std::string benchmark_name_;
   const BenchmarkType benchmark_type_;
 
-  std::vector<std::filesystem::path> pmem_files_;
-  std::vector<bool> owns_pmem_files_;
+  std::vector<MemoryRegion> memory_regions_;
   std::vector<char*> pmem_data_;
-
-  std::vector<std::filesystem::path> dram_files_;
   std::vector<char*> dram_data_;
 
   const std::vector<BenchmarkConfig> configs_;
