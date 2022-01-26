@@ -5,11 +5,19 @@
 #include <sys/mman.h>
 
 #include <filesystem>
+#include <unordered_map>
 #include <vector>
 
 #include "json.hpp"
 
-namespace perma::utils {
+namespace perma {
+
+class PermaException : public std::exception {
+ public:
+  const char* what() const noexcept override { return "Execution failed. Check logs for more details."; }
+};
+
+namespace utils {
 
 static constexpr size_t NUM_UTIL_THREADS = 4;                  // Should be a power of two
 static constexpr size_t PMEM_PAGE_SIZE = 2 * (1024ul * 1024);  // 2 MiB persistent memory page size
@@ -20,11 +28,6 @@ static int PMEM_MAP_FLAGS = MAP_SHARED_VALIDATE | MAP_SYNC;
 static int DRAM_MAP_FLAGS = MAP_SHARED | MAP_ANONYMOUS;
 
 void setPMEM_MAP_FLAGS(int flags);
-
-class PermaException : public std::exception {
- public:
-  const char* what() const noexcept override { return "Execution failed. Check logs for more details."; }
-};
 
 char* map_file(const std::filesystem::path& file, bool is_dram, size_t expected_length);
 char* create_file(const std::filesystem::path& file, bool is_dram, size_t length);
@@ -49,4 +52,15 @@ std::filesystem::path create_result_file(const std::filesystem::path& result_dir
                                          const std::filesystem::path& config_path);
 void write_benchmark_results(const std::filesystem::path& result_path, const nlohmann::json& results);
 
-}  // namespace perma::utils
+template <typename T>
+std::string get_enum_as_string(const std::unordered_map<std::string, T>& enum_map, T value) {
+  for (auto it = enum_map.cbegin(); it != enum_map.cend(); ++it) {
+    if (it->second == value) {
+      return it->first;
+    }
+  }
+  throw std::invalid_argument("Unknown enum value for " + std::string(typeid(T).name()));
+}
+
+}  // namespace utils
+}  // namespace perma

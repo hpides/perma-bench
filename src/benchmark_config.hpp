@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <ostream>
 
 namespace perma {
 
@@ -25,13 +26,21 @@ static constexpr size_t NANOSECONDS_IN_SECONDS = 1e9;
 
 struct CustomOp {
   Operation type;
-  size_t size;
+  bool is_pmem = true;
+  uint64_t size;
   PersistInstruction persist = PersistInstruction::None;
+  // This can be signed, e.g., to represent the case when the previous cache line should be written to.
+  int64_t offset = 0;
 
   static CustomOp from_string(const std::string& str);
   static std::vector<CustomOp> all_from_string(const std::string& str);
   static std::string all_to_string(const std::vector<CustomOp>& ops);
   static std::string to_string(const CustomOp& op);
+  std::string to_string() const;
+
+  friend std::ostream& operator<<(std::ostream& os, const CustomOp& op);
+  bool operator==(const CustomOp& rhs) const;
+  bool operator!=(const CustomOp& rhs) const;
 };
 
 /**
@@ -103,9 +112,13 @@ struct BenchmarkConfig {
 };
 
 struct ConfigEnums {
+  // <read or write, is_pmem>
+  using OpLocation = std::pair<perma::Operation, bool>;
+
   static const std::unordered_map<std::string, bool> str_to_mem_type;
   static const std::unordered_map<std::string, Mode> str_to_mode;
   static const std::unordered_map<std::string, Operation> str_to_operation;
+  static const std::unordered_map<std::string, OpLocation> str_to_op_location;
   static const std::unordered_map<std::string, NumaPattern> str_to_numa_pattern;
   static const std::unordered_map<std::string, PersistInstruction> str_to_persist_instruction;
   static const std::unordered_map<std::string, RandomDistribution> str_to_random_distribution;

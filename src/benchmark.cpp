@@ -13,16 +13,6 @@
 
 namespace {
 
-template <typename T>
-std::string get_enum_as_string(const std::unordered_map<std::string, T>& enum_map, T value) {
-  for (auto it = enum_map.cbegin(); it != enum_map.cend(); ++it) {
-    if (it->second == value) {
-      return it->first;
-    }
-  }
-  throw std::invalid_argument("Unknown enum value for " + std::string(typeid(T).name()));
-}
-
 nlohmann::json hdr_histogram_to_json(hdr_histogram* hdr) {
   nlohmann::json result;
   result["max"] = hdr_max(hdr);
@@ -53,7 +43,7 @@ namespace perma {
 const std::string& Benchmark::benchmark_name() const { return benchmark_name_; }
 
 std::string Benchmark::benchmark_type_as_str() const {
-  return get_enum_as_string(BenchmarkEnums::str_to_benchmark_type, benchmark_type_);
+  return utils::get_enum_as_string(BenchmarkEnums::str_to_benchmark_type, benchmark_type_);
 }
 
 BenchmarkType Benchmark::get_benchmark_type() const { return benchmark_type_; }
@@ -256,29 +246,29 @@ void Benchmark::run_in_thread(const ThreadRunConfig& thread_config, const Benchm
 
 nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm_config) {
   nlohmann::json config;
-  config["memory_type"] = get_enum_as_string(ConfigEnums::str_to_mem_type, bm_config.is_pmem);
+  config["memory_type"] = utils::get_enum_as_string(ConfigEnums::str_to_mem_type, bm_config.is_pmem);
   config["total_memory_range"] = bm_config.total_memory_range;
-  config["exec_mode"] = get_enum_as_string(ConfigEnums::str_to_mode, bm_config.exec_mode);
+  config["exec_mode"] = utils::get_enum_as_string(ConfigEnums::str_to_mode, bm_config.exec_mode);
   config["number_partitions"] = bm_config.number_partitions;
   config["number_threads"] = bm_config.number_threads;
-  config["numa_pattern"] = get_enum_as_string(ConfigEnums::str_to_numa_pattern, bm_config.numa_pattern);
+  config["numa_pattern"] = utils::get_enum_as_string(ConfigEnums::str_to_numa_pattern, bm_config.numa_pattern);
   config["prefault_file"] = bm_config.prefault_file;
 
   if (bm_config.exec_mode != Mode::Custom) {
     config["access_size"] = bm_config.access_size;
-    config["operation"] = get_enum_as_string(ConfigEnums::str_to_operation, bm_config.operation);
+    config["operation"] = utils::get_enum_as_string(ConfigEnums::str_to_operation, bm_config.operation);
     config["min_io_chunk_size"] = bm_config.min_io_chunk_size;
 
     if (bm_config.operation == Operation::Write) {
       config["persist_instruction"] =
-          get_enum_as_string(ConfigEnums::str_to_persist_instruction, bm_config.persist_instruction);
+          utils::get_enum_as_string(ConfigEnums::str_to_persist_instruction, bm_config.persist_instruction);
     }
   }
 
   if (bm_config.exec_mode == Mode::Random) {
     config["number_operations"] = bm_config.number_operations;
     config["random_distribution"] =
-        get_enum_as_string(ConfigEnums::str_to_random_distribution, bm_config.random_distribution);
+        utils::get_enum_as_string(ConfigEnums::str_to_random_distribution, bm_config.random_distribution);
     if (bm_config.random_distribution == RandomDistribution::Zipf) {
       config["zipf_alpha"] = bm_config.zipf_alpha;
     }

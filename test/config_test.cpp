@@ -10,8 +10,6 @@
 
 namespace perma {
 
-using utils::PermaException;
-
 constexpr auto TEST_SINGLE_CONFIG_FILE_MATRIX = "test_matrix.yaml";
 constexpr auto TEST_SINGLE_CONFIG_FILE_SEQ = "test_seq.yaml";
 constexpr auto TEST_SINGLE_CONFIG_FILE_RANDOM = "test_random.yaml";
