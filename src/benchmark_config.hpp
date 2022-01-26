@@ -39,7 +39,14 @@ struct CustomOp {
  */
 struct BenchmarkConfig {
   /** Represents the total PMem memory range to use for the benchmark. Must be a multiple of `access_size`.  */
-  uint64_t total_memory_range = 10'737'418'240;  // 10 GiB
+  uint64_t memory_range = 10'737'418'240;  // 10 GiB
+
+  /** Represents the total DRAM memory range to use for the benchmark. Must be a multiple of `access_size`.  */
+  uint64_t dram_memory_range = 0;
+
+  /** Represents the ratio of DRAM IOOperations to PMem IOOperations. Must only contain one digit after decimal point,
+   * i.e., 0.1 or 0.2. */
+  double dram_operation_ratio = 0.0;
 
   /** Represents the size of an individual memory access. Must tbe a power of two. */
   uint32_t access_size = 256;
@@ -63,7 +70,7 @@ struct BenchmarkConfig {
    * `PersistInstruction` for more details on available options. */
   PersistInstruction persist_instruction = PersistInstruction::NoCache;
 
-  /** Number of disjoint memory regions to partition the `total_memory_range` into. Must be a multiple of
+  /** Number of disjoint memory regions to partition the `memory_range` into. Must be a multiple of
    * `number_threads`. */
   uint16_t number_partitions = 1;
 
@@ -95,6 +102,7 @@ struct BenchmarkConfig {
   /** These fields are set internally and do not represent user-facing options. */
   std::vector<std::string> matrix_args{};
   bool is_pmem = true;
+  bool is_hybrid = false;
 
   static BenchmarkConfig decode(YAML::Node& raw_config_data);
   void validate() const;

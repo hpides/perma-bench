@@ -5,6 +5,6 @@ large_persistent_copy:
     persist_instruction: [ nocache, none ]
 
   args:
-    total_memory_range: 100G
+    memory_range: 100G
     exec_mode: sequential
     operation: write

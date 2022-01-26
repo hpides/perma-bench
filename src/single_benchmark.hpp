@@ -26,7 +26,7 @@ class SingleBenchmark : public Benchmark {
    * This is probably the first method to be called so that a virtual
    * address space is available to generate the IO addresses.
    */
-  void create_data_file() override;
+  void create_data_files() override;
 
   /** Create all the IO addresses ahead of time to avoid unnecessary ops during the actual benchmark. */
   void set_up() override;

@@ -39,7 +39,7 @@ class MatrixJsonReader:
         self.set_benchmark_subfields(benchmarks)
 
         # set arg lists
-        self.continuous_args = ["total_memory_range", "access_size", "write_ratio", "read_ratio", "pause_frequency",
+        self.continuous_args = ["memory_range", "access_size", "write_ratio", "read_ratio", "pause_frequency",
                                 "number_partitions", "number_threads", "pause_length_micros", "number_operations",
                                 "zipf_alpha"]
         self.categorical_args = ["exec_mode", "data_instruction", "persist_instruction", "random_distribution",
@@ -79,7 +79,7 @@ class MatrixJsonReader:
         for arg in self.continuous_args + self.categorical_args:
             arg_label = arg.replace("_", " ").title()
 
-            if arg in ["total_memory_range", "access_size", "pause_frequency"]:
+            if arg in ["memory_range", "access_size", "pause_frequency"]:
                 arg_label += " (B)"
             elif arg == "pause_length_micros":
                 arg_label += r" ($\mu$s)"

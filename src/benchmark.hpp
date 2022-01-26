@@ -14,6 +14,15 @@
 
 namespace perma {
 
+struct MemoryRegion {
+  const std::filesystem::path pmem_file;
+  const bool owns_pmem_file;
+  const bool is_dram;
+
+  MemoryRegion(std::filesystem::path pmem_file, const bool owns_pmem_file, const bool is_dram)
+      : pmem_file{std::move(pmem_file)}, owns_pmem_file{owns_pmem_file}, is_dram{is_dram} {};
+};
+
 struct Latency {
   Latency() : data{-1u} {}
   Latency(const uint64_t latency, const Operation op_type) : duration{latency}, op_type{op_type} {};
@@ -71,13 +80,11 @@ struct BenchmarkResult {
 
 class Benchmark {
  public:
-  Benchmark(std::string benchmark_name, BenchmarkType benchmark_type, std::vector<std::filesystem::path> pmem_files,
-            std::vector<bool> owns_pmem_files, std::vector<BenchmarkConfig> configs,
-            std::vector<std::unique_ptr<BenchmarkResult>> results)
+  Benchmark(std::string benchmark_name, BenchmarkType benchmark_type, std::vector<MemoryRegion> memory_regions,
+            std::vector<BenchmarkConfig> configs, std::vector<std::unique_ptr<BenchmarkResult>> results)
       : benchmark_name_{std::move(benchmark_name)},
         benchmark_type_{benchmark_type},
-        pmem_files_{std::move(pmem_files)},
-        owns_pmem_files_{std::move(owns_pmem_files)},
+        memory_regions_{std::move(memory_regions)},
         configs_{std::move(configs)},
         results_{std::move(results)} {}
 
@@ -96,7 +103,7 @@ class Benchmark {
    * This is probably the first method to be called so that a virtual
    * address space is available to generate the IO addresses.
    */
-  virtual void create_data_file() = 0;
+  virtual void create_data_files() = 0;
 
   /** Create all the IO addresses ahead of time to avoid unnecessary ops during the actual benchmark. */
   virtual void set_up() = 0;
@@ -114,19 +121,21 @@ class Benchmark {
   std::string benchmark_type_as_str() const;
   BenchmarkType get_benchmark_type() const;
 
-  const std::vector<BenchmarkConfig>& get_benchmark_configs() const;
-  const std::vector<std::filesystem::path>& get_pmem_files() const;
+  const std::filesystem::path& get_pmem_file(uint8_t index) const;
   std::vector<char*> get_pmem_data() const;
+  bool owns_pmem_file(uint8_t index) const;
+  std::vector<char*> get_dram_data() const;
+
+  const std::vector<BenchmarkConfig>& get_benchmark_configs() const;
   const std::vector<std::vector<ThreadRunConfig>>& get_thread_configs() const;
   const std::vector<std::unique_ptr<BenchmarkResult>>& get_benchmark_results() const;
-  std::vector<bool> owns_pmem_files() const;
 
  protected:
   nlohmann::json get_json_config(uint8_t config_index);
   static void single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
                             std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config);
 
-  static char* create_single_data_file(const BenchmarkConfig& config, std::filesystem::path& data_file);
+  char* create_single_data_file(const BenchmarkConfig& config, const MemoryRegion& memory_region);
 
   static void run_custom_ops_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
   static void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
@@ -136,9 +145,9 @@ class Benchmark {
   const std::string benchmark_name_;
   const BenchmarkType benchmark_type_;
 
-  std::vector<std::filesystem::path> pmem_files_;
-  std::vector<bool> owns_pmem_files_;
+  std::vector<MemoryRegion> memory_regions_;
   std::vector<char*> pmem_data_;
+  std::vector<char*> dram_data_;
 
   const std::vector<BenchmarkConfig> configs_;
   std::vector<std::unique_ptr<BenchmarkResult>> results_;

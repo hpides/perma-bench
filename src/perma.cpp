@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
   spdlog::info("Writing results to '{}'.", result_path.string());
 
   try {
-    BenchmarkSuite::run_benchmarks(pmem_directory, config_file, result_path);
+    BenchmarkSuite::run_benchmarks({pmem_directory, config_file, result_path, use_dram});
   } catch (const utils::PermaException& e) {
     // Clean up files before exiting
     if (!use_dram) {

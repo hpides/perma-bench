@@ -31,9 +31,9 @@ char* create_file(const std::filesystem::path& file, bool is_dram, size_t length
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir);
 
-void generate_read_data(char* addr, uint64_t total_memory_range);
+void generate_read_data(char* addr, uint64_t memory_range);
 
-void prefault_file(char* addr, uint64_t total_memory_range, uint64_t page_size);
+void prefault_file(char* addr, uint64_t memory_range, uint64_t page_size);
 
 uint64_t duration_to_nanoseconds(std::chrono::steady_clock::duration duration);
 
