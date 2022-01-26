@@ -24,6 +24,26 @@ static constexpr size_t BYTE_IN_MEGABYTE = 1024u * 1024;
 static constexpr size_t BYTE_IN_GIGABYTE = 1024u * BYTE_IN_MEGABYTE;
 static constexpr size_t NANOSECONDS_IN_SECONDS = 1e9;
 
+/**
+ * This represents a custom operation to be specified by the user. Its string representation, is:
+ *
+ * For reads: r(<location>)_<size>
+ *
+ * with:
+ * 'r' for read,
+ * (optional) <location> is 'd' or 'p' for DRAM/PMem (with p as default is nothing is specified),
+ * <size> is the size of the access (must be power of 2).
+ *
+ * For writes: w(<location>)_<size>_<persist_instruction>(_<offset>)
+ *
+ * with:
+ * 'w' for write,
+ * (optional) <location> is 'd' or 'p' for DRAM/PMem (with p as default is nothing is specified),
+ * <size> is the size of the access (must be power of 2),
+ * <persist_instruction> is the instruction to use after the write (none, cache, cacheinv, noache),
+ * (optional) <offset> is the offset to the previously accessed address (can be negative, default is 0)
+ *
+ * */
 struct CustomOp {
   Operation type;
   bool is_pmem = true;
