@@ -2,10 +2,10 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <ostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <ostream>
 
 namespace perma {
 

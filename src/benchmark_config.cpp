@@ -15,7 +15,8 @@ namespace {
   if (!(exp)) {                  \
     spdlog::critical(txt);       \
     perma::utils::crash_exit();  \
-  } static_assert(true, "Need ; after macro")
+  }                              \
+  static_assert(true, "Need ; after macro")
 
 constexpr auto VISITED_TAG = "visited";
 
