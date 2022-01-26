@@ -46,7 +46,7 @@ struct BenchmarkConfig {
 
   /** Represents the ratio of DRAM IOOperations to PMem IOOperations. Must only contain one digit after decimal point,
    * i.e., 0.1 or 0.2. */
-  double dram_ratio = 0.0;
+  double dram_operation_ratio = 0.0;
 
   /** Represents the size of an individual memory access. Must tbe a power of two. */
   uint32_t access_size = 256;

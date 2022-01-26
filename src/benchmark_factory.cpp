@@ -45,7 +45,7 @@ std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const st
         BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args);
         bm_config.pmem_directory = pmem_directory;
         bm_config.is_pmem = !use_dram;
-        bm_config.is_hybrid = bm_config.dram_ratio > 0.0;
+        bm_config.is_hybrid = bm_config.dram_operation_ratio > 0.0;
         std::vector<std::unique_ptr<BenchmarkResult>> results{};
         results.push_back(std::make_unique<BenchmarkResult>(bm_config));
         benchmarks.emplace_back(name, bm_config, results);
@@ -140,7 +140,7 @@ void BenchmarkFactory::parse_yaml_node(const std::filesystem::path& pmem_directo
     BenchmarkConfig bm_config = BenchmarkConfig::decode(bm_args);
     bm_config.pmem_directory = pmem_directory;
     bm_config.is_pmem = !use_dram;
-    bm_config.is_hybrid = bm_config.dram_ratio > 0.0;
+    bm_config.is_hybrid = bm_config.dram_operation_ratio > 0.0;
     bm_configs.emplace_back(bm_config);
   }
 }
@@ -167,7 +167,7 @@ std::vector<BenchmarkConfig> BenchmarkFactory::create_benchmark_matrix(const std
       BenchmarkConfig final_config = BenchmarkConfig::decode(clean_config);
       final_config.pmem_directory = pmem_directory;
       final_config.is_pmem = !use_dram;
-      final_config.is_hybrid = final_config.dram_ratio > 0.0;
+      final_config.is_hybrid = final_config.dram_operation_ratio > 0.0;
       final_config.matrix_args = {matrix_arg_names.begin(), matrix_arg_names.end()};
 
       matrix.emplace_back(final_config);

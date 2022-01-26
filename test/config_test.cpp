@@ -92,7 +92,7 @@ TEST_F(ConfigTest, SingleDecodeSequential) {
   EXPECT_EQ(bm_config.min_io_chunk_size, 16 * 1024);
 
   EXPECT_EQ(bm_config.dram_memory_range, bm_config_default.dram_memory_range);
-  EXPECT_EQ(bm_config.dram_ratio, bm_config_default.dram_ratio);
+  EXPECT_EQ(bm_config.dram_operation_ratio, bm_config_default.dram_operation_ratio);
   EXPECT_EQ(bm_config.number_operations, bm_config_default.number_operations);
   EXPECT_EQ(bm_config.random_distribution, bm_config_default.random_distribution);
   EXPECT_EQ(bm_config.zipf_alpha, bm_config_default.zipf_alpha);
@@ -120,7 +120,7 @@ TEST_F(ConfigTest, DecodeRandom) {
   EXPECT_EQ(bm_config.operation, Operation::Write);
 
   EXPECT_EQ(bm_config.dram_memory_range, bm_config_default.dram_memory_range);
-  EXPECT_EQ(bm_config.dram_ratio, bm_config_default.dram_ratio);
+  EXPECT_EQ(bm_config.dram_operation_ratio, bm_config_default.dram_operation_ratio);
   EXPECT_EQ(bm_config.memory_range, bm_config_default.memory_range);
   EXPECT_EQ(bm_config.access_size, bm_config_default.access_size);
   EXPECT_EQ(bm_config.number_operations, bm_config_default.number_operations);
@@ -158,7 +158,7 @@ TEST_F(ConfigTest, ParallelDecodeSequentialRandom) {
   EXPECT_EQ(bm_config.operation, Operation::Read);
 
   EXPECT_EQ(bm_config.dram_memory_range, bm_config_default.dram_memory_range);
-  EXPECT_EQ(bm_config.dram_ratio, bm_config_default.dram_ratio);
+  EXPECT_EQ(bm_config.dram_operation_ratio, bm_config_default.dram_operation_ratio);
   EXPECT_EQ(bm_config.random_distribution, bm_config_default.random_distribution);
   EXPECT_EQ(bm_config.zipf_alpha, bm_config_default.zipf_alpha);
   EXPECT_EQ(bm_config.persist_instruction, bm_config_default.persist_instruction);
@@ -180,7 +180,7 @@ TEST_F(ConfigTest, ParallelDecodeSequentialRandom) {
   EXPECT_EQ(bm_config.operation, Operation::Write);
 
   EXPECT_EQ(bm_config.dram_memory_range, bm_config_default.dram_memory_range);
-  EXPECT_EQ(bm_config.dram_ratio, bm_config_default.dram_ratio);
+  EXPECT_EQ(bm_config.dram_operation_ratio, bm_config_default.dram_operation_ratio);
   EXPECT_EQ(bm_config.number_operations, bm_config_default.number_operations);
   EXPECT_EQ(bm_config.random_distribution, bm_config_default.random_distribution);
   EXPECT_EQ(bm_config.zipf_alpha, bm_config_default.zipf_alpha);
@@ -224,7 +224,7 @@ TEST_F(ConfigTest, DecodeMatrix) {
     EXPECT_EQ(config.operation, Operation::Read);
 
     EXPECT_EQ(config.dram_memory_range, bm_config_default.dram_memory_range);
-    EXPECT_EQ(bm_config.dram_ratio, bm_config_default.dram_ratio);
+    EXPECT_EQ(bm_config.dram_operation_ratio, bm_config_default.dram_operation_ratio);
     EXPECT_EQ(config.number_operations, bm_config_default.number_operations);
     EXPECT_EQ(config.random_distribution, bm_config_default.random_distribution);
     EXPECT_EQ(config.zipf_alpha, bm_config_default.zipf_alpha);
@@ -279,7 +279,7 @@ TEST_F(ConfigTest, DecodeCustomOperationsMatrix) {
     EXPECT_EQ(config.number_threads, 16);
 
     EXPECT_EQ(config.dram_memory_range, bm_config_default.dram_memory_range);
-    EXPECT_EQ(bm_config.dram_ratio, bm_config_default.dram_ratio);
+    EXPECT_EQ(bm_config.dram_operation_ratio, bm_config_default.dram_operation_ratio);
     EXPECT_EQ(config.random_distribution, bm_config_default.random_distribution);
     EXPECT_EQ(config.zipf_alpha, bm_config_default.zipf_alpha);
     EXPECT_EQ(config.number_partitions, bm_config_default.number_partitions);
@@ -326,7 +326,7 @@ TEST_F(ConfigTest, ParallelDecodeMatrix) {
     EXPECT_EQ(config_one.operation, Operation::Read);
 
     EXPECT_EQ(config_one.dram_memory_range, bm_config_default.dram_memory_range);
-    EXPECT_EQ(config_one.dram_ratio, bm_config_default.dram_ratio);
+    EXPECT_EQ(config_one.dram_operation_ratio, bm_config_default.dram_operation_ratio);
     EXPECT_EQ(config_one.random_distribution, bm_config_default.random_distribution);
     EXPECT_EQ(config_one.zipf_alpha, bm_config_default.zipf_alpha);
     EXPECT_EQ(config_one.persist_instruction, bm_config_default.persist_instruction);
@@ -344,7 +344,7 @@ TEST_F(ConfigTest, ParallelDecodeMatrix) {
     EXPECT_EQ(config_two.persist_instruction, PersistInstruction::NoCache);
 
     EXPECT_EQ(config_two.dram_memory_range, bm_config_default.dram_memory_range);
-    EXPECT_EQ(config_two.dram_ratio, bm_config_default.dram_ratio);
+    EXPECT_EQ(config_two.dram_operation_ratio, bm_config_default.dram_operation_ratio);
     EXPECT_EQ(config_two.number_operations, bm_config_default.number_operations);
     EXPECT_EQ(config_two.random_distribution, bm_config_default.random_distribution);
     EXPECT_EQ(config_two.zipf_alpha, bm_config_default.zipf_alpha);
@@ -424,19 +424,19 @@ TEST_F(ConfigTest, BadLatencySample) {
 }
 
 TEST_F(ConfigTest, InvalidDRAMRationNegativ) {
-  bm_config.dram_ratio = -0.9;
+  bm_config.dram_operation_ratio = -0.9;
   EXPECT_THROW(bm_config.validate(), PermaException);
-  check_log_for_critical("DRAM ratio must be at least 0 and smaller than 1");
+  check_log_for_critical("DRAM ratio must be at least 0 and not greater than 1");
 }
 
 TEST_F(ConfigTest, InvalidDRAMRationPositiv) {
-  bm_config.dram_ratio = 1.0;
+  bm_config.dram_operation_ratio = 1.01;
   EXPECT_THROW(bm_config.validate(), PermaException);
-  check_log_for_critical("DRAM ratio must be at least 0 and smaller than 1");
+  check_log_for_critical("DRAM ratio must be at least 0 and not greater than 1");
 }
 
 TEST_F(ConfigTest, InvalidDRAMRationTwoDecimals) {
-  bm_config.dram_ratio = 0.22;
+  bm_config.dram_operation_ratio = 0.22;
   EXPECT_THROW(bm_config.validate(), PermaException);
   check_log_for_critical("DRAM ratio must only contain one decimal");
 }

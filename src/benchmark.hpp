@@ -18,6 +18,9 @@ struct MemoryRegion {
   const std::filesystem::path pmem_file;
   const bool owns_pmem_file;
   const bool is_dram;
+
+  MemoryRegion(std::filesystem::path pmem_file, const bool owns_pmem_file, const bool is_dram)
+      : pmem_file{std::move(pmem_file)}, owns_pmem_file{owns_pmem_file}, is_dram{is_dram} {};
 };
 
 struct Latency {
