@@ -17,7 +17,7 @@ bool SingleBenchmark::run() {
   const BenchmarkConfig& config = configs_[0];
   std::vector<std::thread>& pool = pools_[0];
   for (size_t thread_index = 0; thread_index < config.number_threads; thread_index++) {
-    pool.emplace_back(run_in_thread, std::ref(thread_configs_[0][thread_index]), std::ref(config));
+    pool.emplace_back(run_in_thread, &thread_configs_[0][thread_index], std::ref(config));
   }
 
   // wait for all threads
@@ -41,7 +41,7 @@ void SingleBenchmark::create_data_files() {
 void SingleBenchmark::set_up() {
   pools_.resize(1);
   thread_configs_.resize(1);
-  single_set_up(configs_[0], pmem_data_[0], results_[0], pools_[0], thread_configs_[0]);
+  single_set_up(configs_[0], pmem_data_[0], results_[0].get(), &pools_[0], &thread_configs_[0]);
 }
 
 void SingleBenchmark::tear_down(const bool force) {

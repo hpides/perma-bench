@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "benchmark_config.hpp"
 #include "io_operation.hpp"
 #include "utils.hpp"
 
@@ -23,19 +24,6 @@ struct MemoryRegion {
       : pmem_file{std::move(pmem_file)}, owns_pmem_file{owns_pmem_file}, is_dram{is_dram} {};
 };
 
-struct Latency {
-  Latency() : data{-1u} {}
-  Latency(const uint64_t latency, const Operation op_type) : duration{latency}, op_type{op_type} {};
-
-  union {
-    const uint64_t data;
-    struct {
-      const uint64_t duration : 62;
-      const Operation op_type : 2;
-    };
-  };
-};
-
 enum BenchmarkType { Single, Parallel };
 
 struct BenchmarkEnums {
@@ -48,21 +36,28 @@ struct ThreadRunConfig {
   const size_t num_threads_per_partition;
   const size_t thread_num;
   const size_t num_ops;
-  std::vector<Latency>* latencies;
-  uint64_t* custom_op_duration;
   const BenchmarkConfig& config;
 
+  // Pointers to store performance data in.
+  uint64_t* total_operation_size;
+  uint64_t* total_operation_duration;
+  uint64_t* custom_op_duration;
+  std::vector<uint64_t>* custom_op_latencies;
+
   ThreadRunConfig(char* partition_start_addr, const size_t partition_size, const size_t num_threads_per_partition,
-                  const size_t thread_num, const size_t num_ops, std::vector<Latency>* latencies,
-                  uint64_t* custom_op_duration, const BenchmarkConfig& config)
-      : partition_start_addr(partition_start_addr),
-        partition_size(partition_size),
-        num_threads_per_partition(num_threads_per_partition),
-        thread_num(thread_num),
-        num_ops(num_ops),
-        latencies(latencies),
-        custom_op_duration(custom_op_duration),
-        config(config) {}
+                  const size_t thread_num, const size_t num_ops, const BenchmarkConfig& config,
+                  uint64_t* total_operation_duration, uint64_t* total_operation_size, uint64_t* custom_op_duration,
+                  std::vector<uint64_t>* custom_op_latencies)
+      : partition_start_addr{partition_start_addr},
+        partition_size{partition_size},
+        num_threads_per_partition{num_threads_per_partition},
+        thread_num{thread_num},
+        num_ops{num_ops},
+        config{config},
+        total_operation_duration{total_operation_duration},
+        total_operation_size{total_operation_size},
+        custom_op_duration{custom_op_duration},
+        custom_op_latencies{custom_op_latencies} {}
 };
 
 struct BenchmarkResult {
@@ -72,8 +67,14 @@ struct BenchmarkResult {
   nlohmann::json get_result_as_json() const;
   nlohmann::json get_custom_results_as_json() const;
 
-  std::vector<std::vector<Latency>> latencies;
+  // Result vectors for raw operation workloads
+  std::vector<uint64_t> total_operation_sizes;
+  std::vector<uint64_t> total_operation_durations;
+
+  // Result vectors for custom operation workloads
   std::vector<uint64_t> custom_operation_durations;
+  std::vector<std::vector<uint64_t>> custom_operation_latencies;
+
   hdr_histogram* latency_hdr = nullptr;
   const BenchmarkConfig config;
 };
@@ -122,9 +123,10 @@ class Benchmark {
   BenchmarkType get_benchmark_type() const;
 
   const std::filesystem::path& get_pmem_file(uint8_t index) const;
-  std::vector<char*> get_pmem_data() const;
   bool owns_pmem_file(uint8_t index) const;
-  std::vector<char*> get_dram_data() const;
+
+  const std::vector<char*>& get_pmem_data() const;
+  const std::vector<char*>& get_dram_data() const;
 
   const std::vector<BenchmarkConfig>& get_benchmark_configs() const;
   const std::vector<std::vector<ThreadRunConfig>>& get_thread_configs() const;
@@ -132,13 +134,13 @@ class Benchmark {
 
  protected:
   nlohmann::json get_json_config(uint8_t config_index);
-  static void single_set_up(const BenchmarkConfig& config, char* pmem_data, std::unique_ptr<BenchmarkResult>& result,
-                            std::vector<std::thread>& pool, std::vector<ThreadRunConfig>& thread_config);
+  static void single_set_up(const BenchmarkConfig& config, char* pmem_data, BenchmarkResult* result,
+                            std::vector<std::thread>* pool, std::vector<ThreadRunConfig>* thread_config);
 
   char* create_single_data_file(const BenchmarkConfig& config, const MemoryRegion& memory_region);
 
-  static void run_custom_ops_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
-  static void run_in_thread(const ThreadRunConfig& thread_config, const BenchmarkConfig& config);
+  static void run_custom_ops_in_thread(ThreadRunConfig* thread_config, const BenchmarkConfig& config);
+  static void run_in_thread(ThreadRunConfig* thread_config, const BenchmarkConfig& config);
 
   static nlohmann::json get_benchmark_config_as_json(const BenchmarkConfig& bm_config);
 

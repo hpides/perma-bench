@@ -2,6 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <fstream>
 #include <json.hpp>
 
 #include "benchmark_factory.hpp"
@@ -130,6 +131,11 @@ void BenchmarkSuite::run_benchmarks(const PermaOptions& options) {
   if (had_error) {
     utils::crash_exit();
   }
+
+  std::stringstream buffer;
+  std::ifstream file_stream{result_file};
+  buffer << file_stream.rdbuf();
+  spdlog::debug("Results:\n{}", buffer.str());
 
   spdlog::info("Finished all benchmarks successfully.");
 }
