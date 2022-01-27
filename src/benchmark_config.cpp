@@ -210,8 +210,7 @@ void BenchmarkConfig::validate() const {
                      std::to_string(min_io_chunk_size));
 
   // Assumption: we chunk operations in timed execution, so we need enough data to fill at least one chun
-  const bool is_total_memory_large_enough =
-      run_time == -1 || (memory_range / number_threads) >= min_io_chunk_size;
+  const bool is_total_memory_large_enough = run_time == -1 || (memory_range / number_threads) >= min_io_chunk_size;
   CHECK_ARGUMENT(is_total_memory_large_enough, "Each thread needs at least " + std::to_string(min_io_chunk_size) +
                                                    " memory for time-based execution.");
 
