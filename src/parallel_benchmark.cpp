@@ -45,8 +45,8 @@ void ParallelBenchmark::create_data_files() {
 void ParallelBenchmark::set_up() {
   pools_.resize(2);
   thread_configs_.resize(2);
-  single_set_up(configs_[0], pmem_data_[0], results_[0].get(), &pools_[0], &thread_configs_[0]);
-  single_set_up(configs_[1], pmem_data_[1], results_[1].get(), &pools_[1], &thread_configs_[1]);
+  single_set_up(configs_[0], pmem_data_[0], dram_data_[0], results_[0].get(), &pools_[0], &thread_configs_[0]);
+  single_set_up(configs_[1], pmem_data_[1], dram_data_[1], results_[1].get(), &pools_[1], &thread_configs_[1]);
 }
 
 void ParallelBenchmark::tear_down(bool force) {

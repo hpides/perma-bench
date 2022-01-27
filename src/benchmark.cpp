@@ -48,7 +48,7 @@ std::string Benchmark::benchmark_type_as_str() const {
 
 BenchmarkType Benchmark::get_benchmark_type() const { return benchmark_type_; }
 
-void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, BenchmarkResult* result,
+void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, char* dram_data, BenchmarkResult* result,
                               std::vector<std::thread>* pool, std::vector<ThreadRunConfig>* thread_config) {
   const size_t num_total_range_ops = config.memory_range / config.access_size;
   const size_t num_operations = (config.exec_mode == Mode::Random || config.exec_mode == Mode::Custom)
@@ -76,11 +76,16 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, Be
 
   const uint16_t num_threads_per_partition = config.number_threads / num_partitions;
   const uint64_t partition_size = config.memory_range / num_partitions;
+  const uint64_t dram_partition_size = config.dram_memory_range / num_partitions;
 
   for (uint16_t partition_num = 0; partition_num < num_partitions; partition_num++) {
-    char* partition_start = (config.exec_mode == Mode::Sequential_Desc)
-                                ? pmem_data + ((num_partitions - partition_num) * partition_size) - config.access_size
-                                : pmem_data + (partition_num * partition_size);
+    char* partition_start =
+        (config.exec_mode == Mode::Sequential_Desc)
+            ? pmem_data + ((num_partitions - partition_num) * partition_size) - config.access_size
+            : partition_start = pmem_data + (partition_num * partition_size);
+
+    // Only possible in random or custom mode
+    char* dram_partition_start = dram_data + (partition_num * partition_size);
 
     for (uint16_t thread_num = 0; thread_num < num_threads_per_partition; thread_num++) {
       const uint32_t index = thread_num + (partition_num * num_threads_per_partition);
@@ -90,9 +95,10 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, Be
         result->custom_operation_latencies[index].reserve(num_latency_measurements);
       }
 
-      thread_config->emplace_back(partition_start, partition_size, num_threads_per_partition, thread_num,
-                                  num_ops_per_thread, config, &result->total_operation_durations[index],
-                                  &result->total_operation_sizes[index], &result->custom_operation_durations[index],
+      thread_config->emplace_back(partition_start, dram_partition_start, partition_size, dram_partition_size,
+                                  num_threads_per_partition, thread_num, num_ops_per_thread, config,
+                                  &result->total_operation_durations[index], &result->total_operation_sizes[index],
+                                  &result->custom_operation_durations[index],
                                   &result->custom_operation_latencies[index]);
     }
   }
@@ -183,12 +189,15 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
 
   const size_t ops_per_iteration = thread_config->num_threads_per_partition * config.access_size;
   const uint32_t num_accesses_in_range = thread_config->partition_size / config.access_size;
+  const uint32_t num_dram_accesses_in_range = thread_config->dram_partition_size / config.access_size;
   const bool is_read_op = config.operation == Operation::Read;
   const size_t thread_partition_offset = thread_config->thread_num * config.access_size;
 
   std::random_device rnd_device;
   std::mt19937_64 rnd_generator{rnd_device()};
+  std::bernoulli_distribution memory_target_distribution(config.dram_operation_ratio);
   std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
+  std::uniform_int_distribution<int> dram_access_distribution(0, num_dram_accesses_in_range - 1);
 
   // By default, we generate all addresses in one large chunk to avoid any overhead during execution time.
   size_t num_chunks = 1;
@@ -218,12 +227,28 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
       switch (config.exec_mode) {
         case Mode::Random: {
           uint64_t random_value;
-          if (config.random_distribution == RandomDistribution::Uniform) {
-            random_value = access_distribution(rnd_generator);
+          char* partition_start;
+          uint32_t num_target_accesses_in_range;
+          std::uniform_int_distribution<int>* random_distribution;
+          // Get memory target
+          if (config.is_hybrid && memory_target_distribution(rnd_device)) {
+            // DRAM target
+            partition_start = thread_config->dram_partition_start_addr;
+            num_target_accesses_in_range = num_dram_accesses_in_range;
+            random_distribution = &dram_access_distribution;
           } else {
-            random_value = utils::zipf(config.zipf_alpha, num_accesses_in_range);
+            // PMEM target
+            partition_start = thread_config->partition_start_addr;
+            num_target_accesses_in_range = num_accesses_in_range;
+            random_distribution = &access_distribution;
           }
-          op_addresses[io_op] = thread_config->partition_start_addr + (random_value * config.access_size);
+
+          if (config.random_distribution == RandomDistribution::Uniform) {
+            random_value = (*random_distribution)(rnd_generator);
+          } else {
+            random_value = utils::zipf(config.zipf_alpha, num_target_accesses_in_range);
+          }
+          op_addresses[io_op] = partition_start + (random_value * config.access_size);
           break;
         }
         case Mode::Sequential: {

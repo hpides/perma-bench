@@ -32,7 +32,9 @@ struct BenchmarkEnums {
 
 struct ThreadRunConfig {
   char* partition_start_addr;
+  char* dram_partition_start_addr;
   const size_t partition_size;
+  const size_t dram_partition_size;
   const size_t num_threads_per_partition;
   const size_t thread_num;
   const size_t num_ops;
@@ -44,12 +46,15 @@ struct ThreadRunConfig {
   uint64_t* custom_op_duration;
   std::vector<uint64_t>* custom_op_latencies;
 
-  ThreadRunConfig(char* partition_start_addr, const size_t partition_size, const size_t num_threads_per_partition,
-                  const size_t thread_num, const size_t num_ops, const BenchmarkConfig& config,
-                  uint64_t* total_operation_duration, uint64_t* total_operation_size, uint64_t* custom_op_duration,
+  ThreadRunConfig(char* partition_start_addr, char* dram_partition_start_addr, const size_t partition_size,
+                  const size_t dram_partition_size, const size_t num_threads_per_partition, const size_t thread_num,
+                  const size_t num_ops, const BenchmarkConfig& config, uint64_t* total_operation_duration,
+                  uint64_t* total_operation_size, uint64_t* custom_op_duration,
                   std::vector<uint64_t>* custom_op_latencies)
       : partition_start_addr{partition_start_addr},
+        dram_partition_start_addr{dram_partition_start_addr},
         partition_size{partition_size},
+        dram_partition_size{dram_partition_size},
         num_threads_per_partition{num_threads_per_partition},
         thread_num{thread_num},
         num_ops{num_ops},
@@ -134,7 +139,7 @@ class Benchmark {
 
  protected:
   nlohmann::json get_json_config(uint8_t config_index);
-  static void single_set_up(const BenchmarkConfig& config, char* pmem_data, BenchmarkResult* result,
+  static void single_set_up(const BenchmarkConfig& config, char* pmem_data, char* dram_data, BenchmarkResult* result,
                             std::vector<std::thread>* pool, std::vector<ThreadRunConfig>* thread_config);
 
   char* create_single_data_file(const BenchmarkConfig& config, const MemoryRegion& memory_region);
