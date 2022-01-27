@@ -263,6 +263,7 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
       is_time_finished = true;
     }
 
+    const uint64_t chunk_size = config.access_size * ops_per_chunk;
     for (IoOperation& operation : io_operation_chunks) {
       const auto start_ts = std::chrono::steady_clock::now();
       operation.run();
@@ -270,7 +271,7 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
 
       const uint64_t op_duration = (end_ts - start_ts).count();
       *(thread_config->total_operation_duration) += op_duration;
-      *(thread_config->total_operation_size) += operation.access_size_ * operation.op_addresses_.size();
+      *(thread_config->total_operation_size) += chunk_size;
 
       const auto run_time_in_sec = std::chrono::duration_cast<std::chrono::seconds>(end_ts - begin_ts).count();
       if (!is_time_finished && run_time_in_sec >= config.run_time) {
@@ -375,12 +376,14 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
   std::vector<double> per_thread_bandwidth(config.number_threads);
 
   if (total_operation_durations.size() != config.number_threads) {
-    spdlog::critical("Invalid state! Need n result durations for n threads.");
+    spdlog::critical("Invalid state! Need n result durations for n threads. Got: {} but expected: {}",
+                     total_operation_durations.size(), config.number_threads);
     utils::crash_exit();
   }
 
   if (total_operation_sizes.size() != config.number_threads) {
-    spdlog::critical("Invalid state! Need n result sizes for n threads.");
+    spdlog::critical("Invalid state! Need n result sizes for n threads. Got: {} but expected: {}",
+                     total_operation_sizes.size(), config.number_threads);
     utils::crash_exit();
   }
 
@@ -415,7 +418,8 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
                  [&](double x) { return x - avg_bandwidth; });
   const double sq_sum =
       std::inner_product(thread_diff_to_avg.begin(), thread_diff_to_avg.end(), thread_diff_to_avg.begin(), 0.0);
-  const double bandwidth_stddev = std::sqrt(sq_sum / config.number_threads);
+  // Use N - 1 for sample variance
+  const double bandwidth_stddev = std::sqrt(sq_sum / (config.number_threads - 1));
 
   spdlog::debug("Per-Thread Average Bandwidth: {}", avg_bandwidth);
   spdlog::debug("Per-Thread Standard Deviation: {}", bandwidth_stddev);
@@ -443,7 +447,7 @@ nlohmann::json BenchmarkResult::get_custom_results_as_json() const {
   const double avg_duration = avg_duration_ns / NANOSECONDS_IN_SECONDS;
   const double ops_per_sec = config.number_operations / avg_duration;
 
-  // TODO: Add information about per-thread avg and standard deviation.
+  // TODO(#169): Add information about per-thread avg and standard deviation.
 
   result["avg_duration_sec"] = avg_duration;
   result["ops_per_second"] = ops_per_sec;

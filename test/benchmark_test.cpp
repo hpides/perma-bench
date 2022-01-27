@@ -13,8 +13,8 @@ namespace perma {
 
 using ::testing::ElementsAre;
 
-constexpr size_t TEST_FILE_SIZE = 1048576;              // 1 MiB
-constexpr size_t TEST_CHUNK_SIZE = TEST_FILE_SIZE / 8;  // 128 KiB
+constexpr size_t TEST_FILE_SIZE = 1 * BYTES_IN_MEGABYTE;  // 1 MiB
+constexpr size_t TEST_CHUNK_SIZE = TEST_FILE_SIZE / 8;    // 128 KiB
 
 class BenchmarkTest : public ::testing::Test {
  protected:
