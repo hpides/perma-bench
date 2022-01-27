@@ -10,9 +10,9 @@ join_build:
     number_threads: [1, 8, 16, 32]
     # Represent bucket sizes 64, 256, 1024
     custom_operations:
-      - "r64,w64_cache,w64_cache"
-      - "r256,w64_cache,w64_cache"
-      - "r1024,w64_cache,w64_cache"
+      - "r_64,w_64_cache,w_64_cache"
+      - "r_256,w_64_cache,w_64_cache"
+      - "r_1024,w_64_cache,w_64_cache"
 
   args:
     total_memory_range: 10G
@@ -26,9 +26,9 @@ join_probe:
     number_threads: [ 1, 8, 16, 32 ]
     # Represent bucket sizes 64, 256, 1024
     custom_operations:
-      - "r128"
-      - "r512"
-      - "r2048"
+      - "r_128"
+      - "r_512"
+      - "r_2048"
 
   args:
     total_memory_range: 10G

@@ -49,9 +49,9 @@ primary_index_range_scan:
     number_threads: [ 1, 8, 16, 32 ]
     # Representing 256, 512, 1024 Byte nodes.
     custom_operations:
-      - "r512,r512,r512,r512,r512,r512,r512"
-      - "r256,r256,r256,r256,r256,r256,r256,r256,r256,r256,r256"
-      - "r1024,r1024,r1024,r1024,r1024,"
+      - "r_512,r_512,r_512,r_512,r_512,r_512,r_512"
+      - "r_256,r_256,r_256,r_256,r_256,r_256,r_256,r_256,r_256,r_256,r_256"
+      - "r_1024,r_1024,r_1024,r_1024,r_1024,"
 
   args:
     total_memory_range: 2G
