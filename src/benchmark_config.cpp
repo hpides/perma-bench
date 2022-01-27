@@ -161,19 +161,22 @@ void BenchmarkConfig::validate() const {
   CHECK_ARGUMENT(is_memory_range_multiple_of_access_size, "PMem memory range must be a multiple of access size.");
 
   // Check if DRAM memory range is multiple of access size
-  const bool is_dram_memory_range_multiple_of_access_size =
-      dram_memory_range == 0 || (dram_memory_range % access_size) == 0;
+  const bool is_dram_memory_range_multiple_of_access_size = (dram_memory_range % access_size) == 0;
   CHECK_ARGUMENT(is_dram_memory_range_multiple_of_access_size,
                  "DRAM memory range must be a multiple of access size or 0.");
 
   // Check if set DRAM operation has random or custom mode
-  const bool is_dram_operation_mode_valid =
-      dram_operation_ratio == 0.0 || exec_mode == Mode::Random || exec_mode == Mode::Custom;
+  const bool is_dram_operation_mode_valid = dram_operation_ratio == 0.0 || exec_mode == Mode::Random ||
+                                            (exec_mode == Mode::Custom && dram_operation_ratio > 0.0);
   CHECK_ARGUMENT(is_dram_operation_mode_valid, "DRAM execution mode must be random or custom.");
 
   // Check if DRAM ratio is greater and equal to 0 and smaller than 1
-  const bool is_dram_operation_ratio_valid = 0.0 <= dram_operation_ratio && dram_operation_ratio <= 1.0;
-  CHECK_ARGUMENT(is_dram_operation_ratio_valid, "DRAM ratio must be at least 0 and not greater than 1.");
+  const bool is_dram_operation_ratio_valid =
+      dram_operation_ratio == 0.0 ||
+      (0.0 < dram_operation_ratio && dram_operation_ratio <= 1.0 && dram_memory_range > 0);
+  CHECK_ARGUMENT(is_dram_operation_ratio_valid,
+                 "DRAM ratio must be at least 0 and not greater than 1. If greater than 0, dram memory range must be "
+                 "greater than 0.");
 
   // Check if runtime is at least one second
   const bool is_at_least_one_second_or_default = run_time > 0 || run_time == -1;
@@ -194,6 +197,12 @@ void BenchmarkConfig::validate() const {
                                 (number_partitions > 0 && ((memory_range / number_partitions) % access_size) == 0);
   CHECK_ARGUMENT(is_partitionable,
                  "Total memory range must be evenly divisible into number of partitions. "
+                 "Most likely you can fix this by using 2^x partitions.");
+
+  // Assumption: total memory range must be evenly divisible into number of partitions
+  const bool is_dram_partitionable = ((dram_memory_range / number_partitions) % access_size) == 0;
+  CHECK_ARGUMENT(is_dram_partitionable,
+                 "DRAM memory range must be evenly divisible into number of partitions. "
                  "Most likely you can fix this by using 2^x partitions.");
 
   // Assumption: number_operations should only be set for random/custom access. It is ignored in sequential IO.
