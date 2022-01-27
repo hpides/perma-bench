@@ -195,7 +195,7 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
 
   std::random_device rnd_device;
   std::mt19937_64 rnd_generator{rnd_device()};
-  std::bernoulli_distribution memory_target_distribution(config.dram_operation_ratio);
+  std::bernoulli_distribution dram_target_distribution(config.dram_operation_ratio);
   std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
   std::uniform_int_distribution<int> dram_access_distribution(0, num_dram_accesses_in_range - 1);
 
@@ -231,7 +231,7 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
           uint32_t num_target_accesses_in_range;
           std::uniform_int_distribution<int>* random_distribution;
           // Get memory target
-          if (config.is_hybrid && memory_target_distribution(rnd_device)) {
+          if (config.is_hybrid && dram_target_distribution(rnd_device)) {
             // DRAM target
             partition_start = thread_config->dram_partition_start_addr;
             num_target_accesses_in_range = num_dram_accesses_in_range;

@@ -175,10 +175,6 @@ void BenchmarkConfig::validate() const {
   const bool is_dram_operation_ratio_valid = 0.0 <= dram_operation_ratio && dram_operation_ratio <= 1.0;
   CHECK_ARGUMENT(is_dram_operation_ratio_valid, "DRAM ratio must be at least 0 and not greater than 1.");
 
-  // Check if DRAM ratio only contains single decimal, i.e, 0.1, 0.2, or 0.8
-  const bool is_only_one_decimal = (static_cast<int>(dram_operation_ratio * 10) / 10.0) == dram_operation_ratio;
-  CHECK_ARGUMENT(is_only_one_decimal, "DRAM ratio must only contain one decimal.");
-
   // Check if runtime is at least one second
   const bool is_at_least_one_second_or_default = run_time > 0 || run_time == -1;
   CHECK_ARGUMENT(is_at_least_one_second_or_default, "Run time be at least 1 second");
@@ -217,7 +213,7 @@ void BenchmarkConfig::validate() const {
                  "For sequential tim-based execution, the total file size needs to be multiple of chunk size " +
                      std::to_string(min_io_chunk_size));
 
-  // Assumption: we chunk operations in timed execution, so we need enough data to fill at least one chun
+  // Assumption: we chunk operations in timed execution, so we need enough data to fill at least one chunk
   const bool is_total_memory_large_enough = run_time == -1 || (memory_range / number_threads) >= min_io_chunk_size;
   CHECK_ARGUMENT(is_total_memory_large_enough, "Each thread needs at least " + std::to_string(min_io_chunk_size) +
                                                    " memory for time-based execution.");

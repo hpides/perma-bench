@@ -443,11 +443,4 @@ TEST_F(ConfigTest, InvalidDRAMRationPositiv) {
   check_log_for_critical("DRAM ratio must be at least 0 and not greater than 1");
 }
 
-TEST_F(ConfigTest, InvalidDRAMRationTwoDecimals) {
-  bm_config.exec_mode = Mode::Random;
-  bm_config.dram_operation_ratio = 0.22;
-  EXPECT_THROW(bm_config.validate(), PermaException);
-  check_log_for_critical("DRAM ratio must only contain one decimal");
-}
-
 }  // namespace perma
