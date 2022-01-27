@@ -1,8 +1,8 @@
 test_seq_matrix:
   matrix:
-    number_threads: [1, 2, 4]
-    access_size: [256, 4096]
+    number_threads: [ 1, 2, 4 ]
+    access_size: [ 256, 4096 ]
   args:
-    total_memory_range: 512M
+    memory_range: 512M
     exec_mode: sequential
     operation: read

@@ -99,17 +99,21 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
   BenchmarkConfig bm_config{};
   size_t num_found = 0;
   try {
-    num_found += get_size_if_present(node, "total_memory_range", ConfigEnums::scale_suffix_to_factor,
-                                     &bm_config.total_memory_range);
+    num_found +=
+        get_size_if_present(node, "memory_range", ConfigEnums::scale_suffix_to_factor, &bm_config.memory_range);
+    num_found += get_size_if_present(node, "dram_memory_range", ConfigEnums::scale_suffix_to_factor,
+                                     &bm_config.dram_memory_range);
     num_found += get_size_if_present(node, "access_size", ConfigEnums::scale_suffix_to_factor, &bm_config.access_size);
+    num_found += get_size_if_present(node, "min_io_chunk_size", ConfigEnums::scale_suffix_to_factor,
+                                     &bm_config.min_io_chunk_size);
 
+    num_found += get_if_present(node, "dram_operation_ratio", &bm_config.dram_operation_ratio);
     num_found += get_if_present(node, "number_operations", &bm_config.number_operations);
     num_found += get_if_present(node, "run_time", &bm_config.run_time);
     num_found += get_if_present(node, "number_partitions", &bm_config.number_partitions);
     num_found += get_if_present(node, "number_threads", &bm_config.number_threads);
     num_found += get_if_present(node, "zipf_alpha", &bm_config.zipf_alpha);
     num_found += get_if_present(node, "prefault_file", &bm_config.prefault_file);
-    num_found += get_if_present(node, "min_io_chunk_size", &bm_config.min_io_chunk_size);
     num_found += get_if_present(node, "latency_sample_frequency", &bm_config.latency_sample_frequency);
 
     num_found += get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_mode, &bm_config.exec_mode);
@@ -152,9 +156,23 @@ void BenchmarkConfig::validate() const {
   const bool is_access_size_power_of_two = (access_size & (access_size - 1)) == 0;
   CHECK_ARGUMENT(is_access_size_power_of_two, "Access size must be a power of 2");
 
-  // Check if memory range is multiple of access size
-  const bool is_memory_range_multiple_of_access_size = (total_memory_range % access_size) == 0;
-  CHECK_ARGUMENT(is_memory_range_multiple_of_access_size, "Total memory range must be a multiple of access size.");
+  // Check if PMem memory range is multiple of access size
+  const bool is_memory_range_multiple_of_access_size = (memory_range % access_size) == 0;
+  CHECK_ARGUMENT(is_memory_range_multiple_of_access_size, "PMem memory range must be a multiple of access size.");
+
+  // Check if DRAM memory range is multiple of access size
+  const bool is_dram_memory_range_multiple_of_access_size =
+      dram_memory_range == 0 || (dram_memory_range % access_size) == 0;
+  CHECK_ARGUMENT(is_dram_memory_range_multiple_of_access_size,
+                 "DRAM memory range must be a multiple of access size or 0.");
+
+  // Check if DRAM ratio is greater and equal to 0 and smaller than 1
+  const bool is_dram_operation_ratio_valid = 0.0 <= dram_operation_ratio && dram_operation_ratio <= 1.0;
+  CHECK_ARGUMENT(is_dram_operation_ratio_valid, "DRAM ratio must be at least 0 and not greater than 1.");
+
+  // Check if DRAM ratio only contains single decimal, i.e, 0.1, 0.2, or 0.8
+  const bool is_only_one_decimal = (static_cast<int>(dram_operation_ratio * 10) / 10.0) == dram_operation_ratio;
+  CHECK_ARGUMENT(is_only_one_decimal, "DRAM ratio must only contain one decimal.");
 
   // Check if runtime is at least one second
   const bool is_at_least_one_second_or_default = run_time > 0 || run_time == -1;
@@ -174,7 +192,7 @@ void BenchmarkConfig::validate() const {
                  "Number threads must be a multiple of number partitions.");
 
   // Assumption: total memory range must be evenly divisible into number of partitions
-  const bool is_partitionable = ((total_memory_range / number_partitions) % access_size) == 0;
+  const bool is_partitionable = ((memory_range / number_partitions) % access_size) == 0;
   CHECK_ARGUMENT(is_partitionable,
                  "Total memory range must be evenly divisible into number of partitions. "
                  "Most likely you can fix this by using 2^x partitions.");
@@ -189,15 +207,17 @@ void BenchmarkConfig::validate() const {
   CHECK_ARGUMENT(is_valid_min_io_chunk_size, "Minimum IO chunk must be >= 64 Byte and a power of two.");
 
   // Assumption: total memory needs to fit into N chunks exactly
-  const bool is_seq_total_memory_chunkable =
-      (exec_mode == Mode::Random || exec_mode == Mode::Custom) || (total_memory_range % min_io_chunk_size) == 0;
-  CHECK_ARGUMENT(is_seq_total_memory_chunkable,
-                 "Total file size needs to be multiple of chunk size " + std::to_string(min_io_chunk_size));
+  const bool is_time_based_seq_total_memory_chunkable =
+      (exec_mode == Mode::Random || exec_mode == Mode::Custom || run_time == -1) ||
+      (memory_range % min_io_chunk_size) == 0;
+  CHECK_ARGUMENT(is_time_based_seq_total_memory_chunkable,
+                 "For sequential tim-based execution, the total file size needs to be multiple of chunk size " +
+                     std::to_string(min_io_chunk_size));
 
-  // Assumption: we chunk operations and we need enough data to fill at least one chunk
-  const bool is_total_memory_large_enough = (total_memory_range / number_threads) >= min_io_chunk_size;
-  CHECK_ARGUMENT(is_total_memory_large_enough,
-                 "Each thread needs at least " + std::to_string(min_io_chunk_size) + " memory.");
+  // Assumption: we chunk operations in timed execution, so we need enough data to fill at least one chun
+  const bool is_total_memory_large_enough = run_time == -1 || (memory_range / number_threads) >= min_io_chunk_size;
+  CHECK_ARGUMENT(is_total_memory_large_enough, "Each thread needs at least " + std::to_string(min_io_chunk_size) +
+                                                   " memory for time-based execution.");
 
   const bool is_far_numa_node_available = numa_pattern == NumaPattern::Near || has_far_numa_nodes();
   CHECK_ARGUMENT(is_far_numa_node_available, "Cannot run far NUMA node benchmark without far NUMA nodes.");

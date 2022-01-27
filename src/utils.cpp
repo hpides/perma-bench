@@ -18,6 +18,11 @@ namespace perma::utils {
 void setPMEM_MAP_FLAGS(const int flags) { PMEM_MAP_FLAGS = flags; }
 
 char* map_file(const std::filesystem::path& file, const bool is_dram, size_t expected_length) {
+  // Do not mmap any data if length is 0
+  if (expected_length == 0) {
+    return nullptr;
+  }
+
   uint64_t fd = -1;
   int flags;
   if (!is_dram) {
@@ -66,29 +71,29 @@ std::filesystem::path generate_random_file_name(const std::filesystem::path& bas
   return base_dir / file;
 }
 
-void generate_read_data(char* addr, const uint64_t total_memory_range) {
-  spdlog::info("Generating {} GB of random data to read.", total_memory_range / ONE_GB);
+void generate_read_data(char* addr, const uint64_t memory_range) {
+  spdlog::debug("Generating {} GB of random data to read.", memory_range / ONE_GB);
   std::vector<std::thread> thread_pool;
   thread_pool.reserve(NUM_UTIL_THREADS - 1);
-  uint64_t thread_memory_range = total_memory_range / NUM_UTIL_THREADS;
+  uint64_t thread_memory_range = memory_range / NUM_UTIL_THREADS;
   for (uint8_t thread_count = 0; thread_count < NUM_UTIL_THREADS - 1; thread_count++) {
     char* from = addr + thread_count * thread_memory_range;
     const char* to = addr + (thread_count + 1) * thread_memory_range;
     thread_pool.emplace_back(rw_ops::write_data, from, to);
   }
 
-  rw_ops::write_data(addr + (NUM_UTIL_THREADS - 1) * thread_memory_range, addr + total_memory_range);
+  rw_ops::write_data(addr + (NUM_UTIL_THREADS - 1) * thread_memory_range, addr + memory_range);
 
   // wait for all threads
   for (std::thread& thread : thread_pool) {
     thread.join();
   }
-  spdlog::info("Finished generating data.");
+  spdlog::debug("Finished generating data.");
 }
 
-void prefault_file(char* addr, const uint64_t total_memory_range, const uint64_t page_size) {
-  spdlog::debug("Prefaulting data.");
-  const size_t num_prefault_pages = total_memory_range / page_size;
+void prefault_file(char* addr, const uint64_t memory_range, const uint64_t page_size) {
+  spdlog::debug("Pre-faulting data.");
+  const size_t num_prefault_pages = memory_range / page_size;
   for (size_t prefault_offset = 0; prefault_offset < num_prefault_pages; ++prefault_offset) {
     addr[prefault_offset * page_size] = '\0';
   }

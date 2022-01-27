@@ -1,6 +1,6 @@
 operation_latency:
   matrix:
-    number_threads: [1, 16, 32]
+    number_threads: [ 1, 16, 32 ]
     custom_operations:
     # 64 Byte
       - "r_64"
@@ -19,7 +19,7 @@ operation_latency:
       - "r_512,w_512_nocache"
 
   args:
-    total_memory_range: 10G
+    memory_range: 10G
     number_operations: 100000000
     latency_sample_frequency: 5000
     exec_mode: custom

@@ -30,6 +30,10 @@ int main(int argc, char** argv) {
 
   CLI::App app{"PerMA-Bench: Benchmark your Persistent Memory"};
 
+  // Set verbosity
+  bool be_verbose;
+  app.add_flag("-v,--verbose", be_verbose, "Set true to log additional runtime information.")->default_val(false);
+
   // Define command line args
   std::filesystem::path config_file = std::filesystem::current_path() / DEFAULT_WORKLOAD_PATH;
   app.add_option("-c,--config", config_file,
@@ -88,6 +92,10 @@ int main(int argc, char** argv) {
     return app.exit(e);
   }
 
+  if (be_verbose) {
+    spdlog::set_level(spdlog::level::debug);
+  }
+
   // Make sure that the benchmarks are NUMA-aware. Setting this in the main thread will inherit to all child threads.
   init_numa(pmem_directory, numa_nodes, use_dram, ignore_numa);
 
@@ -97,7 +105,7 @@ int main(int argc, char** argv) {
   spdlog::info("Writing results to '{}'.", result_path.string());
 
   try {
-    BenchmarkSuite::run_benchmarks(pmem_directory, config_file, result_path);
+    BenchmarkSuite::run_benchmarks({pmem_directory, config_file, result_path, use_dram});
   } catch (const PermaException& e) {
     // Clean up files before exiting
     if (!use_dram) {

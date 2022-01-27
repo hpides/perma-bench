@@ -15,6 +15,13 @@ class IoOperation {
   friend class Benchmark;
 
  public:
+  IoOperation(std::vector<char*>&& op_addresses, uint32_t access_size, Operation op_type,
+              PersistInstruction persist_instruction)
+      : op_addresses_{std::move(op_addresses)},
+        access_size_{access_size},
+        op_type_{op_type},
+        persist_instruction_{persist_instruction} {}
+
   inline void run() {
     switch (op_type_) {
       case Operation::Read: {
@@ -33,23 +40,7 @@ class IoOperation {
   inline bool is_read() const { return op_type_ == Operation::Read; }
   inline bool is_write() const { return op_type_ == Operation::Write; }
 
-  static IoOperation ReadOp(const std::vector<char*>& op_addresses, uint32_t access_size) {
-    return IoOperation{op_addresses, access_size, Operation::Read, PersistInstruction::None};
-  }
-
-  static IoOperation WriteOp(const std::vector<char*>& op_addresses, uint32_t access_size,
-                             PersistInstruction persist_instruction) {
-    return IoOperation{op_addresses, access_size, Operation::Write, persist_instruction};
-  }
-
  private:
-  IoOperation(const std::vector<char*>& op_addresses, uint32_t access_size, Operation op_type,
-              PersistInstruction persist_instruction)
-      : op_addresses_{op_addresses},
-        access_size_{access_size},
-        op_type_{op_type},
-        persist_instruction_{persist_instruction} {}
-
   void run_read() {
 #ifdef HAS_AVX
     switch (access_size_) {
@@ -134,12 +125,8 @@ class IoOperation {
 #endif
   }
 
-  // The order here is important. At the moment, we can fit this into 16 Byte. Reorder with care.
-  const std::vector<char*>& op_addresses_;
-  union {
-    const uint32_t access_size_;
-    const uint32_t duration_;
-  };
+  std::vector<char*> op_addresses_;
+  const uint32_t access_size_;
   const Operation op_type_;
   const PersistInstruction persist_instruction_;
 };

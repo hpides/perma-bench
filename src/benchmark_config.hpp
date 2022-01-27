@@ -20,8 +20,8 @@ enum class Operation : uint8_t { Read, Write };
 enum class NumaPattern : uint8_t { Near, Far };
 
 // We assume 2^30 for GB and not 10^9
-static constexpr size_t BYTE_IN_MEGABYTE = 1024u * 1024;
-static constexpr size_t BYTE_IN_GIGABYTE = 1024u * BYTE_IN_MEGABYTE;
+static constexpr size_t BYTES_IN_MEGABYTE = 1024u * 1024;
+static constexpr size_t BYTES_IN_GIGABYTE = 1024u * BYTES_IN_MEGABYTE;
 static constexpr size_t NANOSECONDS_IN_SECONDS = 1e9;
 
 /**
@@ -67,11 +67,18 @@ struct CustomOp {
  * The values shown here define the benchmark and represent user-facing configuration options.
  */
 struct BenchmarkConfig {
-  /** Represents the total PMem memory range to use for the benchmark. Must be a multiple of `access_size`.  */
-  uint64_t total_memory_range = 10'737'418'240;  // 10 GiB
-
-  /** Represents the size of an individual memory access. Must tbe a power of two. */
+  /** Represents the size of an individual memory access in Byte. Must be a power of two. */
   uint32_t access_size = 256;
+
+  /** Represents the total PMem memory range to use for the benchmark. Must be a multiple of `access_size`.  */
+  uint64_t memory_range = 10 * BYTES_IN_GIGABYTE;  // 10 GiB
+
+  /** Represents the total DRAM memory range to use for the benchmark. Must be a multiple of `access_size`.  */
+  uint64_t dram_memory_range = 0;
+
+  /** Represents the ratio of DRAM IOOperations to PMem IOOperations. Must only contain one digit after decimal point,
+   * i.e., 0.1 or 0.2. */
+  double dram_operation_ratio = 0.0;
 
   /** Represents the number of random access operations to perform. Can *not* be set for sequential access. */
   uint64_t number_operations = 10'000'000;
@@ -92,8 +99,8 @@ struct BenchmarkConfig {
    * `PersistInstruction` for more details on available options. */
   PersistInstruction persist_instruction = PersistInstruction::NoCache;
 
-  /** Number of disjoint memory regions to partition the `total_memory_range` into. Must be a multiple of
-   * `number_threads`. */
+  /** Number of disjoint memory regions to partition the `memory_range` into. Must be a divisor of
+   * `number_threads`, i.e., one or more threads map to one partition. */
   uint16_t number_partitions = 1;
 
   /** Define whether the memory access should be NUMA-local (`near`) or -remote (`far`). */
@@ -115,15 +122,16 @@ struct BenchmarkConfig {
    * time caused by page faults on first access to the allocated memory region. */
   bool prefault_file = true;
 
-  // TODO: remove this logic to avoid overhead of chunking
-  uint64_t min_io_chunk_size = 128 * 1024u;  // 128 KiB
-
-  /** This field is required and has no default value, i.e., it must be set as a command line argument. */
-  std::string pmem_directory{};
+  /** Represents the minimum size of a chunk after which completion is checked in time-based execution, i.e., when
+   * `run_time` is set. A chunk contains chunk_size / access_size number of operations. */
+  uint64_t min_io_chunk_size = 1 * BYTES_IN_GIGABYTE;
 
   /** These fields are set internally and do not represent user-facing options. */
+  /** This field is required and has no default value, i.e., it must be set as a command line argument. */
+  std::string pmem_directory{};
   std::vector<std::string> matrix_args{};
   bool is_pmem = true;
+  bool is_hybrid = false;
 
   static BenchmarkConfig decode(YAML::Node& raw_config_data);
   void validate() const;

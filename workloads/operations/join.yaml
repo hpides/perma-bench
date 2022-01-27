@@ -7,7 +7,7 @@
 # We also vary the number of threads.
 join_build:
   matrix:
-    number_threads: [1, 8, 16, 32]
+    number_threads: [ 1, 8, 16, 32 ]
     # Represent bucket sizes 64, 256, 1024
     custom_operations:
       - "r_64,w_64_cache,w_64_cache"
@@ -15,7 +15,7 @@ join_build:
       - "r_1024,w_64_cache,w_64_cache"
 
   args:
-    total_memory_range: 10G
+    memory_range: 10G
     number_operations: 100000000
     exec_mode: custom
 
@@ -31,6 +31,6 @@ join_probe:
       - "r_2048"
 
   args:
-    total_memory_range: 10G
+    memory_range: 10G
     number_operations: 200000000
     exec_mode: custom

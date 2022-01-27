@@ -2,6 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <fstream>
 #include <json.hpp>
 
 #include "benchmark_factory.hpp"
@@ -55,17 +56,16 @@ void print_bm_information(const perma::Benchmark& bm) {
 
 namespace perma {
 
-void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
-                                    const std::filesystem::path& config_file,
-                                    const std::filesystem::path& result_directory) {
-  std::vector<YAML::Node> configs = BenchmarkFactory::get_config_files(config_file);
+void BenchmarkSuite::run_benchmarks(const PermaOptions& options) {
+  std::vector<YAML::Node> configs = BenchmarkFactory::get_config_files(options.config_file);
   nlohmann::json results = nlohmann::json::array();
 
   // Start single benchmarks
-  std::vector<SingleBenchmark> single_benchmarks = BenchmarkFactory::create_single_benchmarks(pmem_directory, configs);
+  std::vector<SingleBenchmark> single_benchmarks =
+      BenchmarkFactory::create_single_benchmarks(options.pmem_directory, configs, !options.is_pmem);
   spdlog::info("Found {} single benchmark{}.", single_benchmarks.size(), single_benchmarks.size() != 1 ? "s" : "");
   std::vector<ParallelBenchmark> parallel_benchmarks =
-      BenchmarkFactory::create_parallel_benchmarks(pmem_directory, configs);
+      BenchmarkFactory::create_parallel_benchmarks(options.pmem_directory, configs, !options.is_pmem);
   spdlog::info("Found {} parallel benchmark{}.", parallel_benchmarks.size(),
                parallel_benchmarks.size() != 1 ? "s" : "");
 
@@ -79,7 +79,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
     benchmarks.push_back(&benchmark);
   }
 
-  const std::filesystem::path result_file = utils::create_result_file(result_directory, config_file);
+  const std::filesystem::path result_file = utils::create_result_file(options.result_directory, options.config_file);
 
   if (benchmarks.empty()) {
     spdlog::warn("No benchmarks found. Nothing to do.");
@@ -106,7 +106,7 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
       printed_info = true;
     }
 
-    benchmark.create_data_file();
+    benchmark.create_data_files();
     benchmark.set_up();
     const bool success = benchmark.run();
     previous_bm = &benchmark;
@@ -131,6 +131,11 @@ void BenchmarkSuite::run_benchmarks(const std::filesystem::path& pmem_directory,
   if (had_error) {
     utils::crash_exit();
   }
+
+  std::stringstream buffer;
+  std::ifstream file_stream{result_file};
+  buffer << file_stream.rdbuf();
+  spdlog::debug("Results:\n{}", buffer.str());
 
   spdlog::info("Finished all benchmarks successfully.");
 }

@@ -17,7 +17,7 @@ primary_index_lookup:
       - "r1024,r1024,r1024"
 
   args:
-    total_memory_range: 2G
+    memory_range: 2G
     number_operations: 100000000
     exec_mode: custom
 
@@ -34,7 +34,7 @@ primary_index_update:
       - "r1024,r1024,r1024,w64_cache,w64_cache,w64_cache,w64_cache,w64_cache,w64_cache,w64_cache,w64_cache"
 
   args:
-    total_memory_range: 2G
+    memory_range: 2G
     number_operations: 100000000
     exec_mode: custom
 
@@ -54,6 +54,6 @@ primary_index_range_scan:
       - "r_1024,r_1024,r_1024,r_1024,r_1024,"
 
   args:
-    total_memory_range: 2G
+    memory_range: 2G
     number_operations: 100000000
     exec_mode: custom
