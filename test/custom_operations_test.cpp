@@ -165,4 +165,26 @@ TEST_F(CustomOperationTest, CustomWrite128NegativeOffsetString) {
   EXPECT_EQ(op.to_string(), "wd_128_cache_-64");
 }
 
+TEST_F(CustomOperationTest, ValidChainDramPmemReadWrite) {
+  std::vector<CustomOp> ops = {CustomOp{.type = Operation::Read, .is_pmem = true},
+                               CustomOp{.type = Operation::Write, .is_pmem = true},
+                               CustomOp{.type = Operation::Write, .is_pmem = true},
+                               CustomOp{.type = Operation::Read, .is_pmem = true},
+                               CustomOp{.type = Operation::Read, .is_pmem = false},
+                               CustomOp{.type = Operation::Write, .is_pmem = false},
+  };
+  EXPECT_TRUE(CustomOp::validate(ops));
+}
+
+TEST_F(CustomOperationTest, BadChainStartsWithWrite) {
+  std::vector<CustomOp> ops = {CustomOp{.type = Operation::Write}, CustomOp{.type = Operation::Read}};
+  EXPECT_FALSE(CustomOp::validate(ops));
+}
+
+TEST_F(CustomOperationTest, BadChainWithDramWriteAftrPmemRead) {
+  std::vector<CustomOp> ops = {CustomOp{.type = Operation::Read, .is_pmem = true},
+                               CustomOp{.type = Operation::Write, .is_pmem = false}};
+  EXPECT_FALSE(CustomOp::validate(ops));
+}
+
 }  // namespace perma

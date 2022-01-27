@@ -58,6 +58,8 @@ struct CustomOp {
   static std::string to_string(const CustomOp& op);
   std::string to_string() const;
 
+  static bool validate(const std::vector<CustomOp>& operations);
+
   friend std::ostream& operator<<(std::ostream& os, const CustomOp& op);
   bool operator==(const CustomOp& rhs) const;
   bool operator!=(const CustomOp& rhs) const;

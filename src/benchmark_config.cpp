@@ -339,8 +339,10 @@ std::vector<CustomOp> CustomOp::all_from_string(const std::string& str) {
     ops.emplace_back(from_string(op_str));
   }
 
-  if (ops[0].type != Operation::Read) {
-    spdlog::error("First custom operation must be a read");
+  // Check if operation chain is valid
+  const bool is_valid = validate(ops);
+  if (!is_valid) {
+    spdlog::error("Got invalid custom operations: {}", str);
     utils::crash_exit();
   }
 
@@ -371,11 +373,30 @@ std::string CustomOp::all_to_string(const std::vector<CustomOp>& ops) {
   return out.str();
 }
 
+bool CustomOp::validate(const std::vector<CustomOp>& operations) {
+  if (operations[0].type != Operation::Read) {
+    spdlog::error("First custom operation must be a read");
+    return false;
+  }
+
+  // Check if write is to same memory type
+  bool is_currently_pmem = operations[0].is_pmem;
+  for (const CustomOp& op : operations) {
+    if (op.type == Operation::Write && is_currently_pmem ^ op.is_pmem) {
+      spdlog::error("A write must occur after a read to the same memory type, i.e., DRAM or PMem.");
+      spdlog::error("Bad operation: {}", op.to_string());
+      return false;
+    }
+    is_currently_pmem = op.is_pmem;
+  }
+
+  return true;
+}
+
 bool CustomOp::operator==(const CustomOp& rhs) const {
   return type == rhs.type && is_pmem == rhs.is_pmem && size == rhs.size && persist == rhs.persist &&
          offset == rhs.offset;
 }
-
 bool CustomOp::operator!=(const CustomOp& rhs) const { return !(rhs == *this); }
 std::ostream& operator<<(std::ostream& os, const CustomOp& op) { return os << op.to_string(); }
 
