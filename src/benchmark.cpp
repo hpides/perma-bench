@@ -419,7 +419,7 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
   const double sq_sum =
       std::inner_product(thread_diff_to_avg.begin(), thread_diff_to_avg.end(), thread_diff_to_avg.begin(), 0.0);
   // Use N - 1 for sample variance
-  const double bandwidth_stddev = std::sqrt(sq_sum / (config.number_threads - 1));
+  const double bandwidth_stddev = std::sqrt(sq_sum / std::max(1, config.number_threads - 1));
 
   spdlog::debug("Per-Thread Average Bandwidth: {}", avg_bandwidth);
   spdlog::debug("Per-Thread Standard Deviation: {}", bandwidth_stddev);

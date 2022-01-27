@@ -621,7 +621,7 @@ TEST_F(BenchmarkTest, ResultsMultiThreadRead) {
   }
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  check_json_bandwidth(result_json, 3.48772321, 0.8719308, 0.0642052);
+  check_json_bandwidth(result_json, 3.48772321, 0.8719308, 0.0741378);
 }
 
 TEST_F(BenchmarkTest, ResultsMultiThreadWrite) {
@@ -640,7 +640,7 @@ TEST_F(BenchmarkTest, ResultsMultiThreadWrite) {
   }
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  check_json_bandwidth(result_json, 3.0517578, 0.38146972, 0.0606978);
+  check_json_bandwidth(result_json, 3.0517578, 0.38146972, 0.0648887);
 }
 
 // TODO(#167): Change "mixed" to DRAM/PMem
