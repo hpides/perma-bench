@@ -3,6 +3,7 @@
 #include <benchmark.hpp>
 #include <fstream>
 
+#include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 #include "parallel_benchmark.hpp"
 #include "single_benchmark.hpp"
@@ -10,10 +11,10 @@
 
 namespace perma {
 
-constexpr size_t TEST_FILE_SIZE = 1048576;  // 1 MiB
+using ::testing::ElementsAre;
 
-// Duplicate this instead of using global constant so that we notice when it is changed.
-const size_t TEST_IO_OP_CHUNK_SIZE = 128 * 1024u;
+constexpr size_t TEST_FILE_SIZE = 1048576;              // 1 MiB
+constexpr size_t TEST_CHUNK_SIZE = TEST_FILE_SIZE / 8;  // 128 KiB
 
 class BenchmarkTest : public ::testing::Test {
  protected:
@@ -215,9 +216,13 @@ TEST_F(BenchmarkTest, SetUpSingleThread) {
   EXPECT_EQ(thread_config.partition_start_addr, bm.get_pmem_data()[0]);
   EXPECT_EQ(&thread_config.config, &bm.get_benchmark_configs()[0]);
 
-  const std::vector<std::vector<Latency>>& latencies = bm.get_benchmark_results()[0]->latencies;
-  ASSERT_EQ(latencies.size(), 1);
-  EXPECT_EQ(thread_config.latencies->data(), latencies[0].data());
+  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  ASSERT_EQ(op_durations.size(), 1);
+  EXPECT_EQ(thread_config.total_operation_duration, &op_durations[0]);
+
+  const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
+  ASSERT_EQ(op_sizes.size(), 1);
+  EXPECT_EQ(thread_config.total_operation_size, &op_sizes[0]);
 
   bm.get_benchmark_results()[0]->config.validate();
 }
@@ -251,12 +256,19 @@ TEST_F(BenchmarkTest, SetUpMultiThread) {
   EXPECT_EQ(thread_config2.partition_start_addr, bm.get_pmem_data()[0] + partition_size);
   EXPECT_EQ(thread_config3.partition_start_addr, bm.get_pmem_data()[0] + partition_size);
 
-  const std::vector<std::vector<Latency>>& latencies = bm.get_benchmark_results()[0]->latencies;
-  ASSERT_EQ(latencies.size(), num_threads);
-  EXPECT_EQ(thread_config0.latencies->data(), latencies[0].data());
-  EXPECT_EQ(thread_config1.latencies->data(), latencies[1].data());
-  EXPECT_EQ(thread_config2.latencies->data(), latencies[2].data());
-  EXPECT_EQ(thread_config3.latencies->data(), latencies[3].data());
+  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  ASSERT_EQ(op_durations.size(), num_threads);
+  EXPECT_EQ(thread_config0.total_operation_duration, &op_durations[0]);
+  EXPECT_EQ(thread_config1.total_operation_duration, &op_durations[1]);
+  EXPECT_EQ(thread_config2.total_operation_duration, &op_durations[2]);
+  EXPECT_EQ(thread_config3.total_operation_duration, &op_durations[3]);
+
+  const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
+  ASSERT_EQ(op_sizes.size(), num_threads);
+  EXPECT_EQ(thread_config0.total_operation_size, &op_sizes[0]);
+  EXPECT_EQ(thread_config1.total_operation_size, &op_sizes[1]);
+  EXPECT_EQ(thread_config2.total_operation_size, &op_sizes[2]);
+  EXPECT_EQ(thread_config3.total_operation_size, &op_sizes[3]);
 
   // These values are the same for all threads
   for (const ThreadRunConfig& tc : thread_configs) {
@@ -269,9 +281,7 @@ TEST_F(BenchmarkTest, SetUpMultiThread) {
 }
 
 TEST_F(BenchmarkTest, RunSingeThreadRead) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
-  const size_t num_chunks = 8;
-  const size_t num_ops = num_chunks * ops_per_chunk;
+  const size_t num_ops = TEST_FILE_SIZE / 256;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
   base_config_.operation = Operation::Read;
@@ -285,21 +295,16 @@ TEST_F(BenchmarkTest, RunSingeThreadRead) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
-  ASSERT_EQ(all_latencies.size(), 1);
-  const std::vector<Latency>& latencies = all_latencies[0];
+  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  ASSERT_EQ(op_durations.size(), 1);
+  EXPECT_GT(op_durations[0], 0);
 
-  ASSERT_EQ(latencies.size(), num_chunks);
-  for (const Latency latency : latencies) {
-    EXPECT_EQ(latency.op_type, Operation::Read);
-    EXPECT_GE(latency.duration, 0);
-  }
+  const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
+  EXPECT_THAT(op_sizes, ElementsAre(TEST_FILE_SIZE));
 }
 
 TEST_F(BenchmarkTest, RunSingeThreadReadDRAM) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
-  const size_t num_chunks = 8;
-  const size_t num_ops = num_chunks * ops_per_chunk;
+  const size_t num_ops = TEST_FILE_SIZE / 256;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
   base_config_.operation = Operation::Read;
@@ -314,26 +319,20 @@ TEST_F(BenchmarkTest, RunSingeThreadReadDRAM) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
-  ASSERT_EQ(all_latencies.size(), 1);
-  const std::vector<Latency>& latencies = all_latencies[0];
+  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  ASSERT_EQ(op_durations.size(), 1);
+  EXPECT_GT(op_durations[0], 0);
 
-  ASSERT_EQ(latencies.size(), num_chunks);
-  for (const Latency latency : latencies) {
-    EXPECT_EQ(latency.op_type, Operation::Read);
-    EXPECT_GE(latency.duration, 0);
-  }
+  const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
+  EXPECT_THAT(op_sizes, ElementsAre(TEST_FILE_SIZE));
 }
 
 TEST_F(BenchmarkTest, RunSingleThreadWrite) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
-  const size_t num_chunks = 8;
-  const size_t num_ops = num_chunks * ops_per_chunk;
-  const size_t total_size = 256 * num_ops;
+  const size_t num_ops = TEST_FILE_SIZE / 512;
   base_config_.number_threads = 1;
-  base_config_.access_size = 256;
+  base_config_.access_size = 512;
   base_config_.operation = Operation::Write;
-  base_config_.memory_range = total_size;
+  base_config_.memory_range = TEST_FILE_SIZE;
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, base_results_};
@@ -343,26 +342,21 @@ TEST_F(BenchmarkTest, RunSingleThreadWrite) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
-  ASSERT_EQ(all_latencies.size(), 1);
-  const std::vector<Latency>& latencies = all_latencies[0];
+  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  ASSERT_EQ(op_durations.size(), 1);
+  EXPECT_GT(op_durations[0], 0);
 
-  ASSERT_EQ(latencies.size(), num_chunks);
-  for (const Latency latency : latencies) {
-    EXPECT_EQ(latency.op_type, Operation::Write);
-    EXPECT_GE(latency.duration, 0);
-  }
+  const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
+  EXPECT_THAT(op_sizes, ElementsAre(TEST_FILE_SIZE));
 
-  check_file_written(bm.get_pmem_file(0), total_size);
+  check_file_written(bm.get_pmem_file(0), TEST_FILE_SIZE);
 }
 
 TEST_F(BenchmarkTest, RunSingleThreadWriteDRAM) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
-  const size_t num_chunks = 8;
-  const size_t num_ops = num_chunks * ops_per_chunk;
-  const size_t total_size = 256 * num_ops;
+  const size_t num_ops = TEST_FILE_SIZE / 64;
+  const size_t total_size = 64 * num_ops;
   base_config_.number_threads = 1;
-  base_config_.access_size = 256;
+  base_config_.access_size = 64;
   base_config_.operation = Operation::Write;
   base_config_.memory_range = total_size;
   base_config_.is_pmem = false;
@@ -375,20 +369,17 @@ TEST_F(BenchmarkTest, RunSingleThreadWriteDRAM) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
-  ASSERT_EQ(all_latencies.size(), 1);
-  const std::vector<Latency>& latencies = all_latencies[0];
+  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  ASSERT_EQ(op_durations.size(), 1);
+  EXPECT_GT(op_durations[0], 0);
 
-  ASSERT_EQ(latencies.size(), num_chunks);
-  for (const Latency latency : latencies) {
-    EXPECT_EQ(latency.op_type, Operation::Write);
-    EXPECT_GE(latency.duration, 0);
-  }
+  const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
+  EXPECT_THAT(op_sizes, ElementsAre(total_size));
 }
 
 // TODO(#167): Change "mixed" to DRAM/PMem
 TEST_F(BenchmarkTest, DISABLED_RunSingeThreadMixed) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
+  const size_t ops_per_chunk = TEST_FILE_SIZE / 256;
   const size_t num_chunks = 8;
   const size_t num_ops = num_chunks * ops_per_chunk;
   base_config_.number_threads = 1;
@@ -407,21 +398,17 @@ TEST_F(BenchmarkTest, DISABLED_RunSingeThreadMixed) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
-  ASSERT_EQ(all_latencies.size(), 1);
-  const std::vector<Latency>& latencies = all_latencies[0];
+  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  ASSERT_EQ(op_durations.size(), 1);
+  EXPECT_GT(op_durations[0], 0);
 
-  ASSERT_EQ(latencies.size(), num_chunks);
-  for (const Latency latency : latencies) {
-    EXPECT_TRUE(latency.op_type == Operation::Write || latency.op_type == Operation::Read);
-    EXPECT_GE(latency.duration, 0);
-  }
+  const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
+  uint64_t dummy_value_to_fail = 12346;
+  EXPECT_THAT(op_sizes, ElementsAre(dummy_value_to_fail));
 }
 
 TEST_F(BenchmarkTest, RunMultiThreadRead) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 1024;
-  const size_t num_chunks = 32;
-  const size_t num_ops = num_chunks * ops_per_chunk;
+  const size_t num_ops = TEST_FILE_SIZE / 1024;
   const size_t num_threads = 4;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 1024;
@@ -436,21 +423,19 @@ TEST_F(BenchmarkTest, RunMultiThreadRead) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
-  ASSERT_EQ(all_latencies.size(), num_threads);
-  for (const std::vector<Latency>& latencies : all_latencies) {
-    ASSERT_EQ(latencies.size(), num_chunks / num_threads);
-    for (const Latency latency : latencies) {
-      EXPECT_EQ(latency.op_type, Operation::Read);
-      EXPECT_GE(latency.duration, 0);
-    }
+  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  EXPECT_EQ(op_durations.size(), num_threads);
+  for (uint64_t duration : op_durations) {
+    EXPECT_GT(duration, 0);
   }
+
+  const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
+  const uint64_t per_thread_size = TEST_FILE_SIZE / num_threads;
+  EXPECT_THAT(op_sizes, ElementsAre(per_thread_size, per_thread_size, per_thread_size, per_thread_size));
 }
 
 TEST_F(BenchmarkTest, RunMultiThreadWrite) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 512;
-  const size_t num_chunks = 128;
-  const size_t num_ops = num_chunks * ops_per_chunk;
+  const size_t num_ops = TEST_FILE_SIZE / 512;
   const size_t num_threads = 16;
   const size_t total_size = 512 * num_ops;
   base_config_.number_threads = num_threads;
@@ -466,23 +451,24 @@ TEST_F(BenchmarkTest, RunMultiThreadWrite) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
-  ASSERT_EQ(all_latencies.size(), num_threads);
-  for (const std::vector<Latency>& latencies : all_latencies) {
-    ASSERT_EQ(latencies.size(), num_chunks / num_threads);
-    for (const Latency latency : latencies) {
-      EXPECT_EQ(latency.op_type, Operation::Read);
-      EXPECT_GE(latency.duration, 0);
-    }
+  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  EXPECT_EQ(op_durations.size(), num_threads);
+  for (uint64_t duration : op_durations) {
+    EXPECT_GT(duration, 0);
+  }
+
+  const uint64_t per_thread_size = TEST_FILE_SIZE / num_threads;
+  const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
+  EXPECT_EQ(op_sizes.size(), 16);
+  for (uint64_t size : op_sizes) {
+    EXPECT_EQ(size, per_thread_size);
   }
 
   check_file_written(bm.get_pmem_file(0), total_size);
 }
 
 TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 1024;
-  const size_t num_chunks = 32;
-  const size_t num_ops = num_chunks * ops_per_chunk;
+  const size_t num_ops = TEST_FILE_SIZE / 1024;
   const size_t num_threads = 4;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 1024;
@@ -498,21 +484,22 @@ TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
-  ASSERT_EQ(all_latencies.size(), num_threads);
-  for (const std::vector<Latency>& latencies : all_latencies) {
-    ASSERT_EQ(latencies.size(), num_chunks / num_threads);
-    for (const Latency latency : latencies) {
-      EXPECT_EQ(latency.op_type, Operation::Read);
-      EXPECT_GE(latency.duration, 0);
-    }
+  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  EXPECT_EQ(op_durations.size(), num_threads);
+  for (uint64_t duration : op_durations) {
+    EXPECT_GT(duration, 0);
+  }
+
+  const uint64_t per_thread_size = TEST_FILE_SIZE / num_threads;
+  const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
+  EXPECT_EQ(op_sizes.size(), 4);
+  for (uint64_t size : op_sizes) {
+    EXPECT_EQ(size, per_thread_size);
   }
 }
 
 TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 512;
-  const size_t num_chunks = 128;
-  const size_t num_ops = num_chunks * ops_per_chunk;
+  const size_t num_ops = TEST_FILE_SIZE / 512;
   const size_t num_threads = 16;
   const size_t total_size = 512 * num_ops;
   base_config_.number_threads = num_threads;
@@ -529,80 +516,58 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<std::vector<Latency>>& all_latencies = result.latencies;
-  ASSERT_EQ(all_latencies.size(), num_threads);
-  for (const std::vector<Latency>& latencies : all_latencies) {
-    ASSERT_EQ(latencies.size(), num_chunks / num_threads);
-    for (const Latency latency : latencies) {
-      EXPECT_EQ(latency.op_type, Operation::Read);
-      EXPECT_GE(latency.duration, 0);
-    }
+  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  EXPECT_EQ(op_durations.size(), num_threads);
+  for (uint64_t duration : op_durations) {
+    EXPECT_GT(duration, 0);
+  }
+
+  const uint64_t per_thread_size = TEST_FILE_SIZE / num_threads;
+  const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
+  EXPECT_EQ(op_sizes.size(), 16);
+  for (uint64_t size : op_sizes) {
+    EXPECT_EQ(size, per_thread_size);
   }
 
   check_file_written(bm.get_pmem_file(0), total_size);
 }
 
 TEST_F(BenchmarkTest, ResultsSingleThreadRead) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
-  const size_t num_chunks = 8;
-  const size_t num_ops = num_chunks * ops_per_chunk;
-  const size_t total_size = 256 * num_ops;
+  const size_t num_ops = TEST_FILE_SIZE / 256;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
   base_config_.operation = Operation::Read;
-  base_config_.memory_range = total_size;
+  base_config_.memory_range = TEST_FILE_SIZE;
 
   BenchmarkResult bm_result{base_config_};
-  std::vector<Latency> latencies{};
-  latencies.reserve(num_ops);
-  for (size_t i = 0; i < num_ops; ++i) {
-    latencies.emplace_back(ops_per_chunk * 100, Operation::Read);
-  }
-  bm_result.latencies.emplace_back(latencies);
+
+  const uint64_t total_op_duration = 1000000;
+  bm_result.total_operation_durations.emplace_back(total_op_duration);
+  bm_result.total_operation_sizes.emplace_back(TEST_FILE_SIZE);
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  ASSERT_JSON_EQ(result_json, size(), 1);
-  ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
-
-  const nlohmann::json& bandwidth_json = result_json["bandwidth"];
-  ASSERT_JSON_EQ(bandwidth_json, size(), 1);
-  ASSERT_JSON_TRUE(bandwidth_json, contains("read"));
-  ASSERT_JSON_TRUE(bandwidth_json, at("read").is_number());
-  EXPECT_NEAR(bandwidth_json.at("read").get<double>(), 2.38419, 0.1);
+  check_json_bandwidth(result_json, 0.9765625, 0.9765625, 0.0);
 }
 
 TEST_F(BenchmarkTest, ResultsSingleThreadWrite) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
-  const size_t num_chunks = 8;
-  const size_t num_ops = num_chunks * ops_per_chunk;
-  const size_t total_size = 256 * num_ops;
+  const size_t num_ops = TEST_FILE_SIZE / 256;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
   base_config_.operation = Operation::Write;
-  base_config_.memory_range = total_size;
+  base_config_.memory_range = TEST_FILE_SIZE;
 
   BenchmarkResult bm_result{base_config_};
-  std::vector<Latency> latencies{};
-  latencies.reserve(num_ops);
-  for (size_t i = 0; i < num_ops; ++i) {
-    latencies.emplace_back(ops_per_chunk * 100, Operation::Write);
-  }
-  bm_result.latencies.emplace_back(latencies);
+  const uint64_t total_op_duration = 2000000;
+  bm_result.total_operation_durations.emplace_back(total_op_duration);
+  bm_result.total_operation_sizes.emplace_back(TEST_FILE_SIZE);
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  ASSERT_JSON_EQ(result_json, size(), 1);
-  ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
-
-  const nlohmann::json& bandwidth_json = result_json["bandwidth"];
-  ASSERT_JSON_EQ(bandwidth_json, size(), 1);
-  ASSERT_JSON_TRUE(bandwidth_json, contains("write"));
-  ASSERT_JSON_TRUE(bandwidth_json, at("write").is_number());
-  EXPECT_NEAR(bandwidth_json.at("write").get<double>(), 2.38419, 0.1);
+  check_json_bandwidth(result_json, 0.48828125, 0.48828125, 0.0);
 }
 
 // TODO(#167): Change "mixed" to DRAM/PMem
 TEST_F(BenchmarkTest, DISABLED_ResultsSingleThreadMixed) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 512;
+  const size_t ops_per_chunk = TEST_FILE_SIZE / 512;
   const size_t num_chunks = 8;
   const size_t num_ops = num_chunks * ops_per_chunk;
   const size_t total_size = 512 * num_ops;
@@ -615,16 +580,16 @@ TEST_F(BenchmarkTest, DISABLED_ResultsSingleThreadMixed) {
   base_config_.exec_mode = Mode::Random;
 
   BenchmarkResult bm_result{base_config_};
-  std::vector<Latency> latencies{};
-  latencies.reserve(num_ops);
-  for (size_t i = 0; i < num_ops; ++i) {
-    if (i % 2 == 0) {
-      latencies.emplace_back(200 * ops_per_chunk, Operation::Write);
-    } else {
-      latencies.emplace_back(100 * ops_per_chunk, Operation::Read);
-    }
-  }
-  bm_result.latencies.emplace_back(latencies);
+  //  std::vector<Latency> latencies{};
+  //  latencies.reserve(num_ops);
+  //  for (size_t i = 0; i < num_ops; ++i) {
+  //    if (i % 2 == 0) {
+  //      latencies.emplace_back(200 * ops_per_chunk, Operation::Write);
+  //    } else {
+  //      latencies.emplace_back(100 * ops_per_chunk, Operation::Read);
+  //    }
+  //  }
+  //  bm_result.latencies.emplace_back(latencies);
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
   ASSERT_JSON_EQ(result_json, size(), 1);
@@ -641,72 +606,46 @@ TEST_F(BenchmarkTest, DISABLED_ResultsSingleThreadMixed) {
 }
 
 TEST_F(BenchmarkTest, ResultsMultiThreadRead) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 1024;
-  const size_t num_chunks = 64;
-  const size_t num_ops = num_chunks * ops_per_chunk;
+  const size_t num_ops = TEST_FILE_SIZE / 1024;
   const size_t num_threads = 4;
   const size_t num_ops_per_thread = num_ops / num_threads;
-  const size_t total_size = 1024 * num_ops;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 1024;
   base_config_.operation = Operation::Read;
-  base_config_.memory_range = total_size;
+  base_config_.memory_range = TEST_FILE_SIZE;
 
   BenchmarkResult bm_result{base_config_};
   for (size_t thread = 0; thread < num_threads; ++thread) {
-    std::vector<Latency> latencies{};
-    for (size_t i = 0; i < num_ops_per_thread; ++i) {
-      latencies.emplace_back((100 + (thread * 10)) * ops_per_chunk, Operation::Read);
-    }
-    bm_result.latencies.emplace_back(latencies);
+    bm_result.total_operation_durations.emplace_back(250000 + (10000 * thread));
+    bm_result.total_operation_sizes.emplace_back(TEST_FILE_SIZE / num_threads);
   }
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  ASSERT_JSON_EQ(result_json, size(), 1);
-  ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
-
-  const nlohmann::json& bandwidth_json = result_json["bandwidth"];
-  ASSERT_JSON_EQ(bandwidth_json, size(), 1);
-  ASSERT_JSON_TRUE(bandwidth_json, contains("read"));
-  ASSERT_JSON_TRUE(bandwidth_json, at("read").is_number());
-  EXPECT_NEAR(bandwidth_json.at("read").get<double>(), 33.1712, 0.1);
+  check_json_bandwidth(result_json, 3.48772321, 0.8719308, 0.0642052);
 }
 
 TEST_F(BenchmarkTest, ResultsMultiThreadWrite) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 512;
-  const size_t num_chunks = 64;
-  const size_t num_ops = num_chunks * ops_per_chunk;
+  const size_t num_ops = TEST_FILE_SIZE / 512;
   const size_t num_threads = 8;
   const size_t num_ops_per_thread = num_ops / num_threads;
-  const size_t total_size = 512 * num_ops;
   base_config_.number_threads = num_threads;
   base_config_.access_size = 512;
   base_config_.operation = Operation::Write;
-  base_config_.memory_range = total_size;
+  base_config_.memory_range = TEST_FILE_SIZE;
 
   BenchmarkResult bm_result{base_config_};
   for (size_t thread = 0; thread < num_threads; ++thread) {
-    std::vector<Latency> latencies{};
-    for (size_t i = 0; i < num_ops_per_thread; ++i) {
-      latencies.emplace_back((100 + (thread * 10)) * ops_per_chunk, Operation::Write);
-    }
-    bm_result.latencies.emplace_back(latencies);
+    bm_result.total_operation_durations.emplace_back(250000 + (10000 * thread));
+    bm_result.total_operation_sizes.emplace_back(TEST_FILE_SIZE / num_threads);
   }
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  ASSERT_JSON_EQ(result_json, size(), 1);
-  ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
-
-  const nlohmann::json& bandwidth_json = result_json["bandwidth"];
-  ASSERT_JSON_EQ(bandwidth_json, size(), 1);
-  ASSERT_JSON_TRUE(bandwidth_json, contains("write"));
-  ASSERT_JSON_TRUE(bandwidth_json, at("write").is_number());
-  EXPECT_NEAR(bandwidth_json.at("write").get<double>(), 28.2570, 0.1);
+  check_json_bandwidth(result_json, 3.0517578, 0.38146972, 0.0606978);
 }
 
 // TODO(#167): Change "mixed" to DRAM/PMem
 TEST_F(BenchmarkTest, DISABLED_ResultsMultiThreadMixed) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 512;
+  const size_t ops_per_chunk = TEST_FILE_SIZE / 512;
   const size_t num_chunks = 64;
   const size_t num_ops = num_chunks * ops_per_chunk;
   const size_t num_threads = 16;
@@ -721,17 +660,17 @@ TEST_F(BenchmarkTest, DISABLED_ResultsMultiThreadMixed) {
   base_config_.exec_mode = Mode::Random;
 
   BenchmarkResult bm_result{base_config_};
-  for (size_t thread = 0; thread < num_threads; ++thread) {
-    std::vector<Latency> latencies{};
-    for (size_t i = 0; i < num_ops_per_thread; ++i) {
-      if (i % 2 == 0) {
-        latencies.emplace_back(500 * ops_per_chunk, Operation::Write);
-      } else {
-        latencies.emplace_back(400 * ops_per_chunk, Operation::Read);
-      }
-    }
-    bm_result.latencies.emplace_back(latencies);
-  }
+  //  for (size_t thread = 0; thread < num_threads; ++thread) {
+  //    std::vector<Latency> latencies{};
+  //    for (size_t i = 0; i < num_ops_per_thread; ++i) {
+  //      if (i % 2 == 0) {
+  //        latencies.emplace_back(500 * ops_per_chunk, Operation::Write);
+  //      } else {
+  //        latencies.emplace_back(400 * ops_per_chunk, Operation::Read);
+  //      }
+  //    }
+  //    bm_result.latencies.emplace_back(latencies);
+  //  }
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
   ASSERT_JSON_EQ(result_json, size(), 1);
@@ -747,19 +686,27 @@ TEST_F(BenchmarkTest, DISABLED_ResultsMultiThreadMixed) {
   EXPECT_NEAR(bandwidth_json.at("write").get<double>(), 7.625, 0.1);
 }
 
-TEST_F(BenchmarkTest, ResultsParallelSingleThreadRead) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
-  const size_t num_chunks = 8;
-  const size_t num_ops = num_chunks * ops_per_chunk;
+TEST_F(BenchmarkTest, RunParallelSingleThreadRead) {
+  const size_t num_ops = TEST_FILE_SIZE / 256;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
   base_config_.operation = Operation::Read;
   base_config_.memory_range = 256 * num_ops;
-  base_results_.reserve(2);
-  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
-  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
+  base_config_.min_io_chunk_size = TEST_CHUNK_SIZE;
+  base_config_.run_time = 1;
 
-  ParallelBenchmark bm{bm_name_, "sub_bm_1", "sub_bm_2", base_config_, base_config_, base_results_};
+  BenchmarkConfig config_one = base_config_;
+  BenchmarkConfig config_two = base_config_;
+
+  config_one.exec_mode = Mode::Sequential;
+  config_two.exec_mode = Mode::Random;
+  config_two.number_operations = num_ops;
+
+  base_results_.reserve(2);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(config_one));
+  base_results_.push_back(std::make_unique<BenchmarkResult>(config_two));
+
+  ParallelBenchmark bm{bm_name_, "sub_bm_1", "sub_bm_2", config_one, config_two, base_results_};
   bm.create_data_files();
   bm.set_up();
   bm.run();
@@ -767,88 +714,46 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadRead) {
   const BenchmarkResult& result_one = *bm.get_benchmark_results()[0];
   const BenchmarkResult& result_two = *bm.get_benchmark_results()[1];
 
-  const std::vector<std::vector<Latency>>& all_latencies_one = result_one.latencies;
-  const std::vector<std::vector<Latency>>& all_latencies_two = result_two.latencies;
+  const std::vector<uint64_t>& all_durations_one = result_one.total_operation_durations;
+  const std::vector<uint64_t>& all_durations_two = result_two.total_operation_durations;
+  ASSERT_EQ(all_durations_one.size(), 1);
+  EXPECT_GT(all_durations_one[0], 950000000);  // only check 0.95s to leave buffer for generation
+  ASSERT_EQ(all_durations_two.size(), 1);
+  EXPECT_GT(all_durations_two[0], 950000000);
 
-  ASSERT_EQ(all_latencies_one.size(), 1);
-  ASSERT_EQ(all_latencies_two.size(), 1);
-  const std::vector<Latency>& latencies_one = all_latencies_one[0];
-  const std::vector<Latency>& latencies_two = all_latencies_two[0];
-
-  ASSERT_EQ(latencies_one.size(), num_chunks);
-  ASSERT_EQ(latencies_two.size(), num_chunks);
-  for (const Latency latency : latencies_one) {
-    EXPECT_EQ(latency.op_type, Operation::Read);
-    EXPECT_GE(latency.duration, 0);
-  }
-  for (const Latency latency : latencies_two) {
-    EXPECT_EQ(latency.op_type, Operation::Read);
-    EXPECT_GE(latency.duration, 0);
-  }
-}
-
-TEST_F(BenchmarkTest, ResultsParallelSingleThreadWrite) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
-  const size_t num_chunks = 8;
-  const size_t num_ops = num_chunks * ops_per_chunk;
-  const size_t total_size = 256 * num_ops;
-  base_config_.number_threads = 1;
-  base_config_.access_size = 256;
-  base_config_.operation = Operation::Write;
-  base_config_.memory_range = total_size;
-  base_results_.reserve(2);
-  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
-  base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
-
-  ParallelBenchmark bm{bm_name_, "sub_bm_1", "sub_bm_2", base_config_, base_config_, base_results_};
-  bm.create_data_files();
-  bm.set_up();
-  bm.run();
-
-  const BenchmarkResult& result_one = *bm.get_benchmark_results()[0];
-  const BenchmarkResult& result_two = *bm.get_benchmark_results()[1];
-
-  const std::vector<std::vector<Latency>>& all_latencies_one = result_one.latencies;
-  const std::vector<std::vector<Latency>>& all_latencies_two = result_two.latencies;
-
-  ASSERT_EQ(all_latencies_one.size(), 1);
-  ASSERT_EQ(all_latencies_two.size(), 1);
-
-  const std::vector<Latency>& latencies_one = all_latencies_one[0];
-  const std::vector<Latency>& latencies_two = all_latencies_two[0];
-
-  ASSERT_EQ(latencies_one.size(), num_chunks);
-  ASSERT_EQ(latencies_two.size(), num_chunks);
-  for (const Latency latency : latencies_one) {
-    EXPECT_EQ(latency.op_type, Operation::Write);
-    EXPECT_GE(latency.duration, 0);
-  }
-  for (const Latency latency : latencies_two) {
-    EXPECT_EQ(latency.op_type, Operation::Write);
-    EXPECT_GE(latency.duration, 0);
-  }
-
-  check_file_written(bm.get_pmem_file(0), total_size);
-  check_file_written(bm.get_pmem_file(1), total_size);
+  const std::vector<uint64_t>& all_sizes_one = result_one.total_operation_sizes;
+  const std::vector<uint64_t>& all_sizes_two = result_two.total_operation_sizes;
+  ASSERT_EQ(all_sizes_one.size(), 1);
+  EXPECT_GT(all_sizes_one[0], 0);
+  EXPECT_EQ(all_sizes_one[0] % TEST_CHUNK_SIZE, 0);  // can only increase in chunk-sized blocks
+  ASSERT_EQ(all_sizes_two.size(), 1);
+  EXPECT_GT(all_sizes_two[0], 0);
+  EXPECT_EQ(all_sizes_two[0] % TEST_CHUNK_SIZE, 0);
 }
 
 TEST_F(BenchmarkTest, ResultsParallelSingleThreadMixed) {
-  const size_t ops_per_chunk = TEST_IO_OP_CHUNK_SIZE / 256;
-  const size_t num_chunks = 8;
-  const size_t num_ops = num_chunks * ops_per_chunk;
-  const size_t total_size = 256 * num_ops;
+  const size_t num_ops = TEST_FILE_SIZE / 256;
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
-  base_config_.memory_range = total_size;
-  BenchmarkConfig bm_config_read = base_config_;
-  BenchmarkConfig bm_config_write = base_config_;
-  bm_config_read.operation = Operation::Read;
-  bm_config_write.operation = Operation::Write;
-  base_results_.reserve(2);
-  base_results_.push_back(std::make_unique<BenchmarkResult>(bm_config_read));
-  base_results_.push_back(std::make_unique<BenchmarkResult>(bm_config_write));
+  base_config_.memory_range = TEST_FILE_SIZE;
+  base_config_.min_io_chunk_size = TEST_CHUNK_SIZE;
+  base_config_.run_time = 1;
 
-  ParallelBenchmark bm{bm_name_, "sub_bm_1", "sub_bm_2", bm_config_read, bm_config_write, base_results_};
+  BenchmarkConfig config_one = base_config_;
+  BenchmarkConfig config_two = base_config_;
+
+  config_one.exec_mode = Mode::Sequential;
+  config_one.operation = Operation::Write;
+
+  config_two.exec_mode = Mode::Random;
+  config_two.operation = Operation::Read;
+  config_two.number_operations = num_ops;
+
+  base_results_.reserve(2);
+  base_results_.push_back(std::make_unique<BenchmarkResult>(config_one));
+  base_results_.push_back(std::make_unique<BenchmarkResult>(config_two));
+
+  ParallelBenchmark bm{bm_name_, "sub_bm_1", "sub_bm_2", config_one, config_two, base_results_};
   bm.create_data_files();
   bm.set_up();
   bm.run();
@@ -856,28 +761,25 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadMixed) {
   const BenchmarkResult& result_one = *bm.get_benchmark_results()[0];
   const BenchmarkResult& result_two = *bm.get_benchmark_results()[1];
 
-  const std::vector<std::vector<Latency>>& all_latencies_one = result_one.latencies;
-  const std::vector<std::vector<Latency>>& all_latencies_two = result_two.latencies;
+  const std::vector<uint64_t>& all_durations_one = result_one.total_operation_durations;
+  const std::vector<uint64_t>& all_durations_two = result_two.total_operation_durations;
+  ASSERT_EQ(all_durations_one.size(), 1);
+  EXPECT_GT(all_durations_one[0], 950000000);  // only check 0.95s to leave buffer for generation
+  ASSERT_EQ(all_durations_two.size(), 1);
+  EXPECT_GT(all_durations_two[0], 950000000);
 
-  ASSERT_EQ(all_latencies_one.size(), 1);
-  ASSERT_EQ(all_latencies_two.size(), 1);
+  const std::vector<uint64_t>& all_sizes_one = result_one.total_operation_sizes;
+  const std::vector<uint64_t>& all_sizes_two = result_two.total_operation_sizes;
+  ASSERT_EQ(all_sizes_one.size(), 1);
+  EXPECT_GT(all_sizes_one[0], 0);
+  EXPECT_EQ(all_sizes_one[0] % TEST_CHUNK_SIZE, 0);  // can only increase in chunk-sized blocks
+  ASSERT_EQ(all_sizes_two.size(), 1);
+  EXPECT_GT(all_sizes_two[0], 0);
+  EXPECT_EQ(all_sizes_two[0] % TEST_CHUNK_SIZE, 0);
 
-  const std::vector<Latency>& latencies_one = all_latencies_one[0];
-  const std::vector<Latency>& latencies_two = all_latencies_two[0];
-
-  ASSERT_EQ(latencies_one.size(), num_chunks);
-  ASSERT_EQ(latencies_two.size(), num_chunks);
-  for (const Latency latency : latencies_one) {
-    EXPECT_EQ(latency.op_type, Operation::Read);
-    EXPECT_GE(latency.duration, 0);
-  }
-  for (const Latency latency : latencies_two) {
-    EXPECT_EQ(latency.op_type, Operation::Write);
-    EXPECT_GE(latency.duration, 0);
-  }
-
-  check_file_written(bm.get_pmem_file(1), total_size);
+  check_file_written(bm.get_pmem_file(0), TEST_FILE_SIZE);
 }
+
 #endif
 
 }  // namespace perma

@@ -16,8 +16,7 @@ bool ParallelBenchmark::run() {
 
   for (size_t bm_num = 0; bm_num < configs_.size(); ++bm_num) {
     for (size_t thread_index = 0; thread_index < configs_[bm_num].number_threads; thread_index++) {
-      pools_[bm_num].emplace_back(&run_in_thread, std::ref(thread_configs_[bm_num][thread_index]),
-                                  std::ref(configs_[bm_num]));
+      pools_[bm_num].emplace_back(&run_in_thread, &thread_configs_[bm_num][thread_index], std::ref(configs_[bm_num]));
     }
   }
 
@@ -46,8 +45,8 @@ void ParallelBenchmark::create_data_files() {
 void ParallelBenchmark::set_up() {
   pools_.resize(2);
   thread_configs_.resize(2);
-  single_set_up(configs_[0], pmem_data_[0], results_[0], pools_[0], thread_configs_[0]);
-  single_set_up(configs_[1], pmem_data_[1], results_[1], pools_[1], thread_configs_[1]);
+  single_set_up(configs_[0], pmem_data_[0], results_[0].get(), &pools_[0], &thread_configs_[0]);
+  single_set_up(configs_[1], pmem_data_[1], results_[1].get(), &pools_[1], &thread_configs_[1]);
 }
 
 void ParallelBenchmark::tear_down(bool force) {

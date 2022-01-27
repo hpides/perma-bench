@@ -72,7 +72,7 @@ std::filesystem::path generate_random_file_name(const std::filesystem::path& bas
 }
 
 void generate_read_data(char* addr, const uint64_t memory_range) {
-  spdlog::info("Generating {} GB of random data to read.", memory_range / ONE_GB);
+  spdlog::debug("Generating {} GB of random data to read.", memory_range / ONE_GB);
   std::vector<std::thread> thread_pool;
   thread_pool.reserve(NUM_UTIL_THREADS - 1);
   uint64_t thread_memory_range = memory_range / NUM_UTIL_THREADS;
@@ -88,11 +88,11 @@ void generate_read_data(char* addr, const uint64_t memory_range) {
   for (std::thread& thread : thread_pool) {
     thread.join();
   }
-  spdlog::info("Finished generating data.");
+  spdlog::debug("Finished generating data.");
 }
 
 void prefault_file(char* addr, const uint64_t memory_range, const uint64_t page_size) {
-  spdlog::debug("Prefaulting data.");
+  spdlog::debug("Pre-faulting data.");
   const size_t num_prefault_pages = memory_range / page_size;
   for (size_t prefault_offset = 0; prefault_offset < num_prefault_pages; ++prefault_offset) {
     addr[prefault_offset * page_size] = '\0';

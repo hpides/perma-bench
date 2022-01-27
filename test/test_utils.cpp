@@ -2,6 +2,7 @@
 #include "gtest/gtest.h"
 #include <fstream>
 #include "read_write_ops.hpp"
+#include "test_utils.hpp"
 
 namespace perma {
 
@@ -28,6 +29,23 @@ void check_file_written(const std::filesystem::path& pmem_file, const size_t tot
 
 void check_file_written(const std::filesystem::path& pmem_file, const size_t total_size) {
   check_file_written(pmem_file, total_size, total_size);
+}
+
+void check_json_bandwidth(const nlohmann::json& result_json, double expected_bandwidth,
+                          double expected_per_thread_bandwidth, double expected_per_thread_stddev) {
+  ASSERT_JSON_EQ(result_json, size(), 1);
+  ASSERT_JSON_TRUE(result_json, contains("bandwidth"));
+
+  const nlohmann::json& bandwidth_json = result_json["bandwidth"];
+  ASSERT_JSON_EQ(bandwidth_json, size(), 3);
+  ASSERT_JSON_TRUE(bandwidth_json, contains("total"));
+  ASSERT_JSON_TRUE(bandwidth_json, at("total").is_number());
+  EXPECT_NEAR(bandwidth_json.at("total").get<double>(),expected_bandwidth, 0.001);
+
+  ASSERT_JSON_TRUE(bandwidth_json, contains("per_thread_avg"));
+  EXPECT_NEAR(bandwidth_json.at("per_thread_avg").get<double>(), expected_per_thread_bandwidth, 0.001);
+  ASSERT_JSON_TRUE(bandwidth_json, contains("per_thread_std_dev"));
+  EXPECT_NEAR(bandwidth_json.at("per_thread_std_dev").get<double>(), expected_per_thread_stddev, 0.001);
 }
 
 }  // namespace perma
