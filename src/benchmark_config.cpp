@@ -382,7 +382,7 @@ bool CustomOp::validate(const std::vector<CustomOp>& operations) {
   // Check if write is to same memory type
   bool is_currently_pmem = operations[0].is_pmem;
   for (const CustomOp& op : operations) {
-    if (op.type == Operation::Write && is_currently_pmem ^ op.is_pmem) {
+    if ((op.type == Operation::Write) && (is_currently_pmem ^ op.is_pmem)) {
       spdlog::error("A write must occur after a read to the same memory type, i.e., DRAM or PMem.");
       spdlog::error("Bad operation: {}", op.to_string());
       return false;
