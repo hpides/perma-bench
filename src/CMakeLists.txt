@@ -11,7 +11,6 @@ set(
         benchmark_suite.hpp
         fast_random.cpp
         fast_random.hpp
-        io_operation.cpp
         io_operation.hpp
         numa.cpp
         numa.hpp

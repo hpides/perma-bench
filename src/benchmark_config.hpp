@@ -2,6 +2,7 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <ostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -23,15 +24,45 @@ static constexpr size_t BYTES_IN_MEGABYTE = 1024u * 1024;
 static constexpr size_t BYTES_IN_GIGABYTE = 1024u * BYTES_IN_MEGABYTE;
 static constexpr size_t NANOSECONDS_IN_SECONDS = 1e9;
 
+/**
+ * This represents a custom operation to be specified by the user. Its string representation, is:
+ *
+ * For reads: r(<location>)_<size>
+ *
+ * with:
+ * 'r' for read,
+ * (optional) <location> is 'd' or 'p' for DRAM/PMem (with p as default is nothing is specified),
+ * <size> is the size of the access (must be power of 2).
+ *
+ * For writes: w(<location>)_<size>_<persist_instruction>(_<offset>)
+ *
+ * with:
+ * 'w' for write,
+ * (optional) <location> is 'd' or 'p' for DRAM/PMem (with p as default is nothing is specified),
+ * <size> is the size of the access (must be power of 2),
+ * <persist_instruction> is the instruction to use after the write (none, cache, cacheinv, noache),
+ * (optional) <offset> is the offset to the previously accessed address (can be negative, default is 0)
+ *
+ * */
 struct CustomOp {
   Operation type;
-  size_t size;
+  bool is_pmem = true;
+  uint64_t size;
   PersistInstruction persist = PersistInstruction::None;
+  // This can be signed, e.g., to represent the case when the previous cache line should be written to.
+  int64_t offset = 0;
 
   static CustomOp from_string(const std::string& str);
   static std::vector<CustomOp> all_from_string(const std::string& str);
   static std::string all_to_string(const std::vector<CustomOp>& ops);
   static std::string to_string(const CustomOp& op);
+  std::string to_string() const;
+
+  static bool validate(const std::vector<CustomOp>& operations);
+
+  friend std::ostream& operator<<(std::ostream& os, const CustomOp& op);
+  bool operator==(const CustomOp& rhs) const;
+  bool operator!=(const CustomOp& rhs) const;
 };
 
 /**
@@ -111,9 +142,13 @@ struct BenchmarkConfig {
 };
 
 struct ConfigEnums {
+  // <read or write, is_pmem>
+  using OpLocation = std::pair<perma::Operation, bool>;
+
   static const std::unordered_map<std::string, bool> str_to_mem_type;
   static const std::unordered_map<std::string, Mode> str_to_mode;
   static const std::unordered_map<std::string, Operation> str_to_operation;
+  static const std::unordered_map<std::string, OpLocation> str_to_op_location;
   static const std::unordered_map<std::string, NumaPattern> str_to_numa_pattern;
   static const std::unordered_map<std::string, PersistInstruction> str_to_persist_instruction;
   static const std::unordered_map<std::string, RandomDistribution> str_to_random_distribution;

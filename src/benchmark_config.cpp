@@ -2,6 +2,10 @@
 
 #include <spdlog/spdlog.h>
 
+#include <charconv>
+#include <string>
+#include <unordered_map>
+
 #include "numa.hpp"
 #include "utils.hpp"
 
@@ -11,7 +15,8 @@ namespace {
   if (!(exp)) {                  \
     spdlog::critical(txt);       \
     perma::utils::crash_exit();  \
-  }
+  }                              \
+  static_assert(true, "Need ; after macro")
 
 constexpr auto VISITED_TAG = "visited";
 
@@ -235,6 +240,166 @@ bool BenchmarkConfig::contains_write_op() const {
          std::any_of(custom_operations.begin(), custom_operations.end(), find_custom_write_op);
 }
 
+CustomOp CustomOp::from_string(const std::string& str) {
+  if (str.empty()) {
+    spdlog::error("Custom operation cannot be empty!");
+    utils::crash_exit();
+  }
+
+  // Get all parts of the custom operation string representation.
+  std::vector<std::string> op_str_parts;
+  std::stringstream stream{str};
+  std::string op_str_part;
+  while (std::getline(stream, op_str_part, '_')) {
+    op_str_parts.emplace_back(op_str_part);
+  }
+
+  const size_t num_op_str_parts = op_str_parts.size();
+  if (num_op_str_parts < 2) {
+    spdlog::error("Custom operation is too short: '{}'. Expected at least <operation>_<size>", str);
+    utils::crash_exit();
+  }
+
+  // Create new custom operation
+  CustomOp custom_op;
+
+  // Get operation and location
+  const std::string& operation_str = op_str_parts[0];
+  auto op_location_it = ConfigEnums::str_to_op_location.find(operation_str);
+  if (op_location_it == ConfigEnums::str_to_op_location.end()) {
+    spdlog::error("Unknown operation and/or location: {}", operation_str);
+    utils::crash_exit();
+  }
+  custom_op.type = op_location_it->second.first;
+  custom_op.is_pmem = op_location_it->second.second;
+
+  // Get size of access
+  const std::string& size_str = op_str_parts[1];
+  auto size_result = std::from_chars(size_str.data(), size_str.data() + size_str.size(), custom_op.size);
+  if (size_result.ec != std::errc()) {
+    spdlog::error("Could not parse operation size: {}", size_str);
+    utils::crash_exit();
+  }
+
+  if ((custom_op.size & (custom_op.size - 1)) != 0) {
+    spdlog::error("Access size of custom operation must be power of 2. Got: {}", custom_op.size);
+    utils::crash_exit();
+  }
+
+  const bool is_write = custom_op.type == Operation::Write;
+
+  if (!is_write) {
+    // Read op has no further information.
+    return custom_op;
+  }
+
+  if (num_op_str_parts < 3) {
+    spdlog::error("Custom write op must have '_<persist_instruction>' after size, e.g., w64_cache. Got: '{}'", str);
+    utils::crash_exit();
+  }
+
+  const std::string& persist_str = op_str_parts[2];
+  auto persist_it = ConfigEnums::str_to_persist_instruction.find(persist_str);
+  if (persist_it == ConfigEnums::str_to_persist_instruction.end()) {
+    spdlog::error("Could not parse the persist instruction in write op: '{}'", persist_str);
+    utils::crash_exit();
+  }
+
+  custom_op.persist = persist_it->second;
+
+  const bool has_offset_information = num_op_str_parts == 4;
+  if (has_offset_information) {
+    const std::string& offset_str = op_str_parts[3];
+    auto offset_result = std::from_chars(offset_str.data(), offset_str.data() + offset_str.size(), custom_op.offset);
+    if (offset_result.ec != std::errc()) {
+      spdlog::error("Could not parse operation offset: {}", offset_str);
+      utils::crash_exit();
+    }
+
+    const uint64_t absolute_offset = std::abs(custom_op.offset);
+    if ((absolute_offset & (absolute_offset - 1)) != 0) {
+      spdlog::error("Offset of custom write operation must be power of 2. Got: {}", custom_op.offset);
+      utils::crash_exit();
+    }
+  }
+
+  return custom_op;
+}
+
+std::vector<CustomOp> CustomOp::all_from_string(const std::string& str) {
+  if (str.empty()) {
+    spdlog::error("Custom operations cannot be empty!");
+    utils::crash_exit();
+  }
+
+  std::vector<CustomOp> ops;
+  std::stringstream stream{str};
+  std::string op_str;
+  while (std::getline(stream, op_str, ',')) {
+    ops.emplace_back(from_string(op_str));
+  }
+
+  // Check if operation chain is valid
+  const bool is_valid = validate(ops);
+  if (!is_valid) {
+    spdlog::error("Got invalid custom operations: {}", str);
+    utils::crash_exit();
+  }
+
+  return ops;
+}
+
+std::string CustomOp::to_string() const {
+  std::stringstream out;
+  out << utils::get_enum_as_string(ConfigEnums::str_to_op_location, std::make_pair(type, is_pmem));
+  out << '_' << size;
+  if (type == Operation::Write) {
+    out << '_' << utils::get_enum_as_string(ConfigEnums::str_to_persist_instruction, persist);
+    if (offset != 0) {
+      out << '_' << offset;
+    }
+  }
+  return out.str();
+}
+
+std::string CustomOp::to_string(const CustomOp& op) { return op.to_string(); }
+
+std::string CustomOp::all_to_string(const std::vector<CustomOp>& ops) {
+  std::stringstream out;
+  for (size_t i = 0; i < ops.size() - 1; ++i) {
+    out << to_string(ops[i]) << ',';
+  }
+  out << to_string(ops[ops.size() - 1]);
+  return out.str();
+}
+
+bool CustomOp::validate(const std::vector<CustomOp>& operations) {
+  if (operations[0].type != Operation::Read) {
+    spdlog::error("First custom operation must be a read");
+    return false;
+  }
+
+  // Check if write is to same memory type
+  bool is_currently_pmem = operations[0].is_pmem;
+  for (const CustomOp& op : operations) {
+    if ((op.type == Operation::Write) && (is_currently_pmem ^ op.is_pmem)) {
+      spdlog::error("A write must occur after a read to the same memory type, i.e., DRAM or PMem.");
+      spdlog::error("Bad operation: {}", op.to_string());
+      return false;
+    }
+    is_currently_pmem = op.is_pmem;
+  }
+
+  return true;
+}
+
+bool CustomOp::operator==(const CustomOp& rhs) const {
+  return type == rhs.type && is_pmem == rhs.is_pmem && size == rhs.size && persist == rhs.persist &&
+         offset == rhs.offset;
+}
+bool CustomOp::operator!=(const CustomOp& rhs) const { return !(rhs == *this); }
+std::ostream& operator<<(std::ostream& os, const CustomOp& op) { return os << op.to_string(); }
+
 const std::unordered_map<std::string, bool> ConfigEnums::str_to_mem_type{{"pmem", true}, {"dram", false}};
 
 const std::unordered_map<std::string, Mode> ConfigEnums::str_to_mode{{"sequential", Mode::Sequential},
@@ -250,10 +415,19 @@ const std::unordered_map<std::string, NumaPattern> ConfigEnums::str_to_numa_patt
                                                                                     {"far", NumaPattern::Far}};
 
 const std::unordered_map<std::string, PersistInstruction> ConfigEnums::str_to_persist_instruction{
-    {"nocache", PersistInstruction::NoCache}, {"cache", PersistInstruction::Cache}, {"none", PersistInstruction::None}};
+    {"nocache", PersistInstruction::NoCache},
+    {"cache", PersistInstruction::Cache},
+    {"cacheinv", PersistInstruction::CacheInvalidate},
+    {"none", PersistInstruction::None}};
 
 const std::unordered_map<std::string, RandomDistribution> ConfigEnums::str_to_random_distribution{
     {"uniform", RandomDistribution::Uniform}, {"zipf", RandomDistribution::Zipf}};
+
+const std::unordered_map<std::string, ConfigEnums::OpLocation> ConfigEnums::str_to_op_location = {
+    {"r", {perma::Operation::Read, true}},   {"w", {perma::Operation::Write, true}},
+    {"rp", {perma::Operation::Read, true}},  {"wp", {perma::Operation::Write, true}},
+    {"rd", {perma::Operation::Read, false}}, {"wd", {perma::Operation::Write, false}},
+};
 
 const std::unordered_map<char, uint64_t> ConfigEnums::scale_suffix_to_factor{{'k', 1024},
                                                                              {'K', 1024},

@@ -9,9 +9,9 @@ aggregation:
     number_threads: [1, 4, 8, 16]
     # Represent bucket sizes 64, 256, 1024
     custom_operations:
-      - "r64,w64_none"
-      - "r256,w128_none"
-      - "r1024,w128_none"
+      - "r_64,w_64_none"
+      - "r_256,w_128_none"
+      - "r_1024,w_128_none"
 
   args:
     memory_range: 2G

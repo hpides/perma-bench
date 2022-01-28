@@ -139,13 +139,16 @@ class ChainedOperation {
         range_size_(range_size),
         align_(-access_size_),
         type_(op.type),
-        persist_instruction_(op.persist) {}
+        persist_instruction_(op.persist),
+        offset_(op.offset) {}
 
   inline void run(char* current_addr, char* dependent_addr) {
+    // TODO: support DRAM/PMem mix. Make sure that write to PMem follows read from PMem (same for DRAM).
     if (type_ == Operation::Read) {
       current_addr = get_random_address(dependent_addr);
       dependent_addr = run_read(current_addr);
     } else {
+      current_addr += offset_;
       run_write(current_addr);
     }
 
@@ -269,6 +272,7 @@ class ChainedOperation {
   ChainedOperation* next_ = nullptr;
   const Operation type_;
   const PersistInstruction persist_instruction_;
+  const int64_t offset_;
 };
 
 }  // namespace perma

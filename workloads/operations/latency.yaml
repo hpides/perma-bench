@@ -2,21 +2,21 @@ operation_latency:
   matrix:
     number_threads: [ 1, 16, 32 ]
     custom_operations:
-      # 64 Byte
-      - "r64"
-      - "r64,w64_none"
-      - "r64,w64_cache"
-      - "r64,w64_nocache"
-      # 256 Byte
-      - "r256"
-      - "r256,w256_none"
-      - "r256,w256_cache"
-      - "r256,w256_nocache"
-      # 512 Byte
-      - "r512"
-      - "r512,w512_none"
-      - "r512,w512_cache"
-      - "r512,w512_nocache"
+    # 64 Byte
+      - "r_64"
+      - "r_64,w_64_none"
+      - "r_64,w_64_cache"
+      - "r_64,w_64_nocache"
+    # 256 Byte
+      - "r_256"
+      - "r_256,w_256_none"
+      - "r_256,w_256_cache"
+      - "r_256,w_256_nocache"
+    # 512 Byte
+      - "r_512"
+      - "r_512,w_512_none"
+      - "r_512,w_512_cache"
+      - "r_512,w_512_nocache"
 
   args:
     memory_range: 10G
