@@ -78,10 +78,9 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, Be
   const uint64_t partition_size = config.memory_range / num_partitions;
 
   for (uint16_t partition_num = 0; partition_num < num_partitions; partition_num++) {
-    char* partition_start =
-        (config.exec_mode == Mode::Sequential_Desc)
-            ? pmem_data + ((num_partitions - partition_num) * partition_size) - config.access_size
-            : partition_start = pmem_data + (partition_num * partition_size);
+    char* partition_start = (config.exec_mode == Mode::Sequential_Desc)
+                                ? pmem_data + ((num_partitions - partition_num) * partition_size) - config.access_size
+                                : partition_start = pmem_data + (partition_num * partition_size);
 
     for (uint16_t thread_num = 0; thread_num < num_threads_per_partition; thread_num++) {
       const uint32_t index = thread_num + (partition_num * num_threads_per_partition);
