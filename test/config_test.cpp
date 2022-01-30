@@ -381,13 +381,14 @@ TEST_F(ConfigTest, InvalidNumberThreads) {
   check_log_for_critical("threads must be");
 }
 
-TEST_F(ConfigTest, InvalidNumberPartitions) {
-  bm_config.number_partitions = 0;
+TEST_F(ConfigTest, InvalidSmallThreadPartitionRatio) {
+  bm_config.number_partitions = 5;
+  bm_config.number_threads = 12;
   EXPECT_THROW(bm_config.validate(), PermaException);
-  check_log_for_critical("partitions must be");
+  check_log_for_critical("threads must be a multiple of number partitions");
 }
 
-TEST_F(ConfigTest, InvalidThreadPartitionRatio) {
+TEST_F(ConfigTest, InvalidLargeThreadPartitionRatio) {
   bm_config.number_partitions = 2;
   bm_config.number_threads = 1;
   EXPECT_THROW(bm_config.validate(), PermaException);

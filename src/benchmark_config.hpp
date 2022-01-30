@@ -101,9 +101,12 @@ struct BenchmarkConfig {
    * `PersistInstruction` for more details on available options. */
   PersistInstruction persist_instruction = PersistInstruction::NoCache;
 
-  /** Number of disjoint memory regions to partition the `memory_range` into. Must be a divisor of
-   * `number_threads`, i.e., one or more threads map to one partition. */
-  uint16_t number_partitions = 1;
+  /** Number of disjoint memory regions to partition the `memory_range` into. Must be 0 or a divisor of
+   * `number_threads` i.e., one or more threads map to one partition. When set to 0, it is equal to the number of
+   * threads, i.e., each thread has its own partition. Default is set to 0, as it is more common for each thread to have
+   * its own region in sequential access and the impact of shared/disjoint regions on random access is negligible when
+   * the ranges are large enough. */
+  uint16_t number_partitions = 0;
 
   /** Define whether the memory access should be NUMA-local (`near`) or -remote (`far`). */
   NumaPattern numa_pattern = NumaPattern::Near;
