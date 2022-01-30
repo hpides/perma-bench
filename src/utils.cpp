@@ -111,11 +111,11 @@ uint64_t duration_to_nanoseconds(const std::chrono::steady_clock::duration durat
 //=    - Output: Returns with Zipf distributed random variable              =
 //===========================================================================
 uint64_t zipf(const double alpha, const uint64_t n) {
-  static bool first = true;  // Static first time flag
-  static double c = 0;       // Normalization constant
-  static double* sum_probs;  // Pre-calculated sum of probabilities
-  double z;                  // Uniform random number (0 < z < 1)
-  int zipf_value;            // Computed exponential value to be returned
+  static thread_local bool first = true;  // Static first time flag
+  static thread_local double c = 0;       // Normalization constant
+  static thread_local double* sum_probs;  // Pre-calculated sum of probabilities
+  double z;                               // Uniform random number (0 < z < 1)
+  int zipf_value;                         // Computed exponential value to be returned
 
   // Compute normalization constant on first call only
   if (first) {

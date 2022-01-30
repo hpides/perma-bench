@@ -192,12 +192,14 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
   const uint32_t num_dram_accesses_in_range = thread_config->dram_partition_size / config.access_size;
   const bool is_read_op = config.operation == Operation::Read;
   const size_t thread_partition_offset = thread_config->thread_num * config.access_size;
+  const auto dram_target_ratio = static_cast<uint64_t>(config.dram_operation_ratio * 100);
 
-  std::random_device rnd_device;
-  std::mt19937_64 rnd_generator{rnd_device()};
-  std::bernoulli_distribution dram_target_distribution(config.dram_operation_ratio);
-  std::uniform_int_distribution<int> access_distribution(0, num_accesses_in_range - 1);
-  std::uniform_int_distribution<int> dram_access_distribution(0, num_dram_accesses_in_range - 1);
+  const size_t seed = std::chrono::steady_clock::now().time_since_epoch().count() * (thread_config->thread_num + 1);
+  lehmer64_seed(seed);
+
+  auto dram_target_distribution = [&]() { return (lehmer64() % 100) < dram_target_ratio; };
+  auto access_distribution = [&]() { return lehmer64() % num_accesses_in_range; };
+  auto dram_access_distribution = [&]() { return lehmer64() % num_dram_accesses_in_range; };
 
   // By default, we generate all addresses in one large chunk to avoid any overhead during execution time.
   size_t num_chunks = 1;
@@ -211,6 +213,8 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
 
   // Start timer for time-based execution before generation to avoid drift when one workload's generation takes longer.
   const auto begin_ts = std::chrono::steady_clock::now();
+
+  spdlog::debug("Thread #{}: Starting address generation", thread_config->thread_num);
 
   char* next_op_position = config.exec_mode == Mode::Sequential_Desc
                                ? thread_config->partition_start_addr - thread_partition_offset
@@ -229,22 +233,22 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
           uint64_t random_value;
           char* partition_start;
           uint32_t num_target_accesses_in_range;
-          std::uniform_int_distribution<int>* random_distribution;
+          std::function<uint64_t()> random_distribution;
           // Get memory target
-          if (config.is_hybrid && dram_target_distribution(rnd_device)) {
+          if (config.is_hybrid && dram_target_distribution()) {
             // DRAM target
             partition_start = thread_config->dram_partition_start_addr;
             num_target_accesses_in_range = num_dram_accesses_in_range;
-            random_distribution = &dram_access_distribution;
+            random_distribution = dram_access_distribution;
           } else {
             // PMEM target
             partition_start = thread_config->partition_start_addr;
             num_target_accesses_in_range = num_accesses_in_range;
-            random_distribution = &access_distribution;
+            random_distribution = access_distribution;
           }
 
           if (config.random_distribution == RandomDistribution::Uniform) {
-            random_value = (*random_distribution)(rnd_generator);
+            random_value = random_distribution();
           } else {
             random_value = utils::zipf(config.zipf_alpha, num_target_accesses_in_range);
           }
@@ -273,6 +277,11 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
     io_operation_chunks.emplace_back(std::move(op_addresses), config.access_size, op, config.persist_instruction);
   }
 
+  const auto generation_end_ts = std::chrono::steady_clock::now();
+  const uint64_t generation_duration_us =
+      std::chrono::duration_cast<std::chrono::milliseconds>(generation_end_ts - begin_ts).count();
+  spdlog::debug("Thread #{}: Finished address generation in {} ms", thread_config->thread_num, generation_duration_us);
+
   bool is_time_finished = false;
   while (!is_time_finished) {
     if (config.run_time == -1) {
@@ -297,6 +306,9 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
       }
     }
   }
+
+  spdlog::debug("Thread #{}: Finished execution in {} ms", thread_config->thread_num,
+                *thread_config->total_operation_duration / 1'000'000);
 }
 
 nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm_config) {
@@ -411,7 +423,7 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
 
     per_thread_bandwidth[thread_num] = get_bandwidth(thread_op_size, thread_duration);
 
-    spdlog::debug("Per Thread Information for Thread #{}", thread_num);
+    spdlog::debug("Thread #{}: Per-Thread Information", thread_num);
     spdlog::debug(" ├─ Bandwidth (GiB/s): {:.5f}", get_bandwidth(thread_op_size, thread_duration));
     spdlog::debug(" ├─ Total Access Size (MiB): {}", thread_op_size / BYTES_IN_MEGABYTE);
     spdlog::debug(" └─ Duration (s): {:.5f}", static_cast<double>(thread_duration) / NANOSECONDS_IN_SECONDS);
