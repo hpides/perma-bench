@@ -79,10 +79,9 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, ch
   const uint64_t dram_partition_size = config.dram_memory_range / num_partitions;
 
   for (uint16_t partition_num = 0; partition_num < num_partitions; partition_num++) {
-    char* partition_start =
-        (config.exec_mode == Mode::Sequential_Desc)
-            ? pmem_data + ((num_partitions - partition_num) * partition_size) - config.access_size
-            : partition_start = pmem_data + (partition_num * partition_size);
+    char* partition_start = (config.exec_mode == Mode::Sequential_Desc)
+                                ? pmem_data + ((num_partitions - partition_num) * partition_size) - config.access_size
+                                : partition_start = pmem_data + (partition_num * partition_size);
 
     // Only possible in random or custom mode
     char* dram_partition_start = dram_data + (partition_num * partition_size);
