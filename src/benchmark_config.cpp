@@ -182,17 +182,15 @@ void BenchmarkConfig::validate() const {
   const bool is_at_least_one_thread = number_threads > 0;
   CHECK_ARGUMENT(is_at_least_one_thread, "Number threads must be at least 1.");
 
-  // Check if at least one partition
-  const bool is_at_least_one_partition = number_partitions > 0;
-  CHECK_ARGUMENT(is_at_least_one_partition, "Number partitions must be at least 1.");
-
   // Assumption: number_threads is multiple of number_partitions
-  const bool is_number_threads_multiple_of_number_partitions = (number_threads % number_partitions) == 0;
+  const bool is_number_threads_multiple_of_number_partitions =
+      (number_partitions == 0) || (number_threads % number_partitions) == 0;
   CHECK_ARGUMENT(is_number_threads_multiple_of_number_partitions,
                  "Number threads must be a multiple of number partitions.");
 
   // Assumption: total memory range must be evenly divisible into number of partitions
-  const bool is_partitionable = ((memory_range / number_partitions) % access_size) == 0;
+  const bool is_partitionable = (number_partitions == 0 && ((memory_range / number_threads) % access_size) == 0) ||
+                                (number_partitions > 0 && ((memory_range / number_partitions) % access_size) == 0);
   CHECK_ARGUMENT(is_partitionable,
                  "Total memory range must be evenly divisible into number of partitions. "
                  "Most likely you can fix this by using 2^x partitions.");
