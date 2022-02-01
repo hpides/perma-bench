@@ -3,7 +3,6 @@
 #include <asm-generic/mman-common.h>
 #include <asm-generic/mman.h>
 #include <sys/mman.h>
-#include <linux/mman.h>
 
 #include <filesystem>
 #include <unordered_map>
@@ -30,8 +29,9 @@ static int DRAM_MAP_FLAGS = MAP_PRIVATE | MAP_ANONYMOUS;
 
 void setPMEM_MAP_FLAGS(int flags);
 
-char* map_file(const std::filesystem::path& file, bool is_dram, size_t expected_length);
-char* create_file(const std::filesystem::path& file, bool is_dram, size_t length);
+char* map_pmem(const std::filesystem::path& file, size_t expected_length);
+char* map_dram(size_t expected_length);
+char* create_pmem_file(const std::filesystem::path& file, size_t length);
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir);
 

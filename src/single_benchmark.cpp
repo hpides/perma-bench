@@ -33,9 +33,8 @@ bool SingleBenchmark::run() {
 }
 
 void SingleBenchmark::create_data_files() {
-  pmem_data_.push_back(create_single_data_file(configs_[0], memory_regions_[0]));
-  // Reuse pmem_file_name as it is ignored for dram
-  dram_data_.push_back(utils::map_file(memory_regions_[0].pmem_file, true, configs_[0].dram_memory_range));
+  pmem_data_.push_back(create_pmem_data_file(configs_[0], memory_regions_[0]));
+  dram_data_.push_back(create_dram_data(configs_[0]));
 }
 
 void SingleBenchmark::set_up() {

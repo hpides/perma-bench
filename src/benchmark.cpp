@@ -81,7 +81,7 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, ch
   for (uint16_t partition_num = 0; partition_num < num_partitions; partition_num++) {
     char* partition_start = (config.exec_mode == Mode::Sequential_Desc)
                                 ? pmem_data + ((num_partitions - partition_num) * partition_size) - config.access_size
-                                : partition_start = pmem_data + (partition_num * partition_size);
+                                : pmem_data + (partition_num * partition_size);
 
     // Only possible in random or custom mode
     char* dram_partition_start = dram_data + (partition_num * partition_size);
@@ -103,23 +103,33 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, ch
   }
 }
 
-char* Benchmark::create_single_data_file(const BenchmarkConfig& config, const MemoryRegion& memory_region) {
+char* Benchmark::create_pmem_data_file(const BenchmarkConfig& config, const MemoryRegion& memory_region) {
   if (std::filesystem::exists(memory_region.pmem_file)) {
     // Data was already generated. Only re-map it.
-    return utils::map_file(memory_region.pmem_file, !config.is_pmem, config.memory_range);
+    return utils::map_pmem(memory_region.pmem_file, config.memory_range);
   }
 
-  char* file_data = utils::create_file(memory_region.pmem_file, !config.is_pmem, config.memory_range);
+  char* file_data = utils::create_pmem_file(memory_region.pmem_file, config.memory_range);
+  prepare_data_file(file_data, config, config.memory_range, utils::PMEM_PAGE_SIZE);
+  return file_data;
+}
+
+char* Benchmark::create_dram_data(const BenchmarkConfig& config) {
+  char* dram_data = utils::map_dram(config.dram_memory_range);
+  prepare_data_file(dram_data, config, config.dram_memory_range, utils::DRAM_PAGE_SIZE);
+  return dram_data;
+}
+
+void Benchmark::prepare_data_file(char* file_data, const BenchmarkConfig& config, const uint64_t memory_range,
+                                  const uint64_t page_size) {
   if (config.contains_read_op()) {
     // If we read data in this benchmark, we need to generate it first.
-    utils::generate_read_data(file_data, config.memory_range);
+    utils::generate_read_data(file_data, memory_range);
   }
 
   if (config.contains_write_op() && config.prefault_file) {
-    const size_t page_size = config.is_pmem ? utils::PMEM_PAGE_SIZE : utils::DRAM_PAGE_SIZE;
-    utils::prefault_file(file_data, config.memory_range, page_size);
+    utils::prefault_file(file_data, memory_range, page_size);
   }
-  return file_data;
 }
 
 void Benchmark::run_custom_ops_in_thread(ThreadRunConfig* thread_config, const BenchmarkConfig& config) {
@@ -380,7 +390,6 @@ const std::vector<char*>& Benchmark::get_dram_data() const { return dram_data_; 
 const std::vector<std::vector<ThreadRunConfig>>& Benchmark::get_thread_configs() const { return thread_configs_; }
 
 const std::vector<std::unique_ptr<BenchmarkResult>>& Benchmark::get_benchmark_results() const { return results_; }
-
 nlohmann::json Benchmark::get_json_config(uint8_t config_index) {
   return get_benchmark_config_as_json(configs_[config_index]);
 }

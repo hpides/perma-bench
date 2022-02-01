@@ -142,7 +142,10 @@ class Benchmark {
   static void single_set_up(const BenchmarkConfig& config, char* pmem_data, char* dram_data, BenchmarkResult* result,
                             std::vector<std::thread>* pool, std::vector<ThreadRunConfig>* thread_config);
 
-  char* create_single_data_file(const BenchmarkConfig& config, const MemoryRegion& memory_region);
+  static char* create_pmem_data_file(const BenchmarkConfig& config, const MemoryRegion& memory_region);
+  static char* create_dram_data(const BenchmarkConfig& config);
+  static void prepare_data_file(char* file_data, const BenchmarkConfig& config, uint64_t memory_range,
+                                uint64_t page_size);
 
   static void run_custom_ops_in_thread(ThreadRunConfig* thread_config, const BenchmarkConfig& config);
   static void run_in_thread(ThreadRunConfig* thread_config, const BenchmarkConfig& config);

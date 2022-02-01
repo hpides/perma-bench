@@ -35,11 +35,11 @@ bool ParallelBenchmark::run() {
 }
 
 void ParallelBenchmark::create_data_files() {
-  pmem_data_.push_back(create_single_data_file(configs_[0], memory_regions_[0]));
-  pmem_data_.push_back(create_single_data_file(configs_[1], memory_regions_[1]));
-  // Reuse pmem_file_name as it is ignored for dram
-  dram_data_.push_back(utils::map_file(memory_regions_[0].pmem_file, true, configs_[0].dram_memory_range));
-  dram_data_.push_back(utils::map_file(memory_regions_[1].pmem_file, true, configs_[1].dram_memory_range));
+  pmem_data_.push_back(create_pmem_data_file(configs_[0], memory_regions_[0]));
+  pmem_data_.push_back(create_pmem_data_file(configs_[1], memory_regions_[1]));
+
+  dram_data_.push_back(create_dram_data(configs_[0]));
+  dram_data_.push_back(create_dram_data(configs_[1]));
 }
 
 void ParallelBenchmark::set_up() {
