@@ -80,7 +80,7 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, Be
   for (uint16_t partition_num = 0; partition_num < num_partitions; partition_num++) {
     char* partition_start = (config.exec_mode == Mode::Sequential_Desc)
                                 ? pmem_data + ((num_partitions - partition_num) * partition_size) - config.access_size
-                                : partition_start = pmem_data + (partition_num * partition_size);
+                                : pmem_data + (partition_num * partition_size);
 
     for (uint16_t thread_num = 0; thread_num < num_threads_per_partition; thread_num++) {
       const uint32_t index = thread_num + (partition_num * num_threads_per_partition);
