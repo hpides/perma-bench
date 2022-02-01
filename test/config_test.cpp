@@ -450,4 +450,11 @@ TEST_F(ConfigTest, InvalidDRAMMemoryRange) {
   check_log_for_critical("If greater than 0, dram memory range must be greater ");
 }
 
+TEST_F(ConfigTest, MissingDRAMMemoryRangeForCustomOp) {
+  bm_config.exec_mode = Mode::Custom;
+  bm_config.custom_operations = {CustomOp{.type = Operation::Read, .is_pmem = false, .size = 64}};
+  EXPECT_THROW(bm_config.validate(), PermaException);
+  check_log_for_critical("dram_memory_range > 0 if the benchmark contains DRAM operations");
+}
+
 }  // namespace perma

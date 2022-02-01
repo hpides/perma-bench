@@ -142,6 +142,7 @@ struct BenchmarkConfig {
   void validate() const;
   bool contains_read_op() const;
   bool contains_write_op() const;
+  bool contains_dram_op() const;
 };
 
 struct ConfigEnums {

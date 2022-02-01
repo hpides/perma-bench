@@ -135,11 +135,19 @@ void Benchmark::run_custom_ops_in_thread(ThreadRunConfig* thread_config, const B
   for (const CustomOp& op : operations) {
     max_access_size = std::max(op.size, max_access_size);
   }
+
   const size_t aligned_range_size = thread_config->partition_size - max_access_size;
+  const size_t aligned_dram_range_size = thread_config->dram_partition_size - max_access_size;
 
   for (size_t i = 0; i < num_ops; ++i) {
     const CustomOp& op = operations[i];
-    operation_chain.emplace_back(op, thread_config->partition_start_addr, aligned_range_size);
+
+    if (op.is_pmem) {
+      operation_chain.emplace_back(op, thread_config->partition_start_addr, aligned_range_size);
+    } else {
+      operation_chain.emplace_back(op, thread_config->dram_partition_start_addr, aligned_dram_range_size);
+    }
+
     if (i > 0) {
       operation_chain[i - 1].set_next(&operation_chain[i]);
     }

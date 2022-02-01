@@ -178,6 +178,10 @@ void BenchmarkConfig::validate() const {
                  "DRAM ratio must be at least 0 and not greater than 1. If greater than 0, dram memory range must be "
                  "greater than 0.");
 
+  const bool has_dram_size_for_dram_operations = !contains_dram_op() || dram_memory_range > 0;
+  CHECK_ARGUMENT(has_dram_size_for_dram_operations,
+                 "Must set dram_memory_range > 0 if the benchmark contains DRAM operations.");
+
   // Check if runtime is at least one second
   const bool is_at_least_one_second_or_default = run_time > 0 || run_time == -1;
   CHECK_ARGUMENT(is_at_least_one_second_or_default, "Run time be at least 1 second");
@@ -239,13 +243,18 @@ void BenchmarkConfig::validate() const {
   const bool latency_sample_is_custom = exec_mode == Mode::Custom || latency_sample_frequency == 0;
   CHECK_ARGUMENT(latency_sample_is_custom, "Latency sampling can only be used with custom operations.");
 }
-
 bool BenchmarkConfig::contains_read_op() const { return operation == Operation::Read || exec_mode == Mode::Custom; }
 
 bool BenchmarkConfig::contains_write_op() const {
   auto find_custom_write_op = [](const CustomOp& op) { return op.type == Operation::Write; };
   return operation == Operation::Write ||
          std::any_of(custom_operations.begin(), custom_operations.end(), find_custom_write_op);
+}
+
+bool BenchmarkConfig::contains_dram_op() const {
+  auto find_custom_dram_op = [](const CustomOp& op) { return !op.is_pmem; };
+  return dram_operation_ratio > 0.0 ||
+         std::any_of(custom_operations.begin(), custom_operations.end(), find_custom_dram_op);
 }
 
 CustomOp CustomOp::from_string(const std::string& str) {
