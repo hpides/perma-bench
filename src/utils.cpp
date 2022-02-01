@@ -23,7 +23,7 @@ char* map_file(const std::filesystem::path& file, const bool is_dram, size_t exp
     return nullptr;
   }
 
-  uint64_t fd = -1;
+  int32_t fd = -1;
   int flags;
   if (!is_dram) {
     const mode_t mode = 0644;
@@ -39,7 +39,7 @@ char* map_file(const std::filesystem::path& file, const bool is_dram, size_t exp
   void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, flags, fd, 0);
   close(fd);
   if (addr == MAP_FAILED) {
-    throw std::runtime_error{"Could not map file: " + file.string()};
+    throw std::runtime_error{"Could not map file: " + file.string() + "; Error: " + std::strerror(errno)};
   }
 
   return static_cast<char*>(addr);

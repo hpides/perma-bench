@@ -3,6 +3,7 @@
 #include <asm-generic/mman-common.h>
 #include <asm-generic/mman.h>
 #include <sys/mman.h>
+#include <linux/mman.h>
 
 #include <filesystem>
 #include <unordered_map>
@@ -25,7 +26,7 @@ static constexpr size_t DRAM_PAGE_SIZE = 4 * 1024ul;           // 4 KiB DRAM pag
 static constexpr size_t ONE_GB = 1024ul * 1024 * 1024;
 
 static int PMEM_MAP_FLAGS = MAP_SHARED_VALIDATE | MAP_SYNC;
-static int DRAM_MAP_FLAGS = MAP_SHARED | MAP_ANONYMOUS;
+static int DRAM_MAP_FLAGS = MAP_PRIVATE | MAP_ANONYMOUS;
 
 void setPMEM_MAP_FLAGS(int flags);
 

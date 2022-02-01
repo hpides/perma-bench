@@ -204,7 +204,9 @@ void BenchmarkConfig::validate() const {
                  "Most likely you can fix this by using 2^x partitions.");
 
   // Assumption: total memory range must be evenly divisible into number of partitions
-  const bool is_dram_partitionable = ((dram_memory_range / number_partitions) % access_size) == 0;
+  const bool is_dram_partitionable =
+      (number_partitions == 0 && ((dram_memory_range / number_threads) % access_size) == 0) ||
+      (number_partitions > 0 && ((dram_memory_range / number_partitions) % access_size) == 0);
   CHECK_ARGUMENT(is_dram_partitionable,
                  "DRAM memory range must be evenly divisible into number of partitions. "
                  "Most likely you can fix this by using 2^x partitions.");
