@@ -3,6 +3,7 @@
 #include <spdlog/spdlog.h>
 
 #include <cstdint>
+#include <iostream>
 #include <memory>
 #include <thread>
 #include <utility>
@@ -51,9 +52,9 @@ BenchmarkType Benchmark::get_benchmark_type() const { return benchmark_type_; }
 void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, char* dram_data, BenchmarkResult* result,
                               std::vector<std::thread>* pool, std::vector<ThreadRunConfig>* thread_config) {
   const size_t num_total_range_ops = config.memory_range / config.access_size;
-  const size_t num_operations = (config.exec_mode == Mode::Random || config.exec_mode == Mode::Custom)
-                                    ? config.number_operations
-                                    : num_total_range_ops;
+  const bool is_custom_execution = config.exec_mode == Mode::Custom;
+  const size_t num_operations =
+      (config.exec_mode == Mode::Random || is_custom_execution) ? config.number_operations : num_total_range_ops;
   const size_t num_ops_per_thread = num_operations / config.number_threads;
 
   pool->reserve(config.number_threads);
@@ -62,7 +63,7 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, ch
   result->total_operation_sizes.resize(config.number_threads, 0);
 
   uint64_t num_latency_measurements = 0;
-  if (config.exec_mode == Mode::Custom) {
+  if (is_custom_execution) {
     result->custom_operation_latencies.resize(config.number_threads);
     result->custom_operation_durations.resize(config.number_threads, 0);
 
@@ -90,15 +91,18 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, ch
       const uint32_t index = thread_num + (partition_num * num_threads_per_partition);
 
       // Reserve space for custom operation latency measurements to avoid resizing during benchmark execution.
-      if (config.exec_mode == Mode::Custom) {
+      if (is_custom_execution) {
         result->custom_operation_latencies[index].reserve(num_latency_measurements);
       }
 
+      uint64_t* total_op_duration = &result->total_operation_durations[index];
+      uint64_t* total_op_size = &result->total_operation_sizes[index];
+      uint64_t* custom_op_duration = is_custom_execution ? &result->custom_operation_durations[index] : nullptr;
+      std::vector<uint64_t>* custom_op_latencies = is_custom_execution ? &result->custom_operation_latencies[index] : nullptr;
+
       thread_config->emplace_back(partition_start, dram_partition_start, partition_size, dram_partition_size,
-                                  num_threads_per_partition, thread_num, num_ops_per_thread, config,
-                                  &result->total_operation_durations[index], &result->total_operation_sizes[index],
-                                  &result->custom_operation_durations[index],
-                                  &result->custom_operation_latencies[index]);
+                                  num_threads_per_partition, thread_num, num_ops_per_thread, config, total_op_duration,
+                                  total_op_size, custom_op_duration, custom_op_latencies);
     }
   }
 }
