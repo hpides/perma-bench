@@ -1,0 +1,120 @@
+#  matrix:
+#    persist_instruction: [ cache ]
+#    access_size: [ 256 ]
+#    number_threads: [ 1, 16 ]
+#
+#  args:
+#    random_distribution: uniform
+#    memory_range: 16G
+#    number_operations: 50000000
+##    min_io_chunk_size: 4294967296
+#    exec_mode: random
+#    operation: write
+#
+#raw_bm_seq1:
+#  matrix:
+#    persist_instruction: [ nocache ]
+#    access_size: [ 256 ]
+#
+#  args:
+#    number_threads: 1
+#    number_partitions: 1
+#    memory_range: 4G
+#    min_io_chunk_size: 2147483648
+#    exec_mode: sequential
+#    operation: write
+
+#raw_bm_seq16:
+#  matrix:
+#    persist_instruction: [ nocache ]
+#    access_size: [ 256 ]
+#
+#  args:
+#    number_threads: 16
+#    number_partitions: 16
+#    memory_range: 32G
+##    min_io_chunk_size: 2147483648
+#    exec_mode: sequential
+#    operation: write
+#
+#
+#pmem_ops:
+#  matrix:
+##    latency_sample_frequency: [0, 50000]
+#    custom_operations:
+#      - "rp_256"
+##      - "rp_256,wp_256_nocache"
+##      - "rd_256,wd_256_nocache"
+##      - "rp_256,rp_256,wp_256_nocache"
+##      - "rd_256,rp_256,wp_256_nocache"
+#
+#  args:
+#    number_threads: 16
+#    number_partitions: 1
+#    memory_range: 10G
+#    number_operations: 100000000
+#    exec_mode: custom
+
+#
+#dram_ops:
+#  matrix:
+#    #    latency_sample_frequency: [0, 50000]
+#    custom_operations:
+#      - "rd_256"
+#  #      - "rd_256,wd_256_nocache"
+#
+#  args:
+#    number_threads: 16
+#    number_partitions: 1
+#    memory_range: 1G
+#    dram_memory_range: 10G
+#    number_operations: 100000000
+#    exec_mode: custom
+
+
+# Represents the database workload index lookup (random reads)
+#index_lookup:
+#  matrix:
+#    number_threads: [16, 32]
+#    access_size: [ 64, 256, 1024 ]
+#    random_distribution: [ uniform ]
+#
+#  args:
+#    number_partitions: 16
+#    memory_range: 10G
+#    number_operations: 50000000
+#    exec_mode: random
+#    operation: read
+
+
+index_lookup:
+  matrix:
+    access_size: [ 256 ]
+#    dram_operation_ratio: [ 0.0, 0.3, 0.5, 1 ]
+    dram_operation_ratio: [ 0, 1 ]
+    number_partitions: [0]
+#    dram_operation_ratio: [ 0 ]
+
+  args:
+    number_threads: 32
+    random_distribution: uniform
+#    number_partitions: 0
+    memory_range: 32G
+    dram_memory_range: 32G
+    number_operations: 1000000000
+#    number_operations: 30000000
+    exec_mode: random
+    operation: read
+#
+#seq_write:
+#  matrix:
+#    number_threads: [8, 16]
+#    number_partitions: [1, 2, 4, 8, 0]
+#
+#  args:
+#    access_size: 512
+#    memory_range: 10G
+#    persist_instruction: nocache
+#    operation: write
+#    exec_mode: sequential
+

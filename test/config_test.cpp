@@ -426,7 +426,7 @@ TEST_F(ConfigTest, InvalidDRAMMode) {
   bm_config.dram_operation_ratio = 0.2;
   bm_config.exec_mode = Mode::Sequential;
   EXPECT_THROW(bm_config.validate(), PermaException);
-  check_log_for_critical("DRAM execution mode must be random or custom");
+  check_log_for_critical("DRAM operation ratio only supported in random execution");
 }
 
 TEST_F(ConfigTest, InvalidDRAMRationNegativ) {

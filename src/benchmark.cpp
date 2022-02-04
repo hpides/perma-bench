@@ -3,7 +3,6 @@
 #include <spdlog/spdlog.h>
 
 #include <cstdint>
-#include <iostream>
 #include <memory>
 #include <thread>
 #include <utility>
@@ -98,7 +97,8 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, ch
       uint64_t* total_op_duration = &result->total_operation_durations[index];
       uint64_t* total_op_size = &result->total_operation_sizes[index];
       uint64_t* custom_op_duration = is_custom_execution ? &result->custom_operation_durations[index] : nullptr;
-      std::vector<uint64_t>* custom_op_latencies = is_custom_execution ? &result->custom_operation_latencies[index] : nullptr;
+      std::vector<uint64_t>* custom_op_latencies =
+          is_custom_execution ? &result->custom_operation_latencies[index] : nullptr;
 
       thread_config->emplace_back(partition_start, dram_partition_start, partition_size, dram_partition_size,
                                   num_threads_per_partition, thread_num, num_ops_per_thread, config, total_op_duration,

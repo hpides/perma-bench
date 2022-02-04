@@ -166,9 +166,8 @@ void BenchmarkConfig::validate() const {
                  "DRAM memory range must be a multiple of access size or 0.");
 
   // Check if set DRAM operation has random or custom mode
-  const bool is_dram_operation_mode_valid = dram_operation_ratio == 0.0 || exec_mode == Mode::Random ||
-                                            (exec_mode == Mode::Custom && dram_operation_ratio > 0.0);
-  CHECK_ARGUMENT(is_dram_operation_mode_valid, "DRAM execution mode must be random or custom.");
+  const bool is_dram_operation_mode_valid = dram_operation_ratio == 0.0 || exec_mode == Mode::Random;
+  CHECK_ARGUMENT(is_dram_operation_mode_valid, "DRAM operation ratio only supported in random execution.");
 
   // Check if DRAM ratio is greater and equal to 0 and smaller than 1
   const bool is_dram_operation_ratio_valid =
