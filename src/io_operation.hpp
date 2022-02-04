@@ -22,6 +22,14 @@ class IoOperation {
         op_type_{op_type},
         persist_instruction_{persist_instruction} {}
 
+  IoOperation() : IoOperation{{}, 0, Operation::Read, PersistInstruction::None} {};
+
+  IoOperation(const IoOperation&) = delete;
+  IoOperation& operator=(const IoOperation&) = delete;
+  IoOperation(IoOperation&&) = default;
+  IoOperation& operator=(IoOperation&&) = default;
+  ~IoOperation() = default;
+
   inline void run() {
     switch (op_type_) {
       case Operation::Read: {
@@ -126,9 +134,9 @@ class IoOperation {
   }
 
   std::vector<char*> op_addresses_;
-  const uint32_t access_size_;
-  const Operation op_type_;
-  const PersistInstruction persist_instruction_;
+  uint32_t access_size_;
+  Operation op_type_;
+  PersistInstruction persist_instruction_;
 };
 
 class ChainedOperation {

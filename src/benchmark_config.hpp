@@ -82,14 +82,14 @@ struct BenchmarkConfig {
    * i.e., 0.1 or 0.2. */
   double dram_operation_ratio = 0.0;
 
-  /** Represents the number of random access operations to perform. Can *not* be set for sequential access. */
-  uint64_t number_operations = 10'000'000;
+  /** Represents the number of random access / custom operations to perform. Can *not* be set for sequential access. */
+  uint64_t number_operations = 100'000'000;
 
   /** Number of threads to run the benchmark with. Must be a power of two. */
   uint16_t number_threads = 1;
 
   /** Alternative measure to end a benchmark by letting is run for `run_time` seconds. */
-  uint64_t run_time = UINT64_MAX;
+  uint64_t run_time = 0;
 
   /** Type of memory access operation to perform, i.e., read or write. */
   Operation operation = Operation::Read;
@@ -127,9 +127,10 @@ struct BenchmarkConfig {
    * time caused by page faults on first access to the allocated memory region. */
   bool prefault_file = true;
 
+  // TODO: change comment!!!
   /** Represents the minimum size of a chunk after which completion is checked in time-based execution, i.e., when
    * `run_time` is set. A chunk contains chunk_size / access_size number of operations. */
-  uint64_t min_io_chunk_size = 1 * BYTES_IN_GIGABYTE;
+  uint64_t min_io_chunk_size = 64 * BYTES_IN_MEGABYTE;
 
   /** These fields are set internally and do not represent user-facing options. */
   /** This field is required and has no default value, i.e., it must be set as a command line argument. */

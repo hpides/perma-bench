@@ -212,7 +212,7 @@ TEST_F(BenchmarkTest, SetUpSingleThread) {
   EXPECT_EQ(thread_config.thread_num, 0);
   EXPECT_EQ(thread_config.num_threads_per_partition, 1);
   EXPECT_EQ(thread_config.partition_size, TEST_FILE_SIZE);
-  EXPECT_EQ(thread_config.num_ops, TEST_FILE_SIZE / 256);
+  EXPECT_EQ(thread_config.num_ops_per_thread, TEST_FILE_SIZE / 256);
   EXPECT_EQ(thread_config.partition_start_addr, bm.get_pmem_data()[0]);
   EXPECT_EQ(&thread_config.config, &bm.get_benchmark_configs()[0]);
 
@@ -274,7 +274,7 @@ TEST_F(BenchmarkTest, SetUpMultiThreadCustomPartition) {
   for (const ThreadRunConfig& tc : thread_configs) {
     EXPECT_EQ(tc.num_threads_per_partition, 2);
     EXPECT_EQ(tc.partition_size, partition_size);
-    EXPECT_EQ(tc.num_ops, TEST_FILE_SIZE / num_threads / 512);
+    EXPECT_EQ(tc.num_ops_per_thread, TEST_FILE_SIZE / num_threads / 512);
     EXPECT_EQ(&tc.config, &bm.get_benchmark_configs()[0]);
   }
   bm.get_benchmark_results()[0]->config.validate();
@@ -327,7 +327,7 @@ TEST_F(BenchmarkTest, SetUpMultiThreadDefaultPartition) {
   for (const ThreadRunConfig& tc : thread_configs) {
     EXPECT_EQ(tc.num_threads_per_partition, 1);
     EXPECT_EQ(tc.partition_size, partition_size);
-    EXPECT_EQ(tc.num_ops, TEST_FILE_SIZE / num_threads / 256);
+    EXPECT_EQ(tc.num_ops_per_thread, TEST_FILE_SIZE / num_threads / 256);
     EXPECT_EQ(&tc.config, &bm.get_benchmark_configs()[0]);
   }
   bm.get_benchmark_results()[0]->config.validate();

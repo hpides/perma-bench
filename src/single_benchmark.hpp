@@ -9,9 +9,11 @@ namespace perma {
 class SingleBenchmark : public Benchmark {
  public:
   SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config,
-                  std::vector<std::unique_ptr<BenchmarkResult>>& results);
+                  std::vector<std::unique_ptr<BenchmarkExecution>>&& executions,
+                  std::vector<std::unique_ptr<BenchmarkResult>>&& results);
   SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config,
-                  std::vector<std::unique_ptr<BenchmarkResult>>& results, std::filesystem::path pmem_file);
+                  std::vector<std::unique_ptr<BenchmarkExecution>>&& executions,
+                  std::vector<std::unique_ptr<BenchmarkResult>>&& results, std::filesystem::path pmem_file);
 
   SingleBenchmark(SingleBenchmark&& other) = default;
   SingleBenchmark(const SingleBenchmark& other) = delete;
