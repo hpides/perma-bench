@@ -770,9 +770,9 @@ TEST_F(BenchmarkTest, RunParallelSingleThreadRead) {
   const std::vector<uint64_t>& all_durations_one = result_one.total_operation_durations;
   const std::vector<uint64_t>& all_durations_two = result_two.total_operation_durations;
   ASSERT_EQ(all_durations_one.size(), 1);
-  EXPECT_GT(all_durations_one[0], 950000000);  // only check 0.95s to leave buffer for generation
+  EXPECT_GT(all_durations_one[0], 900000000);  // only check 0.90s to leave buffer for generation
   ASSERT_EQ(all_durations_two.size(), 1);
-  EXPECT_GT(all_durations_two[0], 950000000);
+  EXPECT_GT(all_durations_two[0], 900000000);
 
   const std::vector<uint64_t>& all_sizes_one = result_one.total_operation_sizes;
   const std::vector<uint64_t>& all_sizes_two = result_two.total_operation_sizes;
