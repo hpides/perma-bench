@@ -422,22 +422,39 @@ TEST_F(ConfigTest, BadLatencySample) {
   check_log_for_critical("Latency sampling can only");
 }
 
+TEST_F(ConfigTest, InvalidDRAMMode) {
+  bm_config.dram_operation_ratio = 0.2;
+  bm_config.exec_mode = Mode::Sequential;
+  EXPECT_THROW(bm_config.validate(), PermaException);
+  check_log_for_critical("DRAM operation ratio only supported in random execution");
+}
+
 TEST_F(ConfigTest, InvalidDRAMRationNegativ) {
+  bm_config.exec_mode = Mode::Random;
   bm_config.dram_operation_ratio = -0.9;
   EXPECT_THROW(bm_config.validate(), PermaException);
   check_log_for_critical("DRAM ratio must be at least 0 and not greater than 1");
 }
 
 TEST_F(ConfigTest, InvalidDRAMRationPositiv) {
+  bm_config.exec_mode = Mode::Random;
   bm_config.dram_operation_ratio = 1.01;
   EXPECT_THROW(bm_config.validate(), PermaException);
   check_log_for_critical("DRAM ratio must be at least 0 and not greater than 1");
 }
 
-TEST_F(ConfigTest, InvalidDRAMRationTwoDecimals) {
-  bm_config.dram_operation_ratio = 0.22;
+TEST_F(ConfigTest, InvalidDRAMMemoryRange) {
+  bm_config.exec_mode = Mode::Random;
+  bm_config.dram_operation_ratio = 0.5;
   EXPECT_THROW(bm_config.validate(), PermaException);
-  check_log_for_critical("DRAM ratio must only contain one decimal");
+  check_log_for_critical("If greater than 0, dram memory range must be greater ");
+}
+
+TEST_F(ConfigTest, MissingDRAMMemoryRangeForCustomOp) {
+  bm_config.exec_mode = Mode::Custom;
+  bm_config.custom_operations = {CustomOp{.type = Operation::Read, .is_pmem = false, .size = 64}};
+  EXPECT_THROW(bm_config.validate(), PermaException);
+  check_log_for_critical("dram_memory_range > 0 if the benchmark contains DRAM operations");
 }
 
 }  // namespace perma

@@ -143,7 +143,6 @@ class ChainedOperation {
         offset_(op.offset) {}
 
   inline void run(char* current_addr, char* dependent_addr) {
-    // TODO: support DRAM/PMem mix. Make sure that write to PMem follows read from PMem (same for DRAM).
     if (type_ == Operation::Read) {
       current_addr = get_random_address(dependent_addr);
       dependent_addr = run_read(current_addr);

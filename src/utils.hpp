@@ -25,12 +25,13 @@ static constexpr size_t DRAM_PAGE_SIZE = 4 * 1024ul;           // 4 KiB DRAM pag
 static constexpr size_t ONE_GB = 1024ul * 1024 * 1024;
 
 static int PMEM_MAP_FLAGS = MAP_SHARED_VALIDATE | MAP_SYNC;
-static int DRAM_MAP_FLAGS = MAP_SHARED | MAP_ANONYMOUS;
+static int DRAM_MAP_FLAGS = MAP_PRIVATE | MAP_ANONYMOUS;
 
 void setPMEM_MAP_FLAGS(int flags);
 
-char* map_file(const std::filesystem::path& file, bool is_dram, size_t expected_length);
-char* create_file(const std::filesystem::path& file, bool is_dram, size_t length);
+char* map_pmem(const std::filesystem::path& file, size_t expected_length);
+char* map_dram(size_t expected_length);
+char* create_pmem_file(const std::filesystem::path& file, size_t length);
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir);
 

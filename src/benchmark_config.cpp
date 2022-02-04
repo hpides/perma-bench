@@ -161,18 +161,25 @@ void BenchmarkConfig::validate() const {
   CHECK_ARGUMENT(is_memory_range_multiple_of_access_size, "PMem memory range must be a multiple of access size.");
 
   // Check if DRAM memory range is multiple of access size
-  const bool is_dram_memory_range_multiple_of_access_size =
-      dram_memory_range == 0 || (dram_memory_range % access_size) == 0;
+  const bool is_dram_memory_range_multiple_of_access_size = (dram_memory_range % access_size) == 0;
   CHECK_ARGUMENT(is_dram_memory_range_multiple_of_access_size,
                  "DRAM memory range must be a multiple of access size or 0.");
 
-  // Check if DRAM ratio is greater and equal to 0 and smaller than 1
-  const bool is_dram_operation_ratio_valid = 0.0 <= dram_operation_ratio && dram_operation_ratio <= 1.0;
-  CHECK_ARGUMENT(is_dram_operation_ratio_valid, "DRAM ratio must be at least 0 and not greater than 1.");
+  // Check if set DRAM operation has random or custom mode
+  const bool is_dram_operation_mode_valid = dram_operation_ratio == 0.0 || exec_mode == Mode::Random;
+  CHECK_ARGUMENT(is_dram_operation_mode_valid, "DRAM operation ratio only supported in random execution.");
 
-  // Check if DRAM ratio only contains single decimal, i.e, 0.1, 0.2, or 0.8
-  const bool is_only_one_decimal = (static_cast<int>(dram_operation_ratio * 10) / 10.0) == dram_operation_ratio;
-  CHECK_ARGUMENT(is_only_one_decimal, "DRAM ratio must only contain one decimal.");
+  // Check if DRAM ratio is greater and equal to 0 and smaller than 1
+  const bool is_dram_operation_ratio_valid =
+      dram_operation_ratio == 0.0 ||
+      (0.0 < dram_operation_ratio && dram_operation_ratio <= 1.0 && dram_memory_range > 0);
+  CHECK_ARGUMENT(is_dram_operation_ratio_valid,
+                 "DRAM ratio must be at least 0 and not greater than 1. If greater than 0, dram memory range must be "
+                 "greater than 0.");
+
+  const bool has_dram_size_for_dram_operations = !contains_dram_op() || dram_memory_range > 0;
+  CHECK_ARGUMENT(has_dram_size_for_dram_operations,
+                 "Must set dram_memory_range > 0 if the benchmark contains DRAM operations.");
 
   // Check if runtime is at least one second
   const bool is_at_least_one_second_or_default = run_time > 0 || run_time == -1;
@@ -195,6 +202,14 @@ void BenchmarkConfig::validate() const {
                  "Total memory range must be evenly divisible into number of partitions. "
                  "Most likely you can fix this by using 2^x partitions.");
 
+  // Assumption: total memory range must be evenly divisible into number of partitions
+  const bool is_dram_partitionable =
+      (number_partitions == 0 && ((dram_memory_range / number_threads) % access_size) == 0) ||
+      (number_partitions > 0 && ((dram_memory_range / number_partitions) % access_size) == 0);
+  CHECK_ARGUMENT(is_dram_partitionable,
+                 "DRAM memory range must be evenly divisible into number of partitions. "
+                 "Most likely you can fix this by using 2^x partitions.");
+
   // Assumption: number_operations should only be set for random/custom access. It is ignored in sequential IO.
   const bool is_number_operations_set_random = number_operations == BenchmarkConfig{}.number_operations ||
                                                (exec_mode == Mode::Random || exec_mode == Mode::Custom);
@@ -212,7 +227,7 @@ void BenchmarkConfig::validate() const {
                  "For sequential tim-based execution, the total file size needs to be multiple of chunk size " +
                      std::to_string(min_io_chunk_size));
 
-  // Assumption: we chunk operations in timed execution, so we need enough data to fill at least one chun
+  // Assumption: we chunk operations in timed execution, so we need enough data to fill at least one chunk
   const bool is_total_memory_large_enough = run_time == -1 || (memory_range / number_threads) >= min_io_chunk_size;
   CHECK_ARGUMENT(is_total_memory_large_enough, "Each thread needs at least " + std::to_string(min_io_chunk_size) +
                                                    " memory for time-based execution.");
@@ -229,13 +244,18 @@ void BenchmarkConfig::validate() const {
   const bool latency_sample_is_custom = exec_mode == Mode::Custom || latency_sample_frequency == 0;
   CHECK_ARGUMENT(latency_sample_is_custom, "Latency sampling can only be used with custom operations.");
 }
-
 bool BenchmarkConfig::contains_read_op() const { return operation == Operation::Read || exec_mode == Mode::Custom; }
 
 bool BenchmarkConfig::contains_write_op() const {
   auto find_custom_write_op = [](const CustomOp& op) { return op.type == Operation::Write; };
   return operation == Operation::Write ||
          std::any_of(custom_operations.begin(), custom_operations.end(), find_custom_write_op);
+}
+
+bool BenchmarkConfig::contains_dram_op() const {
+  auto find_custom_dram_op = [](const CustomOp& op) { return !op.is_pmem; };
+  return dram_operation_ratio > 0.0 ||
+         std::any_of(custom_operations.begin(), custom_operations.end(), find_custom_dram_op);
 }
 
 CustomOp CustomOp::from_string(const std::string& str) {

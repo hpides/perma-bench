@@ -58,18 +58,18 @@ TEST_F(UtilsTest, ZipfBound) {
 /**
  * Verifies whether the memory mapped file is the same size as the file.
  */
-TEST_F(UtilsTest, ReadMapFileCorrectSizePmem) { EXPECT_NO_THROW(map_file(tmp_file_name_read, false, FILE_SIZE)); }
+TEST_F(UtilsTest, ReadMapFileCorrectSizePmem) { EXPECT_NO_THROW(map_pmem(tmp_file_name_read, FILE_SIZE)); }
 
 /**
  * Verifies whether the memory mapped file can be mapped without a backing file.
  */
-TEST_F(UtilsTest, ReadMapFileCorrectSizeDRAM) { EXPECT_NO_THROW(map_file(tmp_file_name_read, true, FILE_SIZE)); }
+TEST_F(UtilsTest, ReadMapFileCorrectSizeDRAM) { EXPECT_NO_THROW(map_pmem(tmp_file_name_read, FILE_SIZE)); }
 
 /**
  * Verifies whether the created memory mapped file is of the correct size.
  */
 TEST_F(UtilsTest, CreateMapFileSize) {
-  ASSERT_NO_THROW(create_file(tmp_file_name_create, false, FILE_SIZE));
+  ASSERT_NO_THROW(create_pmem_file(tmp_file_name_create, FILE_SIZE));
   size_t file_size = fs::file_size(tmp_file_name_create);
   EXPECT_EQ(file_size, FILE_SIZE);
 }

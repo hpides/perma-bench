@@ -36,7 +36,7 @@ std::vector<uint64_t> auto_detect_numa(const std::filesystem::path& pmem_dir, co
   const std::filesystem::path temp_file = utils::generate_random_file_name(pmem_dir);
   // Create random 2 MiB file
   const size_t temp_size = 2u * (1024u * 1024u);
-  char* pmem_data = utils::create_file(temp_file, is_dram, temp_size);
+  char* pmem_data = utils::create_pmem_file(temp_file, temp_size);
   rw_ops::write_data(pmem_data, pmem_data + temp_size);
 
   int numa_node = -1;

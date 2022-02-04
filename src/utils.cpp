@@ -17,48 +17,53 @@ namespace perma::utils {
 
 void setPMEM_MAP_FLAGS(const int flags) { PMEM_MAP_FLAGS = flags; }
 
-char* map_file(const std::filesystem::path& file, const bool is_dram, size_t expected_length) {
+char* map_pmem(const std::filesystem::path& file, size_t expected_length) {
   // Do not mmap any data if length is 0
   if (expected_length == 0) {
     return nullptr;
   }
 
-  uint64_t fd = -1;
-  int flags;
-  if (!is_dram) {
-    const mode_t mode = 0644;
-    fd = open(file.c_str(), O_RDWR | O_DIRECT, mode);
-    if (fd == -1) {
-      throw std::runtime_error{"Could not open file: " + file.string()};
-    }
-    flags = PMEM_MAP_FLAGS;
-  } else {
-    flags = DRAM_MAP_FLAGS;
+  const mode_t mode = 0644;
+  int32_t fd = open(file.c_str(), O_RDWR | O_DIRECT, mode);
+  if (fd == -1) {
+    throw std::runtime_error{"Could not open file: " + file.string()};
   }
 
-  void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, flags, fd, 0);
+  void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, PMEM_MAP_FLAGS, fd, 0);
   close(fd);
-  if (addr == MAP_FAILED) {
-    throw std::runtime_error{"Could not map file: " + file.string()};
+  if (addr == MAP_FAILED || addr == nullptr) {
+    throw std::runtime_error{"Could not map file: " + file.string() + "; Error: " + std::strerror(errno)};
   }
 
   return static_cast<char*>(addr);
 }
 
-char* create_file(const std::filesystem::path& file, const bool is_dram, size_t length) {
-  if (!is_dram) {
-    const std::filesystem::path base_dir = file.parent_path();
-    if (!std::filesystem::exists(base_dir)) {
-      if (!std::filesystem::create_directories(base_dir)) {
-        throw std::runtime_error{"Could not create dir: " + base_dir.string()};
-      }
-    }
-
-    std::ofstream temp_stream{file};
-    temp_stream.close();
-    std::filesystem::resize_file(file, length);
+char* map_dram(const size_t expected_length) {
+  // Do not mmap any data if length is 0
+  if (expected_length == 0) {
+    return nullptr;
   }
-  return map_file(file, is_dram, length);
+
+  void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, DRAM_MAP_FLAGS, -1, 0);
+  if (addr == MAP_FAILED || addr == nullptr) {
+    throw std::runtime_error{"Could not map anonymous DRAM region. Error: " + std::string{std::strerror(errno)}};
+  }
+
+  return static_cast<char*>(addr);
+}
+
+char* create_pmem_file(const std::filesystem::path& file, const size_t length) {
+  const std::filesystem::path base_dir = file.parent_path();
+  if (!std::filesystem::exists(base_dir)) {
+    if (!std::filesystem::create_directories(base_dir)) {
+      throw std::runtime_error{"Could not create dir: " + base_dir.string()};
+    }
+  }
+
+  std::ofstream temp_stream{file};
+  temp_stream.close();
+  std::filesystem::resize_file(file, length);
+  return map_pmem(file, length);
 }
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir) {
@@ -111,11 +116,11 @@ uint64_t duration_to_nanoseconds(const std::chrono::steady_clock::duration durat
 //=    - Output: Returns with Zipf distributed random variable              =
 //===========================================================================
 uint64_t zipf(const double alpha, const uint64_t n) {
-  static bool first = true;  // Static first time flag
-  static double c = 0;       // Normalization constant
-  static double* sum_probs;  // Pre-calculated sum of probabilities
-  double z;                  // Uniform random number (0 < z < 1)
-  int zipf_value;            // Computed exponential value to be returned
+  static thread_local bool first = true;  // Static first time flag
+  static thread_local double c = 0;       // Normalization constant
+  static thread_local double* sum_probs;  // Pre-calculated sum of probabilities
+  double z;                               // Uniform random number (0 < z < 1)
+  int zipf_value;                         // Computed exponential value to be returned
 
   // Compute normalization constant on first call only
   if (first) {
