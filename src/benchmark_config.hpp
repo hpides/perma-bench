@@ -127,9 +127,11 @@ struct BenchmarkConfig {
    * time caused by page faults on first access to the allocated memory region. */
   bool prefault_file = true;
 
-  // TODO: change comment!!!
-  /** Represents the minimum size of a chunk after which completion is checked in time-based execution, i.e., when
-   * `run_time` is set. A chunk contains chunk_size / access_size number of operations. */
+  /** Whether or not to use transparent huge pages in DRAM, i.e., 2 MiB instead of regular 4 KiB pages. */
+  bool dram_huge_pages = true;
+
+  /** Represents the minimum size of an atomic work package. A chunk contains chunk_size / access_size number of
+   * operations. Assuming the lowest bandwidth of 1 GiB/s operations per thread, 64 MiB is a ~60 ms execution unit. */
   uint64_t min_io_chunk_size = 64 * BYTES_IN_MEGABYTE;
 
   /** These fields are set internally and do not represent user-facing options. */

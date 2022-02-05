@@ -90,18 +90,19 @@
 index_lookup:
   matrix:
     access_size: [ 256 ]
-#    dram_operation_ratio: [ 0.0, 0.3, 0.5, 1 ]
-    dram_operation_ratio: [ 0, 0.3, 0.5, 0.8, 1 ]
+    dram_operation_ratio: [ 0, 1 ]
+#    dram_operation_ratio: [ 0, 0.3, 0.5, 0.8, 1 ]
     number_partitions: [1]
-    number_threads: [16, 32]
+#    number_threads: [16, 32]
+    number_threads: [32]
 #    dram_operation_ratio: [ 0 ]
 
   args:
     random_distribution: uniform
 #    number_partitions: 0
-    memory_range: 32G
+    memory_range: 10G
     dram_memory_range: 32G
-    number_operations: 500000000
+    number_operations: 1000000000
 #    number_operations: 1000000
     exec_mode: random
     operation: read

@@ -19,7 +19,7 @@ class PermaException : public std::exception {
 
 namespace utils {
 
-static constexpr size_t NUM_UTIL_THREADS = 4;                  // Should be a power of two
+static constexpr size_t NUM_UTIL_THREADS = 8;                  // Should be a power of two
 static constexpr size_t PMEM_PAGE_SIZE = 2 * (1024ul * 1024);  // 2 MiB persistent memory page size
 static constexpr size_t DRAM_PAGE_SIZE = 4 * 1024ul;           // 4 KiB DRAM page size
 static constexpr size_t ONE_GB = 1024ul * 1024 * 1024;
@@ -30,7 +30,7 @@ static int DRAM_MAP_FLAGS = MAP_PRIVATE | MAP_ANONYMOUS;
 void setPMEM_MAP_FLAGS(int flags);
 
 char* map_pmem(const std::filesystem::path& file, size_t expected_length);
-char* map_dram(size_t expected_length);
+char* map_dram(size_t expected_length, bool use_huge_pages);
 char* create_pmem_file(const std::filesystem::path& file, size_t length);
 
 std::filesystem::path generate_random_file_name(const std::filesystem::path& base_dir);

@@ -115,6 +115,7 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_if_present(node, "zipf_alpha", &bm_config.zipf_alpha);
     num_found += get_if_present(node, "prefault_file", &bm_config.prefault_file);
     num_found += get_if_present(node, "latency_sample_frequency", &bm_config.latency_sample_frequency);
+    num_found += get_if_present(node, "dram_huge_pages", &bm_config.dram_huge_pages);
 
     num_found += get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_mode, &bm_config.exec_mode);
     num_found += get_enum_if_present(node, "operation", ConfigEnums::str_to_operation, &bm_config.operation);
@@ -238,10 +239,11 @@ void BenchmarkConfig::validate() const {
   CHECK_ARGUMENT(is_time_based_seq_total_memory_chunkable,
                  "The total file size needs to be multiple of chunk size " + std::to_string(min_io_chunk_size));
 
-  // Assumption: we chunk operations in timed execution, so we need enough data to fill at least one chunk
-  const bool is_total_memory_large_enough = (memory_range / number_threads) >= min_io_chunk_size;
-  CHECK_ARGUMENT(is_total_memory_large_enough, "Each thread needs at least " + std::to_string(min_io_chunk_size) +
-                                                   " memory for time-based execution.");
+  // Assumption: we chunk operations, so we need enough data to fill at least one chunk
+  const bool is_total_memory_large_enough =
+      (memory_range / number_threads) >= min_io_chunk_size || dram_operation_ratio == 1;
+  CHECK_ARGUMENT(is_total_memory_large_enough,
+                 "Each thread needs at least " + std::to_string(min_io_chunk_size) + " Bytes of memory.");
 
   const bool is_far_numa_node_available = numa_pattern == NumaPattern::Near || has_far_numa_nodes();
   CHECK_ARGUMENT(is_far_numa_node_available, "Cannot run far NUMA node benchmark without far NUMA nodes.");

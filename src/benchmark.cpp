@@ -132,7 +132,7 @@ char* Benchmark::create_pmem_data_file(const BenchmarkConfig& config, const Memo
 }
 
 char* Benchmark::create_dram_data(const BenchmarkConfig& config) {
-  char* dram_data = utils::map_dram(config.dram_memory_range);
+  char* dram_data = utils::map_dram(config.dram_memory_range, config.dram_huge_pages);
   prepare_data_file(dram_data, config, config.dram_memory_range, utils::DRAM_PAGE_SIZE);
   return dram_data;
 }
@@ -263,7 +263,6 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
     for (size_t io_op = 0; io_op < thread_config->num_ops_per_chunk; ++io_op) {
       switch (config.exec_mode) {
         case Mode::Random: {
-          uint64_t random_value;
           char* partition_start;
           uint32_t num_target_accesses_in_range;
           std::function<uint64_t()> random_distribution;
@@ -280,6 +279,7 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
             random_distribution = access_distribution;
           }
 
+          uint64_t random_value;
           if (config.random_distribution == RandomDistribution::Uniform) {
             random_value = random_distribution();
           } else {
@@ -412,6 +412,7 @@ nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm
   if (bm_config.is_hybrid) {
     config["dram_memory_range"] = bm_config.dram_memory_range;
     config["dram_operation_ratio"] = bm_config.dram_operation_ratio;
+    config["dram_huge_pages"] = bm_config.dram_huge_pages;
   }
 
   if (bm_config.exec_mode != Mode::Custom) {

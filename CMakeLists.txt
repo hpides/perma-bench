@@ -14,7 +14,7 @@ endif()
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
     message("-- Release mode, all optimizations enabled")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -g")
 endif ()
 
 set(INCLUDE_HINTS ${CMAKE_INCLUDE_PATH} "/usr/include" "/usr/local/include")
