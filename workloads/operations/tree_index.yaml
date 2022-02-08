@@ -7,7 +7,7 @@
 # (32^3 * 512 Byte = ~16 MB). To find a record, we need 3 random node lookups in memory.
 # For  256 Byte nodes, we assume 7 levels, where 4 levels fit into cache (~16 MB).
 # For 1024 Byte nodes, we assume 5 levels, where 2 levels fit into cache (~4 MB).
-primary_index_lookup:
+tree_index_lookup:
   matrix:
     number_threads: [ 1, 8, 16, 32 ]
     # Representing 256, 512, 1024 Byte nodes.
@@ -24,7 +24,7 @@ primary_index_lookup:
 # To write an entry, FAST+FAIR performs (on avg.) node_size / 64 / 2 flushes,
 # i.e., 4 with 512 Byte nodes. For smaller/larger nodes, we adapt the number accordingly.
 # An insertion is a lookup, followed by the record entry / shifting algorithm.
-primary_index_update:
+tree_index_update:
   matrix:
     number_threads: [ 1, 8, 16, 32 ]
     # Representing 256, 512, 1024 Byte nodes.
@@ -44,14 +44,14 @@ primary_index_update:
 # As the leaves are not fully packed, we assume a filling degree of 75%.
 # For 256 Byte nodes, we need 8 extra reads, for 512 Byte 4 extra, and 2 extra for
 # 1024 Byte nodes.
-primary_index_range_scan:
+tree_index_range_scan:
   matrix:
     number_threads: [ 1, 8, 16, 32 ]
     # Representing 256, 512, 1024 Byte nodes.
     custom_operations:
       - "r_512,r_512,r_512,r_512,r_512,r_512,r_512"
       - "r_256,r_256,r_256,r_256,r_256,r_256,r_256,r_256,r_256,r_256,r_256"
-      - "r_1024,r_1024,r_1024,r_1024,r_1024,"
+      - "r_1024,r_1024,r_1024,r_1024,r_1024"
 
   args:
     memory_range: 2G

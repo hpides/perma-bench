@@ -1,10 +1,11 @@
 intermediate_result:
   matrix:
     number_threads: [ 1, 2, 4, 8, 16, 32 ]
-    memory_range: [ 10G, 1G, 100M ]
-    persist_instruction: [ cache, nocache, none ]
+    access_size: [ 64, 256 ]
+    persist_instruction: [ cache, cacheinv, nocache, none ]
 
   args:
     exec_mode: random
-    access_size: 64
+
+    memory_range: 10G
     operation: write

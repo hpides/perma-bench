@@ -9,15 +9,3 @@ logging:
     memory_range: 30G
     exec_mode: sequential
     operation: write
-
-logging_partition:
-  matrix:
-    number_partitions: [ 1, 2, 4, 8 ]
-    access_size: [ 64, 128, 256, 512, 1024 ]
-    persist_instruction: [ nocache, none ]
-
-  args:
-    memory_range: 30G
-    number_threads: 8
-    exec_mode: sequential
-    operation: write

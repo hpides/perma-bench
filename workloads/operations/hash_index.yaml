@@ -1,18 +1,18 @@
-# Represent a (hash-) join operation split into build and probe.
+# Represent a hash index split into lookups and updates.
 
-# The join is inspired by the PMem hash-index Dash (Lu et al., PVLDB 13(8), 2020).
+# The index is inspired by the PMem hash-index Dash (Lu et al., PVLDB 13(8), 2020).
 # Dash has 256 Byte buckets and performs two stores for each insert.
 # We represent this with an initial bucket lookup (with varying size), followed by two cache line sized writes.
 # The writes are followed by a CLWB + SFENCE as in the original paper.
 # We also vary the number of threads.
-join_build:
+hash_index_update:
   matrix:
     number_threads: [ 1, 8, 16, 32 ]
     # Represent bucket sizes 64, 256, 1024
     custom_operations:
-      - "r_64,w_64_cache,w_64_cache"
-      - "r_256,w_64_cache,w_64_cache"
-      - "r_1024,w_64_cache,w_64_cache"
+      - "r_128,w_64_cache_64,w_64_cache_-64"
+      - "r_512,w_64_cache_256,w_64_cache_-256"
+      - "r_1024,w_64_cache_512,w_64_cache_-512"
 
   args:
     memory_range: 10G
@@ -21,14 +21,14 @@ join_build:
 
 # Based on Dash's displacement bucket design, we read two consecutive buckets for each lookup.
 # We double the sizes of the buckets used in the build benchmark to represent this.
-join_probe:
+hash_index_lookup:
   matrix:
     number_threads: [ 1, 8, 16, 32 ]
     # Represent bucket sizes 64, 256, 1024
     custom_operations:
       - "r_128"
       - "r_512"
-      - "r_2048"
+      - "r_1024"
 
   args:
     memory_range: 10G

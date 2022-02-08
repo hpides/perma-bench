@@ -1,0 +1,26 @@
+# Represents the database workload table scan (large sequential reads) and dram group by operator (small random writes)
+parallel:
+  pmem_scan:
+    matrix:
+      number_threads: [ 1, 8, 16 ]
+      access_size: [ 256, 4096 ]
+
+    args:
+      exec_mode: sequential
+      memory_range: 50G
+      operation: read
+      run_time: 10
+
+  dram_aggregation:
+    matrix:
+      number_threads: [ 1, 8, 16 ]
+
+    args:
+      access_size: 64
+      exec_mode: random
+      dram_operation_ratio: 1
+      memory_range: 1G
+      dram_memory_range: 10G
+      operation: write
+      persist_instruction: none
+      run_time: 10
