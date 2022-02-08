@@ -560,7 +560,7 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
   std::chrono::duration<float> execution_time_s = execution_time;
 
   bandwidth_results["bandwidth"] = total_bandwidth;
-//  bandwidth_results["duration"] = std::chrono::duration_cast<std::chrono::milliseconds>(execution_time).count();
+  //  bandwidth_results["duration"] = std::chrono::duration_cast<std::chrono::milliseconds>(execution_time).count();
   bandwidth_results["execution_time"] = execution_time_s.count();
   bandwidth_results["accessed_bytes"] = total_size;
   bandwidth_results["thread_bandwidth_avg"] = avg_bandwidth;

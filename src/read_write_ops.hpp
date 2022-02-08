@@ -16,7 +16,7 @@ namespace perma::rw_ops {
 
 #define READ_SIMD_512(mem_addr, offset) _mm512_load_si512((void*)((mem_addr) + ((offset)*CACHE_LINE_SIZE)))
 #define NEW_READ_SIMD_512(mem_addr, reg, offset) \
-  asm volatile("vmovdqa64 " #offset "*64(%[maddr]),   %%zmm"#reg " \n" : [maddr] "+r" (mem_addr) : : "zmm"#reg)
+  asm volatile("vmovdqa64 " #offset "*64(%[maddr]),   %%zmm" #reg " \n" : [ maddr ] "+r"(mem_addr) : : "zmm" #reg)
 
 #define WRITE_SIMD_NT_512(mem_addr, offset, data) \
   _mm512_stream_si512(reinterpret_cast<__m512i*>((mem_addr) + ((offset)*CACHE_LINE_SIZE)), data)
@@ -480,7 +480,7 @@ inline void simd_read_256(const std::vector<char*>& addresses) {
   KEEP(&x);
 }
 
-//inline void simd_read_256(const std::vector<char*>& addresses) {
+// inline void simd_read_256(const std::vector<char*>& addresses) {
 //  __m512i res0, res1, res2, res3;
 //  __m512i res4, res5, res6, res7;
 //  auto simd_fn = [&]() {

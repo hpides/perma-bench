@@ -58,7 +58,7 @@ char* map_dram(const size_t expected_length, const bool use_huge_pages) {
   } else {
     // Explicitly don't use huge pages.
     if (madvise(addr, expected_length, MADV_NOHUGEPAGE) == -1) {
-      spdlog::critical("madavise for DRAM huge pages failed. Error: {}", std::strerror(errno));
+      spdlog::critical("madavise for DRAM no huge pages failed. Error: {}", std::strerror(errno));
       crash_exit();
     }
   }
