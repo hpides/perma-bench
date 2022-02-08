@@ -2,6 +2,7 @@
 
 #include <hdr_histogram.h>
 
+#include <chrono>
 #include <condition_variable>
 #include <filesystem>
 #include <json.hpp>

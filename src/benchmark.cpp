@@ -522,7 +522,7 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
 
     total_size += thread_op_size;
     earliest_begin = std::min(earliest_begin, thread_timestamps.begin);
-    latest_end = std::min(latest_end, thread_timestamps.end);
+    latest_end = std::max(latest_end, thread_timestamps.end);
 
     nlohmann::json thread_results;
     thread_results["bandwidth"] = thread_bandwidth;

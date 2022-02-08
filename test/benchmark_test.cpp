@@ -21,6 +21,7 @@ class BenchmarkTest : public ::testing::Test {
   void SetUp() override {
     base_config_.pmem_directory = temp_dir_;
     base_config_.memory_range = TEST_FILE_SIZE;
+    base_config_.min_io_chunk_size = TEST_CHUNK_SIZE;
 
     utils::setPMEM_MAP_FLAGS(MAP_SHARED);
   }
@@ -245,12 +246,13 @@ TEST_F(BenchmarkTest, SetUpSingleThread) {
   EXPECT_EQ(thread_config.num_threads_per_partition, 1);
   EXPECT_EQ(thread_config.partition_size, TEST_FILE_SIZE);
   EXPECT_EQ(thread_config.dram_partition_size, 0);
-  EXPECT_EQ(thread_config.num_ops_per_thread, TEST_FILE_SIZE / 256);
+  EXPECT_EQ(thread_config.num_ops_per_chunk, TEST_CHUNK_SIZE / 256);
+  EXPECT_EQ(thread_config.num_chunks, 8);
   EXPECT_EQ(thread_config.partition_start_addr, bm.get_pmem_data()[0]);
   EXPECT_EQ(thread_config.dram_partition_start_addr, bm.get_dram_data()[0]);
   EXPECT_EQ(&thread_config.config, &bm.get_benchmark_configs()[0]);
 
-  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  const std::vector<ExecutionDuration>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
   ASSERT_EQ(op_durations.size(), 1);
   EXPECT_EQ(thread_config.total_operation_duration, &op_durations[0]);
 
@@ -284,15 +286,15 @@ TEST_F(BenchmarkTest, SetUpMultiThreadCustomPartition) {
 
   EXPECT_EQ(thread_config0.thread_num, 0);
   EXPECT_EQ(thread_config1.thread_num, 1);
-  EXPECT_EQ(thread_config2.thread_num, 0);
-  EXPECT_EQ(thread_config3.thread_num, 1);
+  EXPECT_EQ(thread_config2.thread_num, 2);
+  EXPECT_EQ(thread_config3.thread_num, 3);
 
   EXPECT_EQ(thread_config0.partition_start_addr, bm.get_pmem_data()[0]);
   EXPECT_EQ(thread_config1.partition_start_addr, bm.get_pmem_data()[0]);
   EXPECT_EQ(thread_config2.partition_start_addr, bm.get_pmem_data()[0] + partition_size);
   EXPECT_EQ(thread_config3.partition_start_addr, bm.get_pmem_data()[0] + partition_size);
 
-  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  const std::vector<ExecutionDuration>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
   ASSERT_EQ(op_durations.size(), num_threads);
   EXPECT_EQ(thread_config0.total_operation_duration, &op_durations[0]);
   EXPECT_EQ(thread_config1.total_operation_duration, &op_durations[1]);
@@ -310,7 +312,8 @@ TEST_F(BenchmarkTest, SetUpMultiThreadCustomPartition) {
   for (const ThreadRunConfig& tc : thread_configs) {
     EXPECT_EQ(tc.num_threads_per_partition, 2);
     EXPECT_EQ(tc.partition_size, partition_size);
-    EXPECT_EQ(tc.num_ops_per_thread, TEST_FILE_SIZE / num_threads / 512);
+    EXPECT_EQ(tc.num_ops_per_chunk, TEST_CHUNK_SIZE / 512);
+    EXPECT_EQ(tc.num_chunks, 8);
     EXPECT_EQ(&tc.config, &bm.get_benchmark_configs()[0]);
   }
   bm.get_benchmark_results()[0]->config.validate();
@@ -338,16 +341,16 @@ TEST_F(BenchmarkTest, SetUpMultiThreadDefaultPartition) {
   const ThreadRunConfig& thread_config3 = thread_configs[3];
 
   EXPECT_EQ(thread_config0.thread_num, 0);
-  EXPECT_EQ(thread_config1.thread_num, 0);
-  EXPECT_EQ(thread_config2.thread_num, 0);
-  EXPECT_EQ(thread_config3.thread_num, 0);
+  EXPECT_EQ(thread_config1.thread_num, 1);
+  EXPECT_EQ(thread_config2.thread_num, 2);
+  EXPECT_EQ(thread_config3.thread_num, 3);
 
   EXPECT_EQ(thread_config0.partition_start_addr, bm.get_pmem_data()[0] + (0 * partition_size));
   EXPECT_EQ(thread_config1.partition_start_addr, bm.get_pmem_data()[0] + (1 * partition_size));
   EXPECT_EQ(thread_config2.partition_start_addr, bm.get_pmem_data()[0] + (2 * partition_size));
   EXPECT_EQ(thread_config3.partition_start_addr, bm.get_pmem_data()[0] + (3 * partition_size));
 
-  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  const std::vector<ExecutionDuration>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
   ASSERT_EQ(op_durations.size(), num_threads);
   EXPECT_EQ(thread_config0.total_operation_duration, &op_durations[0]);
   EXPECT_EQ(thread_config1.total_operation_duration, &op_durations[1]);
@@ -365,7 +368,8 @@ TEST_F(BenchmarkTest, SetUpMultiThreadDefaultPartition) {
   for (const ThreadRunConfig& tc : thread_configs) {
     EXPECT_EQ(tc.num_threads_per_partition, 1);
     EXPECT_EQ(tc.partition_size, partition_size);
-    EXPECT_EQ(tc.num_ops_per_thread, TEST_FILE_SIZE / num_threads / 256);
+    EXPECT_EQ(tc.num_ops_per_chunk, TEST_CHUNK_SIZE / 256);
+    EXPECT_EQ(tc.num_chunks, 8);
     EXPECT_EQ(&tc.config, &bm.get_benchmark_configs()[0]);
   }
   bm.get_benchmark_results()[0]->config.validate();
@@ -382,15 +386,20 @@ TEST_F(BenchmarkTest, RunSingeThreadRead) {
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
+
+  const auto start_test_ts = std::chrono::steady_clock::now();
+
   bm.create_data_files();
   bm.set_up();
   bm.run();
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  const std::vector<ExecutionDuration>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
   ASSERT_EQ(op_durations.size(), 1);
-  EXPECT_GT(op_durations[0], 0);
+  EXPECT_GT(op_durations[0].begin, start_test_ts);
+  EXPECT_GT(op_durations[0].end, start_test_ts);
+  EXPECT_LT(op_durations[0].begin, op_durations[0].end);
 
   const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
   EXPECT_THAT(op_sizes, ElementsAre(TEST_FILE_SIZE));
@@ -408,15 +417,20 @@ TEST_F(BenchmarkTest, RunSingeThreadReadDRAM) {
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
+
+  const auto start_test_ts = std::chrono::steady_clock::now();
+
   bm.create_data_files();
   bm.set_up();
   bm.run();
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  const std::vector<ExecutionDuration>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
   ASSERT_EQ(op_durations.size(), 1);
-  EXPECT_GT(op_durations[0], 0);
+  EXPECT_GT(op_durations[0].begin, start_test_ts);
+  EXPECT_GT(op_durations[0].end, start_test_ts);
+  EXPECT_LT(op_durations[0].begin, op_durations[0].end);
 
   const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
   EXPECT_THAT(op_sizes, ElementsAre(TEST_FILE_SIZE));
@@ -433,15 +447,20 @@ TEST_F(BenchmarkTest, RunSingleThreadWrite) {
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
+
+  const auto start_test_ts = std::chrono::steady_clock::now();
+
   bm.create_data_files();
   bm.set_up();
   bm.run();
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  const std::vector<ExecutionDuration>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
   ASSERT_EQ(op_durations.size(), 1);
-  EXPECT_GT(op_durations[0], 0);
+  EXPECT_GT(op_durations[0].begin, start_test_ts);
+  EXPECT_GT(op_durations[0].end, start_test_ts);
+  EXPECT_LT(op_durations[0].begin, op_durations[0].end);
 
   const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
   EXPECT_THAT(op_sizes, ElementsAre(TEST_FILE_SIZE));
@@ -462,15 +481,20 @@ TEST_F(BenchmarkTest, RunSingleThreadWriteDRAM) {
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
+
+  const auto start_test_ts = std::chrono::steady_clock::now();
+
   bm.create_data_files();
   bm.set_up();
   bm.run();
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  const std::vector<ExecutionDuration>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
   ASSERT_EQ(op_durations.size(), 1);
-  EXPECT_GT(op_durations[0], 0);
+  EXPECT_GT(op_durations[0].begin, start_test_ts);
+  EXPECT_GT(op_durations[0].end, start_test_ts);
+  EXPECT_LT(op_durations[0].begin, op_durations[0].end);
 
   const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
   EXPECT_THAT(op_sizes, ElementsAre(total_size));
@@ -493,15 +517,20 @@ TEST_F(BenchmarkTest, DISABLED_RunSingeThreadMixed) {
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
+
+  const auto start_test_ts = std::chrono::steady_clock::now();
+
   bm.create_data_files();
   bm.set_up();
   bm.run();
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  const std::vector<ExecutionDuration>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
   ASSERT_EQ(op_durations.size(), 1);
-  EXPECT_GT(op_durations[0], 0);
+  EXPECT_GT(op_durations[0].begin, start_test_ts);
+  EXPECT_GT(op_durations[0].end, start_test_ts);
+  EXPECT_LT(op_durations[0].begin, op_durations[0].end);
 
   const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
   uint64_t dummy_value_to_fail = 12346;
@@ -520,21 +549,29 @@ TEST_F(BenchmarkTest, RunMultiThreadRead) {
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
+
+  const auto start_test_ts = std::chrono::steady_clock::now();
+
   bm.create_data_files();
   bm.set_up();
   bm.run();
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  const std::vector<ExecutionDuration>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
   EXPECT_EQ(op_durations.size(), num_threads);
-  for (uint64_t duration : op_durations) {
-    EXPECT_GT(duration, 0);
+  for (ExecutionDuration duration : op_durations) {
+    EXPECT_GT(duration.begin, start_test_ts);
+    EXPECT_GT(duration.end, start_test_ts);
+    EXPECT_LT(duration.begin, duration.end);
   }
 
   const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
-  const uint64_t per_thread_size = TEST_FILE_SIZE / num_threads;
-  EXPECT_THAT(op_sizes, ElementsAre(per_thread_size, per_thread_size, per_thread_size, per_thread_size));
+  EXPECT_EQ(op_durations.size(), num_threads);
+  EXPECT_EQ(std::accumulate(op_sizes.begin(), op_sizes.end(), 0ul), TEST_FILE_SIZE);
+  for (uint64_t size : op_sizes) {
+    EXPECT_EQ(size % TEST_CHUNK_SIZE, 0);
+  }
 }
 
 TEST_F(BenchmarkTest, RunMultiThreadWrite) {
@@ -550,23 +587,28 @@ TEST_F(BenchmarkTest, RunMultiThreadWrite) {
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
+
+  const auto start_test_ts = std::chrono::steady_clock::now();
+
   bm.create_data_files();
   bm.set_up();
   bm.run();
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  const std::vector<ExecutionDuration>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
   EXPECT_EQ(op_durations.size(), num_threads);
-  for (uint64_t duration : op_durations) {
-    EXPECT_GT(duration, 0);
+  for (ExecutionDuration duration : op_durations) {
+    EXPECT_GT(duration.begin, start_test_ts);
+    EXPECT_GT(duration.end, start_test_ts);
+    EXPECT_LT(duration.begin, duration.end);
   }
 
-  const uint64_t per_thread_size = TEST_FILE_SIZE / num_threads;
   const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
   EXPECT_EQ(op_sizes.size(), 16);
+  EXPECT_EQ(std::accumulate(op_sizes.begin(), op_sizes.end(), 0ul), TEST_FILE_SIZE);
   for (uint64_t size : op_sizes) {
-    EXPECT_EQ(size, per_thread_size);
+    EXPECT_EQ(size % TEST_CHUNK_SIZE, 0);
   }
 
   check_file_written(bm.get_pmem_file(0), total_size);
@@ -585,23 +627,29 @@ TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
+
+  const auto start_test_ts = std::chrono::steady_clock::now();
+
   bm.create_data_files();
   bm.set_up();
   bm.run();
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  const std::vector<ExecutionDuration>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
   EXPECT_EQ(op_durations.size(), num_threads);
-  for (uint64_t duration : op_durations) {
-    EXPECT_GT(duration, 0);
+  for (ExecutionDuration duration : op_durations) {
+    EXPECT_GT(duration.begin, start_test_ts);
+    EXPECT_GT(duration.end, start_test_ts);
+    EXPECT_LT(duration.begin, duration.end);
   }
 
   const uint64_t per_thread_size = TEST_FILE_SIZE / num_threads;
   const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
   EXPECT_EQ(op_sizes.size(), 4);
+  EXPECT_EQ(std::accumulate(op_sizes.begin(), op_sizes.end(), 0ul), TEST_FILE_SIZE);
   for (uint64_t size : op_sizes) {
-    EXPECT_EQ(size, per_thread_size);
+    EXPECT_EQ(size % TEST_CHUNK_SIZE, 0);
   }
 }
 
@@ -619,23 +667,29 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
+
+  const auto start_test_ts = std::chrono::steady_clock::now();
+
   bm.create_data_files();
   bm.set_up();
   bm.run();
 
   const BenchmarkResult& result = *bm.get_benchmark_results()[0];
 
-  const std::vector<uint64_t>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
+  const std::vector<ExecutionDuration>& op_durations = bm.get_benchmark_results()[0]->total_operation_durations;
   EXPECT_EQ(op_durations.size(), num_threads);
-  for (uint64_t duration : op_durations) {
-    EXPECT_GT(duration, 0);
+  for (ExecutionDuration duration : op_durations) {
+    EXPECT_GT(duration.begin, start_test_ts);
+    EXPECT_GT(duration.end, start_test_ts);
+    EXPECT_LT(duration.begin, duration.end);
   }
 
   const uint64_t per_thread_size = TEST_FILE_SIZE / num_threads;
   const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
   EXPECT_EQ(op_sizes.size(), 16);
+  EXPECT_EQ(std::accumulate(op_sizes.begin(), op_sizes.end(), 0ul), TEST_FILE_SIZE);
   for (uint64_t size : op_sizes) {
-    EXPECT_EQ(size, per_thread_size);
+    EXPECT_EQ(size % TEST_CHUNK_SIZE, 0);
   }
 
   check_file_written(bm.get_pmem_file(0), total_size);
@@ -651,11 +705,13 @@ TEST_F(BenchmarkTest, ResultsSingleThreadRead) {
   BenchmarkResult bm_result{base_config_};
 
   const uint64_t total_op_duration = 1000000;
-  bm_result.total_operation_durations.emplace_back(total_op_duration);
+  const auto start = std::chrono::steady_clock::now();
+  const auto end = start + std::chrono::nanoseconds(total_op_duration);
+  bm_result.total_operation_durations.push_back({start, end});
   bm_result.total_operation_sizes.emplace_back(TEST_FILE_SIZE);
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  check_json_bandwidth(result_json, 0.9765625, 0.9765625, 0.0);
+  check_json_result(result_json, TEST_FILE_SIZE, 0.9765625, 1, 0.9765625, 0.0);
 }
 
 TEST_F(BenchmarkTest, ResultsSingleThreadWrite) {
@@ -667,11 +723,13 @@ TEST_F(BenchmarkTest, ResultsSingleThreadWrite) {
 
   BenchmarkResult bm_result{base_config_};
   const uint64_t total_op_duration = 2000000;
-  bm_result.total_operation_durations.emplace_back(total_op_duration);
+  const auto start = std::chrono::steady_clock::now();
+  const auto end = start + std::chrono::nanoseconds(total_op_duration);
+  bm_result.total_operation_durations.push_back({start, end});
   bm_result.total_operation_sizes.emplace_back(TEST_FILE_SIZE);
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  check_json_bandwidth(result_json, 0.48828125, 0.48828125, 0.0);
+  check_json_result(result_json, TEST_FILE_SIZE, 0.48828125, 1, 0.48828125, 0.0);
 }
 
 // TODO(#167): Change "mixed" to DRAM/PMem
@@ -724,13 +782,16 @@ TEST_F(BenchmarkTest, ResultsMultiThreadRead) {
   base_config_.memory_range = TEST_FILE_SIZE;
 
   BenchmarkResult bm_result{base_config_};
+  const auto start = std::chrono::steady_clock::now();
   for (size_t thread = 0; thread < num_threads; ++thread) {
-    bm_result.total_operation_durations.emplace_back(250000 + (10000 * thread));
+    const uint64_t thread_dur = (250000 + (10000 * thread));
+    const auto end = start + std::chrono::nanoseconds(thread_dur);
+    bm_result.total_operation_durations.push_back({start, end});
     bm_result.total_operation_sizes.emplace_back(TEST_FILE_SIZE / num_threads);
   }
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  check_json_bandwidth(result_json, 3.48772321, 0.8719308, 0.0741378);
+  check_json_result(result_json, TEST_FILE_SIZE, 3.48772321, 4, 0.8719308, 0.0741378);
 }
 
 TEST_F(BenchmarkTest, ResultsMultiThreadWrite) {
@@ -743,13 +804,16 @@ TEST_F(BenchmarkTest, ResultsMultiThreadWrite) {
   base_config_.memory_range = TEST_FILE_SIZE;
 
   BenchmarkResult bm_result{base_config_};
+  const auto start = std::chrono::steady_clock::now();
   for (size_t thread = 0; thread < num_threads; ++thread) {
-    bm_result.total_operation_durations.emplace_back(250000 + (10000 * thread));
+    const uint64_t thread_dur = (250000 + (10000 * thread));
+    const auto end = start + std::chrono::nanoseconds(thread_dur);
+    bm_result.total_operation_durations.push_back({start, end});
     bm_result.total_operation_sizes.emplace_back(TEST_FILE_SIZE / num_threads);
   }
 
   const nlohmann::json& result_json = bm_result.get_result_as_json();
-  check_json_bandwidth(result_json, 3.0517578, 0.38146972, 0.0648887);
+  check_json_result(result_json, TEST_FILE_SIZE, 3.0517578, 8, 0.38146972, 0.0648887);
 }
 
 // TODO(#167): Change "mixed" to DRAM/PMem
@@ -811,11 +875,16 @@ TEST_F(BenchmarkTest, RunParallelSingleThreadRead) {
   config_two.exec_mode = Mode::Random;
   config_two.number_operations = num_ops;
 
+  base_executions_.reserve(2);
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>(config_one));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>(config_two));
+
   base_results_.reserve(2);
   base_results_.push_back(std::make_unique<BenchmarkResult>(config_one));
   base_results_.push_back(std::make_unique<BenchmarkResult>(config_two));
 
-  ParallelBenchmark bm{bm_name_, "sub_bm_1", "sub_bm_2", config_one, config_two, base_results_};
+  ParallelBenchmark bm{
+      bm_name_, "sub_bm_1", "sub_bm_2", config_one, config_two, std::move(base_executions_), std::move(base_results_)};
   bm.create_data_files();
   bm.set_up();
   bm.run();
@@ -823,12 +892,12 @@ TEST_F(BenchmarkTest, RunParallelSingleThreadRead) {
   const BenchmarkResult& result_one = *bm.get_benchmark_results()[0];
   const BenchmarkResult& result_two = *bm.get_benchmark_results()[1];
 
-  const std::vector<uint64_t>& all_durations_one = result_one.total_operation_durations;
-  const std::vector<uint64_t>& all_durations_two = result_two.total_operation_durations;
+  const std::vector<ExecutionDuration>& all_durations_one = result_one.total_operation_durations;
+  const std::vector<ExecutionDuration>& all_durations_two = result_two.total_operation_durations;
   ASSERT_EQ(all_durations_one.size(), 1);
-  EXPECT_GT(all_durations_one[0], 900000000);  // only check 0.90s to leave buffer for generation
+  EXPECT_GT(all_durations_one[0].end - all_durations_one[0].begin, std::chrono::seconds{1});
   ASSERT_EQ(all_durations_two.size(), 1);
-  EXPECT_GT(all_durations_two[0], 900000000);
+  EXPECT_GT(all_durations_two[0].end - all_durations_two[0].begin, std::chrono::seconds{1});
 
   const std::vector<uint64_t>& all_sizes_one = result_one.total_operation_sizes;
   const std::vector<uint64_t>& all_sizes_two = result_two.total_operation_sizes;
@@ -858,11 +927,16 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadMixed) {
   config_two.operation = Operation::Read;
   config_two.number_operations = num_ops;
 
+  base_executions_.reserve(2);
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>(config_one));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>(config_two));
+
   base_results_.reserve(2);
   base_results_.push_back(std::make_unique<BenchmarkResult>(config_one));
   base_results_.push_back(std::make_unique<BenchmarkResult>(config_two));
 
-  ParallelBenchmark bm{bm_name_, "sub_bm_1", "sub_bm_2", config_one, config_two, base_results_};
+  ParallelBenchmark bm{
+      bm_name_, "sub_bm_1", "sub_bm_2", config_one, config_two, std::move(base_executions_), std::move(base_results_)};
   bm.create_data_files();
   bm.set_up();
   bm.run();
@@ -870,12 +944,12 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadMixed) {
   const BenchmarkResult& result_one = *bm.get_benchmark_results()[0];
   const BenchmarkResult& result_two = *bm.get_benchmark_results()[1];
 
-  const std::vector<uint64_t>& all_durations_one = result_one.total_operation_durations;
-  const std::vector<uint64_t>& all_durations_two = result_two.total_operation_durations;
+  const std::vector<ExecutionDuration>& all_durations_one = result_one.total_operation_durations;
+  const std::vector<ExecutionDuration>& all_durations_two = result_two.total_operation_durations;
   ASSERT_EQ(all_durations_one.size(), 1);
-  EXPECT_GT(all_durations_one[0], 950000000);  // only check 0.95s to leave buffer for generation
+  EXPECT_GT(all_durations_one[0].end - all_durations_one[0].begin, std::chrono::seconds{1});
   ASSERT_EQ(all_durations_two.size(), 1);
-  EXPECT_GT(all_durations_two[0], 950000000);
+  EXPECT_GT(all_durations_two[0].end - all_durations_two[0].begin, std::chrono::seconds{1});
 
   const std::vector<uint64_t>& all_sizes_one = result_one.total_operation_sizes;
   const std::vector<uint64_t>& all_sizes_two = result_two.total_operation_sizes;
