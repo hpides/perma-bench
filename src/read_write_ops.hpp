@@ -15,8 +15,6 @@ namespace perma::rw_ops {
 #define KEEP(x) asm volatile("" : : "g"(x) : "memory")
 
 #define READ_SIMD_512(mem_addr, offset) _mm512_load_si512((void*)((mem_addr) + ((offset)*CACHE_LINE_SIZE)))
-#define NEW_READ_SIMD_512(mem_addr, reg, offset) \
-  asm volatile("vmovdqa64 " #offset "*64(%[maddr]), %%zmm" #reg " \n" : [maddr] "+r"(mem_addr) : : "zmm" #reg)
 
 #define WRITE_SIMD_NT_512(mem_addr, offset, data) \
   _mm512_stream_si512(reinterpret_cast<__m512i*>((mem_addr) + ((offset)*CACHE_LINE_SIZE)), data)
@@ -479,41 +477,6 @@ inline void simd_read_256(const std::vector<char*>& addresses) {
   __m512i x = simd_fn();
   KEEP(&x);
 }
-
-// inline void simd_read_256(const std::vector<char*>& addresses) {
-//  __m512i res0, res1, res2, res3;
-//  __m512i res4, res5, res6, res7;
-//  auto simd_fn = [&]() {
-//    const size_t num_addresses = addresses.size();
-//    for (size_t i = 0; i < num_addresses; i += 4) {
-//      char* addr1 = addresses[i + 0];
-//      char* addr2 = addresses[i + 1];
-//      char* addr3 = addresses[i + 2];
-//      char* addr4 = addresses[i + 3];
-//      NEW_READ_SIMD_512(addr1, 0, 0);
-//      NEW_READ_SIMD_512(addr1, 1, 1);
-//      NEW_READ_SIMD_512(addr1, 2, 2);
-//      NEW_READ_SIMD_512(addr1, 3, 3);
-//      NEW_READ_SIMD_512(addr2, 4, 0);
-//      NEW_READ_SIMD_512(addr2, 5, 1);
-//      NEW_READ_SIMD_512(addr2, 6, 2);
-//      NEW_READ_SIMD_512(addr2, 7, 3);
-//      NEW_READ_SIMD_512(addr3, 8, 0);
-//      NEW_READ_SIMD_512(addr3, 9, 1);
-//      NEW_READ_SIMD_512(addr3, 10, 2);
-//      NEW_READ_SIMD_512(addr3, 11, 3);
-//      NEW_READ_SIMD_512(addr4, 12, 0);
-//      NEW_READ_SIMD_512(addr4, 13, 1);
-//      NEW_READ_SIMD_512(addr4, 14, 2);
-//      NEW_READ_SIMD_512(addr4, 15, 3);
-//    }
-//    return res0 + res1 + res2 + res3 + res4 + res5 + res6 + res7;
-//  };
-//  // Do a single copy of the last read value to the stack from a zmm register. Otherwise, KEEP copies on each
-//  // invocation if we have KEEP in the loop because it cannot be sure how KEEP modifies the current zmm register.
-//  __m512i x = simd_fn();
-//  KEEP(&x);
-//}
 
 inline void simd_read_512(const std::vector<char*>& addresses) {
   __m512i res0, res1, res2, res3, res4, res5, res6, res7;
