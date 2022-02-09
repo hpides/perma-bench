@@ -1,6 +1,6 @@
 # Represents the database workload table scan (large sequential reads) and dram group by operator (small random writes)
 pmem_scan_dram_aggregation:
-  parallel_benchmarks:
+  parallel_benchmark:
     pmem_scan:
       matrix:
         number_threads: [ 1, 8, 16 ]
