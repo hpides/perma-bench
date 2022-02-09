@@ -35,6 +35,8 @@ struct BenchmarkEnums {
 struct ExecutionDuration {
   std::chrono::steady_clock::time_point begin;
   std::chrono::steady_clock::time_point end;
+
+  std::chrono::steady_clock::duration duration() const { return end - begin; }
 };
 
 struct BenchmarkExecution {
@@ -45,7 +47,8 @@ struct BenchmarkExecution {
   std::atomic<uint64_t> io_position = 0;
 
   // For custom operations, we don't have chunks but only simulate them by running chunk-sized blocks.
-  std::atomic<uint64_t> num_custom_chunks_remaining = 0;
+  // This is a *signed* integer, as our atomic -= operations my go below 0.
+  std::atomic<int64_t> num_custom_chunks_remaining = 0;
 
   // The main list of all IO operations to steal work from
   std::vector<IoOperation> io_operations;
@@ -71,15 +74,13 @@ struct ThreadRunConfig {
   // Pointers to store performance data in.
   uint64_t* total_operation_size;
   ExecutionDuration* total_operation_duration;
-  uint64_t* custom_op_duration;
   std::vector<uint64_t>* custom_op_latencies;
 
   ThreadRunConfig(char* partition_start_addr, char* dram_partition_start_addr, const size_t partition_size,
                   const size_t dram_partition_size, const size_t num_threads_per_partition, const size_t thread_num,
                   const size_t num_ops_per_chunk, const size_t num_chunks, const BenchmarkConfig& config,
                   BenchmarkExecution* execution, ExecutionDuration* total_operation_duration,
-                  uint64_t* total_operation_size, uint64_t* custom_op_duration,
-                  std::vector<uint64_t>* custom_op_latencies)
+                  uint64_t* total_operation_size, std::vector<uint64_t>* custom_op_latencies)
       : partition_start_addr{partition_start_addr},
         dram_partition_start_addr{dram_partition_start_addr},
         partition_size{partition_size},
@@ -92,7 +93,6 @@ struct ThreadRunConfig {
         execution{execution},
         total_operation_duration{total_operation_duration},
         total_operation_size{total_operation_size},
-        custom_op_duration{custom_op_duration},
         custom_op_latencies{custom_op_latencies} {}
 };
 
@@ -108,7 +108,6 @@ struct BenchmarkResult {
   std::vector<ExecutionDuration> total_operation_durations;
 
   // Result vectors for custom operation workloads
-  std::vector<uint64_t> custom_operation_durations;
   std::vector<std::vector<uint64_t>> custom_operation_latencies;
 
   hdr_histogram* latency_hdr = nullptr;

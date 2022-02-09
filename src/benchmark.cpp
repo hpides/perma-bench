@@ -14,6 +14,18 @@
 
 namespace {
 
+double calculate_standard_deviation(std::vector<double>& per_thread_values, const double average) {
+  const uint16_t num_threads = per_thread_values.size();
+  std::vector<double> thread_diff_to_avg(num_threads);
+  std::transform(per_thread_values.begin(), per_thread_values.end(), thread_diff_to_avg.begin(),
+                 [&](double x) { return x - average; });
+  const double sq_sum =
+      std::inner_product(thread_diff_to_avg.begin(), thread_diff_to_avg.end(), thread_diff_to_avg.begin(), 0.0);
+  // Use N - 1 for sample variance
+  const double std_dev = sqrt(sq_sum / std::max(1, num_threads - 1));
+  return std_dev;
+}
+
 nlohmann::json hdr_histogram_to_json(hdr_histogram* hdr) {
   nlohmann::json result;
   result["max"] = hdr_max(hdr);
@@ -66,7 +78,6 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, ch
   uint64_t estimate_num_latency_measurements = 0;
   if (is_custom_execution) {
     result->custom_operation_latencies.resize(config.number_threads);
-    result->custom_operation_durations.resize(config.number_threads, 0);
 
     if (config.latency_sample_frequency > 0) {
       estimate_num_latency_measurements = (num_ops_per_thread / config.latency_sample_frequency) * 2;
@@ -89,7 +100,7 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, ch
   execution->threads_remaining = config.number_threads;
   execution->io_position = 0;
   execution->io_operations.resize(num_chunks);
-  execution->num_custom_chunks_remaining = num_chunks;
+  execution->num_custom_chunks_remaining = static_cast<int64_t>(num_chunks);
 
   for (uint16_t partition_num = 0; partition_num < num_partitions; partition_num++) {
     char* partition_start = (config.exec_mode == Mode::Sequential_Desc)
@@ -109,13 +120,12 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, ch
 
       ExecutionDuration* total_op_duration = &result->total_operation_durations[thread_idx];
       uint64_t* total_op_size = &result->total_operation_sizes[thread_idx];
-      uint64_t* custom_op_duration = is_custom_execution ? &result->custom_operation_durations[thread_idx] : nullptr;
       std::vector<uint64_t>* custom_op_latencies =
           is_custom_execution ? &result->custom_operation_latencies[thread_idx] : nullptr;
 
       thread_config->emplace_back(partition_start, dram_partition_start, partition_size, dram_partition_size,
                                   num_threads_per_partition, thread_idx, ops_per_chunk, num_chunks, config, execution,
-                                  total_op_duration, total_op_size, custom_op_duration, custom_op_latencies);
+                                  total_op_duration, total_op_size, custom_op_latencies);
     }
   }
 }
@@ -150,7 +160,6 @@ void Benchmark::prepare_data_file(char* file_data, const BenchmarkConfig& config
 }
 
 void Benchmark::run_custom_ops_in_thread(ThreadRunConfig* thread_config, const BenchmarkConfig& config) {
-  throw PermaException();
   const std::vector<CustomOp>& operations = config.custom_operations;
   const size_t num_ops = operations.size();
 
@@ -187,35 +196,41 @@ void Benchmark::run_custom_ops_in_thread(ThreadRunConfig* thread_config, const B
   ChainedOperation& start_op = operation_chain[0];
   auto start_ts = std::chrono::steady_clock::now();
 
-  if (config.latency_sample_frequency == 0) {
-    // We don't want the sampling code overhead if we don't want to sample the latency.
-    while (true) {
-      for (size_t iteration = 0; iteration < thread_config->num_ops_per_chunk; ++iteration) {
+  const size_t num_ops_per_chunk = thread_config->num_ops_per_chunk;
+  uint64_t total_num_ops = 0;
+
+  while (true) {
+    if (thread_config->execution->num_custom_chunks_remaining.fetch_sub(1) <= 0) {
+      break;
+    }
+
+    if (config.latency_sample_frequency == 0) {
+      // We don't want the sampling code overhead if we don't want to sample the latency.
+      for (size_t iteration = 0; iteration < num_ops_per_chunk; ++iteration) {
         start_op.run(start_addr, start_addr);
       }
-      if (thread_config->execution->num_custom_chunks_remaining.fetch_sub(1)) {
-        // TODO
+    } else {
+      // Latency sampling requested, measure the latency every x iterations.
+      const uint64_t freq = config.latency_sample_frequency;
+      // Start at 1 to avoid measuring latency of first request.
+      for (size_t iteration = 1; iteration <= num_ops_per_chunk; ++iteration) {
+        if (iteration % freq == 0) {
+          auto op_start = std::chrono::steady_clock::now();
+          start_op.run(start_addr, start_addr);
+          auto op_end = std::chrono::steady_clock::now();
+          thread_config->custom_op_latencies->emplace_back((op_end - op_start).count());
+        } else {
+          start_op.run(start_addr, start_addr);
+        }
       }
     }
-  } else {
-    // Latency sampling requested, measure the latency every x iterations.
-    const uint64_t freq = config.latency_sample_frequency;
-    // Start at 1 to avoid measuring latency of first request.
-    for (size_t iteration = 1; iteration <= thread_config->num_ops_per_chunk; ++iteration) {
-      if (iteration % freq == 0) {
-        auto op_start = std::chrono::steady_clock::now();
-        start_op.run(start_addr, start_addr);
-        auto op_end = std::chrono::steady_clock::now();
-        thread_config->custom_op_latencies->emplace_back((op_end - op_start).count());
-      } else {
-        start_op.run(start_addr, start_addr);
-      }
-    }
+
+    total_num_ops += num_ops_per_chunk;
   }
 
   auto end_ts = std::chrono::steady_clock::now();
-  auto duration = (end_ts - start_ts).count();
-  *(thread_config->custom_op_duration) = duration;
+  *(thread_config->total_operation_duration) = ExecutionDuration{start_ts, end_ts};
+  *(thread_config->total_operation_size) = total_num_ops;
 }
 
 void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkConfig& config) {
@@ -487,9 +502,6 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
     return get_custom_results_as_json();
   }
 
-  uint64_t total_size = 0;
-  std::vector<double> per_thread_bandwidth(config.number_threads);
-
   if (total_operation_durations.size() != config.number_threads) {
     spdlog::critical("Invalid state! Need n result durations for n threads. Got: {} but expected: {}",
                      total_operation_durations.size(), config.number_threads);
@@ -505,11 +517,15 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
   std::chrono::steady_clock::time_point earliest_begin = total_operation_durations[0].begin;
   std::chrono::steady_clock::time_point latest_end = total_operation_durations[0].end;
 
+  uint64_t total_size = 0;
+  std::vector<double> per_thread_bandwidth(config.number_threads);
   nlohmann::json per_thread_results = nlohmann::json::array();
 
   for (uint16_t thread_num = 0; thread_num < config.number_threads; thread_num++) {
     const ExecutionDuration& thread_timestamps = total_operation_durations[thread_num];
-    const std::chrono::steady_clock::duration thread_duration = thread_timestamps.end - thread_timestamps.begin;
+    const std::chrono::steady_clock::duration thread_duration = thread_timestamps.duration();
+    auto thread_duration_s = std::chrono::duration<double>(std::chrono::nanoseconds{thread_duration}).count();
+
     const uint64_t thread_op_size = total_operation_sizes[thread_num];
 
     const double thread_bandwidth = get_bandwidth(thread_op_size, thread_duration);
@@ -518,7 +534,7 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
     spdlog::debug("Thread #{}: Per-Thread Information", thread_num);
     spdlog::debug(" ├─ Bandwidth (GiB/s): {:.5f}", thread_bandwidth);
     spdlog::debug(" ├─ Total Access Size (MiB): {}", thread_op_size / BYTES_IN_MEGABYTE);
-    spdlog::debug(" └─ Duration (s): {:.5f}", static_cast<double>(thread_duration.count()) / NANOSECONDS_IN_SECONDS);
+    spdlog::debug(" └─ Duration (s): {:.5f}", thread_duration_s);
 
     total_size += thread_op_size;
     earliest_begin = std::min(earliest_begin, thread_timestamps.begin);
@@ -526,29 +542,17 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
 
     nlohmann::json thread_results;
     thread_results["bandwidth"] = thread_bandwidth;
-    thread_results["execution_time"] = std::chrono::duration_cast<std::chrono::milliseconds>(thread_duration).count();
+    thread_results["execution_time"] = thread_duration_s;
     thread_results["accessed_bytes"] = thread_op_size;
     per_thread_results.emplace_back(std::move(thread_results));
   }
 
-  // TODO: update!
-  // Calculate final bandwidth. We base this on the "slowest" thread, i.e., the maximum duration. This slightly
-  // underestimates the actual bandwidth utilization but avoids weird settings where threads have largely varying
-  // runtimes, e.g., through hyper-threading, which overestimates the per-thread bandwidth and shows numbers that are
-  // beyond the physical limit of the hardware. We are rather too conservative than claim numbers that are not true.
   const auto execution_time = latest_end - earliest_begin;
   const double total_bandwidth = get_bandwidth(total_size, execution_time);
 
   // Add information about per-thread avg and standard deviation.
   const double avg_bandwidth = total_bandwidth / config.number_threads;
-
-  std::vector<double> thread_diff_to_avg(config.number_threads);
-  std::transform(per_thread_bandwidth.begin(), per_thread_bandwidth.end(), thread_diff_to_avg.begin(),
-                 [&](double x) { return x - avg_bandwidth; });
-  const double sq_sum =
-      std::inner_product(thread_diff_to_avg.begin(), thread_diff_to_avg.end(), thread_diff_to_avg.begin(), 0.0);
-  // Use N - 1 for sample variance
-  const double bandwidth_stddev = std::sqrt(sq_sum / std::max(1, config.number_threads - 1));
+  double bandwidth_stddev = calculate_standard_deviation(per_thread_bandwidth, avg_bandwidth);
 
   spdlog::debug("Per-Thread Average Bandwidth: {}", avg_bandwidth);
   spdlog::debug("Per-Thread Standard Deviation: {}", bandwidth_stddev);
@@ -557,10 +561,9 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
   nlohmann::json result;
   nlohmann::json bandwidth_results;
 
-  std::chrono::duration<float> execution_time_s = execution_time;
+  auto execution_time_s = std::chrono::duration<double>(std::chrono::nanoseconds{execution_time});
 
   bandwidth_results["bandwidth"] = total_bandwidth;
-  //  bandwidth_results["duration"] = std::chrono::duration_cast<std::chrono::milliseconds>(execution_time).count();
   bandwidth_results["execution_time"] = execution_time_s.count();
   bandwidth_results["accessed_bytes"] = total_size;
   bandwidth_results["thread_bandwidth_avg"] = avg_bandwidth;
@@ -579,30 +582,60 @@ nlohmann::json BenchmarkResult::get_result_as_json() const {
 }
 
 nlohmann::json BenchmarkResult::get_custom_results_as_json() const {
-  nlohmann::json result;
+  nlohmann::json custom_op_results;
+  nlohmann::json per_thread_results = nlohmann::json::array();
 
-  uint64_t total_duration = 0;
-  for (uint64_t thread_id = 0; thread_id < config.number_threads; ++thread_id) {
-    total_duration += custom_operation_durations[thread_id];
+  uint64_t total_num_ops = 0;
+  std::vector<double> per_thread_ops_per_s(config.number_threads);
+
+  std::chrono::steady_clock::time_point earliest_begin = total_operation_durations[0].begin;
+  std::chrono::steady_clock::time_point latest_end = total_operation_durations[0].end;
+
+  for (uint64_t thread_num = 0; thread_num < config.number_threads; ++thread_num) {
+    const ExecutionDuration& thread_timestamps = total_operation_durations[thread_num];
+    const std::chrono::steady_clock::duration thread_duration = thread_timestamps.duration();
+    const auto thread_duration_s = std::chrono::duration<double>(std::chrono::nanoseconds{thread_duration}).count();
+
+    const uint64_t num_ops = total_operation_sizes[thread_num];
+    total_num_ops += num_ops;
+    const double thread_ops_per_s = static_cast<double>(num_ops) / thread_duration_s;
+    per_thread_ops_per_s[thread_num] = thread_ops_per_s;
+
+    earliest_begin = std::min(earliest_begin, thread_timestamps.begin);
+    latest_end = std::max(latest_end, thread_timestamps.end);
+
+    nlohmann::json thread_results;
+    thread_results["num_operations"] = num_ops;
+    thread_results["execution_time"] = thread_duration_s;
+    thread_results["ops_per_second"] = thread_ops_per_s;
+    per_thread_results.emplace_back(std::move(thread_results));
   }
-  const double avg_duration_ns = static_cast<double>(total_duration) / config.number_threads;
-  const double avg_duration = avg_duration_ns / NANOSECONDS_IN_SECONDS;
-  const double ops_per_sec = config.number_operations / avg_duration;
 
-  // TODO(#169): Add information about per-thread avg and standard deviation.
+  const auto execution_time = latest_end - earliest_begin;
+  auto execution_time_s = std::chrono::duration<double>(std::chrono::nanoseconds{execution_time});
 
-  result["avg_duration_sec"] = avg_duration;
-  result["ops_per_second"] = ops_per_sec;
+  const double total_ops_per_s = static_cast<double>(total_num_ops) / execution_time_s.count();
+  const double avg_ops_per_s = total_ops_per_s / config.number_threads;
+  const double ops_per_s_std_dev = calculate_standard_deviation(per_thread_ops_per_s, avg_ops_per_s);
+
+  custom_op_results["execution_time"] = execution_time_s.count();
+  custom_op_results["num_operations"] = total_num_ops;
+  custom_op_results["ops_per_second"] = total_ops_per_s;
+  custom_op_results["thread_ops_per_second_avg"] = avg_ops_per_s;
+  custom_op_results["thread_ops_per_second_std_dev"] = ops_per_s_std_dev;
+  custom_op_results["threads"] = per_thread_results;
 
   if (config.latency_sample_frequency > 0) {
     for (const std::vector<uint64_t>& thread_latencies : custom_operation_latencies) {
       for (const uint64_t latency : thread_latencies) {
-        hdr_record_value(latency_hdr, latency);
+        hdr_record_value(latency_hdr, static_cast<int64_t>(latency));
       }
     }
-    result["latency"] = hdr_histogram_to_json(latency_hdr);
+    custom_op_results["latency"] = hdr_histogram_to_json(latency_hdr);
   }
 
+  nlohmann::json result;
+  result["results"] = custom_op_results;
   return result;
 }
 
