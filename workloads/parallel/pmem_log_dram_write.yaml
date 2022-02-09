@@ -1,27 +1,28 @@
 # Represents the database workload logging (small sequential reads) and dram index (small write)
-parallel:
-  pmem_log:
-    matrix:
-      number_threads: [ 1, 8, 16 ]
-      access_size: [ 64, 256, 512 ]
-      persist_instruction: [ cacheinv, nocache ]
+pmem_log_dram_index:
+  parallel_benchmarks:
+    pmem_log:
+      matrix:
+        number_threads: [ 1, 8, 16 ]
+        access_size: [ 64, 256, 512 ]
+        persist_instruction: [ cacheinv, nocache ]
 
-    args:
-      exec_mode: sequential
-      memory_range: 10G
-      operation: write
-      run_time: 10
+      args:
+        exec_mode: sequential
+        memory_range: 10G
+        operation: write
+        run_time: 10
 
-  dram_index:
-    matrix:
-      number_threads: [ 1, 8, 16 ]
+    dram_index:
+      matrix:
+        number_threads: [ 1, 8, 16 ]
 
-    args:
-      access_size: 64
-      exec_mode: random
-      dram_operation_ratio: 1
-      memory_range: 1G
-      dram_memory_range: 10G
-      operation: write
-      persist_instruction: none
-      run_time: 10
+      args:
+        access_size: 64
+        exec_mode: random
+        dram_operation_ratio: 1
+        memory_range: 1G
+        dram_memory_range: 10G
+        operation: write
+        persist_instruction: none
+        run_time: 10

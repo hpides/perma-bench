@@ -8,6 +8,6 @@ random_reads:
   args:
     number_partitions: 1
     memory_range: 10G
-    number_operations: 50000000
+    number_operations: 100000000
     exec_mode: random
     operation: read
