@@ -530,8 +530,6 @@ inline void simd_read(const std::vector<char*>& addresses, const size_t access_s
 inline void write_data(char* from, const char* to) {
 #ifdef HAS_AVX
   return simd_write_data_range(from, to);
-#else
-  static_assert(false, "Need AVX! This should not happen");
 #endif
 }
 
