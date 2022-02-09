@@ -348,8 +348,8 @@ CustomOp CustomOp::from_string(const std::string& str) {
     }
 
     const uint64_t absolute_offset = std::abs(custom_op.offset);
-    if ((absolute_offset & (absolute_offset - 1)) != 0) {
-      spdlog::error("Offset of custom write operation must be power of 2. Got: {}", custom_op.offset);
+    if ((absolute_offset % 64) != 0) {
+      spdlog::error("Offset of custom write operation must be multiple of 64. Got: {}", custom_op.offset);
       utils::crash_exit();
     }
   }
