@@ -52,10 +52,6 @@ struct BenchmarkExecution {
 
   // The main list of all IO operations to steal work from
   std::vector<IoOperation> io_operations;
-
-  const BenchmarkConfig& config;
-
-  explicit BenchmarkExecution(const BenchmarkConfig& config) : config{config} {}
 };
 
 struct ThreadRunConfig {

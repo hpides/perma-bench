@@ -72,8 +72,8 @@ void ParallelBenchmark::tear_down(bool force) {
 
 nlohmann::json ParallelBenchmark::get_result_as_json() {
   nlohmann::json result;
-  result["configs"][benchmark_name_one_] = get_json_config(0);
-  result["configs"][benchmark_name_two_] = get_json_config(1);
+  result["config"][benchmark_name_one_] = get_json_config(0);
+  result["config"][benchmark_name_two_] = get_json_config(1);
   result["results"][benchmark_name_one_].update(results_[0]->get_result_as_json());
   result["results"][benchmark_name_two_].update(results_[1]->get_result_as_json());
   return result;

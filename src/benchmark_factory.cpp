@@ -34,7 +34,7 @@ std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const st
         for (BenchmarkConfig& bm : matrix) {
           // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
           std::vector<std::unique_ptr<BenchmarkExecution>> executions{};
-          executions.push_back(std::make_unique<BenchmarkExecution>(bm));
+          executions.push_back(std::make_unique<BenchmarkExecution>());
 
           std::vector<std::unique_ptr<BenchmarkResult>> results{};
           results.push_back(std::make_unique<BenchmarkResult>(bm));
@@ -50,7 +50,7 @@ std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const st
         bm_config.is_pmem = !use_dram;
         bm_config.is_hybrid = bm_config.contains_dram_op();
         std::vector<std::unique_ptr<BenchmarkExecution>> executions{};
-        executions.push_back(std::make_unique<BenchmarkExecution>(bm_config));
+        executions.push_back(std::make_unique<BenchmarkExecution>());
         std::vector<std::unique_ptr<BenchmarkResult>> results{};
         results.push_back(std::make_unique<BenchmarkResult>(bm_config));
         benchmarks.emplace_back(name, bm_config, std::move(executions), std::move(results));
@@ -98,25 +98,19 @@ std::vector<ParallelBenchmark> BenchmarkFactory::create_parallel_benchmarks(cons
         for (const BenchmarkConfig& config_two : bm_two_configs) {
           // Generate unique file for benchmarks that write or reuse existing file for read-only benchmarks.
           std::vector<std::unique_ptr<BenchmarkExecution>> executions{};
-          std::vector<std::unique_ptr<BenchmarkResult>> results{};
+          executions.push_back(std::make_unique<BenchmarkExecution>());
+          executions.push_back(std::make_unique<BenchmarkExecution>());
 
-          // Reorder benchmarks if only the first benchmark is read-only and the second writing
-          if (!config_one.contains_write_op() && config_two.contains_write_op()) {
-            executions.push_back(std::move(std::make_unique<BenchmarkExecution>(config_one)));
-            executions.push_back(std::move(std::make_unique<BenchmarkExecution>(config_two)));
-            results.push_back(std::move(std::make_unique<BenchmarkResult>(config_one)));
-            results.push_back(std::move(std::make_unique<BenchmarkResult>(config_two)));
-          } else {
-            executions.push_back(std::move(std::make_unique<BenchmarkExecution>(config_two)));
-            executions.push_back(std::move(std::make_unique<BenchmarkExecution>(config_one)));
-            results.push_back(std::move(std::make_unique<BenchmarkResult>(config_two)));
-            results.push_back(std::move(std::make_unique<BenchmarkResult>(config_one)));
-          }
+          std::vector<std::unique_ptr<BenchmarkResult>> results{};
+          results.push_back(std::make_unique<BenchmarkResult>(config_one));
+          results.push_back(std::make_unique<BenchmarkResult>(config_two));
 
           if (config_one.contains_write_op() && config_two.contains_write_op()) {
             benchmarks.emplace_back(name, unique_name_one, unique_name_two, config_one, config_two,
                                     std::move(executions), std::move(results));
           } else if (config_one.contains_write_op()) {
+            // Reorder benchmarks if the first benchmark is read-only and the second writing
+            std::swap(results[0], results[1]);
             benchmarks.emplace_back(name, unique_name_two, unique_name_one, config_two, config_one,
                                     std::move(executions), std::move(results), pmem_data_file_two);
           } else if (config_two.contains_write_op()) {
