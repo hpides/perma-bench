@@ -563,7 +563,7 @@ TEST_F(BenchmarkTest, RunMultiThreadRead) {
   for (ExecutionDuration duration : op_durations) {
     EXPECT_GT(duration.begin, start_test_ts);
     EXPECT_GT(duration.end, start_test_ts);
-    EXPECT_LT(duration.begin, duration.end);
+    EXPECT_LE(duration.begin, duration.end);
   }
 
   const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
@@ -601,7 +601,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWrite) {
   for (ExecutionDuration duration : op_durations) {
     EXPECT_GT(duration.begin, start_test_ts);
     EXPECT_GT(duration.end, start_test_ts);
-    EXPECT_LT(duration.begin, duration.end);
+    EXPECT_LE(duration.begin, duration.end);
   }
 
   const std::vector<uint64_t>& op_sizes = bm.get_benchmark_results()[0]->total_operation_sizes;
@@ -641,7 +641,7 @@ TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
   for (ExecutionDuration duration : op_durations) {
     EXPECT_GT(duration.begin, start_test_ts);
     EXPECT_GT(duration.end, start_test_ts);
-    EXPECT_LT(duration.begin, duration.end);
+    EXPECT_LE(duration.begin, duration.end);
   }
 
   const uint64_t per_thread_size = TEST_FILE_SIZE / num_threads;
@@ -681,7 +681,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
   for (ExecutionDuration duration : op_durations) {
     EXPECT_GT(duration.begin, start_test_ts);
     EXPECT_GT(duration.end, start_test_ts);
-    EXPECT_LT(duration.begin, duration.end);
+    EXPECT_LE(duration.begin, duration.end);
   }
 
   const uint64_t per_thread_size = TEST_FILE_SIZE / num_threads;
