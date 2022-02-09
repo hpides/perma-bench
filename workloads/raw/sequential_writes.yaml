@@ -1,5 +1,5 @@
 # Represents the database workload logging (small sequential writes)
-logging:
+sequential_writes:
   matrix:
     number_threads: [ 1, 2, 4, 8, 16, 32 ]
     access_size: [ 64, 128, 256, 512, 1024 ]

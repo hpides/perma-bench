@@ -10,8 +10,8 @@ hash_aggregation:
     # Represent bucket sizes 64, 256, 1024
     custom_operations:
       - "r_128,w_64_none"
-      - "r_512,w_128_none"
-      - "r_1024,w_128_none"
+      - "r_512,w_64_none_256,w_64_none_-256"
+      - "r_1024,w_64_none_512,w_64_none_-512"
 
   args:
     memory_range: 2G

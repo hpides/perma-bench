@@ -1,1 +1,18 @@
-#TODO(Benchmark): define hybrid benchmark similar to FP-tree behaviour
+# Represent a hybrid tree-index structure split into index lookups and updates.
+
+# The tree-index structure is inspired by FPTree (Oukid et al., SIGMOD, 2016).
+# As done in the recent work, we assume 1024 Byte leaf nodes, which hold 64 records and 2048 Byte inner nodes, which
+# hold 128 records. A tree with 1 billion entries has a height of 6 (128^4 inner nodes * 64 keys per leaf node > 1
+# billion) including the root. We assume the root, first and second level to be in the L3 cache
+# (128^2 * 2 KiB = ~33MB). To find a record, we need 2 random node lookup in DRAM and 1 dependent random lookup in PMem.
+# TODO: For 256/512 Byte leaf/inner nodes, we assume X levels, where X levels fit into cache (~X MB).
+hybrid_tree_index_lookup:
+  matrix:
+    number_threads: [ 1, 8, 16, 32 ]
+    custom_operations:
+      - "rd_2048,rd_2048,rp_1024"
+
+  args:
+    memory_range: 20G
+    number_operations: 100000000
+    exec_mode: custom

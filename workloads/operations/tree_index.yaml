@@ -1,6 +1,6 @@
-# Represent a (tree-) index structure split into index lookups and updates.
+# Represent a PMem-only tree-index structure split into index lookups and updates.
 
-# The tree-index structure is inspired by FAST+FAIR (Hwang et al., FAST '18, 2018).
+# The tree-index structure is inspired by FAST+FAIR (Hwang et al., FAST, 2018).
 # As used in the original paper, we assume 512 Byte nodes, which hold 32 records.
 # A tree with 100 million entries has a height of 6 (32^6 > 100 million) including
 # the root. We assume the root, second, and third level to be in the L3 cache
@@ -17,7 +17,7 @@ tree_index_lookup:
       - "r_1024,r_1024,r_1024"
 
   args:
-    memory_range: 2G
+    memory_range: 10G
     number_operations: 100000000
     exec_mode: custom
 
@@ -29,12 +29,12 @@ tree_index_update:
     number_threads: [ 1, 8, 16, 32 ]
     # Representing 256, 512, 1024 Byte nodes.
     custom_operations:
-      - "r_512,r_512,r_512,w_64_cache_320,w_64_cache_256,w_64_cache_192,w_64_cache_128"
-      - "r_256,r_256,r_256,w_64_cache_128,w_64_cache_64"
-      - "r_1024,r_1024,r_1024,w_64_cache_576,w_64_cache_512,w_64_cache_448,w_64_cache_384,w_64_cache_320,w_64_cache_256,w_64_cache_192,w_64_cache_128"
+      - "r_512,r_512,r_512,w_64_cache_320,w_64_cache_-64,w_64_cache_-64,w_64_cache_-64"
+      - "r_256,r_256,r_256,w_64_cache_128,w_64_cache_-64"
+      - "r_1024,r_1024,r_1024,w_64_cache_576,w_64_cache_-64,w_64_cache_-64,w_64_cache_-64,w_64_cache_-64,w_64_cache_-64,w_64_cache_-64,w_64_cache_-64"
 
   args:
-    memory_range: 2G
+    memory_range: 10G
     number_operations: 100000000
     exec_mode: custom
 
@@ -54,6 +54,6 @@ tree_index_range_scan:
       - "r_1024,r_1024,r_1024,r_1024,r_1024"
 
   args:
-    memory_range: 2G
+    memory_range: 10G
     number_operations: 100000000
     exec_mode: custom

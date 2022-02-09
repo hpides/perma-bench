@@ -1,6 +1,6 @@
 # Represents the database workload logging (small sequential reads) and dram index (small write)
 pmem_log_dram_index:
-  parallel_benchmarks:
+  parallel_benchmark:
     pmem_log:
       matrix:
         number_threads: [ 1, 8, 16 ]
