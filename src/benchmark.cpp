@@ -426,9 +426,7 @@ const std::vector<char*>& Benchmark::get_dram_data() const { return dram_data_; 
 const std::vector<std::vector<ThreadRunConfig>>& Benchmark::get_thread_configs() const { return thread_configs_; }
 const std::vector<std::unique_ptr<BenchmarkResult>>& Benchmark::get_benchmark_results() const { return results_; }
 
-nlohmann::json Benchmark::get_json_config(uint8_t config_index) {
-  return configs_[config_index].as_json();
-}
+nlohmann::json Benchmark::get_json_config(uint8_t config_index) { return configs_[config_index].as_json(); }
 
 const std::unordered_map<std::string, BenchmarkType> BenchmarkEnums::str_to_benchmark_type{
     {"single", BenchmarkType::Single}, {"parallel", BenchmarkType::Parallel}};
