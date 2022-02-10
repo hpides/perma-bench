@@ -1,18 +1,38 @@
 # Represent a hybrid tree-index structure split into index lookups and updates.
 
 # The tree-index structure is inspired by FPTree (Oukid et al., SIGMOD, 2016).
-# As done in the recent work, we assume 1024 Byte leaf nodes, which hold 64 records and 2048 Byte inner nodes, which
+# As in the original paper, we assume 1024 Byte leaf nodes, which hold 64 records and 2048 Byte inner nodes, which
 # hold 128 records. A tree with 1 billion entries has a height of 6 (128^4 inner nodes * 64 keys per leaf node > 1
 # billion) including the root. We assume the root, first and second level to be in the L3 cache
 # (128^2 * 2 KiB = ~33MB). To find a record, we need 2 random node lookup in DRAM and 1 dependent random lookup in PMem.
-# TODO: For 256/512 Byte leaf/inner nodes, we assume X levels, where X levels fit into cache (~X MB).
+# For 1024/512 Byte inner/leaf nodes, we assume 7 levels, where root + 2 levels fit into cache (~4 MB).
+# For 512/256 Byte inner/leaf nodes, we assume 8 levels, where root + 3 levels fit into cache (~16 MB).
 hybrid_tree_index_lookup:
   matrix:
     number_threads: [ 1, 8, 16, 32 ]
     custom_operations:
       - "rd_2048,rd_2048,rp_1024"
+      - "rd_1024,rd_1024,rd_1024,rp_512"
+      - "rd_512,rd_512,rd_512,rp_256"
 
   args:
     memory_range: 20G
+    number_operations: 100000000
+    exec_mode: custom
+
+
+# To write an entry, FPTree performs 3 flushes, one for the data, one for the fingerprint, and one for the slot index.
+# The data is randomly positioned in the node and the other two flushes are at te head.
+# An insertion is a lookup, followed by the record entry. We use the same sizes as above.
+hybrid_tree_index_update:
+  matrix:
+    number_threads: [ 1, 8, 16, 32 ]
+    custom_operations:
+      - "rd_2048,rd_2048,rp_1024,wp_64_cache_512,wp_64_cache_-512,wp_64_cache"
+      - "rd_1024,rd_1024,rd_1024,rp_512,wp_64_cache_256,wp_64_cache_-256,wp_64_cache"
+      - "rd_512,rd_512,rd_512,rp_256,wp_64_cache_128,wp_64_cache_-128,wp_64_cache"
+
+  args:
+    memory_range: 10G
     number_operations: 100000000
     exec_mode: custom
