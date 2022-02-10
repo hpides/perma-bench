@@ -14,15 +14,13 @@
 
 namespace {
 
-double calculate_standard_deviation(std::vector<double>& per_thread_values, const double average) {
-  const uint16_t num_threads = per_thread_values.size();
-  std::vector<double> thread_diff_to_avg(num_threads);
-  std::transform(per_thread_values.begin(), per_thread_values.end(), thread_diff_to_avg.begin(),
-                 [&](double x) { return x - average; });
-  const double sq_sum =
-      std::inner_product(thread_diff_to_avg.begin(), thread_diff_to_avg.end(), thread_diff_to_avg.begin(), 0.0);
+double calculate_standard_deviation(const std::vector<double>& values, const double average) {
+  const uint16_t num_values = values.size();
+  std::vector<double> diffs_to_avg(num_values);
+  std::transform(values.begin(), values.end(), diffs_to_avg.begin(), [&](double x) { return x - average; });
+  const double sq_sum = std::inner_product(diffs_to_avg.begin(), diffs_to_avg.end(), diffs_to_avg.begin(), 0.0);
   // Use N - 1 for sample variance
-  const double std_dev = sqrt(sq_sum / std::max(1, num_threads - 1));
+  const double std_dev = sqrt(sq_sum / std::max(1, num_values - 1));
   return std_dev;
 }
 

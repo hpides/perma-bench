@@ -231,7 +231,7 @@ TEST_F(BenchmarkTest, SetUpSingleThread) {
   base_config_.number_threads = 1;
   base_config_.access_size = 256;
   base_executions_.reserve(1);
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(base_config_));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
@@ -269,7 +269,7 @@ TEST_F(BenchmarkTest, SetUpMultiThreadCustomPartition) {
   base_config_.number_partitions = 2;
   base_config_.access_size = 512;
   base_executions_.reserve(1);
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(base_config_));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
@@ -325,7 +325,7 @@ TEST_F(BenchmarkTest, SetUpMultiThreadDefaultPartition) {
   base_config_.number_partitions = 0;
   base_config_.access_size = 256;
   base_executions_.reserve(1);
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(base_config_));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
@@ -382,7 +382,7 @@ TEST_F(BenchmarkTest, RunSingeThreadRead) {
   base_config_.operation = Operation::Read;
   base_config_.memory_range = 256 * num_ops;
   base_executions_.reserve(1);
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(base_config_));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
@@ -413,7 +413,7 @@ TEST_F(BenchmarkTest, RunSingeThreadReadDRAM) {
   base_config_.memory_range = 256 * num_ops;
   base_config_.is_pmem = false;
   base_executions_.reserve(1);
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(base_config_));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
@@ -443,7 +443,7 @@ TEST_F(BenchmarkTest, RunSingleThreadWrite) {
   base_config_.operation = Operation::Write;
   base_config_.memory_range = TEST_FILE_SIZE;
   base_executions_.reserve(1);
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(base_config_));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
@@ -477,7 +477,7 @@ TEST_F(BenchmarkTest, RunSingleThreadWriteDRAM) {
   base_config_.memory_range = total_size;
   base_config_.is_pmem = false;
   base_executions_.reserve(1);
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(base_config_));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
@@ -513,7 +513,7 @@ TEST_F(BenchmarkTest, DISABLED_RunSingeThreadMixed) {
   base_config_.exec_mode = Mode::Random;
   base_config_.memory_range = 256 * num_ops;
   base_executions_.reserve(1);
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(base_config_));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
@@ -545,7 +545,7 @@ TEST_F(BenchmarkTest, RunMultiThreadRead) {
   base_config_.operation = Operation::Read;
   base_config_.memory_range = 1024 * num_ops;
   base_executions_.reserve(1);
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(base_config_));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
@@ -583,7 +583,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWrite) {
   base_config_.operation = Operation::Read;
   base_config_.memory_range = total_size;
   base_executions_.reserve(1);
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(base_config_));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
@@ -623,7 +623,7 @@ TEST_F(BenchmarkTest, RunMultiThreadReadDesc) {
   base_config_.memory_range = 1024 * num_ops;
   base_config_.exec_mode = Mode::Sequential_Desc;
   base_executions_.reserve(1);
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(base_config_));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
@@ -663,7 +663,7 @@ TEST_F(BenchmarkTest, RunMultiThreadWriteDesc) {
   base_config_.memory_range = total_size;
   base_config_.exec_mode = Mode::Sequential_Desc;
   base_executions_.reserve(1);
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(base_config_));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
   base_results_.reserve(1);
   base_results_.push_back(std::make_unique<BenchmarkResult>(base_config_));
   SingleBenchmark bm{bm_name_, base_config_, std::move(base_executions_), std::move(base_results_)};
@@ -876,8 +876,8 @@ TEST_F(BenchmarkTest, RunParallelSingleThreadRead) {
   config_two.number_operations = num_ops;
 
   base_executions_.reserve(2);
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(config_one));
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(config_two));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
 
   base_results_.reserve(2);
   base_results_.push_back(std::make_unique<BenchmarkResult>(config_one));
@@ -928,8 +928,8 @@ TEST_F(BenchmarkTest, ResultsParallelSingleThreadMixed) {
   config_two.number_operations = num_ops;
 
   base_executions_.reserve(2);
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(config_one));
-  base_executions_.push_back(std::make_unique<BenchmarkExecution>(config_two));
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
+  base_executions_.push_back(std::make_unique<BenchmarkExecution>());
 
   base_results_.reserve(2);
   base_results_.push_back(std::make_unique<BenchmarkResult>(config_one));
