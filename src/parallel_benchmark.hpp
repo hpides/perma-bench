@@ -53,9 +53,6 @@ class ParallelBenchmark : public Benchmark {
   /** Create all the IO addresses ahead of time to avoid unnecessary ops during the actual benchmark. */
   void set_up() override;
 
-  /** Clean up after te benchmark */
-  void tear_down(bool force) override;
-
   /** Return the results as a JSON to be exported to the user and visualization. */
   nlohmann::json get_result_as_json() override;
 

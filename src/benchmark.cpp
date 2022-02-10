@@ -428,6 +428,28 @@ const std::vector<std::unique_ptr<BenchmarkResult>>& Benchmark::get_benchmark_re
 
 nlohmann::json Benchmark::get_json_config(uint8_t config_index) { return configs_[config_index].as_json(); }
 
+void Benchmark::tear_down(bool force) {
+  executions_.clear();
+  results_.clear();
+
+  for (size_t index = 0; index < pmem_data_.size(); index++) {
+    if (pmem_data_[index] != nullptr) {
+      munmap(pmem_data_[index], configs_[index].memory_range);
+      pmem_data_[index] = nullptr;
+    }
+    if (configs_[index].is_pmem && (memory_regions_[index].owns_pmem_file || force)) {
+      std::filesystem::remove(memory_regions_[index].pmem_file);
+    }
+  }
+  for (size_t index = 0; index < dram_data_.size(); index++) {
+    //  Only unmap dram data as no file is created
+    if (dram_data_[index] != nullptr) {
+      munmap(dram_data_[index], configs_[index].dram_memory_range);
+      dram_data_[index] = nullptr;
+    }
+  }
+}
+
 const std::unordered_map<std::string, BenchmarkType> BenchmarkEnums::str_to_benchmark_type{
     {"single", BenchmarkType::Single}, {"parallel", BenchmarkType::Parallel}};
 

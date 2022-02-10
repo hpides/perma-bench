@@ -142,11 +142,11 @@ class Benchmark {
   /** Create all the IO addresses ahead of time to avoid unnecessary ops during the actual benchmark. */
   virtual void set_up() = 0;
 
-  /** Clean up after te benchmark */
-  virtual void tear_down(bool force) = 0;
-
   /** Return the results as a JSON to be exported to the user and visualization. */
   virtual nlohmann::json get_result_as_json() = 0;
+
+  /** Clean up after te benchmark */
+  void tear_down(bool force);
 
   /** Return the name of the benchmark. */
   const std::string& benchmark_name() const;
