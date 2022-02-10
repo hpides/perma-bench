@@ -413,10 +413,6 @@ uint64_t Benchmark::run_duration_based_benchmark(std::vector<IoOperation>* io_op
   return num_executed_operations;
 }
 
-nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm_config) {
-
-}
-
 const std::vector<BenchmarkConfig>& Benchmark::get_benchmark_configs() const { return configs_; }
 
 const std::filesystem::path& Benchmark::get_pmem_file(const uint8_t index) const {
