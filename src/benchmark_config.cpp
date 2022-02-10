@@ -482,7 +482,6 @@ std::ostream& operator<<(std::ostream& os, const CustomOp& op) { return os << op
 const std::unordered_map<std::string, bool> ConfigEnums::str_to_mem_type{{"pmem", true}, {"dram", false}};
 
 const std::unordered_map<std::string, Mode> ConfigEnums::str_to_mode{{"sequential", Mode::Sequential},
-                                                                     {"sequential_asc", Mode::Sequential},
                                                                      {"sequential_desc", Mode::Sequential_Desc},
                                                                      {"random", Mode::Random},
                                                                      {"custom", Mode::Custom}};

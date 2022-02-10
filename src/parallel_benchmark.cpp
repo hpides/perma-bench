@@ -52,6 +52,9 @@ void ParallelBenchmark::set_up() {
 }
 
 void ParallelBenchmark::tear_down(bool force) {
+  executions_.clear();
+  results_.clear();
+
   for (size_t index = 0; index < pmem_data_.size(); index++) {
     if (pmem_data_[index] != nullptr) {
       munmap(pmem_data_[index], configs_[index].memory_range);

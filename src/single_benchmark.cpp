@@ -45,6 +45,9 @@ void SingleBenchmark::set_up() {
 }
 
 void SingleBenchmark::tear_down(const bool force) {
+  executions_.clear();
+  results_.clear();
+
   if (!pmem_data_.empty() && pmem_data_[0] != nullptr) {
     munmap(pmem_data_[0], configs_[0].memory_range);
     pmem_data_[0] = nullptr;
