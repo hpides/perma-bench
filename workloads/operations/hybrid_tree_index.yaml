@@ -17,6 +17,7 @@ hybrid_tree_index_lookup:
 
   args:
     memory_range: 20G
+    dram_memory_range: 10G
     number_operations: 100000000
     exec_mode: custom
 
@@ -33,6 +34,7 @@ hybrid_tree_index_update:
       - "rd_512,rd_512,rd_512,rp_256,wp_64_cache_128,wp_64_cache_-128,wp_64_cache"
 
   args:
-    memory_range: 10G
+    memory_range: 20G
+    dram_memory_range: 10G
     number_operations: 100000000
     exec_mode: custom
