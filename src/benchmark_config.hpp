@@ -82,14 +82,14 @@ struct BenchmarkConfig {
    * i.e., 0.1 or 0.2. */
   double dram_operation_ratio = 0.0;
 
-  /** Represents the number of random access operations to perform. Can *not* be set for sequential access. */
-  uint64_t number_operations = 10'000'000;
+  /** Represents the number of random access / custom operations to perform. Can *not* be set for sequential access. */
+  uint64_t number_operations = 100'000'000;
 
   /** Number of threads to run the benchmark with. Must be a power of two. */
   uint16_t number_threads = 1;
 
   /** Alternative measure to end a benchmark by letting is run for `run_time` seconds. */
-  uint64_t run_time = UINT64_MAX;
+  uint64_t run_time = 0;
 
   /** Type of memory access operation to perform, i.e., read or write. */
   Operation operation = Operation::Read;
@@ -103,10 +103,8 @@ struct BenchmarkConfig {
 
   /** Number of disjoint memory regions to partition the `memory_range` into. Must be 0 or a divisor of
    * `number_threads` i.e., one or more threads map to one partition. When set to 0, it is equal to the number of
-   * threads, i.e., each thread has its own partition. Default is set to 0, as it is more common for each thread to have
-   * its own region in sequential access and the impact of shared/disjoint regions on random access is negligible when
-   * the ranges are large enough. */
-  uint16_t number_partitions = 0;
+   * threads, i.e., each thread has its own partition. Default is set to 1.  */
+  uint16_t number_partitions = 1;
 
   /** Define whether the memory access should be NUMA-local (`near`) or -remote (`far`). */
   NumaPattern numa_pattern = NumaPattern::Near;
@@ -127,9 +125,12 @@ struct BenchmarkConfig {
    * time caused by page faults on first access to the allocated memory region. */
   bool prefault_file = true;
 
-  /** Represents the minimum size of a chunk after which completion is checked in time-based execution, i.e., when
-   * `run_time` is set. A chunk contains chunk_size / access_size number of operations. */
-  uint64_t min_io_chunk_size = 1 * BYTES_IN_GIGABYTE;
+  /** Whether or not to use transparent huge pages in DRAM, i.e., 2 MiB instead of regular 4 KiB pages. */
+  bool dram_huge_pages = true;
+
+  /** Represents the minimum size of an atomic work package. A chunk contains chunk_size / access_size number of
+   * operations. Assuming the lowest bandwidth of 1 GiB/s operations per thread, 64 MiB is a ~60 ms execution unit. */
+  uint64_t min_io_chunk_size = 64 * BYTES_IN_MEGABYTE;
 
   /** These fields are set internally and do not represent user-facing options. */
   /** This field is required and has no default value, i.e., it must be set as a command line argument. */

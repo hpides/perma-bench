@@ -2,6 +2,8 @@
 
 #include <hdr_histogram.h>
 
+#include <chrono>
+#include <condition_variable>
 #include <filesystem>
 #include <json.hpp>
 #include <map>
@@ -30,6 +32,28 @@ struct BenchmarkEnums {
   static const std::unordered_map<std::string, BenchmarkType> str_to_benchmark_type;
 };
 
+struct ExecutionDuration {
+  std::chrono::steady_clock::time_point begin;
+  std::chrono::steady_clock::time_point end;
+
+  std::chrono::steady_clock::duration duration() const { return end - begin; }
+};
+
+struct BenchmarkExecution {
+  // Owning instance for thread synchronization
+  std::mutex generation_lock{};
+  std::condition_variable generation_done{};
+  uint16_t threads_remaining;
+  std::atomic<uint64_t> io_position = 0;
+
+  // For custom operations, we don't have chunks but only simulate them by running chunk-sized blocks.
+  // This is a *signed* integer, as our atomic -= operations my go below 0.
+  std::atomic<int64_t> num_custom_chunks_remaining = 0;
+
+  // The main list of all IO operations to steal work from
+  std::vector<IoOperation> io_operations;
+};
+
 struct ThreadRunConfig {
   char* partition_start_addr;
   char* dram_partition_start_addr;
@@ -37,31 +61,34 @@ struct ThreadRunConfig {
   const size_t dram_partition_size;
   const size_t num_threads_per_partition;
   const size_t thread_num;
-  const size_t num_ops;
+  const size_t num_ops_per_chunk;
+  const size_t num_chunks;
   const BenchmarkConfig& config;
+
+  BenchmarkExecution* execution;
 
   // Pointers to store performance data in.
   uint64_t* total_operation_size;
-  uint64_t* total_operation_duration;
-  uint64_t* custom_op_duration;
+  ExecutionDuration* total_operation_duration;
   std::vector<uint64_t>* custom_op_latencies;
 
   ThreadRunConfig(char* partition_start_addr, char* dram_partition_start_addr, const size_t partition_size,
                   const size_t dram_partition_size, const size_t num_threads_per_partition, const size_t thread_num,
-                  const size_t num_ops, const BenchmarkConfig& config, uint64_t* total_operation_duration,
-                  uint64_t* total_operation_size, uint64_t* custom_op_duration,
-                  std::vector<uint64_t>* custom_op_latencies)
+                  const size_t num_ops_per_chunk, const size_t num_chunks, const BenchmarkConfig& config,
+                  BenchmarkExecution* execution, ExecutionDuration* total_operation_duration,
+                  uint64_t* total_operation_size, std::vector<uint64_t>* custom_op_latencies)
       : partition_start_addr{partition_start_addr},
         dram_partition_start_addr{dram_partition_start_addr},
         partition_size{partition_size},
         dram_partition_size{dram_partition_size},
         num_threads_per_partition{num_threads_per_partition},
         thread_num{thread_num},
-        num_ops{num_ops},
+        num_ops_per_chunk{num_ops_per_chunk},
+        num_chunks{num_chunks},
         config{config},
+        execution{execution},
         total_operation_duration{total_operation_duration},
         total_operation_size{total_operation_size},
-        custom_op_duration{custom_op_duration},
         custom_op_latencies{custom_op_latencies} {}
 };
 
@@ -74,10 +101,9 @@ struct BenchmarkResult {
 
   // Result vectors for raw operation workloads
   std::vector<uint64_t> total_operation_sizes;
-  std::vector<uint64_t> total_operation_durations;
+  std::vector<ExecutionDuration> total_operation_durations;
 
   // Result vectors for custom operation workloads
-  std::vector<uint64_t> custom_operation_durations;
   std::vector<std::vector<uint64_t>> custom_operation_latencies;
 
   hdr_histogram* latency_hdr = nullptr;
@@ -87,11 +113,13 @@ struct BenchmarkResult {
 class Benchmark {
  public:
   Benchmark(std::string benchmark_name, BenchmarkType benchmark_type, std::vector<MemoryRegion> memory_regions,
-            std::vector<BenchmarkConfig> configs, std::vector<std::unique_ptr<BenchmarkResult>> results)
+            std::vector<BenchmarkConfig> configs, std::vector<std::unique_ptr<BenchmarkExecution>> executions,
+            std::vector<std::unique_ptr<BenchmarkResult>> results)
       : benchmark_name_{std::move(benchmark_name)},
         benchmark_type_{benchmark_type},
         memory_regions_{std::move(memory_regions)},
         configs_{std::move(configs)},
+        executions_{std::move(executions)},
         results_{std::move(results)} {}
 
   Benchmark(Benchmark&& other) = default;
@@ -139,8 +167,9 @@ class Benchmark {
 
  protected:
   nlohmann::json get_json_config(uint8_t config_index);
-  static void single_set_up(const BenchmarkConfig& config, char* pmem_data, char* dram_data, BenchmarkResult* result,
-                            std::vector<std::thread>* pool, std::vector<ThreadRunConfig>* thread_config);
+  static void single_set_up(const BenchmarkConfig& config, char* pmem_data, char* dram_data,
+                            BenchmarkExecution* execution, BenchmarkResult* result, std::vector<std::thread>* pool,
+                            std::vector<ThreadRunConfig>* thread_config);
 
   static char* create_pmem_data_file(const BenchmarkConfig& config, const MemoryRegion& memory_region);
   static char* create_dram_data(const BenchmarkConfig& config);
@@ -150,17 +179,22 @@ class Benchmark {
   static void run_custom_ops_in_thread(ThreadRunConfig* thread_config, const BenchmarkConfig& config);
   static void run_in_thread(ThreadRunConfig* thread_config, const BenchmarkConfig& config);
 
+  static uint64_t run_fixed_sized_benchmark(std::vector<IoOperation>* vector, std::atomic<uint64_t>* io_position);
+  static uint64_t run_duration_based_benchmark(std::vector<IoOperation>* io_operations,
+                                               std::atomic<uint64_t>* io_position,
+                                               std::chrono::steady_clock::time_point execution_end);
+
   static nlohmann::json get_benchmark_config_as_json(const BenchmarkConfig& bm_config);
-
   const std::string benchmark_name_;
-  const BenchmarkType benchmark_type_;
 
+  const BenchmarkType benchmark_type_;
   std::vector<MemoryRegion> memory_regions_;
   std::vector<char*> pmem_data_;
-  std::vector<char*> dram_data_;
 
+  std::vector<char*> dram_data_;
   const std::vector<BenchmarkConfig> configs_;
   std::vector<std::unique_ptr<BenchmarkResult>> results_;
+  std::vector<std::unique_ptr<BenchmarkExecution>> executions_;
   std::vector<std::vector<ThreadRunConfig>> thread_configs_;
   std::vector<std::vector<std::thread>> pools_;
 };

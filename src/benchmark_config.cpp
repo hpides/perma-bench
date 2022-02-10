@@ -115,6 +115,7 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
     num_found += get_if_present(node, "zipf_alpha", &bm_config.zipf_alpha);
     num_found += get_if_present(node, "prefault_file", &bm_config.prefault_file);
     num_found += get_if_present(node, "latency_sample_frequency", &bm_config.latency_sample_frequency);
+    num_found += get_if_present(node, "dram_huge_pages", &bm_config.dram_huge_pages);
 
     num_found += get_enum_if_present(node, "exec_mode", ConfigEnums::str_to_mode, &bm_config.exec_mode);
     num_found += get_enum_if_present(node, "operation", ConfigEnums::str_to_operation, &bm_config.operation);
@@ -148,6 +149,8 @@ BenchmarkConfig BenchmarkConfig::decode(YAML::Node& node) {
 }
 
 void BenchmarkConfig::validate() const {
+  bool is_custom_or_random = exec_mode == Mode::Random || exec_mode == Mode::Custom;
+
   // Check if access size is at least 512-bit, i.e., 64byte (cache line)
   const bool is_access_size_greater_64_byte = access_size >= 64;
   CHECK_ARGUMENT(is_access_size_greater_64_byte, "Access size must be at least 64-byte, i.e., a cache line");
@@ -181,10 +184,6 @@ void BenchmarkConfig::validate() const {
   CHECK_ARGUMENT(has_dram_size_for_dram_operations,
                  "Must set dram_memory_range > 0 if the benchmark contains DRAM operations.");
 
-  // Check if runtime is at least one second
-  const bool is_at_least_one_second_or_default = run_time > 0 || run_time == -1;
-  CHECK_ARGUMENT(is_at_least_one_second_or_default, "Run time be at least 1 second");
-
   // Check if at least one thread
   const bool is_at_least_one_thread = number_threads > 0;
   CHECK_ARGUMENT(is_at_least_one_thread, "Number threads must be at least 1.");
@@ -211,26 +210,40 @@ void BenchmarkConfig::validate() const {
                  "Most likely you can fix this by using 2^x partitions.");
 
   // Assumption: number_operations should only be set for random/custom access. It is ignored in sequential IO.
-  const bool is_number_operations_set_random = number_operations == BenchmarkConfig{}.number_operations ||
-                                               (exec_mode == Mode::Random || exec_mode == Mode::Custom);
+  const bool is_number_operations_set_random =
+      number_operations == BenchmarkConfig{}.number_operations || is_custom_or_random;
   CHECK_ARGUMENT(is_number_operations_set_random, "Number of operations should only be set for random/custom access.");
 
   // Assumption: min_io_chunk size must be a power of two
   const bool is_valid_min_io_chunk_size = min_io_chunk_size >= 64 && (min_io_chunk_size & (min_io_chunk_size - 1)) == 0;
   CHECK_ARGUMENT(is_valid_min_io_chunk_size, "Minimum IO chunk must be >= 64 Byte and a power of two.");
 
-  // Assumption: total memory needs to fit into N chunks exactly
-  const bool is_time_based_seq_total_memory_chunkable =
-      (exec_mode == Mode::Random || exec_mode == Mode::Custom || run_time == -1) ||
-      (memory_range % min_io_chunk_size) == 0;
-  CHECK_ARGUMENT(is_time_based_seq_total_memory_chunkable,
-                 "For sequential tim-based execution, the total file size needs to be multiple of chunk size " +
-                     std::to_string(min_io_chunk_size));
+  // Assumption: We need enough operations to give each thread at least one chunk
+  const uint64_t min_required_number_ops = (min_io_chunk_size / access_size) * number_threads;
+  const bool has_enough_number_operations = !is_custom_or_random || number_operations > min_required_number_ops;
+  CHECK_ARGUMENT(has_enough_number_operations,
+                 "Need enough number_operations to have at least one to chunk per thread. Consider at least 100 "
+                 "operations in total to actual perform a significant amount of work. Need minimum of " +
+                     std::to_string(min_required_number_ops) +
+                     " ops for this workload. Got: " + std::to_string(number_operations));
 
-  // Assumption: we chunk operations in timed execution, so we need enough data to fill at least one chunk
-  const bool is_total_memory_large_enough = run_time == -1 || (memory_range / number_threads) >= min_io_chunk_size;
-  CHECK_ARGUMENT(is_total_memory_large_enough, "Each thread needs at least " + std::to_string(min_io_chunk_size) +
-                                                   " memory for time-based execution.");
+  const uint64_t total_accessed_memory = number_operations * access_size;
+  if (total_accessed_memory < 5 * BYTES_IN_GIGABYTE) {
+    spdlog::warn(
+        "Accessing less then 5 GiB of data. This short run may lead to inaccurate results due to the very short "
+        "execution.");
+  }
+
+  // Assumption: total memory needs to fit into N chunks exactly
+  const bool is_time_based_seq_total_memory_chunkable = (memory_range % min_io_chunk_size) == 0;
+  CHECK_ARGUMENT(is_time_based_seq_total_memory_chunkable,
+                 "The total file size needs to be multiple of chunk size " + std::to_string(min_io_chunk_size));
+
+  // Assumption: we chunk operations, so we need enough data to fill at least one chunk
+  const bool is_total_memory_large_enough =
+      (memory_range / number_threads) >= min_io_chunk_size || dram_operation_ratio == 1;
+  CHECK_ARGUMENT(is_total_memory_large_enough,
+                 "Each thread needs at least " + std::to_string(min_io_chunk_size) + " Bytes of memory.");
 
   const bool is_far_numa_node_available = numa_pattern == NumaPattern::Near || has_far_numa_nodes();
   CHECK_ARGUMENT(is_far_numa_node_available, "Cannot run far NUMA node benchmark without far NUMA nodes.");
@@ -335,8 +348,8 @@ CustomOp CustomOp::from_string(const std::string& str) {
     }
 
     const uint64_t absolute_offset = std::abs(custom_op.offset);
-    if ((absolute_offset & (absolute_offset - 1)) != 0) {
-      spdlog::error("Offset of custom write operation must be power of 2. Got: {}", custom_op.offset);
+    if ((absolute_offset % 64) != 0) {
+      spdlog::error("Offset of custom write operation must be multiple of 64. Got: {}", custom_op.offset);
       utils::crash_exit();
     }
   }

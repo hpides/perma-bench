@@ -38,7 +38,7 @@ char* map_pmem(const std::filesystem::path& file, size_t expected_length) {
   return static_cast<char*>(addr);
 }
 
-char* map_dram(const size_t expected_length) {
+char* map_dram(const size_t expected_length, const bool use_huge_pages) {
   // Do not mmap any data if length is 0
   if (expected_length == 0) {
     return nullptr;
@@ -46,7 +46,21 @@ char* map_dram(const size_t expected_length) {
 
   void* addr = mmap(nullptr, expected_length, PROT_READ | PROT_WRITE, DRAM_MAP_FLAGS, -1, 0);
   if (addr == MAP_FAILED || addr == nullptr) {
-    throw std::runtime_error{"Could not map anonymous DRAM region. Error: " + std::string{std::strerror(errno)}};
+    spdlog::critical("Could not map anonymous DRAM region. Error: {}", std::strerror(errno));
+    crash_exit();
+  }
+
+  if (use_huge_pages) {
+    if (madvise(addr, expected_length, MADV_HUGEPAGE) == -1) {
+      spdlog::critical("madavise for DRAM huge pages failed. Error: {}", std::strerror(errno));
+      crash_exit();
+    }
+  } else {
+    // Explicitly don't use huge pages.
+    if (madvise(addr, expected_length, MADV_NOHUGEPAGE) == -1) {
+      spdlog::critical("madavise for DRAM no huge pages failed. Error: {}", std::strerror(errno));
+      crash_exit();
+    }
   }
 
   return static_cast<char*>(addr);

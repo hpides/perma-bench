@@ -40,7 +40,8 @@ void SingleBenchmark::create_data_files() {
 void SingleBenchmark::set_up() {
   pools_.resize(1);
   thread_configs_.resize(1);
-  single_set_up(configs_[0], pmem_data_[0], dram_data_[0], results_[0].get(), &pools_[0], &thread_configs_[0]);
+  single_set_up(configs_[0], pmem_data_[0], dram_data_[0], executions_[0].get(), results_[0].get(), &pools_[0],
+                &thread_configs_[0]);
 }
 
 void SingleBenchmark::tear_down(const bool force) {
@@ -66,17 +67,19 @@ nlohmann::json SingleBenchmark::get_result_as_json() {
 }
 
 SingleBenchmark::SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config,
-                                 std::vector<std::unique_ptr<BenchmarkResult>>& results)
+                                 std::vector<std::unique_ptr<BenchmarkExecution>>&& executions,
+                                 std::vector<std::unique_ptr<BenchmarkResult>>&& results)
     : Benchmark(
           benchmark_name, BenchmarkType::Single,
           std::vector<MemoryRegion>{{utils::generate_random_file_name(config.pmem_directory), true, config.is_hybrid}},
-          std::vector<BenchmarkConfig>{config}, std::move(results)) {}
+          std::vector<BenchmarkConfig>{config}, std::move(executions), std::move(results)) {}
 
 SingleBenchmark::SingleBenchmark(const std::string& benchmark_name, const BenchmarkConfig& config,
-                                 std::vector<std::unique_ptr<BenchmarkResult>>& results,
+                                 std::vector<std::unique_ptr<BenchmarkExecution>>&& executions,
+                                 std::vector<std::unique_ptr<BenchmarkResult>>&& results,
                                  std::filesystem::path pmem_file)
     : Benchmark(benchmark_name, BenchmarkType::Single,
                 std::vector<MemoryRegion>{{std::move(pmem_file), false, config.is_hybrid}},
-                std::vector<BenchmarkConfig>{config}, std::move(results)) {}
+                std::vector<BenchmarkConfig>{config}, std::move(executions), std::move(results)) {}
 
 }  // namespace perma
