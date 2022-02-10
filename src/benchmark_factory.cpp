@@ -49,10 +49,12 @@ std::vector<SingleBenchmark> BenchmarkFactory::create_single_benchmarks(const st
         bm_config.pmem_directory = pmem_directory;
         bm_config.is_pmem = !use_dram;
         bm_config.is_hybrid = bm_config.contains_dram_op();
+
         std::vector<std::unique_ptr<BenchmarkExecution>> executions{};
         executions.push_back(std::make_unique<BenchmarkExecution>());
         std::vector<std::unique_ptr<BenchmarkResult>> results{};
         results.push_back(std::make_unique<BenchmarkResult>(bm_config));
+
         benchmarks.emplace_back(name, bm_config, std::move(executions), std::move(results));
       }
     }

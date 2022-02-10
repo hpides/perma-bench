@@ -106,6 +106,14 @@ void BenchmarkSuite::run_benchmarks(const PermaOptions& options) {
       printed_info = true;
     }
 
+    const size_t benchmark_num = i + 1;
+    if (benchmark.get_benchmark_type() == BenchmarkType::Parallel) {
+      spdlog::debug("Preparing parallel benchmark #{} with two configs: {} AND {}", benchmark_num,
+                    to_string(benchmark.get_json_config(0)), to_string(benchmark.get_json_config(1)));
+    } else {
+      spdlog::debug("Preparing benchmark #{} with config: {}", benchmark_num, to_string(benchmark.get_json_config(0)));
+    }
+
     benchmark.create_data_files();
     benchmark.set_up();
     const bool success = benchmark.run();
@@ -119,7 +127,7 @@ void BenchmarkSuite::run_benchmarks(const PermaOptions& options) {
 
     matrix_bm_results += benchmark.get_result_as_json();
     benchmark.tear_down(false);
-    spdlog::info("Completed {0}/{1} benchmark{2}.", i + 1, benchmarks.size(), benchmarks.size() > 1 ? "s" : "");
+    spdlog::info("Completed {0}/{1} benchmark{2}.", benchmark_num, benchmarks.size(), benchmarks.size() > 1 ? "s" : "");
   }
 
   if (!benchmarks.empty()) {

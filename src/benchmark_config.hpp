@@ -144,6 +144,8 @@ struct BenchmarkConfig {
   bool contains_read_op() const;
   bool contains_write_op() const;
   bool contains_dram_op() const;
+
+  nlohmann::json as_json() const;
 };
 
 struct ConfigEnums {

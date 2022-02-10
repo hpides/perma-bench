@@ -271,6 +271,54 @@ bool BenchmarkConfig::contains_dram_op() const {
          std::any_of(custom_operations.begin(), custom_operations.end(), find_custom_dram_op);
 }
 
+nlohmann::json BenchmarkConfig::as_json() const {
+  nlohmann::json config;
+  config["memory_type"] = utils::get_enum_as_string(ConfigEnums::str_to_mem_type, is_pmem);
+  config["memory_range"] = memory_range;
+  config["exec_mode"] = utils::get_enum_as_string(ConfigEnums::str_to_mode, exec_mode);
+  config["number_partitions"] = number_partitions;
+  config["number_threads"] = number_threads;
+  config["numa_pattern"] = utils::get_enum_as_string(ConfigEnums::str_to_numa_pattern, numa_pattern);
+  config["prefault_file"] = prefault_file;
+  config["min_io_chunk_size"] = min_io_chunk_size;
+
+  if (is_hybrid) {
+    config["dram_memory_range"] = dram_memory_range;
+    config["dram_operation_ratio"] = dram_operation_ratio;
+    config["dram_huge_pages"] = dram_huge_pages;
+  }
+
+  if (exec_mode != Mode::Custom) {
+    config["access_size"] = access_size;
+    config["operation"] = utils::get_enum_as_string(ConfigEnums::str_to_operation, operation);
+
+    if (operation == Operation::Write) {
+      config["persist_instruction"] =
+          utils::get_enum_as_string(ConfigEnums::str_to_persist_instruction, persist_instruction);
+    }
+  }
+
+  if (exec_mode == Mode::Random) {
+    config["number_operations"] = number_operations;
+    config["random_distribution"] =
+        utils::get_enum_as_string(ConfigEnums::str_to_random_distribution, random_distribution);
+    if (random_distribution == RandomDistribution::Zipf) {
+      config["zipf_alpha"] = zipf_alpha;
+    }
+  }
+
+  if (exec_mode == Mode::Custom) {
+    config["number_operations"] = number_operations;
+    config["custom_operations"] = CustomOp::all_to_string(custom_operations);
+  }
+
+  if (run_time > 0) {
+    config["run_time"] = run_time;
+  }
+
+  return config;
+}
+
 CustomOp CustomOp::from_string(const std::string& str) {
   if (str.empty()) {
     spdlog::error("Custom operation cannot be empty!");
