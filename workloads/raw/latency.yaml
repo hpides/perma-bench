@@ -6,17 +6,36 @@ operation_latency:
       - "r_64"
       - "r_64,w_64_none"
       - "r_64,w_64_cache"
+      - "r_64,w_64_cacheinv"
       - "r_64,w_64_nocache"
     # 256 Byte
       - "r_256"
       - "r_256,w_256_none"
       - "r_256,w_256_cache"
+      - "r_256,w_256_cacheinv"
       - "r_256,w_256_nocache"
     # 512 Byte
       - "r_512"
       - "r_512,w_512_none"
       - "r_512,w_512_cache"
+      - "r_512,w_512_cacheinv"
       - "r_512,w_512_nocache"
+
+  args:
+    memory_range: 10G
+    number_operations: 100000000
+    latency_sample_frequency: 5000
+    exec_mode: custom
+
+double_flush_latency:
+  matrix:
+    number_threads: [ 1, 16, 32 ]
+    custom_operations:
+      - "r_64"
+      - "r_64,w_64_none,w_64_none"
+      - "r_64,w_64_cache,w_64_cache"
+      - "r_64,w_64_cacheinv,w_64_cacheinv"
+      - "r_64,w_64_nocache,w_64_nocache"
 
   args:
     memory_range: 10G

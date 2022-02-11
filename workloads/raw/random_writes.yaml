@@ -1,0 +1,10 @@
+random_writes:
+  matrix:
+    number_threads: [ 1, 2, 4, 8, 16, 32 ]
+    access_size: [ 64, 256 ]
+    persist_instruction: [ cache, cacheinv, nocache, none ]
+
+  args:
+    exec_mode: random
+    memory_range: 10G
+    operation: write

@@ -1,5 +1,5 @@
 # Represents the database workload logging (small sequential writes)
-logging:
+sequential_writes:
   matrix:
     number_threads: [ 1, 2, 4, 8, 16, 32 ]
     access_size: [ 64, 128, 256, 512, 1024 ]
@@ -7,17 +7,5 @@ logging:
 
   args:
     memory_range: 30G
-    exec_mode: sequential
-    operation: write
-
-logging_partition:
-  matrix:
-    number_partitions: [ 1, 2, 4, 8 ]
-    access_size: [ 64, 128, 256, 512, 1024 ]
-    persist_instruction: [ nocache, none ]
-
-  args:
-    memory_range: 30G
-    number_threads: 8
     exec_mode: sequential
     operation: write

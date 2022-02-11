@@ -1,0 +1,25 @@
+# Represents the database workload page propagation
+#   (page-sized random writes/reads)
+page_propagation:
+  parallel_benchmark:
+    page_out:
+      matrix:
+        access_size: [ 256, 4096, 16384 ]
+
+      args:
+        memory_range: 50G
+        exec_mode: random
+        number_threads: 16
+        operation: write
+        run_time: 10
+
+    page_in:
+      matrix:
+        access_size: [ 256, 4096, 16384 ]
+
+      args:
+        memory_range: 50G
+        exec_mode: random
+        number_threads: 16
+        operation: read
+        run_time: 10

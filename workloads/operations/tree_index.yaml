@@ -1,40 +1,40 @@
-# Represent a (tree-) index structure split into index lookups and updates.
+# Represent a PMem-only tree-index structure split into index lookups and updates.
 
-# The tree-index structure is inspired by FAST+FAIR (Hwang et al., FAST '18, 2018).
+# The tree-index structure is inspired by FAST+FAIR (Hwang et al., FAST, 2018).
 # As used in the original paper, we assume 512 Byte nodes, which hold 32 records.
 # A tree with 100 million entries has a height of 6 (32^6 > 100 million) including
 # the root. We assume the root, second, and third level to be in the L3 cache
 # (32^3 * 512 Byte = ~16 MB). To find a record, we need 3 random node lookups in memory.
 # For  256 Byte nodes, we assume 7 levels, where 4 levels fit into cache (~16 MB).
 # For 1024 Byte nodes, we assume 5 levels, where 2 levels fit into cache (~4 MB).
-primary_index_lookup:
+tree_index_lookup:
   matrix:
     number_threads: [ 1, 8, 16, 32 ]
     # Representing 256, 512, 1024 Byte nodes.
     custom_operations:
-      - "r512,r512,r512"
-      - "r256,r256,r256"
-      - "r1024,r1024,r1024"
+      - "r_512,r_512,r_512"
+      - "r_256,r_256,r_256"
+      - "r_1024,r_1024,r_1024"
 
   args:
-    memory_range: 2G
+    memory_range: 10G
     number_operations: 100000000
     exec_mode: custom
 
 # To write an entry, FAST+FAIR performs (on avg.) node_size / 64 / 2 flushes,
 # i.e., 4 with 512 Byte nodes. For smaller/larger nodes, we adapt the number accordingly.
 # An insertion is a lookup, followed by the record entry / shifting algorithm.
-primary_index_update:
+tree_index_update:
   matrix:
     number_threads: [ 1, 8, 16, 32 ]
     # Representing 256, 512, 1024 Byte nodes.
     custom_operations:
-      - "r512,r512,r512,w64_cache,w64_cache,w64_cache,w64_cache"
-      - "r256,r256,r256,w64_cache,w64_cache"
-      - "r1024,r1024,r1024,w64_cache,w64_cache,w64_cache,w64_cache,w64_cache,w64_cache,w64_cache,w64_cache"
+      - "r_512,r_512,r_512,w_64_cache_320,w_64_cache_-64,w_64_cache_-64,w_64_cache_-64"
+      - "r_256,r_256,r_256,w_64_cache_128,w_64_cache_-64"
+      - "r_1024,r_1024,r_1024,w_64_cache_576,w_64_cache_-64,w_64_cache_-64,w_64_cache_-64,w_64_cache_-64,w_64_cache_-64,w_64_cache_-64,w_64_cache_-64"
 
   args:
-    memory_range: 2G
+    memory_range: 10G
     number_operations: 100000000
     exec_mode: custom
 
@@ -44,16 +44,16 @@ primary_index_update:
 # As the leaves are not fully packed, we assume a filling degree of 75%.
 # For 256 Byte nodes, we need 8 extra reads, for 512 Byte 4 extra, and 2 extra for
 # 1024 Byte nodes.
-primary_index_range_scan:
+tree_index_range_scan:
   matrix:
     number_threads: [ 1, 8, 16, 32 ]
     # Representing 256, 512, 1024 Byte nodes.
     custom_operations:
       - "r_512,r_512,r_512,r_512,r_512,r_512,r_512"
       - "r_256,r_256,r_256,r_256,r_256,r_256,r_256,r_256,r_256,r_256,r_256"
-      - "r_1024,r_1024,r_1024,r_1024,r_1024,"
+      - "r_1024,r_1024,r_1024,r_1024,r_1024"
 
   args:
-    memory_range: 2G
-    number_operations: 100000000
+    memory_range: 10G
+    number_operations: 50000000
     exec_mode: custom
