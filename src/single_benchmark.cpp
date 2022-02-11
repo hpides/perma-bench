@@ -34,7 +34,7 @@ bool SingleBenchmark::run() {
 
 void SingleBenchmark::create_data_files() {
   pmem_data_.push_back(create_pmem_data_file(configs_[0], memory_regions_[0]));
-  dram_data_.push_back(create_dram_data(configs_[0]));
+  dram_data_.push_back(create_dram_data(configs_[0], configs_[0].dram_memory_range));
 }
 
 void SingleBenchmark::set_up() {

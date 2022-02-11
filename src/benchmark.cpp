@@ -129,6 +129,11 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, ch
 }
 
 char* Benchmark::create_pmem_data_file(const BenchmarkConfig& config, const MemoryRegion& memory_region) {
+  if (!config.is_pmem) {
+    // Replace PMem range with DRAM if user specifies a dram-only run.
+    return create_dram_data(config, config.memory_range);
+  }
+
   if (std::filesystem::exists(memory_region.pmem_file)) {
     // Data was already generated. Only re-map it.
     return utils::map_pmem(memory_region.pmem_file, config.memory_range);
@@ -139,9 +144,9 @@ char* Benchmark::create_pmem_data_file(const BenchmarkConfig& config, const Memo
   return file_data;
 }
 
-char* Benchmark::create_dram_data(const BenchmarkConfig& config) {
-  char* dram_data = utils::map_dram(config.dram_memory_range, config.dram_huge_pages);
-  prepare_data_file(dram_data, config, config.dram_memory_range, utils::DRAM_PAGE_SIZE);
+char* Benchmark::create_dram_data(const BenchmarkConfig& config, const size_t memory_range) {
+  char* dram_data = utils::map_dram(memory_range, config.dram_huge_pages);
+  prepare_data_file(dram_data, config, memory_range, utils::DRAM_PAGE_SIZE);
   return dram_data;
 }
 
