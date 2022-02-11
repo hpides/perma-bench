@@ -11,8 +11,8 @@ hash_index_update:
     # Represent bucket sizes 64, 256, 1024
     custom_operations:
       - "r_128,w_64_cache_64,w_64_cache_-64"
-      - "r_512,w_64_cache_256,w_64_cache_-256"
-      - "r_1024,w_64_cache_512,w_64_cache_-512"
+      - "r_512,w_64_cache_1 28,w_64_cache_-128"
+      - "r_1024,w_64_cache_256,w_64_cache_-256"
 
   args:
     memory_range: 10G

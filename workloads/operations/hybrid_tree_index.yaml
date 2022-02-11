@@ -23,7 +23,7 @@ hybrid_tree_index_lookup:
 
 
 # To write an entry, FPTree performs 3 flushes, one for the data, one for the fingerprint, and one for the slot index.
-# The data is randomly positioned in the node and the other two flushes are at te head.
+# The data is randomly positioned in the node and the other two flushes are at the head.
 # An insertion is a lookup, followed by the record entry. We use the same sizes as above.
 hybrid_tree_index_update:
   matrix:
