@@ -5,9 +5,9 @@ pmem_log_dram_index:
       matrix:
         number_threads: [ 1, 8, 16 ]
         access_size: [ 64, 256, 512 ]
-        persist_instruction: [ cacheinv, nocache ]
 
       args:
+        persist_instruction: nocache
         exec_mode: sequential
         memory_range: 10G
         operation: write
