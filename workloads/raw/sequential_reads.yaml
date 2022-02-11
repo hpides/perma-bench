@@ -8,3 +8,4 @@ sequential_reads:
     exec_mode: sequential
     memory_range: 50G
     operation: read
+    run_time: 20

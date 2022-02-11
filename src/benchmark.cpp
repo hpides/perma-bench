@@ -92,8 +92,12 @@ void Benchmark::single_set_up(const BenchmarkConfig& config, char* pmem_data, ch
   // Set up thread synchronization and execution parameters
   const size_t ops_per_chunk =
       config.access_size < config.min_io_chunk_size ? config.min_io_chunk_size / config.access_size : 1;
-  // Add one chunk for non-divisible numbers so that we perform at least number_operations ops and not fewer.
-  const size_t num_chunks = (num_operations / ops_per_chunk) + (num_operations % ops_per_chunk != 0);
+
+  // Add one chunk for random execution and non-divisible numbers so that we perform at least number_operations ops and
+  // not fewer. Adding a chunk in sequential access exceeds the memory range and segfaults.
+  const bool is_sequential = config.exec_mode == Mode::Sequential || config.exec_mode == Mode::Sequential_Desc;
+  const size_t extra_chunk = is_sequential ? 0 : (num_operations % ops_per_chunk != 0);
+  const size_t num_chunks = (num_operations / ops_per_chunk) + extra_chunk;
 
   execution->threads_remaining = config.number_threads;
   execution->io_position = 0;
@@ -245,12 +249,14 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
     return run_custom_ops_in_thread(thread_config, config);
   }
 
-  const size_t ops_per_iteration = thread_config->num_threads_per_partition * config.access_size;
   const uint32_t num_accesses_in_range = thread_config->partition_size / config.access_size;
   const uint32_t num_dram_accesses_in_range = thread_config->dram_partition_size / config.access_size;
   const bool is_read_op = config.operation == Operation::Read;
+
   const size_t thread_num_in_partition = thread_config->thread_num % thread_config->num_threads_per_partition;
-  const size_t thread_partition_offset = thread_num_in_partition * config.access_size;
+  const size_t per_iteration_thread_offset = thread_config->num_threads_per_partition * config.min_io_chunk_size;
+  const size_t thread_partition_offset = thread_num_in_partition * config.min_io_chunk_size;
+
   const auto dram_target_ratio = static_cast<uint64_t>(config.dram_operation_ratio * 100);
 
   const size_t seed = std::chrono::steady_clock::now().time_since_epoch().count() * (thread_config->thread_num + 1);
@@ -263,10 +269,6 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
   spdlog::debug("Thread #{}: Starting address generation", thread_config->thread_num);
   const auto generation_begin_ts = std::chrono::steady_clock::now();
 
-  char* next_op_position = config.exec_mode == Mode::Sequential_Desc
-                               ? thread_config->partition_start_addr - thread_partition_offset
-                               : thread_config->partition_start_addr + thread_partition_offset;
-
   // Create all chunks before executing.
   size_t num_chunks_per_thread = thread_config->num_chunks / config.number_threads;
   const size_t remaining_chunks = thread_config->num_chunks % config.number_threads;
@@ -276,6 +278,13 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
   }
 
   for (size_t chunk_num = 0; chunk_num < num_chunks_per_thread; ++chunk_num) {
+    const size_t thread_chunk_offset =
+        // Overall offset after x chunks          + offset of this thread for chunk x+1
+        (chunk_num * per_iteration_thread_offset) + thread_partition_offset;
+    char* next_op_position = config.exec_mode == Mode::Sequential_Desc
+                                 ? thread_config->partition_start_addr - thread_chunk_offset
+                                 : thread_config->partition_start_addr + thread_chunk_offset;
+
     std::vector<char*> op_addresses(thread_config->num_ops_per_chunk);
 
     for (size_t io_op = 0; io_op < thread_config->num_ops_per_chunk; ++io_op) {
@@ -308,12 +317,12 @@ void Benchmark::run_in_thread(ThreadRunConfig* thread_config, const BenchmarkCon
         }
         case Mode::Sequential: {
           op_addresses[io_op] = next_op_position;
-          next_op_position += ops_per_iteration;
+          next_op_position += config.access_size;
           break;
         }
         case Mode::Sequential_Desc: {
           op_addresses[io_op] = next_op_position;
-          next_op_position -= ops_per_iteration;
+          next_op_position -= config.access_size;
           break;
         }
         default: {
