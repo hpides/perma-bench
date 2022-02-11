@@ -27,8 +27,7 @@ void log_numa_nodes(const std::vector<uint64_t>& nodes) {
   spdlog::info("Setting NUMA-affinity to node{}: {}", nodes.size() > 1 ? "s" : "", used_nodes_str);
 }
 
-std::vector<uint64_t> auto_detect_numa(const std::filesystem::path& pmem_dir, const size_t num_numa_nodes,
-                                       const bool is_dram) {
+std::vector<uint64_t> auto_detect_numa(const std::filesystem::path& pmem_dir, const size_t num_numa_nodes) {
 #ifndef HAS_NUMA
   spdlog::critical("Cannot detect numa nodes without NUMA support.");
   utils::crash_exit();
@@ -42,9 +41,7 @@ std::vector<uint64_t> auto_detect_numa(const std::filesystem::path& pmem_dir, co
   int numa_node = -1;
   get_mempolicy(&numa_node, NULL, 0, (void*)pmem_data, MPOL_F_NODE | MPOL_F_ADDR);
   munmap(pmem_data, temp_size);
-  if (!is_dram) {
-    std::filesystem::remove(temp_file);
-  }
+  std::filesystem::remove(temp_file);
 
   if (numa_node < 0 || numa_node > num_numa_nodes) {
     spdlog::warn("Could not determine NUMA node. Running without NUMA-awareness.");
@@ -134,7 +131,12 @@ void init_numa(const std::filesystem::path& pmem_dir, const std::vector<uint64_t
     return;
   }
 
-  const std::vector<uint64_t> detected_nodes = auto_detect_numa(pmem_dir, num_numa_nodes, is_dram);
+  if (is_dram) {
+    spdlog::warn("Cannot auto-detect NUMA region for --dram run. Set NUMA nodes via --numa to ensure correct pinning.");
+    return;
+  }
+
+  const std::vector<uint64_t> detected_nodes = auto_detect_numa(pmem_dir, num_numa_nodes);
   log_numa_nodes(detected_nodes);
   return set_numa_nodes(detected_nodes, num_numa_nodes);
 #endif

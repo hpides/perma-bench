@@ -131,7 +131,7 @@ struct BenchmarkConfig {
 
   /** Represents the minimum size of an atomic work package. A chunk contains chunk_size / access_size number of
    * operations. Assuming the lowest bandwidth of 1 GiB/s operations per thread, 64 MiB is a ~60 ms execution unit. */
-  uint64_t min_io_chunk_size = 64 * BYTES_IN_MEGABYTE;
+  uint64_t  min_io_chunk_size = 64 * BYTES_IN_MEGABYTE;
 
   /** These fields are set internally and do not represent user-facing options. */
   /** This field is required and has no default value, i.e., it must be set as a command line argument. */
