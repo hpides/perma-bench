@@ -118,8 +118,6 @@ class MatrixJsonPlotter:
                 title_val = title_values[idx]
                 y_values_per_legend_category[title_val][cat].append(bm_results[idx])
 
-        could_be_mixed = False
-
         # actual plot
         plot_titles = sorted(set(title_values))
         num_plots = len(plot_titles)
@@ -138,18 +136,7 @@ class MatrixJsonPlotter:
                 if isinstance(ys[0], list):
                     ys = [y[0] for y in ys]
 
-                is_mixed = could_be_mixed and len(y_vals[cat][0]) > 1
-
-                label = cat if not is_mixed else f"{cat} read"
-                rects = ax.bar(x_pos + (offset * bar_width), ys, bar_width, label=label)
-
-                if is_mixed:
-                    ys_stacked = [y[1] for y in y_vals[cat]]
-                    rects_stacked = ax.bar(x_pos + (offset * bar_width), ys_stacked, width=bar_width,
-                                           color='white', hatch='//', edgecolor='black',
-                                           bottom=ys, label=f'{cat} write')
-                    for i, rect in enumerate(rects_stacked):
-                        rect.set_edgecolor(rects[i].get_facecolor())
+                rects = ax.bar(x_pos + (offset * bar_width), ys, bar_width, label=cat)
 
                 # draw cross if y-value is null
                 for rect in rects:
@@ -215,8 +202,6 @@ class MatrixJsonPlotter:
                 x_values_per_legend_category[title_val][cat].append(x_values[idx])
                 y_values_per_legend_category[title_val][cat].append(bm_results[idx])
 
-        could_be_mixed = False
-
         # actual plot
         num_plots = len(x_values_per_legend_category.keys())
         fig, axes = plt.subplots(1, num_plots, figsize=(num_plots * 4, 3))
@@ -232,14 +217,7 @@ class MatrixJsonPlotter:
                 if isinstance(ys[0], list):
                     ys = [y[0] for y in ys]
 
-                is_mixed = could_be_mixed and len(y_vals[cat][0]) > 1
-                label = cat if not is_mixed else f"{cat} read"
-                lines = ax.plot(x_vals[cat], ys, "-o", label=label)
-
-                if is_mixed:
-                    ys_stacked = [y[0] + y[1] for y in y_vals[cat]]
-                    ax.plot(x_vals[cat], ys_stacked, marker="x", ls='--',
-                            label=f'{cat} read + write', color=lines[0].get_color())
+                lines = ax.plot(x_vals[cat], ys, "-o", label=cat)
 
             ax.set_ylabel(self.get_label(y_value))
             ax.set_xlabel(self.reader.get_arg_label(perm[0]))
