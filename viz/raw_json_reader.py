@@ -58,10 +58,10 @@ class RawJsonReader:
     """
 
     def get_bandwidths(self):
-        return [res["bandwidth"] for res in self.results if res["type"] == "read" or res["type"] == "write"]
+        return [res["bandwidth"] for res in self.results if "bandwidth" in res]
 
     def get_data_sizes(self):
-        return [res["data_size"] for res in self.results if res["type"] == "read" or res["type"] == "write"]
+        return [res["accessed_bytes"] for res in self.results if "bandwidth" in res]
 
     def get_latencies(self):
         return [res["latency"] for res in self.results if res["type"] == "read" or res["type"] == "write"]

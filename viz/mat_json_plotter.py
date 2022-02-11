@@ -17,6 +17,11 @@ class MatrixJsonPlotter:
     """
         helper functions:
     """
+    def get_label(self, y_value):
+        label = "Bandwidth (GB/s)"
+        if y_value == "latency": label = "Latency (ns)"
+        if y_value == "ops_per_second": label = "Operations/s"
+        return label
 
     def get_indices_of_legend_categories(self, legend_values):
         indices_per_legend_category = defaultdict(list)
@@ -30,7 +35,7 @@ class MatrixJsonPlotter:
 
         if y_value == "avg":
             y_value = "average_duration"
-        elif y_value == "bandwidth_values":
+        elif y_value == "bandwidth":
             y_value = "bandwidth"
 
         if isinstance(args, tuple):
@@ -81,7 +86,7 @@ class MatrixJsonPlotter:
 
         # set text of axes and x-ticks
         plt.xlabel(self.reader.get_arg_label(arg))
-        plt.ylabel("Average Latency (ns)" if y_value == "avg" else "Bandwidth (GB/s)")
+        plt.ylabel(self.get_label(y_value))
         plt.xticks(x_pos, x_values, rotation=45, ha="right")
         plt.tight_layout()
 
@@ -94,8 +99,10 @@ class MatrixJsonPlotter:
         legend_values = self.reader.get_result(perm[1], bm_idx)
         title_values = self.reader.get_result(perm[2], bm_idx) if len(perm) == 3 else [None] * len(x_values)
         indices_per_legend_category = self.get_indices_of_legend_categories(legend_values)
-        max_num_indices = max(len(v) for v in indices_per_legend_category.values())
         bm_results = self.reader.get_result(y_value, bm_idx)
+
+        if len(bm_results) == 0:
+            return
 
         # get unique x categories but keep their order as given in result list
         x_categories = []
@@ -110,8 +117,6 @@ class MatrixJsonPlotter:
             for idx in indices:
                 title_val = title_values[idx]
                 y_values_per_legend_category[title_val][cat].append(bm_results[idx])
-
-        could_be_mixed = y_value == "bandwidth_values"
 
         # actual plot
         plot_titles = sorted(set(title_values))
@@ -131,18 +136,7 @@ class MatrixJsonPlotter:
                 if isinstance(ys[0], list):
                     ys = [y[0] for y in ys]
 
-                is_mixed = could_be_mixed and len(y_vals[cat][0]) > 1
-
-                label = cat if not is_mixed else f"{cat} read"
-                rects = ax.bar(x_pos + (offset * bar_width), ys, bar_width, label=label)
-
-                if is_mixed:
-                    ys_stacked = [y[1] for y in y_vals[cat]]
-                    rects_stacked = ax.bar(x_pos + (offset * bar_width), ys_stacked, width=bar_width,
-                                           color='white', hatch='//', edgecolor='black',
-                                           bottom=ys, label=f'{cat} write')
-                    for i, rect in enumerate(rects_stacked):
-                        rect.set_edgecolor(rects[i].get_facecolor())
+                rects = ax.bar(x_pos + (offset * bar_width), ys, bar_width, label=cat)
 
                 # draw cross if y-value is null
                 for rect in rects:
@@ -153,7 +147,7 @@ class MatrixJsonPlotter:
 
             # set text of axes, x-ticks and legend title
             ax.set_xlabel(self.reader.get_arg_label(perm[0]))
-            ax.set_ylabel("Average Latency (ns)" if y_value == "avg" else "Bandwidth (GB/s)")
+            ax.set_ylabel(self.get_label(y_value))
             bars_per_category = len(set(legend_values))
             x_ticks_pos = [x + (((bars_per_category / 2) - 0.5) * bar_width) for x in x_pos]
             ax.set_xticks(x_ticks_pos)
@@ -178,7 +172,7 @@ class MatrixJsonPlotter:
 
         # set text of axes
         plt.xlabel(self.reader.get_arg_label(arg))
-        plt.ylabel("Average Latency (ns)" if y_value == "avg" else "Bandwidth (GB/s)")
+        plt.ylabel(self.get_label(y_value))
 
         # adjust layout
         plt.xlim(left=0)
@@ -196,6 +190,9 @@ class MatrixJsonPlotter:
         indices_per_legend_category = self.get_indices_of_legend_categories(legend_values)
         bm_results = self.reader.get_result(y_value, bm_idx)
 
+        if len(bm_results) == 0:
+            return
+
         # collect values for each legend category
         x_values_per_legend_category = defaultdict(lambda: defaultdict(list))
         y_values_per_legend_category = defaultdict(lambda: defaultdict(list))
@@ -204,8 +201,6 @@ class MatrixJsonPlotter:
                 title_val = title_values[idx]
                 x_values_per_legend_category[title_val][cat].append(x_values[idx])
                 y_values_per_legend_category[title_val][cat].append(bm_results[idx])
-
-        could_be_mixed = y_value == "bandwidth_values"
 
         # actual plot
         num_plots = len(x_values_per_legend_category.keys())
@@ -222,16 +217,9 @@ class MatrixJsonPlotter:
                 if isinstance(ys[0], list):
                     ys = [y[0] for y in ys]
 
-                is_mixed = could_be_mixed and len(y_vals[cat][0]) > 1
-                label = cat if not is_mixed else f"{cat} read"
-                lines = ax.plot(x_vals[cat], ys, "-o", label=label)
+                lines = ax.plot(x_vals[cat], ys, "-o", label=cat)
 
-                if is_mixed:
-                    ys_stacked = [y[0] + y[1] for y in y_vals[cat]]
-                    ax.plot(x_vals[cat], ys_stacked, marker="x", ls='--',
-                            label=f'{cat} read + write', color=lines[0].get_color())
-
-            ax.set_ylabel("Average Latency (ns)" if y_value == "avg" else "Bandwidth (GB/s)")
+            ax.set_ylabel(self.get_label(y_value))
             ax.set_xlabel(self.reader.get_arg_label(perm[0]))
             x_ticks = list(x_vals.values())[0]
             ax.set_xticks(x_ticks)

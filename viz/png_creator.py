@@ -17,23 +17,6 @@ class PngCreator:
         self.results = results
         self.img_dir = img_dir
 
-    def process_raw_jsons(self):
-        # collect raw jsons of benchmarks
-        raw_jsons = list()
-        # TODO: handle single file raw result
-        for path in glob.glob(self.results + "/raw/*.json"):
-            raw_jsons.append(path)
-
-        # create pngs
-        if len(raw_jsons) > 0:
-            for raw_json in raw_jsons:
-                plotter = RawJsonPlotter(self.img_dir, raw_json)
-
-                if plotter.reader.is_multithreaded():
-                    plotter.latency_of_several_threads()
-                else:
-                    plotter.latency_of_same_thread()
-
     def process_matrix_jsons(self):
         # collect jsons containing matrix arguments
         if os.path.isfile(self.results) and self.results.endswith(".json"):
@@ -82,21 +65,23 @@ class PngCreator:
 
                         for perm in perms:
                             if perm[0] in plotter.reader.get_categorical_args():
-                                plotter.plot_categorical_x_and_legend(perm, "avg", bm_idx)
-                                plotter.plot_categorical_x_and_legend(perm, "bandwidth_values", bm_idx)
+                                plotter.plot_categorical_x_and_legend(perm, "latency", bm_idx)
+                                plotter.plot_categorical_x_and_legend(perm, "ops_per_second", bm_idx)
+                                plotter.plot_categorical_x_and_legend(perm, "bandwidth", bm_idx)
                             else:
-                                plotter.plot_continuous_x_and_legend(perm, "avg", bm_idx)
-                                plotter.plot_continuous_x_and_legend(perm, "bandwidth_values", bm_idx)
+                                plotter.plot_continuous_x_and_legend(perm, "latency", bm_idx)
+                                plotter.plot_continuous_x_and_legend(perm, "ops_per_second", bm_idx)
+                                plotter.plot_continuous_x_and_legend(perm, "bandwidth", bm_idx)
 
                     # create pngs for matrix with one dimension
                     else:
                         if matrix_args[0] in plotter.reader.get_categorical_args():
-                            plotter.plot_categorical_x(matrix_args[0], "avg", bm_idx)
+                            plotter.plot_categorical_x(matrix_args[0], "ops_per_second", bm_idx)
                             plotter.plot_duration_boxes(matrix_args[0], bm_idx)
-                            plotter.plot_categorical_x(matrix_args[0], "bandwidth_values", bm_idx)
+                            plotter.plot_categorical_x(matrix_args[0], "bandwidth", bm_idx)
                         else:
-                            plotter.plot_continuous_x(matrix_args[0], "avg", bm_idx)
-                            plotter.plot_continuous_x(matrix_args[0], "bandwidth_values", bm_idx)
+                            plotter.plot_continuous_x(matrix_args[0], "ops_per_second", bm_idx)
+                            plotter.plot_continuous_x(matrix_args[0], "bandwidth", bm_idx)
 
                 else:
                     warnings.warn(f"Results of benchmark \"{bm_name}\" cannot be visualized as no matrix arguments are "

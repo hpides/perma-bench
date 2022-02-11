@@ -70,7 +70,6 @@ if __name__ == "__main__":
 
     # create pngs
     png_creator = PngCreator(results, img_dir)
-    png_creator.process_raw_jsons()
     png_creator.process_matrix_jsons()
 
     # create user interface for pngs
