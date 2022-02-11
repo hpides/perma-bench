@@ -411,54 +411,6 @@ uint64_t Benchmark::run_duration_based_benchmark(std::vector<IoOperation>* io_op
   return num_executed_operations;
 }
 
-nlohmann::json Benchmark::get_benchmark_config_as_json(const BenchmarkConfig& bm_config) {
-  nlohmann::json config;
-  config["memory_type"] = utils::get_enum_as_string(ConfigEnums::str_to_mem_type, bm_config.is_pmem);
-  config["memory_range"] = bm_config.memory_range;
-  config["exec_mode"] = utils::get_enum_as_string(ConfigEnums::str_to_mode, bm_config.exec_mode);
-  config["number_partitions"] = bm_config.number_partitions;
-  config["number_threads"] = bm_config.number_threads;
-  config["numa_pattern"] = utils::get_enum_as_string(ConfigEnums::str_to_numa_pattern, bm_config.numa_pattern);
-  config["prefault_file"] = bm_config.prefault_file;
-  config["min_io_chunk_size"] = bm_config.min_io_chunk_size;
-
-  if (bm_config.is_hybrid) {
-    config["dram_memory_range"] = bm_config.dram_memory_range;
-    config["dram_operation_ratio"] = bm_config.dram_operation_ratio;
-    config["dram_huge_pages"] = bm_config.dram_huge_pages;
-  }
-
-  if (bm_config.exec_mode != Mode::Custom) {
-    config["access_size"] = bm_config.access_size;
-    config["operation"] = utils::get_enum_as_string(ConfigEnums::str_to_operation, bm_config.operation);
-
-    if (bm_config.operation == Operation::Write) {
-      config["persist_instruction"] =
-          utils::get_enum_as_string(ConfigEnums::str_to_persist_instruction, bm_config.persist_instruction);
-    }
-  }
-
-  if (bm_config.exec_mode == Mode::Random) {
-    config["number_operations"] = bm_config.number_operations;
-    config["random_distribution"] =
-        utils::get_enum_as_string(ConfigEnums::str_to_random_distribution, bm_config.random_distribution);
-    if (bm_config.random_distribution == RandomDistribution::Zipf) {
-      config["zipf_alpha"] = bm_config.zipf_alpha;
-    }
-  }
-
-  if (bm_config.exec_mode == Mode::Custom) {
-    config["number_operations"] = bm_config.number_operations;
-    config["custom_operations"] = CustomOp::all_to_string(bm_config.custom_operations);
-  }
-
-  if (bm_config.run_time > 0) {
-    config["run_time"] = bm_config.run_time;
-  }
-
-  return config;
-}
-
 const std::vector<BenchmarkConfig>& Benchmark::get_benchmark_configs() const { return configs_; }
 
 const std::filesystem::path& Benchmark::get_pmem_file(const uint8_t index) const {
@@ -473,8 +425,29 @@ const std::vector<char*>& Benchmark::get_dram_data() const { return dram_data_; 
 
 const std::vector<std::vector<ThreadRunConfig>>& Benchmark::get_thread_configs() const { return thread_configs_; }
 const std::vector<std::unique_ptr<BenchmarkResult>>& Benchmark::get_benchmark_results() const { return results_; }
-nlohmann::json Benchmark::get_json_config(uint8_t config_index) {
-  return get_benchmark_config_as_json(configs_[config_index]);
+
+nlohmann::json Benchmark::get_json_config(uint8_t config_index) { return configs_[config_index].as_json(); }
+
+void Benchmark::tear_down(bool force) {
+  executions_.clear();
+  results_.clear();
+
+  for (size_t index = 0; index < pmem_data_.size(); index++) {
+    if (pmem_data_[index] != nullptr) {
+      munmap(pmem_data_[index], configs_[index].memory_range);
+      pmem_data_[index] = nullptr;
+    }
+    if (configs_[index].is_pmem && (memory_regions_[index].owns_pmem_file || force)) {
+      std::filesystem::remove(memory_regions_[index].pmem_file);
+    }
+  }
+  for (size_t index = 0; index < dram_data_.size(); index++) {
+    //  Only unmap dram data as no file is created
+    if (dram_data_[index] != nullptr) {
+      munmap(dram_data_[index], configs_[index].dram_memory_range);
+      dram_data_[index] = nullptr;
+    }
+  }
 }
 
 const std::unordered_map<std::string, BenchmarkType> BenchmarkEnums::str_to_benchmark_type{

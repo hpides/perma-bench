@@ -51,25 +51,6 @@ void ParallelBenchmark::set_up() {
                 &thread_configs_[1]);
 }
 
-void ParallelBenchmark::tear_down(bool force) {
-  for (size_t index = 0; index < pmem_data_.size(); index++) {
-    if (pmem_data_[index] != nullptr) {
-      munmap(pmem_data_[index], configs_[index].memory_range);
-      pmem_data_[index] = nullptr;
-    }
-    if (configs_[index].is_pmem && (memory_regions_[index].owns_pmem_file || force)) {
-      std::filesystem::remove(memory_regions_[index].pmem_file);
-    }
-  }
-  for (size_t index = 0; index < dram_data_.size(); index++) {
-    //  Only unmap dram data as no file is created
-    if (dram_data_[index] != nullptr) {
-      munmap(dram_data_[index], configs_[index].dram_memory_range);
-      dram_data_[index] = nullptr;
-    }
-  }
-}
-
 nlohmann::json ParallelBenchmark::get_result_as_json() {
   nlohmann::json result;
   result["config"][benchmark_name_one_] = get_json_config(0);

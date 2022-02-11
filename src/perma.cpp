@@ -114,5 +114,8 @@ int main(int argc, char** argv) {
     throw e;
   }
 
+  if (!use_dram) {
+    std::filesystem::remove_all(pmem_directory / "*");
+  }
   return 0;
 }

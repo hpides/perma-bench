@@ -142,11 +142,11 @@ class Benchmark {
   /** Create all the IO addresses ahead of time to avoid unnecessary ops during the actual benchmark. */
   virtual void set_up() = 0;
 
-  /** Clean up after te benchmark */
-  virtual void tear_down(bool force) = 0;
-
   /** Return the results as a JSON to be exported to the user and visualization. */
   virtual nlohmann::json get_result_as_json() = 0;
+
+  /** Clean up after te benchmark */
+  void tear_down(bool force);
 
   /** Return the name of the benchmark. */
   const std::string& benchmark_name() const;
@@ -165,8 +165,9 @@ class Benchmark {
   const std::vector<std::vector<ThreadRunConfig>>& get_thread_configs() const;
   const std::vector<std::unique_ptr<BenchmarkResult>>& get_benchmark_results() const;
 
- protected:
   nlohmann::json get_json_config(uint8_t config_index);
+
+ protected:
   static void single_set_up(const BenchmarkConfig& config, char* pmem_data, char* dram_data,
                             BenchmarkExecution* execution, BenchmarkResult* result, std::vector<std::thread>* pool,
                             std::vector<ThreadRunConfig>* thread_config);
@@ -184,7 +185,6 @@ class Benchmark {
                                                std::atomic<uint64_t>* io_position,
                                                std::chrono::steady_clock::time_point execution_end);
 
-  static nlohmann::json get_benchmark_config_as_json(const BenchmarkConfig& bm_config);
   const std::string benchmark_name_;
 
   const BenchmarkType benchmark_type_;

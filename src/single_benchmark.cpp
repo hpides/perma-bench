@@ -44,21 +44,6 @@ void SingleBenchmark::set_up() {
                 &thread_configs_[0]);
 }
 
-void SingleBenchmark::tear_down(const bool force) {
-  if (!pmem_data_.empty() && pmem_data_[0] != nullptr) {
-    munmap(pmem_data_[0], configs_[0].memory_range);
-    pmem_data_[0] = nullptr;
-  }
-  //  Only unmap dram data as no file is created
-  if (!dram_data_.empty() && dram_data_[0] != nullptr) {
-    munmap(dram_data_[0], configs_[0].dram_memory_range);
-    dram_data_[0] = nullptr;
-  }
-  if (configs_[0].is_pmem && (!memory_regions_.empty() && (memory_regions_[0].owns_pmem_file || force))) {
-    std::filesystem::remove(memory_regions_[0].pmem_file);
-  }
-}
-
 nlohmann::json SingleBenchmark::get_result_as_json() {
   nlohmann::json result;
   result["config"] = get_json_config(0);
