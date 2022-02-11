@@ -173,7 +173,7 @@ class Benchmark {
                             std::vector<ThreadRunConfig>* thread_config);
 
   static char* create_pmem_data_file(const BenchmarkConfig& config, const MemoryRegion& memory_region);
-  static char* create_dram_data(const BenchmarkConfig& config);
+  static char* create_dram_data(const BenchmarkConfig& config, size_t memory_range);
   static void prepare_data_file(char* file_data, const BenchmarkConfig& config, uint64_t memory_range,
                                 uint64_t page_size);
 
