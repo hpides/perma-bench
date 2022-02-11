@@ -82,21 +82,21 @@ class PngCreator:
 
                         for perm in perms:
                             if perm[0] in plotter.reader.get_categorical_args():
-                                plotter.plot_categorical_x_and_legend(perm, "avg", bm_idx)
-                                plotter.plot_categorical_x_and_legend(perm, "bandwidth_values", bm_idx)
+                                # plotter.plot_categorical_x_and_legend(perm, "avg", bm_idx)
+                                plotter.plot_categorical_x_and_legend(perm, "bandwidth", bm_idx)
                             else:
-                                plotter.plot_continuous_x_and_legend(perm, "avg", bm_idx)
-                                plotter.plot_continuous_x_and_legend(perm, "bandwidth_values", bm_idx)
+                                # plotter.plot_continuous_x_and_legend(perm, "avg", bm_idx)
+                                plotter.plot_continuous_x_and_legend(perm, "bandwidth", bm_idx)
 
                     # create pngs for matrix with one dimension
                     else:
                         if matrix_args[0] in plotter.reader.get_categorical_args():
                             plotter.plot_categorical_x(matrix_args[0], "avg", bm_idx)
                             plotter.plot_duration_boxes(matrix_args[0], bm_idx)
-                            plotter.plot_categorical_x(matrix_args[0], "bandwidth_values", bm_idx)
+                            plotter.plot_categorical_x(matrix_args[0], "bandwidth", bm_idx)
                         else:
-                            plotter.plot_continuous_x(matrix_args[0], "avg", bm_idx)
-                            plotter.plot_continuous_x(matrix_args[0], "bandwidth_values", bm_idx)
+                            # plotter.plot_continuous_x(matrix_args[0], "avg", bm_idx)
+                            plotter.plot_continuous_x(matrix_args[0], "bandwidth", bm_idx)
 
                 else:
                     warnings.warn(f"Results of benchmark \"{bm_name}\" cannot be visualized as no matrix arguments are "

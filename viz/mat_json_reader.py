@@ -16,11 +16,16 @@ class MatrixJsonReader:
         self.results = defaultdict(list)
         benchmarks = list()
 
-        # Remove all custom operation benchmarks
         clean_bms = []
         for bm in json_obj:
-            if "ops_per_second" in bm["benchmarks"][0]:
+            # Remove all custom operation benchmarks
+            if "ops_per_second" in bm["benchmarks"][0]["results"]:
                 continue
+            
+            # Remove all parallel benchmarks
+            if len(bm["benchmarks"][0]["results"]) == 2:
+                continue
+
             clean_bms.append(bm)
 
         # set main fields of each benchmark
@@ -39,11 +44,8 @@ class MatrixJsonReader:
         self.set_benchmark_subfields(benchmarks)
 
         # set arg lists
-        self.continuous_args = ["memory_range", "access_size", "write_ratio", "read_ratio", "pause_frequency",
-                                "number_partitions", "number_threads", "pause_length_micros", "number_operations",
-                                "zipf_alpha"]
-        self.categorical_args = ["exec_mode", "data_instruction", "persist_instruction", "random_distribution",
-                                 "numa_pattern", "memory_type", "prefault_file"]
+        self.continuous_args = ["memory_range", "access_size", "number_partitions", "number_threads", "number_operations", "zipf_alpha"]
+        self.categorical_args = ["exec_mode", "persist_instruction", "random_distribution", "numa_pattern", "memory_type", "prefault_file"]
 
         # set labels of matrix arguments
         self.arg_labels = dict()
@@ -81,8 +83,6 @@ class MatrixJsonReader:
 
             if arg in ["memory_range", "access_size", "pause_frequency"]:
                 arg_label += " (B)"
-            elif arg == "pause_length_micros":
-                arg_label += r" ($\mu$s)"
 
             self.arg_labels[arg] = arg_label
 

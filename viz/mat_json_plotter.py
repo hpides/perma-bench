@@ -30,7 +30,7 @@ class MatrixJsonPlotter:
 
         if y_value == "avg":
             y_value = "average_duration"
-        elif y_value == "bandwidth_values":
+        elif y_value == "bandwidth":
             y_value = "bandwidth"
 
         if isinstance(args, tuple):
