@@ -19,8 +19,8 @@ class MatrixJsonReader:
         clean_bms = []
         for bm in json_obj:
             # Remove all custom operation benchmarks
-            if "ops_per_second" in bm["benchmarks"][0]["results"]:
-                continue
+            # if "ops_per_second" in bm["benchmarks"][0]["results"]:
+            #     continue
             
             # Remove all parallel benchmarks
             if len(bm["benchmarks"][0]["results"]) == 2:
@@ -45,7 +45,7 @@ class MatrixJsonReader:
 
         # set arg lists
         self.continuous_args = ["memory_range", "access_size", "number_partitions", "number_threads", "number_operations", "zipf_alpha"]
-        self.categorical_args = ["exec_mode", "persist_instruction", "random_distribution", "numa_pattern", "memory_type", "prefault_file"]
+        self.categorical_args = ["exec_mode", "persist_instruction", "random_distribution", "numa_pattern", "memory_type", "prefault_file", "custom_operations"]
 
         # set labels of matrix arguments
         self.arg_labels = dict()
@@ -59,29 +59,21 @@ class MatrixJsonReader:
         for i, bm in enumerate(benchmarks):
             for bm_block in bm:
                 for key, fields in bm_block.items():
+                    for l in fields.items():
+                        if l[0] == "latency":
+                            val = l[1]["avg"]
+                        else:    
+                            val = l[1]
 
-                    # create separate entries for bandwidth operations and values
-                    if key == "bandwidth":
-                        bandwidth_ops = list(fields.keys())
-                        bandwidth_values = list(fields.values())
-                        if len(self.results["bandwidth_ops"]) <= i:
-                            self.results["bandwidth_ops"].append(list())
-                            self.results["bandwidth_values"].append(list())
-                        self.results["bandwidth_ops"][i].append(bandwidth_ops)
-                        self.results["bandwidth_values"][i].append(bandwidth_values)
-
-                    # create entry for each key in config or duration field
-                    else:
-                        for l in fields.items():
-                            while len(self.results[l[0]]) <= i:
-                                self.results[l[0]].append(list())
-                            self.results[l[0]][i].append(l[1])
+                        while len(self.results[l[0]]) <= i:
+                            self.results[l[0]].append(list())
+                        self.results[l[0]][i].append(val)
 
     def set_arg_labels(self):
         for arg in self.continuous_args + self.categorical_args:
             arg_label = arg.replace("_", " ").title()
 
-            if arg in ["memory_range", "access_size", "pause_frequency"]:
+            if arg in ["memory_range", "access_size"]:
                 arg_label += " (B)"
 
             self.arg_labels[arg] = arg_label
@@ -91,7 +83,8 @@ class MatrixJsonReader:
     """
 
     def get_result(self, name, bm_idx):
-        return self.results[name][bm_idx]
+        res = self.results[name]
+        return res[bm_idx] if bm_idx < len(res) else [] 
 
     def get_bm_names(self):
         return self.results["bm_name"]
