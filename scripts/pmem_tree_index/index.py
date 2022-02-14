@@ -87,16 +87,16 @@ if __name__ == '__main__':
     skip_dram = True
     result_path, plot_dir = INIT(sys.argv)
 
-    lookup_config = {"custom_operations": "r512,r512,r512"}
-    lookup_runs = get_runs_from_results(result_path, "primary_index_lookup", lookup_config, skip_dram=skip_dram)
+    lookup_config = {"custom_operations": "rp_512,rp_512,rp_512"}
+    lookup_runs = get_runs_from_results(result_path, "tree_index_lookup", lookup_config, skip_dram=skip_dram)
     lookup_data = get_data_from_runs(lookup_runs, "number_threads", "ops_per_second")
 
-    update_config = {"custom_operations": "r512,r512,r512,w64_cache,w64_cache,w64_cache,w64_cache"}
-    update_runs = get_runs_from_results(result_path, "primary_index_update", update_config, skip_dram=skip_dram)
+    update_config = {"custom_operations": "rp_512,rp_512,rp_512,wp_64_cache_320,wp_64_cache_-64,wp_64_cache_-64,wp_64_cache_-64"}
+    update_runs = get_runs_from_results(result_path, "tree_index_update", update_config, skip_dram=skip_dram)
     update_data = get_data_from_runs(update_runs, "number_threads", "ops_per_second")
 
-    scan_config = {"custom_operations": "r512,r512,r512,r512,r512,r512,r512"}
-    scan_runs = get_runs_from_results(result_path, "primary_index_range_scan", scan_config, skip_dram=skip_dram)
+    scan_config = {"custom_operations": "rp_512,rp_512,rp_512,rp_512,rp_512,rp_512,rp_512"}
+    scan_runs = get_runs_from_results(result_path, "tree_index_range_scan", scan_config, skip_dram=skip_dram)
     scan_data = get_data_from_runs(scan_runs, "number_threads", "ops_per_second")
 
     fig, axes = plt.subplots(1, 3, figsize=DOUBLE_FIG_SIZE)
@@ -112,6 +112,6 @@ if __name__ == '__main__':
         Y_GRID(ax)
         HIDE_BORDERS(ax)
 
-    plot_path = os.path.join(plot_dir, "custom_index")
+    plot_path = os.path.join(plot_dir, "pmem_tree_index")
     SAVE_PLOT(plot_path)
     PRINT_PLOT_PATHS()

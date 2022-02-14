@@ -33,11 +33,11 @@ def plot_aggregation(system_data, ax):
 
 
 if __name__ == '__main__':
-    skip_dram = True
+    skip_dram = False
     result_path, plot_dir = INIT(sys.argv)
 
-    aggregation_config = {"custom_operations": "r256,w128_none"}
-    aggregation_runs = get_runs_from_results(result_path, "aggregation", aggregation_config, skip_dram=skip_dram)
+    aggregation_config = {"custom_operations": "rp_512,wp_64_none_128,wp_64_none_-128"}
+    aggregation_runs = get_runs_from_results(result_path, "hash_aggregation", aggregation_config, skip_dram=skip_dram)
     aggregation_data = get_data_from_runs(aggregation_runs, "number_threads", "ops_per_second")
 
     fig, ax = plt.subplots(1, 1, figsize=SINGLE_FIG_SIZE)
@@ -52,6 +52,6 @@ if __name__ == '__main__':
     Y_GRID(ax)
     HIDE_BORDERS(ax)
 
-    plot_path = os.path.join(plot_dir, "custom_aggregation")
+    plot_path = os.path.join(plot_dir, "hash_aggregation")
     SAVE_PLOT(plot_path)
     PRINT_PLOT_PATHS()

@@ -1,0 +1,44 @@
+Results for Dash-Ex:
+====================
+
+command: numactl -N 0 ./test_pmem -op=insert -t=16 -p 100000000 -n 100000000
+         numactl -N 0 ./test_pmem -op=pos -t=16 -p 100000000 -n 100000000
+
+16 threads, 100 mio prefill, fixed size 8B/8B
+- 100 mio inserts
+- 100 mio lookups (positive)
+
+UPDATE:
+===========
+Intel-256:
+    avg  read GB/s: 5.3
+    avg write GB/s: 3.2
+    inserts/s:      13550466
+    time in s:      7.379819
+
+Intel-128:
+    avg  read GB/s: 4.5
+    avg write GB/s: 2.4
+    inserts/s:      10324116
+    time s:         9.686059
+
+Intel-512:
+    inserts/s:       9946400
+    time s:         10.05388
+
+
+LOOKUP:
+===========
+Intel-256:
+    avg read GB/s: 14.6
+    gets/s:        47271039
+    time in s:     2.115460
+
+Intel-128:
+    avg read GB/s: 12.5
+    gets/s:        38587320
+    time in s:     2.591525
+
+Intel-512:
+    gets/s:        41484534
+    time in s:     2.410537
