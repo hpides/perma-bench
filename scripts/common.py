@@ -27,8 +27,8 @@ SYSTEM_COLOR = {
     'intel-256':   '#378d54',
     'intel-512':   '#41b6c4',
     'intel-gen2':  '#2c7fb8',
-    'nvdimm-hpe':  '#253494',
-    'zdram':       '#0c1652',
+    'zdram':       '#253494',
+    'nvdimm-hpe':  '#0c1652',
 }
 
 SYSTEM_MARKER = {
@@ -36,8 +36,8 @@ SYSTEM_MARKER = {
     'intel-256':   'o',
     'intel-512':   'd',
     'intel-gen2':  's',
-    'nvdimm-hpe':  'X',
-    'zdram':       'x',
+    'zdram':       'X',
+    'nvdimm-hpe':  'x',
 }
 
 SYSTEM_HATCH = {
@@ -45,8 +45,8 @@ SYSTEM_HATCH = {
     'intel-256':   '//',
     'intel-512':   '\\',
     'intel-gen2':  '/',
-    'nvdimm-hpe':  'x',
-    'zdram':       '.',
+    'zdram':       'x',
+    'nvdimm-hpe':  '.',
 }
 
 SYSTEM_NAME = {
@@ -54,8 +54,8 @@ SYSTEM_NAME = {
     'intel-256':   'I-256',
     'intel-512':   'I-512',
     'intel-gen2':  'I-Gen2',
-    'nvdimm-hpe':  'HPE',
     'zdram':       'DRAM',
+    'nvdimm-hpe':  'HPE',
 }
 
 
@@ -207,9 +207,9 @@ def get_data_from_runs(runs, x_attribute, y_type, y_attribute=None):
         for run in system_runs:
             x_val = run['config'][x_attribute]
             if y_attribute is None:
-                y_val = run[y_type]
+                y_val = run['results'][y_type]
             else:
-                y_val = run[y_type].get(y_attribute, 0)
+                y_val = run['results'][y_type].get(y_attribute, 0)
             d.append((x_val, y_val))
     return data
 
