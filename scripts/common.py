@@ -154,7 +154,7 @@ def get_parallel_runs(bms, config):
     runs = defaultdict(list)
     for name, res_runs in bms.items():
         for run in res_runs["benchmarks"]:
-            run_confs = run["configs"]
+            run_confs = run["config"]
 
             append = True
             for single_bm_name, single_bm_conf in config.items():
@@ -186,15 +186,15 @@ def get_runs_from_results(results, bm_name, filter_config, skip_dram=True, is_pa
 
 
 def get_data_from_parallel_runs(runs, sub_bm_name_one, x_attribute_one, y_type_one,
-                                y_attribute_one, sub_bm_name_two, x_attribute_two, y_type_two, y_attribute_two):
+                                sub_bm_name_two, x_attribute_two, y_type_two):
     data = defaultdict(list)
     for system_name, system_runs in runs.items():
         d = data[system_name]
         for run in system_runs:
-            x_val_one = run['configs'][sub_bm_name_one][x_attribute_one]
-            x_val_two = run['configs'][sub_bm_name_two][x_attribute_two]
-            y_val_one = run['results'][sub_bm_name_one][y_type_one].get(y_attribute_one, 0)
-            y_val_two = run['results'][sub_bm_name_two][y_type_two].get(y_attribute_two, 0)
+            x_val_one = run['config'][sub_bm_name_one][x_attribute_one]
+            x_val_two = run['config'][sub_bm_name_two][x_attribute_two]
+            y_val_one = run['results'][sub_bm_name_one]['results'][y_type_one]
+            y_val_two = run['results'][sub_bm_name_two]['results'][y_type_two]
             d.append(({sub_bm_name_one: (x_val_one, y_val_one)}, {sub_bm_name_two: (x_val_two, y_val_two)}))
 
     return data
