@@ -1,11 +1,12 @@
 import sys
 import os
+from unittest import skip
 sys.path.append(os.path.dirname(sys.path[0]))
 
 from common import *
 
 
-def plot_data(system_data, ax, label=False):
+def plot_data(system_data, ax, max_y, label=False):
     # Only use thread count == 32
     system_data = {sys: [(thread, y) for thread, y in data if thread == 32] for sys, data in system_data.items()}
 
@@ -21,57 +22,93 @@ def plot_data(system_data, ax, label=False):
             bar = ax.bar(pos, y_data, width=bar_width, **BAR(system))
         if label:
             bar.set_label(SYSTEM_NAME[system])
+        
+        if 'dram' in system:
+            ax.text(pos, int(max_y * 0.90), int(y_data), ha='center', color=SYSTEM_COLOR[system],
+                    bbox=dict(boxstyle='square,pad=0', fc='white', ec='black'))
 
 
-def plot_join_build(system_data, ax):
-    plot_data(system_data, ax, label=True)
+def plot_hash_index_update(system_data, ax):
+    max_y = 30
+    plot_data(system_data, ax, max_y, label=True)
 
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    ax.set_ylim(0, 100)
-    ax.set_yticks(range(0, 101, 20))
+    ax.set_ylim(0, max_y)
+    ax.set_yticks(range(0, max_y + 1, 5))
 
     ax.set_ylabel("Million Ops/s")
-    ax.set_title("a) Join\nBuild")
+    ax.set_title("a) Hash Index\nUpdate")
     # ax.set_xlabel("32 Threads")
 
-def plot_join_probe(system_data, ax):
-    plot_data(system_data, ax)
+def plot_hash_index_lookup(system_data, ax):
+    max_y = 60
+    plot_data(system_data, ax, max_y)
 
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    ax.set_ylim(0, 150)
-    ax.set_yticks(range(0, 151, 30))
+    ax.set_ylim(0, max_y)
+    ax.set_yticks(range(0, max_y + 1, 10))
 
-    ax.set_title("b) Join\nProbe")
+    ax.set_title("b) Hash Index\nLookup")
     # ax.set_xlabel("32 Threads")
 
 def plot_index_update(system_data, ax):
-    plot_data(system_data, ax)
+    max_y = 15
+    plot_data(system_data, ax, max_y)
 
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    ax.set_ylim(0, 40)
-    ax.set_yticks(range(0, 41, 10))
+    ax.set_ylim(0, max_y)
+    ax.set_yticks(range(0, max_y + 1, 5))
 
     # ax.set_ylabel("Million Ops/s")
-    ax.set_title("c) Index\nUpdate")
+    ax.set_title("c) Tree Index\nUpdate (PMem)")
     # ax.set_xlabel("32 Threads")
 
 def plot_index_lookup(system_data, ax):
-    plot_data(system_data, ax)
+    max_y = 20
+    plot_data(system_data, ax, max_y)
 
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    ax.set_ylim(0, 60)
-    ax.set_yticks(range(0, 61, 15))
+    ax.set_ylim(0, max_y)
+    ax.set_yticks(range(0, max_y + 1, 5))
 
     # ax.set_ylabel("Million Ops/s")
-    ax.set_title("d) Index\nLookup")
+    ax.set_title("d) Tree Index\nLookup (PMem)")
+    # ax.set_xlabel("32 Threads")
+
+def plot_hybrid_index_update(system_data, ax):
+    max_y = 20
+    plot_data(system_data, ax, max_y)
+
+    ax.set_xticks([])
+    ax.set_xticklabels([])
+
+    ax.set_ylim(0, max_y)
+    ax.set_yticks(range(0, max_y + 1, 5))
+
+    # ax.set_ylabel("Million Ops/s")
+    ax.set_title("c) Tree Index\nUpdate (Hybrid)")
+    # ax.set_xlabel("32 Threads")
+
+def plot_hybrid_index_lookup(system_data, ax):
+    max_y = 30
+    plot_data(system_data, ax, max_y)
+
+    ax.set_xticks([])
+    ax.set_xticklabels([])
+
+    ax.set_ylim(0, max_y)
+    ax.set_yticks(range(0, max_y + 1, 5))
+
+    # ax.set_ylabel("Million Ops/s")
+    ax.set_title("d) Tree Index\nLookup (Hybrid)")
     # ax.set_xlabel("32 Threads")
 
 
@@ -79,28 +116,39 @@ if __name__ == '__main__':
     skip_dram = False
     result_path, plot_dir = INIT(sys.argv)
 
-    join_build_config = {"custom_operations": "r256,w64_cache,w64_cache"}
-    join_build_runs = get_runs_from_results(result_path, "join_build", join_build_config, skip_dram=skip_dram)
-    join_build_data = get_data_from_runs(join_build_runs, "number_threads", "ops_per_second")
+    hash_index_update_config = {"custom_operations": "rp_512,wp_64_cache_128,wp_64_cache_-128"}
+    hash_index_update_runs = get_runs_from_results(result_path, "hash_index_update", hash_index_update_config, skip_dram=skip_dram)
+    hash_index_update_data = get_data_from_runs(hash_index_update_runs, "number_threads", "ops_per_second")
 
-    join_probe_config = {"custom_operations": "r512"}
-    join_probe_runs = get_runs_from_results(result_path, "join_probe", join_probe_config, skip_dram=skip_dram)
-    join_probe_data = get_data_from_runs(join_probe_runs, "number_threads", "ops_per_second")
+    hash_index_lookup_config = {"custom_operations": "rp_512"}
+    hash_index_lookup_runs = get_runs_from_results(result_path, "hash_index_lookup", hash_index_lookup_config, skip_dram=skip_dram)
+    hash_index_lookup_data = get_data_from_runs(hash_index_lookup_runs, "number_threads", "ops_per_second")
 
-    index_update_config = {"custom_operations": "r512,r512,r512,w64_cache,w64_cache,w64_cache,w64_cache"}
-    index_update_runs = get_runs_from_results(result_path, "primary_index_update", index_update_config, skip_dram=skip_dram)
+    index_update_config = {"custom_operations": "rp_512,rp_512,rp_512,wp_64_cache_320,wp_64_cache_-64,wp_64_cache_-64,wp_64_cache_-64"}
+    index_update_runs = get_runs_from_results(result_path, "tree_index_update", index_update_config, skip_dram=skip_dram)
     index_update_data = get_data_from_runs(index_update_runs, "number_threads", "ops_per_second")
 
-    index_lookup_config = {"custom_operations": "r512,r512,r512"}
-    index_lookup_runs = get_runs_from_results(result_path, "primary_index_lookup", index_lookup_config, skip_dram=skip_dram)
+    index_lookup_config = {"custom_operations": "rp_512,rp_512,rp_512"}
+    index_lookup_runs = get_runs_from_results(result_path, "tree_index_lookup", index_lookup_config, skip_dram=skip_dram)
     index_lookup_data = get_data_from_runs(index_lookup_runs, "number_threads", "ops_per_second")
 
-    fig, axes = plt.subplots(1, 4, figsize=DOUBLE_FIG_SIZE)
-    join_build_ax, join_probe_ax, index_update_ax, index_lookup_ax  = axes
-    plot_join_build(join_build_data, join_build_ax)
-    plot_join_probe(join_probe_data, join_probe_ax)
+    hybrid_index_update_config = {"custom_operations": "rd_2048,rd_2048,rp_1024,wp_64_cache_512,wp_64_cache_-512,wp_64_cache"}
+    hybrid_index_update_runs = get_runs_from_results(result_path, "hybrid_tree_index_update", hybrid_index_update_config, skip_dram=skip_dram)
+    hybrid_index_update_data = get_data_from_runs(hybrid_index_update_runs, "number_threads", "ops_per_second")
+
+    hybrid_index_lookup_config = {"custom_operations": "rd_2048,rd_2048,rp_1024"}
+    hybrid_index_lookup_runs = get_runs_from_results(result_path, "hybrid_tree_index_lookup", hybrid_index_lookup_config, skip_dram=skip_dram)
+    hybrid_index_lookup_data = get_data_from_runs(hybrid_index_lookup_runs, "number_threads", "ops_per_second")
+
+    fig, axes = plt.subplots(1, 6, figsize=(2 * DOUBLE_FIG_WIDTH, DOUBLE_FIG_HEIGHT))
+    hash_index_update_ax, hash_index_lookup_ax, index_update_ax, index_lookup_ax, hybrid_index_update_ax, hybrid_index_lookup_ax  = axes
+
+    plot_hash_index_update(hash_index_update_data, hash_index_update_ax)
+    plot_hash_index_lookup(hash_index_lookup_data, hash_index_lookup_ax)
     plot_index_update(index_update_data, index_update_ax)
     plot_index_lookup(index_lookup_data, index_lookup_ax)
+    plot_hybrid_index_update(hybrid_index_update_data, hybrid_index_update_ax)
+    plot_hybrid_index_lookup(hybrid_index_lookup_data, hybrid_index_lookup_ax)
 
     HATCH_WIDTH()
 
