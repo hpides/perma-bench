@@ -46,12 +46,12 @@ if __name__ == '__main__':
     result_path, plot_dir = INIT(sys.argv)
 
     threads_config = {"persist_instruction": "nocache", "access_size": 512}
-    threads_runs = get_runs_from_results(result_path, "logging", threads_config, skip_dram=skip_dram)
-    threads_data = get_data_from_runs(threads_runs, "number_threads", "bandwidth", "write")
+    threads_runs = get_runs_from_results(result_path, "sequential_writes", threads_config, skip_dram=skip_dram)
+    threads_data = get_data_from_runs(threads_runs, "number_threads", "bandwidth")
 
-    size_config = {"persist_instruction": "nocache", "number_partitions": 8}
-    size_runs = get_runs_from_results(result_path, "logging_partition", size_config, skip_dram=skip_dram)
-    size_data = get_data_from_runs(size_runs, "access_size", "bandwidth", "write")
+    size_config = {"persist_instruction": "nocache", "number_threads": 8}
+    size_runs = get_runs_from_results(result_path, "sequential_writes", size_config, skip_dram=skip_dram)
+    size_data = get_data_from_runs(size_runs, "access_size", "bandwidth")
 
     fig, axes = plt.subplots(1, 2, figsize=DOUBLE_FIG_SIZE)
     (threads_ax, size_ax) = axes
@@ -69,6 +69,6 @@ if __name__ == '__main__':
               )
     fig.tight_layout()
 
-    plot_path = os.path.join(plot_dir, "logging_threads_size_performance")
+    plot_path = os.path.join(plot_dir, "sequential_writes")
     SAVE_PLOT(plot_path)
     PRINT_PLOT_PATHS()

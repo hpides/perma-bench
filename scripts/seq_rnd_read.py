@@ -11,7 +11,7 @@ def plot_scan(system_data, ax):
 
         ax.plot(x_data, y_data, label=SYSTEM_NAME[system], **LINE(system))
         if 'dram' in system:
-            ax.text(16, 30, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
+            ax.text(7, 50, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
         if 'hpe' in system:
             ax.text(8, 50, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
 
@@ -23,7 +23,7 @@ def plot_scan(system_data, ax):
     ax.set_ylim(0, 55)
     ax.set_yticks(range(0, 55, 10))
 
-    ax.set_title("a) Table Scan")
+    ax.set_title("a) Sequential Reads")
 
 
 def plot_lookup(system_data, ax):
@@ -40,7 +40,8 @@ def plot_lookup(system_data, ax):
         # y_data = y_data[0]
         pos = [x + (i * bar_width) for x in x_pos]
         ax.bar(pos, y_data, width=bar_width, label=SYSTEM_NAME[system], **BAR(system))
-        if 'hpe' in system:
+        if 'dram' in system:
+            ax.text(pos[0] + 0.25, 40.5, int(y_data[0]), ha='center', color=SYSTEM_COLOR[system])
             ax.text(pos[1] + 0.25, 40.5, int(y_data[1]), ha='center', color=SYSTEM_COLOR[system])
             ax.text(pos[2], 45.5, int(y_data[2]), ha='center', color=SYSTEM_COLOR[system])
 
@@ -48,7 +49,7 @@ def plot_lookup(system_data, ax):
     ax.set_xticks(xticks)
     ax.set_xticklabels([64, 256, 1024])
     # ax.set_ylabel("Bandwidth (GB/s)")
-    ax.set_title("b) Index Lookup")
+    ax.set_title("b) Random Reads")
     ax.set_ylim(0, 45)
     ax.set_yticks(range(0, 45, 10))
     ax.set_xlabel("Access Size in Byte")
@@ -56,16 +57,16 @@ def plot_lookup(system_data, ax):
 
 
 if __name__ == '__main__':
-    skip_dram = True
+    skip_dram = False
     result_path, plot_dir = INIT(sys.argv)
 
     table_scan_filter = {"access_size": 4096}
-    scan_runs = get_runs_from_results(result_path, "table_scan", table_scan_filter, skip_dram=skip_dram)
-    scan_data = get_data_from_runs(scan_runs, "number_threads", "bandwidth", "read")
+    scan_runs = get_runs_from_results(result_path, "sequential_reads", table_scan_filter, skip_dram=skip_dram)
+    scan_data = get_data_from_runs(scan_runs, "number_threads", "bandwidth")
 
-    lookup_config = {"random_distribution": "uniform", "number_partitions": 1}
-    lookup_runs = get_runs_from_results(result_path, "index_lookup", lookup_config, skip_dram=skip_dram)
-    lookup_data = get_data_from_runs(lookup_runs, "access_size", "bandwidth", "read")
+    lookup_config = {"number_threads": 16}
+    lookup_runs = get_runs_from_results(result_path, "random_reads", lookup_config, skip_dram=skip_dram)
+    lookup_data = get_data_from_runs(lookup_runs, "access_size", "bandwidth")
 
 
     fig, axes = plt.subplots(1, 2, figsize=DOUBLE_FIG_SIZE)
