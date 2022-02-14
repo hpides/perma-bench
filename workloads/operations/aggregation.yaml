@@ -6,7 +6,7 @@
 # We use a 2 GB memory range to represent the small structure.
 hash_aggregation:
   matrix:
-    number_threads: [ 1, 4, 8, 16 ]
+    number_threads: [ 1, 4, 8, 16, 32 ]
     # Represent bucket sizes 64, 256, 1024
     custom_operations:
       - "r_128,w_64_none"
