@@ -133,7 +133,7 @@ def SAVE_PLOT(plot_path, img_types=None):
 # Benchmark Results
 #######################################
 
-def get_bms(results, bm_name, skip_dram=True):
+def get_bms(results, bm_name, skip_dram=False):
     bms = {}
     for system_results in os.listdir(results):
         if skip_dram and "dram" in system_results:

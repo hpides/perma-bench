@@ -5,10 +5,11 @@ sys.path.append(os.path.dirname(sys.path[0]))
 from common import *
 
 OP_NAMES = {
-    "r256": "Read",
-    "r256,w256_none": "Write (None)",
-    "r256,w256_cache": "Write (Cache)",
-    "r256,w256_nocache": "Write (NoCache)"
+    "rp_256": "Read",
+    "rp_256,wp_256_none": "Write (None)",
+    "rp_256,wp_256_cache": "Write (Cache)",
+    "rp_256,wp_256_cacheinv": "Write (CacheInv)",
+    "rp_256,wp_256_nocache": "Write (NoCache)"
 }
 
 
@@ -39,7 +40,7 @@ def plot_lookup(system_data, ax, label=True):
         filtered_data[sys] = f_data
 
     plot_data(filtered_data, ax, label=label)
-    ax.set_xticklabels(["Read", "RW:$\it{None}$", "RW:$\it{Cache}$", "RW:$\it{NoCache}$"])
+    ax.set_xticklabels(["Read", "+$\it{None}$", "+$\it{Cache}$", "+$\it{CacheInv}$", "+$\it{NoCache}$"])
 
     # ax.set_ylim(0, 18)
     # ax.set_yticks(range(0, 17, 5))
@@ -72,16 +73,16 @@ if __name__ == '__main__':
 
     latency_config = {"number_threads": 16}
     latency_runs = get_runs_from_results(result_path, "operation_latency", latency_config, skip_dram=skip_dram)
-    latency_data = get_data_from_runs(latency_runs, "custom_operations", "duration", "avg")
-    tail_latency_data = get_data_from_runs(latency_runs, "custom_operations", "duration", "percentile_99")
+    latency_data = get_data_from_runs(latency_runs, "custom_operations", "latency", "avg")
+    tail_latency_data = get_data_from_runs(latency_runs, "custom_operations", "latency", "percentile_99")
 
-    read_config = {"custom_operations": "r256"}
+    read_config = {"custom_operations": "rp_256"}
     read_runs = get_runs_from_results(result_path, "operation_latency", read_config, skip_dram=skip_dram)
-    read_data = get_data_from_runs(read_runs, "number_threads", "duration", "avg")
+    read_data = get_data_from_runs(read_runs, "number_threads", "latency", "avg")
 
-    write_config = {"custom_operations": "r256,w256_cache"}
+    write_config = {"custom_operations": "rp_256,wp_256_cache"}
     write_runs = get_runs_from_results(result_path, "operation_latency", write_config, skip_dram=skip_dram)
-    write_data = get_data_from_runs(write_runs, "number_threads", "duration", "avg")
+    write_data = get_data_from_runs(write_runs, "number_threads", "latency", "avg")
 
     tail_latency_config = {"number_threads": 16}
     tail_latency_runs = get_runs_from_results(result_path, "operation_latency", tail_latency_config, skip_dram=skip_dram)
