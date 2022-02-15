@@ -5,6 +5,8 @@ sys.path.append(os.path.dirname(sys.path[0]))
 
 from common import *
 
+LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
+LETTER_ITER = iter(LETTERS)
 
 def plot_data(system_data, ax, label=False):
     # Only use thread count == 32
@@ -35,7 +37,7 @@ def plot_hash_index_update(system_data, ax):
     ax.set_yticks(range(0, max_y + 1, 5))
 
     ax.set_ylabel("Million Ops/s")
-    ax.set_title("a) Hash Index\nUpdate")
+    ax.set_title(f"{next(LETTER_ITER)}) Hash Index\nUpdate")
     # ax.set_xlabel("32 Threads")
 
 def plot_hash_index_lookup(system_data, ax):
@@ -48,11 +50,10 @@ def plot_hash_index_lookup(system_data, ax):
     ax.set_ylim(0, max_y)
     ax.set_yticks(range(0, max_y + 1, 10))
 
-    ax.set_title("b) Hash Index\nLookup")
+    ax.set_title(f"{next(LETTER_ITER)}) Hash Index\nLookup")
     # ax.set_xlabel("32 Threads")
 
 def plot_aggregation(system_data, ax):
-    system_data = {s: data for s, data in system_data.items() if s != 'intel-128'}
     plot_data(system_data, ax)
 
     ax.set_xticks([])
@@ -62,7 +63,7 @@ def plot_aggregation(system_data, ax):
     ax.set_ylim(0, max_y)
     ax.set_yticks(range(0, max_y + 1, 5))
 
-    ax.set_title("c) Hash\nAggregation")
+    ax.set_title(f"{next(LETTER_ITER)}) Volatile Hash\nIndex Update")
     # ax.set_xlabel("32 Threads")
 
 def plot_index_update(system_data, ax):
@@ -76,7 +77,7 @@ def plot_index_update(system_data, ax):
     ax.set_yticks(range(0, max_y + 1, 5))
 
     # ax.set_ylabel("Million Ops/s")
-    ax.set_title("d) Tree Index\nUpdate (PMem)")
+    ax.set_title(f"{next(LETTER_ITER)}) Tree Index\nUpdate (PMem)")
     # ax.set_xlabel("32 Threads")
 
 def plot_index_lookup(system_data, ax):
@@ -90,7 +91,7 @@ def plot_index_lookup(system_data, ax):
     ax.set_yticks(range(0, max_y + 1, 5))
 
     # ax.set_ylabel("Million Ops/s")
-    ax.set_title("e) Tree Index\nLookup (PMem)")
+    ax.set_title(f"{next(LETTER_ITER)}) Tree Index\nLookup (PMem)")
     # ax.set_xlabel("32 Threads")
 
 def plot_hybrid_index_update(system_data, ax):
@@ -104,7 +105,7 @@ def plot_hybrid_index_update(system_data, ax):
     ax.set_yticks(range(0, max_y + 1, 5))
 
     # ax.set_ylabel("Million Ops/s")
-    ax.set_title("f) Tree Index\nUpdate (Hybrid)")
+    ax.set_title(f"{next(LETTER_ITER)}) Tree Index\nUpdate (Hybrid)")
     # ax.set_xlabel("32 Threads")
 
 def plot_hybrid_index_lookup(system_data, ax):
@@ -118,7 +119,7 @@ def plot_hybrid_index_lookup(system_data, ax):
     ax.set_yticks(range(0, max_y + 1, 5))
 
     # ax.set_ylabel("Million Ops/s")
-    ax.set_title("g) Tree Index\nLookup (Hybrid)")
+    ax.set_title(f"{next(LETTER_ITER)}) Tree Index\nLookup (Hybrid)")
     # ax.set_xlabel("32 Threads")
 
 
@@ -155,15 +156,16 @@ if __name__ == '__main__':
     hybrid_index_lookup_data = get_data_from_runs(hybrid_index_lookup_runs, "number_threads", "ops_per_second")
 
     fig, axes = plt.subplots(1, 7, figsize=(2 * DOUBLE_FIG_WIDTH, DOUBLE_FIG_HEIGHT))
-    hash_index_update_ax, hash_index_lookup_ax, aggregation_ax, index_update_ax, index_lookup_ax, hybrid_index_update_ax, hybrid_index_lookup_ax  = axes
+    # hash_index_update_ax, hash_index_lookup_ax, aggregation_ax, index_update_ax, index_lookup_ax, hybrid_index_update_ax, hybrid_index_lookup_ax  = axes
+    axes_iter = iter(axes)
 
-    plot_hash_index_update(hash_index_update_data, hash_index_update_ax)
-    plot_hash_index_lookup(hash_index_lookup_data, hash_index_lookup_ax)
-    plot_aggregation(aggregation_data, aggregation_ax)
-    plot_index_update(index_update_data, index_update_ax)
-    plot_index_lookup(index_lookup_data, index_lookup_ax)
-    plot_hybrid_index_update(hybrid_index_update_data, hybrid_index_update_ax)
-    plot_hybrid_index_lookup(hybrid_index_lookup_data, hybrid_index_lookup_ax)
+    plot_hash_index_update(hash_index_update_data, next(axes_iter))
+    plot_aggregation(aggregation_data, next(axes_iter))
+    plot_index_update(index_update_data, next(axes_iter))
+    plot_hybrid_index_update(hybrid_index_update_data, next(axes_iter))
+    plot_hash_index_lookup(hash_index_lookup_data, next(axes_iter))
+    plot_index_lookup(index_lookup_data, next(axes_iter))
+    plot_hybrid_index_lookup(hybrid_index_lookup_data, next(axes_iter))
 
     all_data = (hash_index_update_data, hash_index_lookup_data, aggregation_data, index_update_data, index_lookup_data,
                 hybrid_index_update_data, hybrid_index_lookup_data)

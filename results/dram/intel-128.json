@@ -8002,16 +8002,16 @@
           "prefault_file": true
         },
         "results": {
-          "execution_time": 5.60502271,
+          "execution_time": 5.445718834,
           "num_operations": 100139008,
-          "ops_per_second": 17865941.528004978,
-          "thread_ops_per_second_avg": 17865941.528004978,
+          "ops_per_second": 18388574.778188776,
+          "thread_ops_per_second_avg": 18388574.778188776,
           "thread_ops_per_second_std_dev": 0.0,
           "threads": [
             {
-              "execution_time": 5.60502271,
+              "execution_time": 5.445718834,
               "num_operations": 100139008,
-              "ops_per_second": 17865941.528004978
+              "ops_per_second": 18388574.778188776
             }
           ]
         }
@@ -8030,16 +8030,16 @@
           "prefault_file": true
         },
         "results": {
-          "execution_time": 7.75232549,
+          "execution_time": 7.487782047,
           "num_operations": 100139008,
-          "ops_per_second": 12917286.319978807,
-          "thread_ops_per_second_avg": 12917286.319978807,
+          "ops_per_second": 13373654.223832672,
+          "thread_ops_per_second_avg": 13373654.223832672,
           "thread_ops_per_second_std_dev": 0.0,
           "threads": [
             {
-              "execution_time": 7.75232549,
+              "execution_time": 7.487782047,
               "num_operations": 100139008,
-              "ops_per_second": 12917286.319978807
+              "ops_per_second": 13373654.223832672
             }
           ]
         }
@@ -8058,16 +8058,16 @@
           "prefault_file": true
         },
         "results": {
-          "execution_time": 7.765714325,
+          "execution_time": 7.464147335,
           "num_operations": 100139008,
-          "ops_per_second": 12895015.681638533,
-          "thread_ops_per_second_avg": 12895015.681638533,
+          "ops_per_second": 13416000.985194916,
+          "thread_ops_per_second_avg": 13416000.985194916,
           "thread_ops_per_second_std_dev": 0.0,
           "threads": [
             {
-              "execution_time": 7.765714325,
+              "execution_time": 7.464147335,
               "num_operations": 100139008,
-              "ops_per_second": 12895015.681638533
+              "ops_per_second": 13416000.985194916
             }
           ]
         }
@@ -8086,31 +8086,31 @@
           "prefault_file": true
         },
         "results": {
-          "execution_time": 1.573270137,
+          "execution_time": 1.546319254,
           "num_operations": 100139008,
-          "ops_per_second": 63650231.225357585,
-          "thread_ops_per_second_avg": 15912557.806339396,
-          "thread_ops_per_second_std_dev": 420515.37573129067,
+          "ops_per_second": 64759594.592747666,
+          "thread_ops_per_second_avg": 16189898.648186916,
+          "thread_ops_per_second_std_dev": 392894.17951758724,
           "threads": [
             {
-              "execution_time": 1.567974843,
-              "num_operations": 24379392,
-              "ops_per_second": 15548331.0901564
-            },
-            {
-              "execution_time": 1.572309133,
-              "num_operations": 24641536,
-              "ops_per_second": 15672195.424435023
-            },
-            {
-              "execution_time": 1.558170068,
+              "execution_time": 1.540446797,
               "num_operations": 25427968,
-              "ops_per_second": 16319122.361680485
+              "ops_per_second": 16506878.426129768
             },
             {
-              "execution_time": 1.573126065,
+              "execution_time": 1.534604733,
+              "num_operations": 24641536,
+              "ops_per_second": 16057252.70495435
+            },
+            {
+              "execution_time": 1.546228357,
               "num_operations": 25690112,
-              "ops_per_second": 16330612.384837702
+              "ops_per_second": 16614694.643062998
+            },
+            {
+              "execution_time": 1.54454203,
+              "num_operations": 24379392,
+              "ops_per_second": 15784220.517456558
             }
           ]
         }
@@ -8129,74 +8129,74 @@
           "prefault_file": true
         },
         "results": {
-          "execution_time": 2.319318082,
+          "execution_time": 2.312557284,
           "num_operations": 100139008,
-          "ops_per_second": 43176056.26290288,
-          "thread_ops_per_second_avg": 10794014.06572572,
-          "thread_ops_per_second_std_dev": 230288.9068329432,
+          "ops_per_second": 43302282.150084026,
+          "thread_ops_per_second_avg": 10825570.537521007,
+          "thread_ops_per_second_std_dev": 62557.80248203931,
           "threads": [
             {
-              "execution_time": 2.302171878,
-              "num_operations": 24641536,
-              "ops_per_second": 10703603.946985578
-            },
-            {
-              "execution_time": 2.319276279,
-              "num_operations": 25427968,
-              "ops_per_second": 10963751.16248063
-            },
-            {
-              "execution_time": 2.316780042,
-              "num_operations": 25690112,
-              "ops_per_second": 11088714.307907527
-            },
-            {
-              "execution_time": 2.298593513,
-              "num_operations": 24379392,
-              "ops_per_second": 10606221.527259657
-            }
-          ]
-        }
-      },
-      {
-        "config": {
-          "custom_operations": "rp_1024,wp_64_none_256,wp_64_none_-256",
-          "exec_mode": "custom",
-          "memory_range": 2147483648,
-          "memory_type": "dram",
-          "min_io_chunk_size": 67108864,
-          "numa_pattern": "near",
-          "number_operations": 100000000,
-          "number_partitions": 1,
-          "number_threads": 4,
-          "prefault_file": true
-        },
-        "results": {
-          "execution_time": 2.35775979,
-          "num_operations": 100139008,
-          "ops_per_second": 42472099.33120456,
-          "thread_ops_per_second_avg": 10618024.83280114,
-          "thread_ops_per_second_std_dev": 242643.0566109989,
-          "threads": [
-            {
-              "execution_time": 2.35775979,
+              "execution_time": 2.300015892,
               "num_operations": 24903680,
-              "ops_per_second": 10562433.079749826
+              "ops_per_second": 10827612.142429493
             },
             {
-              "execution_time": 2.348125362,
-              "num_operations": 24379392,
-              "ops_per_second": 10382491.665281028
-            },
-            {
-              "execution_time": 2.354939987,
+              "execution_time": 2.312557284,
               "num_operations": 25165824,
-              "ops_per_second": 10686397.164650975
+              "ops_per_second": 10882248.917298604
             },
             {
-              "execution_time": 2.345111019,
-              "num_operations": 25690112,
-              "ops_per_second": 10954753.012484139
+              "execution_time": 2.308385869,
+              "num_operations": 25165824,
+              "ops_per_second": 10901913.903545907
+            },
+            {
+              "execution_time": 2.311535556,
+              "num_operations": 24903680,
+              "ops_per_second": 10773652.14450545
+            }
+          ]
+        }
+      },
+      {
+        "config": {
+          "custom_operations": "rp_1024,wp_64_none_256,wp_64_none_-256",
+          "exec_mode": "custom",
+          "memory_range": 2147483648,
+          "memory_type": "dram",
+          "min_io_chunk_size": 67108864,
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 4,
+          "prefault_file": true
+        },
+        "results": {
+          "execution_time": 2.3186407510000002,
+          "num_operations": 100139008,
+          "ops_per_second": 43188669.03241105,
+          "thread_ops_per_second_avg": 10797167.258102762,
+          "thread_ops_per_second_std_dev": 125273.75587191648,
+          "threads": [
+            {
+              "execution_time": 2.313579367,
+              "num_operations": 24641536,
+              "ops_per_second": 10650828.042243687
+            },
+            {
+              "execution_time": 2.314099122,
+              "num_operations": 25165824,
+              "ops_per_second": 10874998.29231602
+            },
+            {
+              "execution_time": 2.318615803,
+              "num_operations": 25165824,
+              "ops_per_second": 10853813.713957507
+            },
+            {
+              "execution_time": 2.303460396,
+              "num_operations": 25165824,
+              "ops_per_second": 10925225.388594003
             }
           ]
         }
@@ -8215,114 +8215,114 @@
           "prefault_file": true
         },
         "results": {
-          "execution_time": 0.899418464,
+          "execution_time": 0.9209685,
           "num_operations": 100139008,
-          "ops_per_second": 111337505.29720056,
-          "thread_ops_per_second_avg": 13917188.16215007,
-          "thread_ops_per_second_std_dev": 179788.8767913216,
+          "ops_per_second": 108732283.46029207,
+          "thread_ops_per_second_avg": 13591535.432536509,
+          "thread_ops_per_second_std_dev": 200427.91615190168,
           "threads": [
             {
-              "execution_time": 0.899418464,
+              "execution_time": 0.917748172,
               "num_operations": 12582912,
-              "ops_per_second": 13990053.021637768
+              "ops_per_second": 13710636.952377388
             },
             {
-              "execution_time": 0.896709874,
-              "num_operations": 12582912,
-              "ops_per_second": 14032311.190988401
-            },
-            {
-              "execution_time": 0.88954984,
-              "num_operations": 12582912,
-              "ops_per_second": 14145258.010501131
-            },
-            {
-              "execution_time": 0.88984783,
-              "num_operations": 12582912,
-              "ops_per_second": 14140521.082127042
-            },
-            {
-              "execution_time": 0.890232955,
-              "num_operations": 12582912,
-              "ops_per_second": 14134403.73031349
-            },
-            {
-              "execution_time": 0.898777806,
+              "execution_time": 0.9049196350000001,
               "num_operations": 12320768,
-              "ops_per_second": 13708358.081107313
+              "ops_per_second": 13615317.342517382
             },
             {
-              "execution_time": 0.885789651,
+              "execution_time": 0.917023287,
               "num_operations": 12320768,
-              "ops_per_second": 13909360.970847469
+              "ops_per_second": 13435610.82326146
             },
             {
-              "execution_time": 0.896251197,
-              "num_operations": 12582912,
-              "ops_per_second": 14039492.546418322
-            }
-          ]
-        }
-      },
-      {
-        "config": {
-          "custom_operations": "rp_512,wp_64_none_128,wp_64_none_-128",
-          "exec_mode": "custom",
-          "memory_range": 2147483648,
-          "memory_type": "dram",
-          "min_io_chunk_size": 67108864,
-          "numa_pattern": "near",
-          "number_operations": 100000000,
-          "number_partitions": 1,
-          "number_threads": 8,
-          "prefault_file": true
-        },
-        "results": {
-          "execution_time": 1.662147254,
-          "num_operations": 100139008,
-          "ops_per_second": 60246772.81691674,
-          "thread_ops_per_second_avg": 7530846.602114593,
-          "thread_ops_per_second_std_dev": 119747.55052556112,
-          "threads": [
-            {
-              "execution_time": 1.64845236,
-              "num_operations": 12582912,
-              "ops_per_second": 7633166.9057151275
-            },
-            {
-              "execution_time": 1.638814882,
+              "execution_time": 0.919027361,
               "num_operations": 12320768,
-              "ops_per_second": 7518096.238523175
+              "ops_per_second": 13406312.502593705
             },
             {
-              "execution_time": 1.639701458,
+              "execution_time": 0.916671961,
               "num_operations": 12582912,
-              "ops_per_second": 7673904.257759098
+              "ops_per_second": 13726733.810286142
             },
             {
-              "execution_time": 1.660883536,
+              "execution_time": 0.913692074,
+              "num_operations": 12582912,
+              "ops_per_second": 13771501.75432079
+            },
+            {
+              "execution_time": 0.920721556,
               "num_operations": 12845056,
-              "ops_per_second": 7733869.185635663
+              "ops_per_second": 13951075.56274049
             },
             {
-              "execution_time": 1.639008363,
+              "execution_time": 0.914552341,
               "num_operations": 12582912,
-              "ops_per_second": 7677149.35692491
-            },
+              "ops_per_second": 13758547.691476522
+            }
+          ]
+        }
+      },
+      {
+        "config": {
+          "custom_operations": "rp_512,wp_64_none_128,wp_64_none_-128",
+          "exec_mode": "custom",
+          "memory_range": 2147483648,
+          "memory_type": "dram",
+          "min_io_chunk_size": 67108864,
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 8,
+          "prefault_file": true
+        },
+        "results": {
+          "execution_time": 1.691235044,
+          "num_operations": 100139008,
+          "ops_per_second": 59210580.07594124,
+          "thread_ops_per_second_avg": 7401322.509492655,
+          "thread_ops_per_second_std_dev": 86031.14128800633,
+          "threads": [
             {
-              "execution_time": 1.661939027,
+              "execution_time": 1.676748957,
               "num_operations": 12582912,
-              "ops_per_second": 7571223.610238981
+              "ops_per_second": 7504350.575242373
             },
             {
-              "execution_time": 1.641454462,
-              "num_operations": 12320768,
-              "ops_per_second": 7506006.584543312
+              "execution_time": 1.684178191,
+              "num_operations": 12582912,
+              "ops_per_second": 7471247.441180053
             },
             {
-              "execution_time": 1.650593407,
+              "execution_time": 1.671407287,
+              "num_operations": 12582912,
+              "ops_per_second": 7528333.8165798
+            },
+            {
+              "execution_time": 1.668911854,
               "num_operations": 12320768,
-              "ops_per_second": 7464447.6027523605
+              "ops_per_second": 7382515.721528334
+            },
+            {
+              "execution_time": 1.67631549,
+              "num_operations": 12582912,
+              "ops_per_second": 7506291.07412233
+            },
+            {
+              "execution_time": 1.667306073,
+              "num_operations": 12320768,
+              "ops_per_second": 7389625.815871421
+            },
+            {
+              "execution_time": 1.680974501,
+              "num_operations": 12582912,
+              "ops_per_second": 7485486.539215505
+            },
+            {
+              "execution_time": 1.69100557,
+              "num_operations": 12582912,
+              "ops_per_second": 7441082.52700788
             }
           ]
         }
@@ -8341,51 +8341,51 @@
           "prefault_file": true
         },
         "results": {
-          "execution_time": 1.723193638,
+          "execution_time": 1.682312355,
           "num_operations": 100139008,
-          "ops_per_second": 58112452.24664647,
-          "thread_ops_per_second_avg": 7264056.530830809,
-          "thread_ops_per_second_std_dev": 96855.90722578646,
+          "ops_per_second": 59524622.58413361,
+          "thread_ops_per_second_avg": 7440577.823016701,
+          "thread_ops_per_second_std_dev": 75599.12370834047,
           "threads": [
             {
-              "execution_time": 1.722368346,
+              "execution_time": 1.682224138,
               "num_operations": 12582912,
-              "ops_per_second": 7305587.1174260415
+              "ops_per_second": 7479925.95978313
             },
             {
-              "execution_time": 1.723087696,
-              "num_operations": 12582912,
-              "ops_per_second": 7302537.200637059
-            },
-            {
-              "execution_time": 1.715486272,
-              "num_operations": 12582912,
-              "ops_per_second": 7334895.187083141
-            },
-            {
-              "execution_time": 1.701933752,
-              "num_operations": 12582912,
-              "ops_per_second": 7393303.050258798
-            },
-            {
-              "execution_time": 1.704105718,
-              "num_operations": 12582912,
-              "ops_per_second": 7383879.9242853075
-            },
-            {
-              "execution_time": 1.702280644,
-              "num_operations": 12582912,
-              "ops_per_second": 7391796.437532659
-            },
-            {
-              "execution_time": 1.703611577,
+              "execution_time": 1.672051158,
               "num_operations": 12320768,
-              "ops_per_second": 7232146.204181377
+              "ops_per_second": 7368654.924851289
             },
             {
-              "execution_time": 1.718629981,
+              "execution_time": 1.682266568,
+              "num_operations": 12582912,
+              "ops_per_second": 7479737.301656939
+            },
+            {
+              "execution_time": 1.680134328,
+              "num_operations": 12582912,
+              "ops_per_second": 7489229.754015239
+            },
+            {
+              "execution_time": 1.674163062,
               "num_operations": 12320768,
-              "ops_per_second": 7168947.438488796
+              "ops_per_second": 7359359.598629109
+            },
+            {
+              "execution_time": 1.673447999,
+              "num_operations": 12582912,
+              "ops_per_second": 7519153.273671577
+            },
+            {
+              "execution_time": 1.666079764,
+              "num_operations": 12582912,
+              "ops_per_second": 7552406.716585029
+            },
+            {
+              "execution_time": 1.676675971,
+              "num_operations": 12582912,
+              "ops_per_second": 7504677.240943175
             }
           ]
         }
@@ -8404,91 +8404,91 @@
           "prefault_file": true
         },
         "results": {
-          "execution_time": 0.791736182,
+          "execution_time": 0.789169489,
           "num_operations": 100139008,
-          "ops_per_second": 126480272.44004367,
-          "thread_ops_per_second_avg": 7905017.02750273,
-          "thread_ops_per_second_std_dev": 1838284.1101294965,
+          "ops_per_second": 126891636.58226529,
+          "thread_ops_per_second_avg": 7930727.2863915805,
+          "thread_ops_per_second_std_dev": 2048086.0712662302,
           "threads": [
             {
-              "execution_time": 0.783431561,
-              "num_operations": 7602176,
-              "ops_per_second": 9703688.718254229
+              "execution_time": 0.788019676,
+              "num_operations": 7077888,
+              "ops_per_second": 8981867.097440343
             },
             {
-              "execution_time": 0.78089029,
+              "execution_time": 0.778246444,
+              "num_operations": 4980736,
+              "ops_per_second": 6399947.007017741
+            },
+            {
+              "execution_time": 0.778869265,
+              "num_operations": 4980736,
+              "ops_per_second": 6394829.30424787
+            },
+            {
+              "execution_time": 0.786930249,
+              "num_operations": 9437184,
+              "ops_per_second": 11992402.137282692
+            },
+            {
+              "execution_time": 0.773767399,
               "num_operations": 9175040,
-              "ops_per_second": 11749460.990224376
+              "ops_per_second": 11857620.276917353
             },
             {
-              "execution_time": 0.788299109,
+              "execution_time": 0.777311936,
+              "num_operations": 6029312,
+              "ops_per_second": 7756618.315970385
+            },
+            {
+              "execution_time": 0.779820395,
+              "num_operations": 4980736,
+              "ops_per_second": 6387029.669825448
+            },
+            {
+              "execution_time": 0.779701201,
+              "num_operations": 7864320,
+              "ops_per_second": 10086325.364015952
+            },
+            {
+              "execution_time": 0.788146895,
+              "num_operations": 8126464,
+              "ops_per_second": 10310849.476860529
+            },
+            {
+              "execution_time": 0.778541527,
+              "num_operations": 4980736,
+              "ops_per_second": 6397521.297537671
+            },
+            {
+              "execution_time": 0.778012627,
+              "num_operations": 4980736,
+              "ops_per_second": 6401870.390208975
+            },
+            {
+              "execution_time": 0.777907406,
+              "num_operations": 4980736,
+              "ops_per_second": 6402736.31743776
+            },
+            {
+              "execution_time": 0.777394604,
               "num_operations": 6815744,
-              "ops_per_second": 8646139.41863532
+              "ops_per_second": 8767418.714936178
             },
             {
-              "execution_time": 0.780101851,
+              "execution_time": 0.777334516,
+              "num_operations": 5767168,
+              "ops_per_second": 7419158.523510102
+            },
+            {
+              "execution_time": 0.778552268,
               "num_operations": 4980736,
-              "ops_per_second": 6384725.2683931915
+              "ops_per_second": 6397433.036570385
             },
             {
-              "execution_time": 0.780665707,
+              "execution_time": 0.769850205,
               "num_operations": 4980736,
-              "ops_per_second": 6380113.735417354
-            },
-            {
-              "execution_time": 0.778504986,
-              "num_operations": 4980736,
-              "ops_per_second": 6397821.580554399
-            },
-            {
-              "execution_time": 0.7915014,
-              "num_operations": 6291456,
-              "ops_per_second": 7948761.682544086
-            },
-            {
-              "execution_time": 0.772131014,
-              "num_operations": 5242880,
-              "ops_per_second": 6790143.000265497
-            },
-            {
-              "execution_time": 0.789760061,
-              "num_operations": 5505024,
-              "ops_per_second": 6970501.892726125
-            },
-            {
-              "execution_time": 0.78582966,
-              "num_operations": 6291456,
-              "ops_per_second": 8006132.015938416
-            },
-            {
-              "execution_time": 0.779812542,
-              "num_operations": 4980736,
-              "ops_per_second": 6387093.989570636
-            },
-            {
-              "execution_time": 0.780687647,
-              "num_operations": 4980736,
-              "ops_per_second": 6379934.432342824
-            },
-            {
-              "execution_time": 0.778458527,
-              "num_operations": 4980736,
-              "ops_per_second": 6398203.407437273
-            },
-            {
-              "execution_time": 0.791179617,
-              "num_operations": 7602176,
-              "ops_per_second": 9608660.077500455
-            },
-            {
-              "execution_time": 0.790954269,
-              "num_operations": 6815744,
-              "ops_per_second": 8617115.131848413
-            },
-            {
-              "execution_time": 0.776403601,
-              "num_operations": 8912896,
-              "ops_per_second": 11479720.068943884
+              "ops_per_second": 6469746.929534168
             }
           ]
         }
@@ -8507,91 +8507,91 @@
           "prefault_file": true
         },
         "results": {
-          "execution_time": 1.57500616,
+          "execution_time": 1.58503433,
           "num_operations": 100139008,
-          "ops_per_second": 63580073.87094918,
-          "thread_ops_per_second_avg": 3973754.6169343237,
-          "thread_ops_per_second_std_dev": 424021.60621068714,
+          "ops_per_second": 63177816.470385216,
+          "thread_ops_per_second_avg": 3948613.529399076,
+          "thread_ops_per_second_std_dev": 702669.246026468,
           "threads": [
             {
-              "execution_time": 1.57500616,
-              "num_operations": 7077888,
-              "ops_per_second": 4493879.566794837
+              "execution_time": 1.563874043,
+              "num_operations": 8126464,
+              "ops_per_second": 5196367.339412386
             },
             {
-              "execution_time": 1.54049921,
-              "num_operations": 6815744,
-              "ops_per_second": 4424373.576926405
+              "execution_time": 1.578155241,
+              "num_operations": 5242880,
+              "ops_per_second": 3322157.32888093
             },
             {
-              "execution_time": 1.566718015,
-              "num_operations": 6815744,
-              "ops_per_second": 4350332.309161582
+              "execution_time": 1.584927644,
+              "num_operations": 6029312,
+              "ops_per_second": 3804155.995906145
             },
             {
-              "execution_time": 1.566112756,
-              "num_operations": 6815744,
-              "ops_per_second": 4352013.591542447
+              "execution_time": 1.547587282,
+              "num_operations": 6553600,
+              "ops_per_second": 4234720.765817201
             },
             {
-              "execution_time": 1.570391459,
+              "execution_time": 1.556289399,
+              "num_operations": 4456448,
+              "ops_per_second": 2863508.549800255
+            },
+            {
+              "execution_time": 1.557599213,
+              "num_operations": 7340032,
+              "ops_per_second": 4712400.942899038
+            },
+            {
+              "execution_time": 1.562090448,
+              "num_operations": 6029312,
+              "ops_per_second": 3859771.3773357635
+            },
+            {
+              "execution_time": 1.577312912,
               "num_operations": 5767168,
-              "ops_per_second": 3672439.739116029
+              "ops_per_second": 3656324.59870461
             },
             {
-              "execution_time": 1.574516117,
+              "execution_time": 1.55986905,
+              "num_operations": 7340032,
+              "ops_per_second": 4705543.712146862
+            },
+            {
+              "execution_time": 1.584427822,
+              "num_operations": 6291456,
+              "ops_per_second": 3970806.314205204
+            },
+            {
+              "execution_time": 1.566330892,
+              "num_operations": 6553600,
+              "ops_per_second": 4184045.6786445095
+            },
+            {
+              "execution_time": 1.571540686,
+              "num_operations": 6291456,
+              "ops_per_second": 4003368.195330324
+            },
+            {
+              "execution_time": 1.531376743,
+              "num_operations": 4980736,
+              "ops_per_second": 3252456.3421556414
+            },
+            {
+              "execution_time": 1.574612325,
               "num_operations": 7077888,
-              "ops_per_second": 4495278.215053038
+              "ops_per_second": 4495003.555875254
             },
             {
-              "execution_time": 1.562219934,
-              "num_operations": 6291456,
-              "ops_per_second": 4027253.693973156
+              "execution_time": 1.56616421,
+              "num_operations": 4456448,
+              "ops_per_second": 2845453.8620825717
             },
             {
-              "execution_time": 1.541697979,
-              "num_operations": 6553600,
-              "ops_per_second": 4250897.445069557
-            },
-            {
-              "execution_time": 1.544644972,
-              "num_operations": 4980736,
-              "ops_per_second": 3224518.31345488
-            },
-            {
-              "execution_time": 1.55944212,
-              "num_operations": 5505024,
-              "ops_per_second": 3530123.965101058
-            },
-            {
-              "execution_time": 1.549074166,
-              "num_operations": 6291456,
-              "ops_per_second": 4061429.812780184
-            },
-            {
-              "execution_time": 1.569657732,
-              "num_operations": 6029312,
-              "ops_per_second": 3841163.507867204
-            },
-            {
-              "execution_time": 1.535845021,
-              "num_operations": 6553600,
-              "ops_per_second": 4267097.207329488
-            },
-            {
-              "execution_time": 1.522773303,
-              "num_operations": 4980736,
-              "ops_per_second": 3270832.2310271026
-            },
-            {
-              "execution_time": 1.518570974,
-              "num_operations": 6553600,
-              "ops_per_second": 4315636.287145312
-            },
-            {
-              "execution_time": 1.566399785,
-              "num_operations": 6029312,
-              "ops_per_second": 3849152.7244432047
+              "execution_time": 1.557742781,
+              "num_operations": 7602176,
+              "ops_per_second": 4880251.15104032
             }
           ]
         }
@@ -8610,91 +8610,640 @@
           "prefault_file": true
         },
         "results": {
-          "execution_time": 1.591918131,
+          "execution_time": 1.61446515,
           "num_operations": 100139008,
-          "ops_per_second": 62904621.82065568,
-          "thread_ops_per_second_avg": 3931538.86379098,
-          "thread_ops_per_second_std_dev": 641518.5868381544,
+          "ops_per_second": 62026119.30025247,
+          "thread_ops_per_second_avg": 3876632.456265779,
+          "thread_ops_per_second_std_dev": 486296.0258544068,
           "threads": [
             {
-              "execution_time": 1.584404365,
-              "num_operations": 6029312,
-              "ops_per_second": 3805412.389153573
-            },
-            {
-              "execution_time": 1.567109976,
-              "num_operations": 5242880,
-              "ops_per_second": 3345572.4743596427
-            },
-            {
-              "execution_time": 1.574045106,
-              "num_operations": 4980736,
-              "ops_per_second": 3164290.5155730653
-            },
-            {
-              "execution_time": 1.584763467,
-              "num_operations": 8126464,
-              "ops_per_second": 5127871.868086167
-            },
-            {
-              "execution_time": 1.571658754,
-              "num_operations": 7864320,
-              "ops_per_second": 5003834.311987041
-            },
-            {
-              "execution_time": 1.572651696,
-              "num_operations": 6291456,
-              "ops_per_second": 4000539.989879615
-            },
-            {
-              "execution_time": 1.576372218,
-              "num_operations": 6815744,
-              "ops_per_second": 4323689.495522434
-            },
-            {
-              "execution_time": 1.586472271,
-              "num_operations": 4980736,
-              "ops_per_second": 3139503.9743496403
-            },
-            {
-              "execution_time": 1.591728162,
-              "num_operations": 6029312,
-              "ops_per_second": 3787903.0753745
-            },
-            {
-              "execution_time": 1.563137635,
-              "num_operations": 6815744,
-              "ops_per_second": 4360296.782183227
-            },
-            {
-              "execution_time": 1.574666553,
-              "num_operations": 5505024,
-              "ops_per_second": 3495993.478436447
-            },
-            {
-              "execution_time": 1.579332322,
-              "num_operations": 6291456,
-              "ops_per_second": 3983617.5783654987
-            },
-            {
-              "execution_time": 1.570079846,
-              "num_operations": 5505024,
-              "ops_per_second": 3506206.3970981003
-            },
-            {
-              "execution_time": 1.546124206,
+              "execution_time": 1.598085044,
               "num_operations": 7077888,
-              "ops_per_second": 4577826.26553096
+              "ops_per_second": 4428980.814615521
             },
             {
-              "execution_time": 1.575844598,
-              "num_operations": 7340032,
-              "ops_per_second": 4657839.998509802
+              "execution_time": 1.591944993,
+              "num_operations": 6029312,
+              "ops_per_second": 3787387.1437214916
             },
             {
-              "execution_time": 1.563909271,
+              "execution_time": 1.599374594,
+              "num_operations": 7077888,
+              "ops_per_second": 4425409.798650335
+            },
+            {
+              "execution_time": 1.600404266,
+              "num_operations": 7077888,
+              "ops_per_second": 4422562.567700629
+            },
+            {
+              "execution_time": 1.591517748,
+              "num_operations": 5505024,
+              "ops_per_second": 3458977.448990409
+            },
+            {
+              "execution_time": 1.606908873,
+              "num_operations": 6815744,
+              "ops_per_second": 4241524.901953789
+            },
+            {
+              "execution_time": 1.604879239,
+              "num_operations": 6553600,
+              "ops_per_second": 4083547.1235103942
+            },
+            {
+              "execution_time": 1.613853342,
+              "num_operations": 6029312,
+              "ops_per_second": 3735972.68295027
+            },
+            {
+              "execution_time": 1.593911667,
+              "num_operations": 5505024,
+              "ops_per_second": 3453782.3607009207
+            },
+            {
+              "execution_time": 1.58066653,
+              "num_operations": 4456448,
+              "ops_per_second": 2819347.3546884046
+            },
+            {
+              "execution_time": 1.590438289,
               "num_operations": 5242880,
-              "ops_per_second": 3352419.5407113233
+              "ops_per_second": 3296500.1133722076
+            },
+            {
+              "execution_time": 1.567997717,
+              "num_operations": 6815744,
+              "ops_per_second": 4346781.839096262
+            },
+            {
+              "execution_time": 1.586970685,
+              "num_operations": 6029312,
+              "ops_per_second": 3799258.585548478
+            },
+            {
+              "execution_time": 1.578889541,
+              "num_operations": 6815744,
+              "ops_per_second": 4316795.965145987
+            },
+            {
+              "execution_time": 1.573340517,
+              "num_operations": 6815744,
+              "ops_per_second": 4332020.898435935
+            },
+            {
+              "execution_time": 1.598628283,
+              "num_operations": 6291456,
+              "ops_per_second": 3935534.0243282807
+            }
+          ]
+        }
+      },
+      {
+        "config": {
+          "custom_operations": "rp_128,wp_64_none",
+          "exec_mode": "custom",
+          "memory_range": 2147483648,
+          "memory_type": "dram",
+          "min_io_chunk_size": 67108864,
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 32,
+          "prefault_file": true
+        },
+        "results": {
+          "execution_time": 0.677645573,
+          "num_operations": 100139008,
+          "ops_per_second": 147774901.79220873,
+          "thread_ops_per_second_avg": 4617965.681006523,
+          "thread_ops_per_second_std_dev": 1045878.384676724,
+          "threads": [
+            {
+              "execution_time": 0.637335685,
+              "num_operations": 3145728,
+              "ops_per_second": 4935747.478191182
+            },
+            {
+              "execution_time": 0.669116998,
+              "num_operations": 3145728,
+              "ops_per_second": 4701312.340596076
+            },
+            {
+              "execution_time": 0.675729763,
+              "num_operations": 3145728,
+              "ops_per_second": 4655304.786389881
+            },
+            {
+              "execution_time": 0.640665685,
+              "num_operations": 3145728,
+              "ops_per_second": 4910092.851312928
+            },
+            {
+              "execution_time": 0.671408269,
+              "num_operations": 3407872,
+              "ops_per_second": 5075707.520069283
+            },
+            {
+              "execution_time": 0.656058913,
+              "num_operations": 3145728,
+              "ops_per_second": 4794886.461667506
+            },
+            {
+              "execution_time": 0.657701909,
+              "num_operations": 3670016,
+              "ops_per_second": 5580059.826160547
+            },
+            {
+              "execution_time": 0.639068845,
+              "num_operations": 3932160,
+              "ops_per_second": 6152952.112694524
+            },
+            {
+              "execution_time": 0.648276208,
+              "num_operations": 4980736,
+              "ops_per_second": 7683046.112961777
+            },
+            {
+              "execution_time": 0.6402345,
+              "num_operations": 2883584,
+              "ops_per_second": 4503949.724671194
+            },
+            {
+              "execution_time": 0.65996523,
+              "num_operations": 3145728,
+              "ops_per_second": 4766505.653638753
+            },
+            {
+              "execution_time": 0.643527695,
+              "num_operations": 2621440,
+              "ops_per_second": 4073546.516129349
+            },
+            {
+              "execution_time": 0.638614598,
+              "num_operations": 2621440,
+              "ops_per_second": 4104885.8078248943
+            },
+            {
+              "execution_time": 0.627383167,
+              "num_operations": 2883584,
+              "ops_per_second": 4596208.7471817685
+            },
+            {
+              "execution_time": 0.631469306,
+              "num_operations": 2883584,
+              "ops_per_second": 4566467.400079776
+            },
+            {
+              "execution_time": 0.607847503,
+              "num_operations": 4456448,
+              "ops_per_second": 7331523.084335184
+            },
+            {
+              "execution_time": 0.618881196,
+              "num_operations": 2621440,
+              "ops_per_second": 4235772.579524294
+            },
+            {
+              "execution_time": 0.639784189,
+              "num_operations": 2621440,
+              "ops_per_second": 4097381.656300981
+            },
+            {
+              "execution_time": 0.664166983,
+              "num_operations": 2621440,
+              "ops_per_second": 3946959.2242588187
+            },
+            {
+              "execution_time": 0.663165351,
+              "num_operations": 2359296,
+              "ops_per_second": 3557628.5709776175
+            },
+            {
+              "execution_time": 0.660657346,
+              "num_operations": 3670016,
+              "ops_per_second": 5555097.543712168
+            },
+            {
+              "execution_time": 0.658808042,
+              "num_operations": 2883584,
+              "ops_per_second": 4376971.463866861
+            },
+            {
+              "execution_time": 0.654918602,
+              "num_operations": 2883584,
+              "ops_per_second": 4402965.484861889
+            },
+            {
+              "execution_time": 0.624227484,
+              "num_operations": 2621440,
+              "ops_per_second": 4199494.682935172
+            },
+            {
+              "execution_time": 0.632780268,
+              "num_operations": 2359296,
+              "ops_per_second": 3728460.129543736
+            },
+            {
+              "execution_time": 0.63304672,
+              "num_operations": 3407872,
+              "ops_per_second": 5383286.7185537275
+            },
+            {
+              "execution_time": 0.628399293,
+              "num_operations": 2359296,
+              "ops_per_second": 3754453.619348678
+            },
+            {
+              "execution_time": 0.648566033,
+              "num_operations": 2621440,
+              "ops_per_second": 4041901.4666468045
+            },
+            {
+              "execution_time": 0.63751276,
+              "num_operations": 4456448,
+              "ops_per_second": 6990366.749678861
+            },
+            {
+              "execution_time": 0.634719532,
+              "num_operations": 3145728,
+              "ops_per_second": 4956091.378010406
+            },
+            {
+              "execution_time": 0.615343875,
+              "num_operations": 2621440,
+              "ops_per_second": 4260122.033391492
+            },
+            {
+              "execution_time": 0.634397087,
+              "num_operations": 3670016,
+              "ops_per_second": 5785045.47893676
+            }
+          ]
+        }
+      },
+      {
+        "config": {
+          "custom_operations": "rp_512,wp_64_none_128,wp_64_none_-128",
+          "exec_mode": "custom",
+          "memory_range": 2147483648,
+          "memory_type": "dram",
+          "min_io_chunk_size": 67108864,
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 32,
+          "prefault_file": true
+        },
+        "results": {
+          "execution_time": 1.673736139,
+          "num_operations": 100139008,
+          "ops_per_second": 59829626.46658847,
+          "thread_ops_per_second_avg": 1869675.8270808896,
+          "thread_ops_per_second_std_dev": 359757.4576358795,
+          "threads": [
+            {
+              "execution_time": 1.637868593,
+              "num_operations": 2883584,
+              "ops_per_second": 1760571.0325748946
+            },
+            {
+              "execution_time": 1.601047805,
+              "num_operations": 2883584,
+              "ops_per_second": 1801060.5248604678
+            },
+            {
+              "execution_time": 1.604526093,
+              "num_operations": 2883584,
+              "ops_per_second": 1797156.1899679247
+            },
+            {
+              "execution_time": 1.597332701,
+              "num_operations": 2883584,
+              "ops_per_second": 1805249.4625538879
+            },
+            {
+              "execution_time": 1.60496852,
+              "num_operations": 2883584,
+              "ops_per_second": 1796660.784349839
+            },
+            {
+              "execution_time": 1.598640893,
+              "num_operations": 4194304,
+              "ops_per_second": 2623668.65402085
+            },
+            {
+              "execution_time": 1.607624362,
+              "num_operations": 3145728,
+              "ops_per_second": 1956755.6167701322
+            },
+            {
+              "execution_time": 1.642805582,
+              "num_operations": 2883584,
+              "ops_per_second": 1755280.1327162765
+            },
+            {
+              "execution_time": 1.634105839,
+              "num_operations": 2883584,
+              "ops_per_second": 1764624.9901197494
+            },
+            {
+              "execution_time": 1.656002491,
+              "num_operations": 2883584,
+              "ops_per_second": 1741292.066691704
+            },
+            {
+              "execution_time": 1.62690152,
+              "num_operations": 2883584,
+              "ops_per_second": 1772439.1824282024
+            },
+            {
+              "execution_time": 1.639305099,
+              "num_operations": 2883584,
+              "ops_per_second": 1759028.2624991701
+            },
+            {
+              "execution_time": 1.642411521,
+              "num_operations": 3145728,
+              "ops_per_second": 1915310.4808255907
+            },
+            {
+              "execution_time": 1.656494544,
+              "num_operations": 2883584,
+              "ops_per_second": 1740774.8250331695
+            },
+            {
+              "execution_time": 1.654449143,
+              "num_operations": 2883584,
+              "ops_per_second": 1742926.9507621245
+            },
+            {
+              "execution_time": 1.651537209,
+              "num_operations": 3145728,
+              "ops_per_second": 1904727.2945819532
+            },
+            {
+              "execution_time": 1.61882497,
+              "num_operations": 4980736,
+              "ops_per_second": 3076760.05269427
+            },
+            {
+              "execution_time": 1.623670453,
+              "num_operations": 4980736,
+              "ops_per_second": 3067578.147275678
+            },
+            {
+              "execution_time": 1.639503266,
+              "num_operations": 2883584,
+              "ops_per_second": 1758815.648495329
+            },
+            {
+              "execution_time": 1.632308846,
+              "num_operations": 2883584,
+              "ops_per_second": 1766567.6486813575
+            },
+            {
+              "execution_time": 1.636977543,
+              "num_operations": 2883584,
+              "ops_per_second": 1761529.3577671272
+            },
+            {
+              "execution_time": 1.628054123,
+              "num_operations": 2883584,
+              "ops_per_second": 1771184.3600668795
+            },
+            {
+              "execution_time": 1.633562204,
+              "num_operations": 2883584,
+              "ops_per_second": 1765212.241651497
+            },
+            {
+              "execution_time": 1.606421102,
+              "num_operations": 3407872,
+              "ops_per_second": 2121406.3957185242
+            },
+            {
+              "execution_time": 1.608064287,
+              "num_operations": 2883584,
+              "ops_per_second": 1793201.9405639595
+            },
+            {
+              "execution_time": 1.63326986,
+              "num_operations": 2883584,
+              "ops_per_second": 1765528.2024245523
+            },
+            {
+              "execution_time": 1.647993511,
+              "num_operations": 2883584,
+              "ops_per_second": 1749754.46247373
+            },
+            {
+              "execution_time": 1.573477002,
+              "num_operations": 3670016,
+              "ops_per_second": 2332424.303205672
+            },
+            {
+              "execution_time": 1.560744498,
+              "num_operations": 3145728,
+              "ops_per_second": 2015530.4113075912
+            },
+            {
+              "execution_time": 1.632022989,
+              "num_operations": 2883584,
+              "ops_per_second": 1766877.0718523255
+            },
+            {
+              "execution_time": 1.631502771,
+              "num_operations": 2883584,
+              "ops_per_second": 1767440.4550551632
+            },
+            {
+              "execution_time": 1.621426482,
+              "num_operations": 2883584,
+              "ops_per_second": 1778424.1419587226
+            }
+          ]
+        }
+      },
+      {
+        "config": {
+          "custom_operations": "rp_1024,wp_64_none_256,wp_64_none_-256",
+          "exec_mode": "custom",
+          "memory_range": 2147483648,
+          "memory_type": "dram",
+          "min_io_chunk_size": 67108864,
+          "numa_pattern": "near",
+          "number_operations": 100000000,
+          "number_partitions": 1,
+          "number_threads": 32,
+          "prefault_file": true
+        },
+        "results": {
+          "execution_time": 1.665725239,
+          "num_operations": 100139008,
+          "ops_per_second": 60117362.48897649,
+          "thread_ops_per_second_avg": 1878667.5777805154,
+          "thread_ops_per_second_std_dev": 385979.52120724844,
+          "threads": [
+            {
+              "execution_time": 1.633564975,
+              "num_operations": 2883584,
+              "ops_per_second": 1765209.2473395495
+            },
+            {
+              "execution_time": 1.621770073,
+              "num_operations": 2883584,
+              "ops_per_second": 1778047.361957949
+            },
+            {
+              "execution_time": 1.628143508,
+              "num_operations": 2883584,
+              "ops_per_second": 1771087.1221310056
+            },
+            {
+              "execution_time": 1.63431771,
+              "num_operations": 2883584,
+              "ops_per_second": 1764396.2262392666
+            },
+            {
+              "execution_time": 1.579949202,
+              "num_operations": 4980736,
+              "ops_per_second": 3152465.910736287
+            },
+            {
+              "execution_time": 1.629115422,
+              "num_operations": 2883584,
+              "ops_per_second": 1770030.5092317762
+            },
+            {
+              "execution_time": 1.638016045,
+              "num_operations": 4194304,
+              "ops_per_second": 2560600.070312498
+            },
+            {
+              "execution_time": 1.646830447,
+              "num_operations": 2883584,
+              "ops_per_second": 1750990.2159344763
+            },
+            {
+              "execution_time": 1.652790893,
+              "num_operations": 2883584,
+              "ops_per_second": 1744675.6345359413
+            },
+            {
+              "execution_time": 1.634401579,
+              "num_operations": 3670016,
+              "ops_per_second": 2245479.964749838
+            },
+            {
+              "execution_time": 1.649996873,
+              "num_operations": 2883584,
+              "ops_per_second": 1747629.9786902687
+            },
+            {
+              "execution_time": 1.642023317,
+              "num_operations": 2883584,
+              "ops_per_second": 1756116.353614484
+            },
+            {
+              "execution_time": 1.636498625,
+              "num_operations": 2883584,
+              "ops_per_second": 1762044.86575722
+            },
+            {
+              "execution_time": 1.647041093,
+              "num_operations": 2883584,
+              "ops_per_second": 1750766.275507857
+            },
+            {
+              "execution_time": 1.651797156,
+              "num_operations": 2883584,
+              "ops_per_second": 1745725.2481187829
+            },
+            {
+              "execution_time": 1.646407892,
+              "num_operations": 2883584,
+              "ops_per_second": 1751439.6122683308
+            },
+            {
+              "execution_time": 1.641354911,
+              "num_operations": 2883584,
+              "ops_per_second": 1756831.493709772
+            },
+            {
+              "execution_time": 1.648072325,
+              "num_operations": 2883584,
+              "ops_per_second": 1749670.78583763
+            },
+            {
+              "execution_time": 1.643931308,
+              "num_operations": 2883584,
+              "ops_per_second": 1754078.157625793
+            },
+            {
+              "execution_time": 1.632024309,
+              "num_operations": 4456448,
+              "ops_per_second": 2730625.9933901513
+            },
+            {
+              "execution_time": 1.630612247,
+              "num_operations": 2883584,
+              "ops_per_second": 1768405.7048542455
+            },
+            {
+              "execution_time": 1.58511189,
+              "num_operations": 2883584,
+              "ops_per_second": 1819167.478454786
+            },
+            {
+              "execution_time": 1.635698982,
+              "num_operations": 3145728,
+              "ops_per_second": 1923170.4822324086
+            },
+            {
+              "execution_time": 1.639405881,
+              "num_operations": 2883584,
+              "ops_per_second": 1758920.1267480387
+            },
+            {
+              "execution_time": 1.630448544,
+              "num_operations": 2883584,
+              "ops_per_second": 1768583.2592580118
+            },
+            {
+              "execution_time": 1.560106801,
+              "num_operations": 4718592,
+              "ops_per_second": 3024531.395527196
+            },
+            {
+              "execution_time": 1.625888124,
+              "num_operations": 2883584,
+              "ops_per_second": 1773543.9218940996
+            },
+            {
+              "execution_time": 1.635960543,
+              "num_operations": 2883584,
+              "ops_per_second": 1762624.418014463
+            },
+            {
+              "execution_time": 1.634937688,
+              "num_operations": 2883584,
+              "ops_per_second": 1763727.1567991404
+            },
+            {
+              "execution_time": 1.640563393,
+              "num_operations": 2883584,
+              "ops_per_second": 1757679.1072528826
+            },
+            {
+              "execution_time": 1.633833164,
+              "num_operations": 2883584,
+              "ops_per_second": 1764919.4933345106
+            },
+            {
+              "execution_time": 1.626792128,
+              "num_operations": 2883584,
+              "ops_per_second": 1772558.3683178483
             }
           ]
         }

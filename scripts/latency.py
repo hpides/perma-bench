@@ -40,7 +40,7 @@ def plot_lookup(system_data, ax, label=True):
         filtered_data[sys] = f_data
 
     plot_data(filtered_data, ax, label=label)
-    ax.set_xticklabels(["Read", "+$\it{None}$", "+$\it{Cache}$", "+$\it{CacheInv}$", "+$\it{NoCache}$"])
+    ax.set_xticklabels(["Read", "$\it{None}$", "$\it{Cache}$", "$\it{CacheInv}$", "$\it{NoCache}$"])
 
     # ax.set_ylim(0, 18)
     # ax.set_yticks(range(0, 17, 5))
