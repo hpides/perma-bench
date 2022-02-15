@@ -32,11 +32,11 @@ SYSTEM_COLOR = {
 }
 
 SYSTEM_MARKER = {
-    'intel-128':   '^',
+    'intel-128':   'X',
     'intel-256':   'o',
     'intel-512':   'd',
     'intel-gen2':  's',
-    'zdram':       'X',
+    'zdram':       '^',
     'nvdimm-hpe':  'x',
 }
 

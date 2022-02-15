@@ -55,7 +55,7 @@ def plot_seq(system_data, ax):
     ax.set_xticks(x_ticks_pos)
     ax.set_xticklabels(x_ticks)
 
-    ax.set_ylabel("Bandwidth (GB/s)")
+    ax.set_ylabel("Throughput (GB/s)")
 
     ax.set_ylim(0, 22)
     ax.set_yticks(range(0, 22, 5))

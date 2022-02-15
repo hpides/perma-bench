@@ -53,7 +53,7 @@ if __name__ == '__main__':
     pmem_ax.set_title("a) PMem Log")
     dram_ax.set_title("b) DRAM Index")
 
-    pmem_ax.set_ylabel("Bandwidth (GB/s)")
+    pmem_ax.set_ylabel("Throughput (GB/s)")
 
     pmem_ax.set_ylim(0, 17)
     pmem_ax.set_yticks(range(0, 17, 3))

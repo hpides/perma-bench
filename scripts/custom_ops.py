@@ -86,7 +86,7 @@ def plot_index_lookup(system_data, ax):
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    max_y = 21
+    max_y = 31
     ax.set_ylim(0, max_y)
     ax.set_yticks(range(0, max_y + 1, 5))
 
@@ -100,9 +100,9 @@ def plot_hybrid_index_update(system_data, ax):
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    max_y = 21
+    max_y = 17
     ax.set_ylim(0, max_y)
-    ax.set_yticks(range(0, max_y + 1, 5))
+    ax.set_yticks(range(0, max_y + 1, 3))
 
     # ax.set_ylabel("Million Ops/s")
     ax.set_title(f"{next(LETTER_ITER)}) Tree Index\nUpdate (Hybrid)")

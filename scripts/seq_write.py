@@ -16,7 +16,7 @@ def plot_threads(system_data, ax):
     ax.set_xticklabels(['1', '', '4', '8', '16', '32'])
     ax.set_xlabel("\# of Threads")
 
-    ax.set_ylabel("Bandwidth (GB/s)")
+    ax.set_ylabel("Throughput (GB/s)")
     ax.set_ylim(0, 28)
     ax.set_yticks(range(0, 28, 5))
 
@@ -34,7 +34,7 @@ def plot_size(system_data, ax):
     ax.set_xticklabels(['64', '', '256', '512', '1024'])
     ax.set_xlabel("Access Size in Byte")
 
-    # ax.set_ylabel("Bandwidth (GB/s)")
+    # ax.set_ylabel("Throughput (GB/s)")
     ax.set_ylim(0, 28)
     ax.set_yticks(range(0, 28, 5))
 

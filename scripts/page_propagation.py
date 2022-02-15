@@ -53,7 +53,7 @@ if __name__ == '__main__':
     page_in_ax.set_title("a) Page In")
     page_out_ax.set_title("b) Page Out")
 
-    page_in_ax.set_ylabel("Bandwidth (GB/s)")
+    page_in_ax.set_ylabel("Throughput (GB/s)")
 
     page_in_ax.set_ylim(0, 16)
     page_in_ax.set_yticks(range(0, 16, 5))

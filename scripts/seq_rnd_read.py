@@ -19,7 +19,7 @@ def plot_scan(system_data, ax):
     ax.set_xticklabels(['1', '', '4', '8', '16', '32'])
     ax.set_xlabel("\# of Threads")
 
-    ax.set_ylabel("Bandwidth (GB/s)")
+    ax.set_ylabel("Throughput (GB/s)")
     ax.set_ylim(0, 55)
     ax.set_yticks(range(0, 55, 10))
 
@@ -48,7 +48,7 @@ def plot_lookup(system_data, ax):
     xticks = BAR_X_TICKS_POS(bar_width, num_bars, num_xticks)
     ax.set_xticks(xticks)
     ax.set_xticklabels([64, 256, 1024])
-    # ax.set_ylabel("Bandwidth (GB/s)")
+    # ax.set_ylabel("Throughput (GB/s)")
     ax.set_title("b) Random Reads")
     ax.set_ylim(0, 45)
     ax.set_yticks(range(0, 45, 10))

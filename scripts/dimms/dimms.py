@@ -70,7 +70,7 @@ def plot_dimms(scan_data, logging_data, index_data, ax):
     ax.set_ylim(0, 45)
     ax.set_yticks(range(0, 45, 10))
 
-    ax.set_ylabel("Bandwidth (GB/s)")
+    ax.set_ylabel("Throughput (GB/s)")
 
 
 if __name__ == '__main__':
