@@ -74,7 +74,7 @@ def plot_index_update(system_data, ax):
 
     max_y = 16
     ax.set_ylim(0, max_y)
-    ax.set_yticks(range(0, max_y + 1, 5))
+    ax.set_yticks(range(0, max_y + 1, 3))
 
     # ax.set_ylabel("Million Ops/s")
     ax.set_title(f"{next(LETTER_ITER)}) Tree Index\nUpdate (PMem)")

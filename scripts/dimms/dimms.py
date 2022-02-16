@@ -15,8 +15,8 @@ DIMM_COLOR = {
 DIMM_HATCH = {
     '1dimms': '\\\\',
     '2dimms': '//',
-    '4dimms': '/',
-    '6dimms': '\\',
+    '4dimms': '\\',
+    '6dimms': '/',
 }
 
 DIMM_NAME = {
@@ -86,7 +86,7 @@ def plot_ops(hash_data, tree_data, ax):
     ax.set_ylabel("Million Ops/s")
     ax.set_ylim(0, 30)
     ax.set_yticks(range(0, 31, 10))
-    ax.set_title("b) Index", loc='left')
+    ax.set_title("b) Index")
 
 
 def plot_lat(latency_data, ax):
@@ -94,8 +94,8 @@ def plot_lat(latency_data, ax):
     ax.set_xticks(BAR_X_TICKS_POS(0.8 / 4, 4, 1))
     ax.set_xticklabels(["64 Byte\nRead"])
     ax.set_ylabel("Latency (ns)")
-    ax.set_ylim(0, 550)
-    ax.set_yticks(range(0, 551, 150))
+    ax.set_ylim(0, 600)
+    ax.set_yticks(range(0, 601, 150))
     ax.set_title("c) Latency", loc='right')
 
 
