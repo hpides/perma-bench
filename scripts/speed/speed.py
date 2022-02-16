@@ -41,16 +41,13 @@ def plot_bm(system_data, ax, offset, label=False):
     num_bars = len(bars)
     bar_width = 0.8 / num_bars
 
-    num_xticks = num_bars
-    x_pos = range(num_xticks)
-
     for i, system in enumerate(bars):
         data = system_data[system]
         y_data = data[-1][1]
         if y_data > MILLION:
             y_data = y_data / MILLION
         # print(f"{system}: {y_data}")
-        pos = x_pos[offset] + (i * bar_width)
+        pos = offset + (i * bar_width)
         bar = ax.bar(pos, y_data, width=bar_width, **SPEED_BAR(system))
         if label:
             label = SPEED_NAME[system]
@@ -71,15 +68,15 @@ def plot_raw(scan_data, logging_data, index_data, ax):
 
 
 def plot_ops(hash_data, tree_data, ax):
-    plot_bm(hash_data, ax, 0)
-    plot_bm(tree_data, ax, 1)
+    plot_bm(tree_data, ax, 0)
+    plot_bm(hash_data, ax, 1)
 
     ax.set_xticks(BAR_X_TICKS_POS(0.8 / 3, 3, 2))
-    ax.set_xticklabels(["Update\nHash", "Tree\nLookup"])
+    ax.set_xticklabels(["Tree\nLookup", "Update\nHash"])
     ax.set_ylabel("Million Ops/s")
     ax.set_ylim(0, 30)
     ax.set_yticks(range(0, 31, 5))
-    ax.set_title("b) Index")
+    ax.set_title("b) Index", loc='left')
 
 
 def plot_lat(latency_data, ax):
@@ -89,7 +86,7 @@ def plot_lat(latency_data, ax):
     ax.set_ylabel("Latency (ns)")
     ax.set_ylim(0, 550)
     ax.set_yticks(range(0, 551, 100))
-    ax.set_title("c) Latency")
+    ax.set_title("c) Latency", loc='right')
 
 
 if __name__ == '__main__':
