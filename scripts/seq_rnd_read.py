@@ -20,8 +20,8 @@ def plot_scan(system_data, ax):
     ax.set_xlabel("\# of Threads")
 
     ax.set_ylabel("Throughput (GB/s)")
-    ax.set_ylim(0, 55)
-    ax.set_yticks(range(0, 55, 10))
+    ax.set_ylim(0, 65)
+    ax.set_yticks(range(0, 65, 10))
 
     ax.set_title("a) Sequential Reads")
 

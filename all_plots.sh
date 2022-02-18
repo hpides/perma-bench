@@ -27,9 +27,9 @@ run_skript_dir() {
     done
 }
 
-# run_skript_dir dimms
 run_skript_dir hash_index
 run_skript_dir pmem_tree_index
-# run_skript_dir speed
+run_skript_dir speed
+run_skript_dir dimms
 
-# open ${PLOT_DIR}/*.png
+open ${PLOT_DIR}/*.png

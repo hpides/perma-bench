@@ -37,14 +37,13 @@ def plot_seq(system_data, ax):
 
     for i, (system, data) in enumerate(sorted(system_data.items())):
         x_data, y_data = zip(*data)
-        color = SYSTEM_COLOR[system]
-        hatch = SYSTEM_HATCH[system]
         bar = BAR(system)
         pos = [x + (i * bar_width) for x in x_pos]
         ax.bar(pos, y_data, width=bar_width, **bar, label=SYSTEM_NAME[system])
         if 'dram' in system:
-            ax.text(pos[0] - 0.25, 20, int(y_data[0]), ha='center', color=SYSTEM_COLOR[system])
-            ax.text(pos[1] - 0.25, 20, int(y_data[1]), ha='center', color=SYSTEM_COLOR[system])
+            color = SYSTEM_COLOR[system]
+            ax.text(pos[0] + 0.23, 20, int(y_data[0]), ha='center', color=color)
+            ax.text(pos[1] - 0.23, 20, int(y_data[1]), ha='center', color=color)
 
     x_ticks = ops
     assert len(x_ticks) == len(x_data)
@@ -77,8 +76,11 @@ def plot_random(system_data, ax):
         pos = [x + (i * bar_width) for x in x_pos]
         ax.bar(pos, y_data, width=bar_width, **bar)
         if 'dram' in system:
-            for x, y in enumerate(y_data):
-                ax.text(pos[x] - 0.25, 4.5, int(y), ha='center', color=SYSTEM_COLOR[system])
+            color = SYSTEM_COLOR[system]
+            ax.text(pos[0] + -0.23, 6,   int(y_data[0]), ha='center', color=color)
+            ax.text(pos[1] + -0.23, 6,   int(y_data[1]), ha='center', color=color)
+            ax.text(pos[2] + 0.23 , 6,   int(y_data[2]), ha='center', color=color)
+            ax.text(pos[3]        , 6.6, int(y_data[3]), ha='center', color=color)
 
     x_ticks = ops
     assert len(x_ticks) == len(x_data)
@@ -89,8 +91,8 @@ def plot_random(system_data, ax):
     ax.set_xticks(x_ticks_pos)
     ax.set_xticklabels(x_ticks)
 
-    ax.set_ylim(0, 5)
-    ax.set_yticks(range(0, 6, 1))
+    ax.set_ylim(0, 6.5)
+    ax.set_yticks(range(0, 7, 1))
 
     ax.set_title("b) Random Writes")
 

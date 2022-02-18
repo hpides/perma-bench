@@ -23,38 +23,39 @@ PLOT_PATHS = []
 IMG_TYPES = ['.png', '.svg']
 
 SYSTEM_COLOR = {
-    'intel-128':   '#a1dab4',
-    'intel-256':   '#378d54',
-    'intel-512':   '#41b6c4',
-    'intel-gen2':  '#2c7fb8',
-    'zdram':       '#253494',
+    'apache-128':  '#a1dab4',
+    'apache-256':  '#378d54',
+    'apache-512':  '#41b6c4',
+    'barlow-256':  '#2c7fb8',
+    'z-apache-dram': '#253494',
     'nvdimm-hpe':  '#0c1652',
 }
 
 SYSTEM_MARKER = {
-    'intel-128':   'P',
-    'intel-256':   'o',
-    'intel-512':   'd',
-    'intel-gen2':  's',
-    'zdram':       '^',
+    'apache-128':  'P',
+    'apache-256':  'o',
+    'apache-512':  'd',
+    'barlow-256':  's',
+    'z-apache-dram': '^',
     'nvdimm-hpe':  'x',
 }
 
 SYSTEM_HATCH = {
-    'intel-128':   '\\\\',
-    'intel-256':   '//',
-    'intel-512':   '\\',
-    'intel-gen2':  '/',
-    'zdram':       'x',
+    'apache-128':  '\\\\',
+    'apache-256':  '//',
+    'apache-512':  '\\',
+    'barlow-256':  '/',
+    'z-apache-dram': 'x',
     'nvdimm-hpe':  '.',
 }
 
 SYSTEM_NAME = {
-    'intel-128':   'I-128',
-    'intel-256':   'I-256',
-    'intel-512':   'I-512',
-    'intel-gen2':  'I-Gen2',
-    'zdram':       'DRAM',
+    'apache-128':  'A-128',
+    'apache-256':  'A-256',
+    'apache-512':  'A-512',
+    'barlow-256':  'B-256',
+    'z-apache-dram': 'A-D',
+    'barlow-dram': 'B-D',
     'nvdimm-hpe':  'HPE',
 }
 

@@ -5,26 +5,26 @@ sys.path.append(os.path.dirname(sys.path[0]))
 from common import *
 
 FF_LOOKUP = {
-    "intel-128": [(16, 10989166)],
-    "intel-256": [(16, 12108809)],
-    "intel-512": [(16, 11831716)]
+    "apache-128": [(16, 10989166)],
+    "apache-256": [(16, 12108809)],
+    "apache-512": [(16, 11831716)]
 }
 
 FF_UPDATE = {
-    "intel-128": [(16, 4926986)],
-    "intel-256": [(16, 5845311)],
-    "intel-512": [(16, 5306726)]
+    "apache-128": [(16, 4926986)],
+    "apache-256": [(16, 5845311)],
+    "apache-512": [(16, 5306726)]
 }
 
 FF_SCAN = {
-    "intel-128": [(16, 2897120)],
-    "intel-256": [(16, 3173883)],
-    "intel-512": [(16, 3154291)]
+    "apache-128": [(16, 2897120)],
+    "apache-256": [(16, 3173883)],
+    "apache-512": [(16, 3154291)]
 }
 
 
 def plot_data(system_data, ax, offset=0, label=False):
-    bars = ("intel-256", "intel-512", "intel-128")
+    bars = ("apache-256", "apache-512", "apache-128")
     num_bars = len(bars)
     bar_width = 0.8 / num_bars
 

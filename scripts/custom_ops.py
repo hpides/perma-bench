@@ -32,25 +32,12 @@ def plot_hash_index_update(system_data, ax):
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    max_y = 30
+    max_y = 37
     ax.set_ylim(0, max_y)
     ax.set_yticks(range(0, max_y + 1, 5))
 
     ax.set_ylabel("Million Ops/s")
     ax.set_title(f"{next(LETTER_ITER)}) Hash Index\nUpdate")
-    # ax.set_xlabel("32 Threads")
-
-def plot_hash_index_lookup(system_data, ax):
-    plot_data(system_data, ax)
-
-    ax.set_xticks([])
-    ax.set_xticklabels([])
-
-    max_y = 60
-    ax.set_ylim(0, max_y)
-    ax.set_yticks(range(0, max_y + 1, 10))
-
-    ax.set_title(f"{next(LETTER_ITER)}) Hash Index\nLookup")
     # ax.set_xlabel("32 Threads")
 
 def plot_aggregation(system_data, ax):
@@ -59,7 +46,7 @@ def plot_aggregation(system_data, ax):
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    max_y = 30
+    max_y = 37
     ax.set_ylim(0, max_y)
     ax.set_yticks(range(0, max_y + 1, 5))
 
@@ -72,26 +59,12 @@ def plot_index_update(system_data, ax):
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    max_y = 16
+    max_y = 19
     ax.set_ylim(0, max_y)
     ax.set_yticks(range(0, max_y + 1, 3))
 
     # ax.set_ylabel("Million Ops/s")
     ax.set_title(f"{next(LETTER_ITER)}) Tree Index\nUpdate (PMem)")
-    # ax.set_xlabel("32 Threads")
-
-def plot_index_lookup(system_data, ax):
-    plot_data(system_data, ax)
-
-    ax.set_xticks([])
-    ax.set_xticklabels([])
-
-    max_y = 31
-    ax.set_ylim(0, max_y)
-    ax.set_yticks(range(0, max_y + 1, 5))
-
-    # ax.set_ylabel("Million Ops/s")
-    ax.set_title(f"{next(LETTER_ITER)}) Tree Index\nLookup (PMem)")
     # ax.set_xlabel("32 Threads")
 
 def plot_hybrid_index_update(system_data, ax):
@@ -100,12 +73,39 @@ def plot_hybrid_index_update(system_data, ax):
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    max_y = 17
+    max_y = 19
     ax.set_ylim(0, max_y)
     ax.set_yticks(range(0, max_y + 1, 3))
 
     # ax.set_ylabel("Million Ops/s")
     ax.set_title(f"{next(LETTER_ITER)}) Tree Index\nUpdate (Hybrid)")
+    # ax.set_xlabel("32 Threads")
+
+def plot_hash_index_lookup(system_data, ax):
+    plot_data(system_data, ax)
+
+    ax.set_xticks([])
+    ax.set_xticklabels([])
+
+    max_y = 81
+    ax.set_ylim(0, max_y)
+    ax.set_yticks(range(0, max_y + 1, 10))
+
+    ax.set_title(f"{next(LETTER_ITER)}) Hash Index\nLookup")
+    # ax.set_xlabel("32 Threads")
+
+def plot_index_lookup(system_data, ax):
+    plot_data(system_data, ax)
+
+    ax.set_xticks([])
+    ax.set_xticklabels([])
+
+    max_y = 38
+    ax.set_ylim(0, max_y)
+    ax.set_yticks(range(0, max_y + 1, 5))
+
+    # ax.set_ylabel("Million Ops/s")
+    ax.set_title(f"{next(LETTER_ITER)}) Tree Index\nLookup (PMem)")
     # ax.set_xlabel("32 Threads")
 
 def plot_hybrid_index_lookup(system_data, ax):
@@ -114,7 +114,7 @@ def plot_hybrid_index_lookup(system_data, ax):
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    max_y = 31
+    max_y = 38
     ax.set_ylim(0, max_y)
     ax.set_yticks(range(0, max_y + 1, 5))
 
@@ -167,16 +167,16 @@ if __name__ == '__main__':
     plot_index_lookup(index_lookup_data, next(axes_iter))
     plot_hybrid_index_lookup(hybrid_index_lookup_data, next(axes_iter))
 
-    all_data = (hash_index_update_data, hash_index_lookup_data, aggregation_data, index_update_data, index_lookup_data,
-                hybrid_index_update_data, hybrid_index_lookup_data)
+    all_data = (hash_index_update_data, aggregation_data, index_update_data, hybrid_index_update_data,
+                hash_index_lookup_data, index_lookup_data, hybrid_index_lookup_data) 
 
     dist = 0.1393
     for i, data in enumerate(all_data, 1):
-        dram_y = int(data['zdram'][-1][1] / MILLION)
+        dram_y = int(data['z-apache-dram'][-1][1] / MILLION)
         len_y = len(f"{dram_y}")
         offset = -0.002 if len_y == 3 else 0
-        fig.text((i * dist) + offset, 0.64, dram_y, ha='left', color=SYSTEM_COLOR['zdram'],
-                 bbox=dict(boxstyle='square,pad=0.05', fc='white', ec=SYSTEM_COLOR['zdram']))
+        fig.text((i * dist) + offset, 0.64, dram_y, ha='left', color=SYSTEM_COLOR['z-apache-dram'],
+                 bbox=dict(boxstyle='square,pad=0.05', fc='white', ec=SYSTEM_COLOR['z-apache-dram']))
 
 
     HATCH_WIDTH()

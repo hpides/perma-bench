@@ -5,21 +5,21 @@ sys.path.append(os.path.dirname(sys.path[0]))
 from common import *
 
 DASH_UPDATE = {
-    "intel-128": [(16, 10324116)],
-    "intel-256": [(16, 13550466)],
-    "intel-512": [(16,  9946400)],
+    "apache-128": [(16, 10324116)],
+    "apache-256": [(16, 13550466)],
+    "apache-512": [(16,  9946400)],
 }
 
 DASH_LOOKUP = {
-    "intel-128": [(16, 38587320)],
-    "intel-256": [(16, 47271039)],
-    "intel-512": [(16, 41484534)],
+    "apache-128": [(16, 38587320)],
+    "apache-256": [(16, 47271039)],
+    "apache-512": [(16, 41484534)],
 }
 
 
 def plot_data(system_data, ax, offset=0, label=False):
     # bars = sorted(system_data.keys(), reverse=False)
-    bars = ('intel-256', 'intel-512', 'intel-128')
+    bars = ('apache-256', 'apache-512', 'apache-128')
     num_bars = len(bars)
     bar_width = 0.6 / num_bars
 

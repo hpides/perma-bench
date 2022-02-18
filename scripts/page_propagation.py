@@ -55,11 +55,11 @@ if __name__ == '__main__':
 
     page_in_ax.set_ylabel("Throughput (GB/s)")
 
-    page_in_ax.set_ylim(0, 16)
-    page_in_ax.set_yticks(range(0, 16, 5))
+    page_in_ax.set_ylim(0, 30)
+    page_in_ax.set_yticks(range(0, 31, 5))
 
-    page_out_ax.set_ylim(0, 16)
-    page_out_ax.set_yticks(range(0, 16, 5))
+    page_out_ax.set_ylim(0, 30)
+    page_out_ax.set_yticks(range(0, 31, 5))
 
 
     HATCH_WIDTH()
