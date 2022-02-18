@@ -44,7 +44,10 @@ def plot_bm(system_data, ax, offset, x_offset=2, label=False):
 
     for i, system in enumerate(bars):
         data = system_data[system]
-        y_data = data[-1][1]
+        y_data = data[-2]
+        assert y_data[0] == 16
+        y_data = y_data[1]
+        # print(f"sys: {system}, y: {y_data}")
         if y_data > MILLION:
             y_data = y_data / MILLION
         
@@ -71,7 +74,7 @@ def plot_read(scan_data, index_data, ax):
     ax.set_xticks(BAR_X_TICKS_POS(0.8 / 4, 4, 2))
     ax.set_xticklabels(["Seq. Read", "Rnd. Read"])
     ax.set_ylabel("Throughput (GB/s)")
-    ax.set_ylim(0, 40)
+    ax.set_ylim(0, 44)
     ax.set_yticks(range(0, 41, 10))
     ax.set_xlabel("a) Read") #, fontweight='bold')
 
@@ -83,21 +86,9 @@ def plot_write(seq_write_data, rnd_write_data, ax):
     ax.set_xticks(BAR_X_TICKS_POS(0.8 / 4, 4, 2))
     ax.set_xticklabels(["Seq. Write", "Rnd. Write"])
     ax.set_ylabel("Throughput (GB/s)")
-    ax.set_ylim(0, 20)
-    ax.set_yticks(range(0, 21, 5))
+    ax.set_ylim(0, 18)
+    ax.set_yticks(range(0, 18, 5))
     ax.set_xlabel("b) Write") #, fontweight='bold')
-
-def plot_ops(hash_data, tree_data, ax):
-    x_off = 2.5
-    plot_bm(tree_data, ax, 0, x_offset=x_off)
-    plot_bm(hash_data, ax, 1, x_offset=x_off)
-
-    ax.set_xticks(BAR_X_TICKS_POS(0.8 / 4, 4, 2))
-    ax.set_xticklabels(["Tree Lookup", "Hash Update"])
-    ax.set_ylabel("Million Ops/s")
-    ax.set_ylim(0, 30)
-    ax.set_yticks(range(0, 31, 10))
-    ax.set_xlabel("c) Index") #, fontweight='bold')
 
 
 def plot_lat(latency_data, write_latency_data, ax):
@@ -107,9 +98,22 @@ def plot_lat(latency_data, write_latency_data, ax):
     ax.set_xticks(BAR_X_TICKS_POS(0.8 / 4, 4, 1))
     ax.set_xticklabels(["64 Byte Read"])
     ax.set_ylabel("Latency (ns)")
-    ax.set_ylim(0, 1050)
-    ax.set_yticks(range(0, 1001, 300))
-    ax.set_xlabel("d) Latency") #, fontweight='bold')
+    ax.set_ylim(0, 850)
+    ax.set_yticks(range(0, 900, 200))
+    ax.set_xlabel("c) Latency") #, fontweight='bold')
+
+
+def plot_ops(hash_data, tree_data, ax):
+    x_off = 2.5
+    plot_bm(tree_data, ax, 0, x_offset=x_off)
+    plot_bm(hash_data, ax, 1, x_offset=x_off)
+
+    ax.set_xticks(BAR_X_TICKS_POS(0.8 / 4, 4, 2))
+    ax.set_xticklabels(["Tree Lookup", "Hash Update"])
+    ax.set_ylabel("Million Ops/s")
+    ax.set_ylim(0, 32)
+    ax.set_yticks(range(0, 31, 10))
+    ax.set_xlabel("d) Index") #, fontweight='bold')
 
 
 if __name__ == '__main__':
@@ -148,13 +152,13 @@ if __name__ == '__main__':
     write_latency_runs = get_runs_from_results(result_path, "operation_latency", write_latency_config, skip_dram=skip_dram)
     write_latency_data = get_data_from_runs(write_latency_runs, "number_threads", "latency", "avg")
 
-    fig, axes = plt.subplots(1, 4, figsize=(2 * DOUBLE_FIG_WIDTH, DOUBLE_FIG_HEIGHT), gridspec_kw={'width_ratios': [2, 2, 2, 1]})
-    read_ax, write_ax, ops_ax, lat_ax = axes
+    fig, axes = plt.subplots(1, 4, figsize=(2 * DOUBLE_FIG_WIDTH, DOUBLE_FIG_HEIGHT), gridspec_kw={'width_ratios': [2, 2, 1, 2]})
+    read_ax, write_ax, lat_ax, ops_ax = axes
 
     plot_read(scan_data, index_data, read_ax)
     plot_write(logging_data, rnd_write_data, write_ax)
-    plot_ops(hash_index_data, tree_index_data, ops_ax)
     plot_lat(latency_data, write_latency_data, lat_ax)
+    plot_ops(hash_index_data, tree_index_data, ops_ax)
 
     HATCH_WIDTH()
     # FIG_LEGEND(fig)

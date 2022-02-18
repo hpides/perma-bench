@@ -23,21 +23,23 @@ PLOT_PATHS = []
 IMG_TYPES = ['.png', '.svg']
 
 SYSTEM_COLOR = {
-    'apache-128':  '#a1dab4',
-    'apache-256':  '#378d54',
-    'apache-512':  '#41b6c4',
-    'barlow-256':  '#2c7fb8',
-    'z-apache-dram': '#253494',
-    'nvdimm-hpe':  '#0c1652',
+    'apache-128':    '#a1dab4',
+    'apache-256':    '#378d54',
+    'apache-512':    '#41b6c4',
+    'barlow-256':    '#2c7fb8',
+    'z-barlow-dram': '#253494',
+    'z-apache-dram': '#0c1652',
+    # 'nvdimm-hpe':  '#0c1652',
 }
 
 SYSTEM_MARKER = {
-    'apache-128':  'P',
-    'apache-256':  'o',
-    'apache-512':  'd',
-    'barlow-256':  's',
-    'z-apache-dram': '^',
-    'nvdimm-hpe':  'x',
+    'apache-128':    'P',
+    'apache-256':    'o',
+    'apache-512':    'd',
+    'barlow-256':    's',
+    'z-apache-dram': 'x',
+    'z-barlow-dram': '^',
+    # 'nvdimm-hpe':  'x',
 }
 
 SYSTEM_HATCH = {
@@ -45,18 +47,19 @@ SYSTEM_HATCH = {
     'apache-256':  '//',
     'apache-512':  '\\',
     'barlow-256':  '/',
-    'z-apache-dram': 'x',
-    'nvdimm-hpe':  '.',
+    'z-apache-dram': '.',
+    'z-barlow-dram': 'x',
+    # 'nvdimm-hpe':  '.',
 }
 
 SYSTEM_NAME = {
-    'apache-128':  'A-128',
-    'apache-256':  'A-256',
-    'apache-512':  'A-512',
-    'barlow-256':  'B-256',
+    'apache-128':    'A-128',
+    'apache-256':    'A-256',
+    'apache-512':    'A-512',
+    'barlow-256':    'B-256',
     'z-apache-dram': 'A-D',
-    'barlow-dram': 'B-D',
-    'nvdimm-hpe':  'HPE',
+    'z-barlow-dram': 'B-D',
+    # 'nvdimm-hpe':    'HPE',
 }
 
 

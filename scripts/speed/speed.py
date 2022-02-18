@@ -67,6 +67,16 @@ def plot_raw(scan_data, logging_data, index_data, ax):
     ax.set_title("a) Raw")
 
 
+def plot_lat(latency_data, ax):
+    plot_bm(latency_data, ax, 0)
+    ax.set_xticks(BAR_X_TICKS_POS(0.8 / 3, 3, 1))
+    ax.set_xticklabels(["64 Byte\nRead"])
+    ax.set_ylabel("Latency (ns)")
+    ax.set_ylim(0, 550)
+    ax.set_yticks(range(0, 551, 100))
+    ax.set_title("b) Latency", loc='right')
+
+
 def plot_ops(hash_data, tree_data, ax):
     plot_bm(tree_data, ax, 0)
     plot_bm(hash_data, ax, 1)
@@ -76,17 +86,7 @@ def plot_ops(hash_data, tree_data, ax):
     ax.set_ylabel("Million Ops/s")
     ax.set_ylim(0, 30)
     ax.set_yticks(range(0, 31, 5))
-    ax.set_title("b) Index", loc='left')
-
-
-def plot_lat(latency_data, ax):
-    plot_bm(latency_data, ax, 0)
-    ax.set_xticks(BAR_X_TICKS_POS(0.8 / 3, 3, 1))
-    ax.set_xticklabels(["64 Byte\nRead"])
-    ax.set_ylabel("Latency (ns)")
-    ax.set_ylim(0, 550)
-    ax.set_yticks(range(0, 551, 100))
-    ax.set_title("c) Latency", loc='right')
+    ax.set_title("c) Index", loc='center')
 
 
 if __name__ == '__main__':
@@ -117,12 +117,12 @@ if __name__ == '__main__':
     latency_runs = get_runs_from_results(result_path, "operation_latency", latency_config, skip_dram=skip_dram)
     latency_data = get_data_from_runs(latency_runs, "number_threads", "latency", "avg")
 
-    fig, axes = plt.subplots(1, 3, figsize=DOUBLE_FIG_SIZE, gridspec_kw={'width_ratios': [3, 2, 1]})
-    raw_ax, ops_ax, lat_ax = axes
+    fig, axes = plt.subplots(1, 3, figsize=DOUBLE_FIG_SIZE, gridspec_kw={'width_ratios': [3, 1, 2]})
+    raw_ax, lat_ax, ops_ax = axes
 
     plot_raw(scan_data, logging_data, index_data, raw_ax)
-    plot_ops(hash_index_data, tree_index_data, ops_ax)
     plot_lat(latency_data, lat_ax)
+    plot_ops(hash_index_data, tree_index_data, ops_ax)
 
     HATCH_WIDTH()
     FIG_LEGEND(fig)
