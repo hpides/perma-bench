@@ -23,6 +23,10 @@ Intel-512:
     inserts/s: 5306726
     time s:    18.844007
 
+Barlow-256:
+    inserts/s: 6275601
+    time s:    15.934728
+
 
 Lookup:
 =======
@@ -38,6 +42,10 @@ Intel-512:
     get/s:     11831716
     time in s: 8.451859
 
+Barlow-256:
+    get/s:     12255313
+    time in s: 8.159726
+
 
 Scan:
 =====
@@ -52,3 +60,7 @@ Intel-128:
 Intel-512:
     scans/s:   3154291
     time in s: 31.702845
+
+Barlow-256:
+    scans/s:   3665585
+    time in s: 27.280768

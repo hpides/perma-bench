@@ -7,24 +7,27 @@ from common import *
 FF_LOOKUP = {
     "apache-128": [(16, 10989166)],
     "apache-256": [(16, 12108809)],
-    "apache-512": [(16, 11831716)]
+    "apache-512": [(16, 11831716)],
+    "barlow-256": [(16, 12255313)],
 }
 
 FF_UPDATE = {
     "apache-128": [(16, 4926986)],
     "apache-256": [(16, 5845311)],
-    "apache-512": [(16, 5306726)]
+    "apache-512": [(16, 5306726)],
+    "barlow-256": [(16, 6275601)],
 }
 
 FF_SCAN = {
     "apache-128": [(16, 2897120)],
     "apache-256": [(16, 3173883)],
-    "apache-512": [(16, 3154291)]
+    "apache-512": [(16, 3154291)],
+    "barlow-256": [(16, 3665585)],
 }
 
 
 def plot_data(system_data, ax, offset=0, label=False):
-    bars = ("apache-256", "apache-512", "apache-128")
+    bars = ("apache-256", "apache-512", "apache-128", "barlow-256")
     num_bars = len(bars)
     bar_width = 0.8 / num_bars
 
@@ -34,6 +37,7 @@ def plot_data(system_data, ax, offset=0, label=False):
     first_bar_y = 0
     for i, system in enumerate(bars):
         data = system_data[system]
+        print(system, data)
         if (len(data) == 1):
             xy_data = data[0]
         else:
