@@ -11,9 +11,7 @@ def plot_scan(system_data, ax):
 
         ax.plot(x_data, y_data, label=SYSTEM_NAME[system], **LINE(system))
         if 'dram' in system:
-            ax.text(7, 50, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
-        if 'hpe' in system:
-            ax.text(8, 50, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
+            ax.text(7.5, 60, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
 
     ax.set_xticks(x_data)
     ax.set_xticklabels(['1', '', '4', '8', '16', '32'])
@@ -42,8 +40,8 @@ def plot_lookup(system_data, ax):
         ax.bar(pos, y_data, width=bar_width, label=SYSTEM_NAME[system], **BAR(system))
         if 'dram' in system:
             ax.text(pos[0] + 0.25, 40.5, int(y_data[0]), ha='center', color=SYSTEM_COLOR[system])
-            ax.text(pos[1] + 0.25, 40.5, int(y_data[1]), ha='center', color=SYSTEM_COLOR[system])
-            ax.text(pos[2], 45.5, int(y_data[2]), ha='center', color=SYSTEM_COLOR[system])
+            ax.text(pos[1] + 0.3, 40.5, int(y_data[1]), ha='center', color=SYSTEM_COLOR[system])
+            ax.text(pos[2] + 0.05, 45.5, int(y_data[2]), ha='center', color=SYSTEM_COLOR[system])
 
     xticks = BAR_X_TICKS_POS(bar_width, num_bars, num_xticks)
     ax.set_xticks(xticks)
