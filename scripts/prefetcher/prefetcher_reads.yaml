@@ -1,0 +1,13 @@
+# This workload is used to measure the impact 
+# of the prefetcher on small random reads.
+prefetch_reads:
+  matrix:
+    number_threads: [ 16, 32 ]
+    access_size: [ 64, 256, 512, 1024 ]
+
+  args:
+    operation: read
+    memory_range: 10G
+    number_operations: 200000000
+    exec_mode: random
+    random_distribution: uniform
