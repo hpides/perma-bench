@@ -4,16 +4,16 @@ sys.path.append(os.path.dirname(sys.path[0]))
 
 from common import *
 
-OP_NAMES = {
-    "rp_256": "Read",
-    "rp_256,wp_256_none": "Write (None)",
-    "rp_256,wp_256_cache": "Write (Cache)",
-    "rp_256,wp_256_cacheinv": "Write (CacheInv)",
-    "rp_256,wp_256_nocache": "Write (NoCache)"
-}
+OP_ORDER = [
+    "rp_256",
+    "rp_256,wp_256_nocache",
+    "rp_256,wp_256_cache",
+    "rp_256,wp_256_cacheinv",
+    "rp_256,wp_256_none",
+]
 
 
-def plot_data(system_data, ax, label=False):
+def plot_data(system_data, ax, sort=False, label=False):
     bars = sorted(system_data.keys(), reverse=False)
     num_bars = len(bars)
     bar_width = 0.8 / num_bars
@@ -23,6 +23,10 @@ def plot_data(system_data, ax, label=False):
 
     for i, system in enumerate(bars):
         data = system_data[system]
+        if sort:
+            data = sorted(data, key=lambda op: OP_ORDER.index(op[0]))
+        # print(system, data)
+
         for j, (_, y_data) in enumerate(data):
             pos = j + (i * bar_width)
             bar = ax.bar(pos, y_data, width=bar_width, **BAR(system))
@@ -39,8 +43,8 @@ def plot_lookup(system_data, ax, label=True):
         f_data = [d for d in data if "256" in d[0]]
         filtered_data[sys] = f_data
 
-    plot_data(filtered_data, ax, label=label)
-    ax.set_xticklabels(["Read", "$\it{None}$", "$\it{Cache}$", "$\it{CacheInv}$", "$\it{NoCache}$"])
+    plot_data(filtered_data, ax, sort=True, label=label)
+    ax.set_xticklabels(["Read", "+$\it{NoCache}$", "+$\it{Cache}$", "+$\it{CacheInv}$", "+$\it{None}$"])
 
     # ax.set_ylim(0, 18)
     # ax.set_yticks(range(0, 17, 5))
@@ -93,7 +97,7 @@ if __name__ == '__main__':
     ###########################
     # latency_fig, axes = plt.subplots(2, 1, figsize=(DOUBLE_FIG_WIDTH, 1.5 * DOUBLE_FIG_HEIGHT))
     # (latency_ax, tail_latency_ax) = axes
-    latency_fig, axes = plt.subplots(1, 1, figsize=DOUBLE_FIG_SIZE)
+    latency_fig, axes = plt.subplots(1, 1, figsize=(DOUBLE_FIG_WIDTH, 2.5))
     latency_ax = axes
 
     plot_lookup(latency_data, latency_ax)
@@ -101,7 +105,7 @@ if __name__ == '__main__':
 
     # latency_ax.set_title("a) Average Latency")
     latency_ax.set_ylim(0, 1950)
-    latency_ax.set_yticks(range(0, 1900, 300))
+    latency_ax.set_yticks(range(0, 1900, 450))
 
     # tail_latency_ax.set_title("b) 99th-Percentile Latency")
     # tail_latency_ax.set_ylim(0, 8500)
@@ -119,7 +123,7 @@ if __name__ == '__main__':
     ###########################
     # Multi-threaded READ/WRITE
     ###########################
-    rw_fig, axes = plt.subplots(1, 2, figsize=DOUBLE_FIG_SIZE)
+    rw_fig, axes = plt.subplots(1, 2, figsize=(DOUBLE_FIG_WIDTH, 3))
     read_ax, write_ax = axes
 
     plot_read(read_data, read_ax)

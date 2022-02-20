@@ -4,13 +4,13 @@ sys.path.append(os.path.dirname(sys.path[0]))
 
 from common import *
 
-OP_NAMES = {
-    "rp_64": "Read",
-    "rp_64,wp_64_none,wp_64_none": "Write (None)",
-    "rp_64,wp_64_cache,wp_64_cache": "Write (Cache)",
-    "rp_64,wp_64_cacheinv,wp_64_cacheinv": "Write (CacheInv)",
-    "rp_64,wp_64_nocache,wp_64_nocache": "Write (NoCache)"
-}
+OP_ORDER = [
+    "rp_64",
+    "rp_64,wp_64_nocache,wp_64_nocache",
+    "rp_64,wp_64_cache,wp_64_cache",
+    "rp_64,wp_64_cacheinv,wp_64_cacheinv",
+    "rp_64,wp_64_none,wp_64_none",
+]
 
 
 def plot_latency(system_data, ax, label=True):
@@ -27,6 +27,9 @@ def plot_latency(system_data, ax, label=True):
 
     for i, system in enumerate(bars):
         data = system_data[system]
+        data = sorted(data, key=lambda op: OP_ORDER.index(op[0]))
+        # print(system, data)
+
         for j, (_, y_data) in enumerate(data):
             pos = j + (i * bar_width)
             bar = ax.bar(pos, y_data, width=bar_width, **BAR(system))
@@ -34,7 +37,7 @@ def plot_latency(system_data, ax, label=True):
             bar.set_label(SYSTEM_NAME[system])
 
     ax.set_xticks(BAR_X_TICKS_POS(bar_width, num_bars, num_xticks))
-    ax.set_xticklabels(["Read", "+$\it{None}$", "+$\it{Cache}$", "+$\it{CacheInv}$", "+$\it{NoCache}$"])
+    ax.set_xticklabels(["Read", "+$\it{NoCache}$", "+$\it{Cache}$", "+$\it{CacheInv}$","+$\it{None}$"])
 
     ax.set_ylabel("Latency (ns)")  
 
@@ -51,14 +54,14 @@ if __name__ == '__main__':
     # latency_fig, axes = plt.subplots(1, 1, figsize=DOUBLE_FIG_SIZE)
     # latency_ax, tail_ax = axes
 
-    latency_fig, axes = plt.subplots(1, 1, figsize=DOUBLE_FIG_SIZE)
+    latency_fig, axes = plt.subplots(1, 1, figsize=(DOUBLE_FIG_WIDTH, 2.5))
     latency_ax = axes
 
     plot_latency(latency_data, latency_ax)
     # plot_latency(tail_latency_data, tail_ax, False)
 
     latency_ax.set_ylim(0, 1900)
-    latency_ax.set_yticks(range(0, 1901, 300))
+    latency_ax.set_yticks(range(0, 1901, 450))
 
     # tail_ax.set_ylim(0, 1)
     # tail_ax.set_yticks(range(0, 1901, 300))
