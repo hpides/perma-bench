@@ -3,31 +3,6 @@ import matplotlib.pyplot as plt
 
 from common import *
 
-def plot_cache_ops(system_data, ax, ops, add_label=True):
-    num_bars = len(system_data)
-    bar_width = 0.8 / num_bars
-    x_pos = range(len(ops))
-
-    for i, (system, data) in enumerate(sorted(system_data.items())):
-        x_data, y_data = zip(*data)
-        color = SYSTEM_COLOR[system]
-        hatch = SYSTEM_HATCH[system]
-        bar = BAR(system)
-        pos = [x + (i * bar_width) for x in x_pos]
-        label = SYSTEM_NAME[system] if add_label else ""
-        ax.bar(pos, y_data, width=bar_width, **bar, label=label)
-        if 'dram' in system or 'hpe' in system:
-            ax.text(pos[-1] - 0.5, 19.5, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
-
-    x_ticks = ops
-    assert len(x_ticks) == len(x_data)
-    assert all([x.lower() == custom_x.lower() for (x, custom_x) in zip(x_ticks, x_data)])
-    x_ticks = [f"$\it{x}$" for x in x_ticks]
-
-    x_ticks_pos = BAR_X_TICKS_POS(bar_width, num_bars, len(x_ticks))
-    ax.set_xticks(x_ticks_pos)
-    ax.set_xticklabels(x_ticks)
-
 
 def plot_seq(system_data, ax):
     ops = ['NoCache', 'None']
@@ -36,6 +11,7 @@ def plot_seq(system_data, ax):
     x_pos = range(len(ops))
 
     for i, (system, data) in enumerate(sorted(system_data.items())):
+        # print(system, data)
         x_data, y_data = zip(*data)
         bar = BAR(system)
         pos = [x + (i * bar_width) for x in x_pos]
@@ -63,26 +39,28 @@ def plot_seq(system_data, ax):
 
 
 def plot_random(system_data, ax):
-    ops = ['Cache', 'CacheInv', 'NoCache', 'None']
+    ops = ['nocache', 'cache', 'cacheinv', 'none']
     num_bars = len(system_data)
     bar_width = 0.8 / num_bars
     x_pos = range(len(ops))
 
     for i, (system, data) in enumerate(sorted(system_data.items())):
+        data = sorted(data, key=lambda op: ops.index(op[0]))
+        # print(system, data)
         x_data, y_data = zip(*data)
         color = SYSTEM_COLOR[system]
-        hatch = SYSTEM_HATCH[system]
         bar = BAR(system)
         pos = [x + (i * bar_width) for x in x_pos]
         ax.bar(pos, y_data, width=bar_width, **bar)
         if 'dram' in system:
             color = SYSTEM_COLOR[system]
-            ax.text(pos[0] + -0.23, 6,   int(y_data[0]), ha='center', color=color)
-            ax.text(pos[1] + -0.23, 6,   int(y_data[1]), ha='center', color=color)
-            ax.text(pos[2] + 0.23 , 6,   int(y_data[2]), ha='center', color=color)
-            ax.text(pos[3]        , 6.6, int(y_data[3]), ha='center', color=color)
+            ax.text(pos[0] + 0.23, 6,   int(y_data[0]), ha='center', color=color)
+            ax.text(pos[1] + 0.2,  6,   int(y_data[1]), ha='center', color=color)
+            ax.text(pos[2] + 0.2,  6,   int(y_data[2]), ha='center', color=color)
+            ax.text(pos[3],        6.6, int(y_data[3]), ha='center', color=color)
 
-    x_ticks = ops
+    op_names = ['NoCache', 'Cache', 'CacheInv', 'None']
+    x_ticks = op_names
     assert len(x_ticks) == len(x_data)
     assert all([x.lower() == custom_x.lower() for (x, custom_x) in zip(x_ticks, x_data)])
     x_ticks = [f"$\it{x}$" for x in x_ticks]
