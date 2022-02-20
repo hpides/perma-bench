@@ -8,9 +8,7 @@ def plot_threads(system_data, ax):
         x_data, y_data = zip(*data)
         ax.plot(x_data, y_data, **LINE(system), label=SYSTEM_NAME[system])
         if 'dram' in system:
-            ax.text(13.5, 25, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
-        if 'hpe' in system:
-            ax.text(4, 25, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
+            ax.text(12, 25, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
 
     ax.set_xticks(x_data)
     ax.set_xticklabels(['1', '', '4', '8', '16', '32'])
@@ -27,8 +25,8 @@ def plot_size(system_data, ax):
     for system, data in sorted(system_data.items()):
         x_data, y_data = zip(*data)
         ax.plot(x_data, y_data, **LINE(system)) #, label=SYSTEM_NAME[system])
-        if 'hpe' in system:
-            ax.text(512, 25, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
+        if 'dram' in system:
+            ax.text(370, 25, int(y_data[-1]), ha='center', color=SYSTEM_COLOR[system])
 
     ax.set_xticks(x_data)
     ax.set_xticklabels(['64', '', '256', '512', '1024'])
@@ -49,7 +47,7 @@ if __name__ == '__main__':
     threads_runs = get_runs_from_results(result_path, "sequential_writes", threads_config, skip_dram=skip_dram)
     threads_data = get_data_from_runs(threads_runs, "number_threads", "bandwidth")
 
-    size_config = {"persist_instruction": "nocache", "number_threads": 8}
+    size_config = {"persist_instruction": "nocache", "number_threads": 16}
     size_runs = get_runs_from_results(result_path, "sequential_writes", size_config, skip_dram=skip_dram)
     size_data = get_data_from_runs(size_runs, "access_size", "bandwidth")
 

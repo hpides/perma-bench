@@ -31,5 +31,6 @@ run_skript_dir hash_index
 run_skript_dir pmem_tree_index
 run_skript_dir speed
 run_skript_dir dimms
+run_skript_dir prefetcher
 
 open ${PLOT_DIR}/*.png
