@@ -93,7 +93,7 @@ if __name__ == '__main__':
     plot_hash_index_lookup(lookup_data, lookup_ax)
 
     if show_prices:
-        print("Update prices scaled by 100_000", calc_prices(update_data, 100_000))
+        print("Update prices scaled by 1_000_000", calc_prices(update_data, 1_000_000))
 
     HATCH_WIDTH()
     FIG_LEGEND(fig)

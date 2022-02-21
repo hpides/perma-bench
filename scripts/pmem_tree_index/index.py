@@ -111,7 +111,7 @@ if __name__ == '__main__':
     plot_scan(scan_data, scan_ax)
 
     if show_prices:
-        print("Lookup prices scaled by 100_000", calc_prices(lookup_data, 100_000))
+        print("Lookup prices scaled by 1_000_000", calc_prices(lookup_data, 1_000_000))
 
     HATCH_WIDTH()
     FIG_LEGEND(fig)
