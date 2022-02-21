@@ -77,6 +77,7 @@ def plot_hash_index_lookup(system_data, ax):
 
 if __name__ == '__main__':
     skip_dram = True
+    show_prices = True
     result_path, plot_dir = INIT(sys.argv)
 
     update_config = {"custom_operations": "rp_512,wp_64_cache_128,wp_64_cache_-128"}
@@ -90,6 +91,9 @@ if __name__ == '__main__':
     fig, (update_ax, lookup_ax) = plt.subplots(1, 2, figsize=DOUBLE_FIG_SIZE)
     plot_hash_index_update(update_data, update_ax)
     plot_hash_index_lookup(lookup_data, lookup_ax)
+
+    if show_prices:
+        print("Update prices scaled by 100_000", calc_prices(update_data, 100_000))
 
     HATCH_WIDTH()
     FIG_LEGEND(fig)

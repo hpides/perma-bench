@@ -56,6 +56,7 @@ def plot_lookup(system_data, ax):
 
 if __name__ == '__main__':
     skip_dram = False
+    show_prices = True
     result_path, plot_dir = INIT(sys.argv)
 
     table_scan_filter = {"access_size": 4096}
@@ -72,6 +73,10 @@ if __name__ == '__main__':
 
     plot_scan(scan_data, scan_ax)
     plot_lookup(lookup_data, lookup_ax)
+
+    if show_prices:
+        print("Sequential read prices", calc_prices(scan_data))
+        print("Random read prices", calc_prices(lookup_data))
 
     for ax in axes:
         Y_GRID(ax)

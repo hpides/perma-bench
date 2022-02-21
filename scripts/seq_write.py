@@ -41,6 +41,7 @@ def plot_size(system_data, ax):
 
 if __name__ == '__main__':
     skip_dram = False
+    show_prices = True
     result_path, plot_dir = INIT(sys.argv)
 
     threads_config = {"persist_instruction": "nocache", "access_size": 512}
@@ -56,6 +57,9 @@ if __name__ == '__main__':
 
     plot_threads(threads_data, threads_ax)
     plot_size(size_data, size_ax)
+
+    if show_prices:
+        print("Sequential write prices", merge_dict_max_value(calc_prices(threads_data), calc_prices(size_data)))
 
     for ax in axes:
         Y_GRID(ax)

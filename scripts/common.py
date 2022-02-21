@@ -66,6 +66,17 @@ SYSTEM_NAME = {
     # 'nvdimm-hpe':    'HPE',
 }
 
+# System price in EURO
+SYSTEM_PRICE = {
+    'apache-128':  7080,
+    'apache-256':  16500,
+    'apache-512':  51000,
+    'barlow-256':  26160,
+    # 'barlow-512':  80920,
+    # 'z-apache-dram': 2940,
+    'z-barlow-dram': 15200,
+}
+
 
 def INIT_PLOT():
     matplotlib.rcParams.update({
@@ -135,6 +146,30 @@ def SAVE_PLOT(plot_path, img_types=None):
         plt.savefig(img_path, bbox_inches='tight', dpi=300)
 
     plt.figure()
+
+#######################################
+# Price Performance
+#######################################
+
+def merge_dict_max_value(dict1, dict2):
+    res = {}
+    for d in (dict1, dict2):
+        for k, v in d.items():
+            res.setdefault(k, float('-inf'))
+            res[k] = max(res[k], v)
+    return res
+
+
+def calc_prices(system_data, scale_factor=1):
+    price_per_system = {}
+    for system, data in sorted(system_data.items()):
+        system_price = SYSTEM_PRICE[system]
+        max_value = 0
+        for _, value in data:
+            max_value = max(max_value, (value / scale_factor))
+        price_per_system[system] = round(system_price/max_value, 2)
+
+    return price_per_system
 
 
 #######################################
