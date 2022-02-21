@@ -11,7 +11,7 @@ def plot_seq(system_data, ax):
     x_pos = range(len(ops))
 
     for i, (system, data) in enumerate(sorted(system_data.items())):
-        # print(system, data)
+        print(system, data)
         x_data, y_data = zip(*data)
         bar = BAR(system)
         pos = [x + (i * bar_width) for x in x_pos]
@@ -46,7 +46,7 @@ def plot_random(system_data, ax):
 
     for i, (system, data) in enumerate(sorted(system_data.items())):
         data = sorted(data, key=lambda op: ops.index(op[0]))
-        # print(system, data)
+        print(system, data)
         x_data, y_data = zip(*data)
         color = SYSTEM_COLOR[system]
         bar = BAR(system)
@@ -54,10 +54,10 @@ def plot_random(system_data, ax):
         ax.bar(pos, y_data, width=bar_width, **bar)
         if 'dram' in system:
             color = SYSTEM_COLOR[system]
-            ax.text(pos[0] + 0.23, 6,   int(y_data[0]), ha='center', color=color)
-            ax.text(pos[1] + 0.2,  6,   int(y_data[1]), ha='center', color=color)
-            ax.text(pos[2] + 0.2,  6,   int(y_data[2]), ha='center', color=color)
-            ax.text(pos[3],        6.6, int(y_data[3]), ha='center', color=color)
+            ax.text(pos[0] + 0.23, 6, int(y_data[0]), ha='center', color=color)
+            ax.text(pos[1] + 0.2,  6, int(y_data[1]), ha='center', color=color)
+            ax.text(pos[2] + 0.2,  6, int(y_data[2]), ha='center', color=color)
+            ax.text(pos[3] - 0.23,  6, int(y_data[3]), ha='center', color=color)
 
     op_names = ['NoCache', 'Cache', 'CacheInv', 'None']
     x_ticks = op_names
