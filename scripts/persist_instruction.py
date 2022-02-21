@@ -78,6 +78,7 @@ def plot_random(system_data, ax):
 
 if __name__ == '__main__':
     skip_dram = False
+    show_prices = True
     result_path, plot_dir = INIT(sys.argv)
 
     sequential_config = {"access_size": 512, "number_threads": 32}
@@ -93,6 +94,9 @@ if __name__ == '__main__':
 
     plot_seq(sequential_data, seq_ax)
     plot_random(random_data, random_ax)
+
+    if show_prices:
+        print("Random write prices", calc_prices(random_data))
 
     for ax in axes:
         Y_GRID(ax)
