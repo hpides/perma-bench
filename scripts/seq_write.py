@@ -5,6 +5,7 @@ from common import *
 
 def plot_threads(system_data, ax):
     for system, data in sorted(system_data.items()):
+        # print(system, data)
         x_data, y_data = zip(*data)
         ax.plot(x_data, y_data, **LINE(system), label=SYSTEM_NAME[system])
         if 'dram' in system:
@@ -23,6 +24,7 @@ def plot_threads(system_data, ax):
 
 def plot_size(system_data, ax):
     for system, data in sorted(system_data.items()):
+        # print(system, data)
         x_data, y_data = zip(*data)
         ax.plot(x_data, y_data, **LINE(system)) #, label=SYSTEM_NAME[system])
         if 'dram' in system:
