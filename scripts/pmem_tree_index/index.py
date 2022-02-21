@@ -37,7 +37,6 @@ def plot_data(system_data, ax, offset=0, label=False):
     first_bar_y = 0
     for i, system in enumerate(bars):
         data = system_data[system]
-        print(system, data)
         if (len(data) == 1):
             xy_data = data[0]
         else:
@@ -89,6 +88,7 @@ def plot_scan(system_data, ax):
 
 if __name__ == '__main__':
     skip_dram = True
+    show_prices = True
     result_path, plot_dir = INIT(sys.argv)
 
     lookup_config = {"custom_operations": "rp_512,rp_512,rp_512"}
@@ -109,6 +109,9 @@ if __name__ == '__main__':
     plot_lookup(lookup_data, lookup_ax)
     plot_update(update_data, update_ax)
     plot_scan(scan_data, scan_ax)
+
+    if show_prices:
+        print("Lookup prices scaled by 100_000", calc_prices(lookup_data, 100_000))
 
     HATCH_WIDTH()
     FIG_LEGEND(fig)

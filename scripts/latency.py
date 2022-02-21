@@ -73,6 +73,7 @@ def plot_write(system_data, ax):
 
 if __name__ == '__main__':
     skip_dram = False
+    show_prices = True
     result_path, plot_dir = INIT(sys.argv)
 
     latency_config = {"number_threads": 16}
@@ -128,6 +129,9 @@ if __name__ == '__main__':
 
     plot_read(read_data, read_ax)
     plot_write(write_data, write_ax)
+
+    if (show_prices):
+        print("Latency prices", calc_prices(read_data))
 
     read_ax.set_ylim(0, 1250)
     read_ax.set_yticks(range(0, 1251, 300))
