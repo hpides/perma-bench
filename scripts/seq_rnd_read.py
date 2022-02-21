@@ -7,7 +7,7 @@ from common import *
 def plot_scan(system_data, ax):
     for system, data in sorted(system_data.items()):
         x_data, y_data = zip(*data)
-        # print(f'{system}: {data}')
+        # print(system, data)
 
         ax.plot(x_data, y_data, label=SYSTEM_NAME[system], **LINE(system))
         if 'dram' in system:
@@ -29,23 +29,29 @@ def plot_lookup(system_data, ax):
     num_bars = len(bars)
     bar_width = 0.8 / num_bars
 
-    num_xticks = len(system_data[bars[0]])
+    num_xticks = 2 #len(system_data[bars[0]])
     x_pos = range(num_xticks)
 
     for i, system in enumerate(bars):
         data = system_data[system]
+        # print(system, data)
         _, y_data = zip(*data)
-        # y_data = y_data[0]
+        y_data = y_data[0:2]
         pos = [x + (i * bar_width) for x in x_pos]
         ax.bar(pos, y_data, width=bar_width, label=SYSTEM_NAME[system], **BAR(system))
         if 'dram' in system:
-            ax.text(pos[0] + 0.25, 40.5, int(y_data[0]), ha='center', color=SYSTEM_COLOR[system])
-            ax.text(pos[1] + 0.3, 40.5, int(y_data[1]), ha='center', color=SYSTEM_COLOR[system])
-            ax.text(pos[2] + 0.05, 45.5, int(y_data[2]), ha='center', color=SYSTEM_COLOR[system])
+            ax.text(pos[0] + 0.2, 40.5, int(y_data[0]), ha='center', color=SYSTEM_COLOR[system])
+            # ax.text(pos[1] - 0.22, 40.5, int(y_data[1]), ha='center', color=SYSTEM_COLOR[system])
+            ax.text(pos[1] + 0.1, 45.5, int(y_data[1]), ha='center', color=SYSTEM_COLOR[system])
+
+            # ax.text(pos[0] + 0.25, 40.5, int(y_data[0]), ha='center', color=SYSTEM_COLOR[system])
+            # ax.text(pos[1] + 0.3, 40.5, int(y_data[1]), ha='center', color=SYSTEM_COLOR[system])
+            # ax.text(pos[2] + 0.05, 45.5, int(y_data[2]), ha='center', color=SYSTEM_COLOR[system])
 
     xticks = BAR_X_TICKS_POS(bar_width, num_bars, num_xticks)
     ax.set_xticks(xticks)
-    ax.set_xticklabels([64, 256, 1024])
+    # ax.set_xticklabels([64, 256, 1024])
+    ax.set_xticklabels([64, 256])
     # ax.set_ylabel("Throughput (GB/s)")
     ax.set_title("b) Random Reads")
     ax.set_ylim(0, 45)
