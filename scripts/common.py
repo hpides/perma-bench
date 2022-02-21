@@ -68,13 +68,13 @@ SYSTEM_NAME = {
 
 # System price in EURO
 SYSTEM_PRICE = {
-    'apache-128':  7080,
-    'apache-256':  16500,
-    'apache-512':  51000,
-    'barlow-256':  26160,
-    # 'barlow-512':  80920,
-    # 'z-apache-dram': 2940,
-    'z-barlow-dram': 15200,
+    'apache-128':  9.21,
+    'apache-256':  10.74,
+    'apache-512':  16.60,
+    'barlow-256':  12.77,
+    'barlow-512':  19.75,
+    'z-apache-dram': 30.62,
+    'z-barlow-dram': 59.37,
 }
 
 
