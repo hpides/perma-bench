@@ -81,7 +81,8 @@ def plot_ops(hash_data, tree_data, ax):
     plot_bm(tree_data, ax, 0)
     plot_bm(hash_data, ax, 1)
 
-    ax.set_xticks(BAR_X_TICKS_POS(0.8 / 5, 5, 2))
+    # ax.set_xticks(BAR_X_TICKS_POS(0.8 / 5, 5, 2))
+    ax.set_xticks([0.2, 1.4])
     ax.set_xticklabels(["Tree\nLookup", "Update\nHash"])
     ax.set_ylabel("Million Ops/s")
     ax.set_ylim(0, 37)

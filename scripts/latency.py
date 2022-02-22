@@ -4,12 +4,14 @@ sys.path.append(os.path.dirname(sys.path[0]))
 
 from common import *
 
+OP_SIZE = 256
+
 OP_ORDER = [
-    "rp_256",
-    "rp_256,wp_256_nocache",
-    "rp_256,wp_256_cache",
-    "rp_256,wp_256_cacheinv",
-    "rp_256,wp_256_none",
+    f"rp_{OP_SIZE}",
+    f"rp_{OP_SIZE},wp_{OP_SIZE}_nocache",
+    f"rp_{OP_SIZE},wp_{OP_SIZE}_cache",
+    f"rp_{OP_SIZE},wp_{OP_SIZE}_cacheinv",
+    f"rp_{OP_SIZE},wp_{OP_SIZE}_none",
 ]
 
 
@@ -40,7 +42,7 @@ def plot_data(system_data, ax, sort=False, label=False):
 def plot_lookup(system_data, ax, label=True):
     filtered_data = {}
     for sys, data in system_data.items():
-        f_data = [d for d in data if "256" in d[0]]
+        f_data = [d for d in data if str(OP_SIZE) in d[0]]
         filtered_data[sys] = f_data
 
     plot_data(filtered_data, ax, sort=True, label=label)
@@ -79,7 +81,7 @@ if __name__ == '__main__':
     latency_config = {"number_threads": 16}
     latency_runs = get_runs_from_results(result_path, "operation_latency", latency_config, skip_dram=skip_dram)
     latency_data = get_data_from_runs(latency_runs, "custom_operations", "latency", "avg")
-    tail_latency_data = get_data_from_runs(latency_runs, "custom_operations", "latency", "percentile_99")
+    # latency_data = get_data_from_runs(latency_runs, "custom_operations", "latency", "percentile_99")
 
     read_config = {"custom_operations": "rp_256"}
     read_runs = get_runs_from_results(result_path, "operation_latency", read_config, skip_dram=skip_dram)
