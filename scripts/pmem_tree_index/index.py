@@ -37,6 +37,7 @@ def plot_data(system_data, ax, offset=0, label=False):
     first_bar_y = 0
     for i, system in enumerate(bars):
         data = system_data[system]
+        # print(system, data)
         if (len(data) == 1):
             xy_data = data[0]
         else:
@@ -51,9 +52,14 @@ def plot_data(system_data, ax, offset=0, label=False):
 
         if i == 0:
             first_bar_y = y_data
-        else:
-            diff = int((y_data / first_bar_y) * 100)
-            ax.text(pos + 0.05, y_data + 0.2, f".{diff}", ha="center", size=FS - 8)
+            y_offset = (first_bar_y * 1.05) - first_bar_y
+        
+
+        # diff = int((y_data / first_bar_y) * 100)
+        # if 'barlow-256' in system and offset == 0:
+        #     ax.text(pos + 0.21, y_data * 1.1 , f"{diff}\%", ha="center", va='top', rotation=90) #, color=SYSTEM_COLOR[system])
+        # else:
+        #     ax.text(pos + 0.01, y_data + y_offset, f"{diff}\%", ha="center", va='bottom', rotation=90) #, color=SYSTEM_COLOR[system])
 
     ax.set_xticks(BAR_X_TICKS_POS(bar_width, num_bars, num_xticks))
     ax.set_xticklabels(["PerMA", "F+F"])
@@ -63,8 +69,8 @@ def plot_lookup(system_data, ax):
     plot_data(system_data, ax, offset=0, label=True)
     plot_data(FF_LOOKUP, ax, offset=1)
 
-    ax.set_ylim(0, 18)
-    ax.set_yticks(range(0, 17, 5))
+    ax.set_ylim(0, 23)
+    ax.set_yticks(range(0, 25, 10))
 
     ax.set_ylabel("Million Ops/s")
     ax.set_title("a) Lookup")
@@ -73,16 +79,16 @@ def plot_update(system_data, ax):
     plot_data(system_data, ax, offset=0)
     plot_data(FF_UPDATE, ax, offset=1)
 
-    ax.set_ylim(0, 10)
-    ax.set_yticks(range(0, 10, 3))
+    ax.set_ylim(0, 12)
+    ax.set_yticks(range(0, 13, 5))
     ax.set_title("b) Update")
 
 def plot_scan(system_data, ax):
     plot_data(system_data, ax, offset=0)
     plot_data(FF_SCAN, ax, offset=1)
 
-    ax.set_ylim(0, 6)
-    ax.set_yticks(range(0, 7, 2))
+    ax.set_ylim(0, 8)
+    ax.set_yticks(range(0, 9, 3))
     ax.set_title("c) Scan")
 
 
@@ -103,7 +109,7 @@ if __name__ == '__main__':
     scan_runs = get_runs_from_results(result_path, "tree_index_range_scan", scan_config, skip_dram=skip_dram)
     scan_data = get_data_from_runs(scan_runs, "number_threads", "ops_per_second")
 
-    fig, axes = plt.subplots(1, 3, figsize=DOUBLE_FIG_SIZE)
+    fig, axes = plt.subplots(1, 3, figsize=(DOUBLE_FIG_WIDTH, 2.5))
     lookup_ax, update_ax, scan_ax = axes
 
     plot_lookup(lookup_data, lookup_ax)
