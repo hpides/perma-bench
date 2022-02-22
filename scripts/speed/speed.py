@@ -8,24 +8,24 @@ SPEED_COLOR = {
     "2133":      '#fecc5c',
     "2400":      '#fd8d3c',
     "2666":      '#f03b20',
-    "2133-dram": '#bd0026',
-    "2666-dram": '#bd0026',
+    "b-2933": '#41b6c4', #  '#bd0026',
+    "b-3200": '#2c7fb8', # '#bd0026',
 }
 
 SPEED_NAME = {
-    "2133": '2133 MT/s',
-    "2400": '2400 MT/s',
-    "2666": '2666 MT/s',
-    "2133-dram": '2133-DRAM',
-    "2666-dram": '2666-DRAM',
+    "2133": 'A-2133',
+    "2400": 'A-2400',
+    "2666": 'A-2666',
+    "b-2933": 'B-2933',
+    "b-3200": 'B-3200',
 }
 
 SPEED_HATCH = {
     "2133": '\\\\',
     "2400": '//',
     "2666": '\\',
-    "2133-dram": '//',
-    "2666-dram": 'x',
+    "b-2933": '/',
+    "b-3200": 'x',
 }
 
 def SPEED_BAR(system):
@@ -46,7 +46,7 @@ def plot_bm(system_data, ax, offset, label=False):
         y_data = data[-1][1]
         if y_data > MILLION:
             y_data = y_data / MILLION
-        # print(f"{system}: {y_data}")
+        # print(system, y_data)
         pos = offset + (i * bar_width)
         bar = ax.bar(pos, y_data, width=bar_width, **SPEED_BAR(system))
         if label:
@@ -59,33 +59,33 @@ def plot_raw(scan_data, logging_data, index_data, ax):
     plot_bm(logging_data, ax, 1)
     plot_bm(index_data, ax, 2)
 
-    ax.set_xticks(BAR_X_TICKS_POS(0.8 / 3, 3, 3))
+    ax.set_xticks(BAR_X_TICKS_POS(0.8 / 5, 5, 3))
     ax.set_xticklabels(["Seq.\nRead", "Seq.\nWrite", "Rnd.\nRead"])
-    ax.set_ylabel("Throughput (GB/s)")
-    ax.set_ylim(0, 40)
-    ax.set_yticks(range(0, 41, 10))
+    ax.set_ylabel("Throughput\n(GB/s)")
+    ax.set_ylim(0, 63)
+    ax.set_yticks(range(0, 61, 20))
     ax.set_title("a) Raw")
 
 
 def plot_lat(latency_data, ax):
     plot_bm(latency_data, ax, 0)
-    ax.set_xticks(BAR_X_TICKS_POS(0.8 / 3, 3, 1))
+    ax.set_xticks(BAR_X_TICKS_POS(0.8 / 5, 5, 1))
     ax.set_xticklabels(["64 Byte\nRead"])
     ax.set_ylabel("Latency (ns)")
-    ax.set_ylim(0, 550)
-    ax.set_yticks(range(0, 551, 100))
-    ax.set_title("b) Latency", loc='right')
+    ax.set_ylim(0, 600)
+    ax.set_yticks(range(0, 601, 250))
+    ax.set_title("b) Latency", loc='center')
 
 
 def plot_ops(hash_data, tree_data, ax):
     plot_bm(tree_data, ax, 0)
     plot_bm(hash_data, ax, 1)
 
-    ax.set_xticks(BAR_X_TICKS_POS(0.8 / 3, 3, 2))
+    ax.set_xticks(BAR_X_TICKS_POS(0.8 / 5, 5, 2))
     ax.set_xticklabels(["Tree\nLookup", "Update\nHash"])
     ax.set_ylabel("Million Ops/s")
-    ax.set_ylim(0, 30)
-    ax.set_yticks(range(0, 31, 5))
+    ax.set_ylim(0, 37)
+    ax.set_yticks(range(0, 37, 10))
     ax.set_title("c) Index", loc='center')
 
 
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     latency_runs = get_runs_from_results(result_path, "operation_latency", latency_config, skip_dram=skip_dram)
     latency_data = get_data_from_runs(latency_runs, "number_threads", "latency", "avg")
 
-    fig, axes = plt.subplots(1, 3, figsize=DOUBLE_FIG_SIZE, gridspec_kw={'width_ratios': [3, 1, 2]})
+    fig, axes = plt.subplots(1, 3, figsize=(DOUBLE_FIG_WIDTH, 3), gridspec_kw={'width_ratios': [3, 1, 2]})
     raw_ax, lat_ax, ops_ax = axes
 
     plot_raw(scan_data, logging_data, index_data, raw_ax)
