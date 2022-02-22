@@ -27,7 +27,7 @@ FF_SCAN = {
 
 
 def plot_data(system_data, ax, offset=0, label=False):
-    bars = ("apache-256", "apache-512", "apache-128", "barlow-256")
+    bars = ("apache-128", "apache-256", "apache-512", "barlow-256")
     num_bars = len(bars)
     bar_width = 0.8 / num_bars
 

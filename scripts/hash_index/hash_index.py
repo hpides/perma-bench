@@ -20,7 +20,7 @@ DASH_LOOKUP = {
 
 
 def plot_data(system_data, ax, offset=0, label=False):
-    bars = ('apache-256', 'apache-512', 'apache-128', 'barlow-256')
+    bars = ('apache-128', 'apache-256', 'apache-512', 'barlow-256')
     num_bars = len(bars)
     bar_width = 0.6 / num_bars
 
@@ -44,7 +44,6 @@ def plot_data(system_data, ax, offset=0, label=False):
             first_bar_y = y_data
             y_offset = (first_bar_y * 1.05) - first_bar_y
             
-        # else:
         diff = int((y_data / first_bar_y) * 100)
         if 'barlow-256' in system and offset == 0:
             ax.text(pos + 0.17, y_data * 1.1 , f"{diff}\%", ha="center", va='top', rotation=90) #, color=SYSTEM_COLOR[system])
