@@ -8,9 +8,12 @@ from common import *
 LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
 LETTER_ITER = iter(LETTERS)
 
+THREAD_COUNT = 32
+THREAD_POS = -1
+
 def plot_data(system_data, ax, label=False):
-    # Only use thread count == 32
-    system_data = {sys: [(thread, y) for thread, y in data if thread == 32] for sys, data in system_data.items()}
+    # Only use thread count == THREAD_COUNT
+    system_data = {sys: [(thread, y) for thread, y in data if thread == THREAD_COUNT] for sys, data in system_data.items()}
 
     bars = sorted(system_data.keys())
     num_bars = len(bars)
@@ -176,7 +179,7 @@ if __name__ == '__main__':
     for i, data in enumerate(all_data, 1):
         dram_sys = 'z-barlow-dram'
         print('check dram values')
-        dram_y = int(data[dram_sys][-2][1] / MILLION)
+        dram_y = int(data[dram_sys][THREAD_POS][1] / MILLION)
         len_y = len(f"{dram_y}")
         offset = -0.002 if len_y == 3 else 0
         fig.text((i * dist) + offset, 0.64, dram_y, ha='left', color=SYSTEM_COLOR[dram_sys],
