@@ -11,15 +11,15 @@ def plot_seq(system_data, ax):
     x_pos = range(len(ops))
 
     for i, (system, data) in enumerate(sorted(system_data.items())):
-        print(system, data)
+        # print(system, data)
         x_data, y_data = zip(*data)
         bar = BAR(system)
         pos = [x + (i * bar_width) for x in x_pos]
         ax.bar(pos, y_data, width=bar_width, **bar, label=SYSTEM_NAME[system])
         if 'dram' in system:
             color = SYSTEM_COLOR[system]
-            ax.text(pos[0] + 0.23, 20, int(y_data[0]), ha='center', color=color)
-            ax.text(pos[1] - 0.23, 20, int(y_data[1]), ha='center', color=color)
+            ax.text(pos[0] + 0.23, 17, int(y_data[0]), ha='center', color=color)
+            ax.text(pos[1] - 0.23, 17, int(y_data[1]), ha='center', color=color)
 
     x_ticks = ops
     assert len(x_ticks) == len(x_data)
@@ -30,7 +30,7 @@ def plot_seq(system_data, ax):
     ax.set_xticks(x_ticks_pos)
     ax.set_xticklabels(x_ticks)
 
-    ax.set_ylabel("Throughput (GB/s)")
+    ax.set_ylabel("Throughput\n(GB/s)")
 
     ax.set_ylim(0, 22)
     ax.set_yticks(range(0, 22, 5))
@@ -46,7 +46,7 @@ def plot_random(system_data, ax):
 
     for i, (system, data) in enumerate(sorted(system_data.items())):
         data = sorted(data, key=lambda op: ops.index(op[0]))
-        print(system, data)
+        # print(system, data)
         x_data, y_data = zip(*data)
         color = SYSTEM_COLOR[system]
         bar = BAR(system)
@@ -54,10 +54,10 @@ def plot_random(system_data, ax):
         ax.bar(pos, y_data, width=bar_width, **bar)
         if 'dram' in system:
             color = SYSTEM_COLOR[system]
-            ax.text(pos[0] + 0.23, 6, int(y_data[0]), ha='center', color=color)
-            ax.text(pos[1] + 0.2,  6, int(y_data[1]), ha='center', color=color)
-            ax.text(pos[2] + 0.2,  6, int(y_data[2]), ha='center', color=color)
-            ax.text(pos[3] - 0.23,  6, int(y_data[3]), ha='center', color=color)
+            ax.text(pos[0] + 0.23, 5.3, int(y_data[0]), ha='center', color=color)
+            ax.text(pos[1] + 0.2,  5.3, int(y_data[1]), ha='center', color=color)
+            ax.text(pos[2] + 0.2,  5.3, int(y_data[2]), ha='center', color=color)
+            ax.text(pos[3] + 0.0,  6.7, int(y_data[3]), ha='center', color=color)
 
     op_names = ['NoCache', 'Cache', 'CacheInv', 'None']
     x_ticks = op_names
@@ -70,7 +70,7 @@ def plot_random(system_data, ax):
     ax.set_xticklabels(x_ticks)
 
     ax.set_ylim(0, 6.5)
-    ax.set_yticks(range(0, 7, 1))
+    ax.set_yticks(range(0, 7, 2))
 
     ax.set_title("b) Random Writes")
 
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     random_runs = get_runs_from_results(result_path, "random_writes", random_config, skip_dram=skip_dram)
     random_data = get_data_from_runs(random_runs, "persist_instruction", "bandwidth")
 
-    fig, axes = plt.subplots(1, 2, figsize=DOUBLE_FIG_SIZE, gridspec_kw={'width_ratios': [1, 2]})
+    fig, axes = plt.subplots(1, 2, figsize=(DOUBLE_FIG_WIDTH, 2.5), gridspec_kw={'width_ratios': [1, 2]})
     (seq_ax, random_ax) = axes
 
     plot_seq(sequential_data, seq_ax)
