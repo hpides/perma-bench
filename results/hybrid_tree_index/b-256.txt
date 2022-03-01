@@ -1,0 +1,112 @@
+NVRAM05:
+=========
+# Records: 100000000
+# Threads: 32
+Operations ratio:
+	Read: 0.8
+	Insert: 0.2
+
+32 LEAF, 128 INNER
+	Operations: 421190259
+	Throughput:
+	- Completed: 14038927.6540 ops/s
+	- Succeeded: 11053846.1251 ops/s
+	Breakdown:
+	- Insert completed: 2633651.6443 ops/s
+	- Insert succeeded: 2547362.9063 ops/s
+	- Read completed: 11405276.0097 ops/s
+	- Read succeeded: 8506483.2188 ops/s
+
+---------------
+
+64 LEAF, 128 INNER
+	Operations: 421702535
+	Throughput:
+	- Completed: 14055977.9049 ops/s
+	- Succeeded: 11065091.6425 ops/s
+	Breakdown:
+	- Insert completed: 2636881.0372 ops/s
+	- Insert succeeded: 2550245.3033 ops/s
+	- Read completed: 11419096.8677 ops/s
+	- Read succeeded: 8514846.3392 ops/s
+
+---------------
+
+64 LEAF, 64 INNER
+Operations: 415169598
+	Throughput:
+	- Completed: 13838248.7403 ops/s
+	- Succeeded: 10924334.1444 ops/s
+	Breakdown:
+	- Insert completed: 2595860.5212 ops/s
+	- Insert succeeded: 2510031.6643 ops/s
+	- Read completed: 11242388.2190 ops/s
+	- Read succeeded: 8414302.4801 ops/s
+
+---------------
+
+64 LEAF, 256 INNER
+Operations: 426403436
+	Throughput:
+	- Completed: 14212690.9668 ops/s
+	- Succeeded: 11166984.8666 ops/s
+	Breakdown:
+	- Insert completed: 2666422.8991 ops/s
+	- Insert succeeded: 2578256.1611 ops/s
+	- Read completed: 11546268.0678 ops/s
+	- Read succeeded: 8588728.7055 ops/s
+
+---------------
+
+16 LEAF, 64 INNER
+Operations: 431128005
+	Throughput:
+	- Completed: 14370187.8594 ops/s
+	- Succeeded: 11269653.0400 ops/s
+	Breakdown:
+	- Insert completed: 2696085.2055 ops/s
+	- Insert succeeded: 2605490.3729 ops/s
+	- Read completed: 11674102.6539 ops/s
+	- Read succeeded: 8664162.6671 ops/s
+
+---------------
+
+64 LEAF, 128 INNER PREFETCHER OFF
+Operations: 401667008
+	Throughput:
+	- Completed: 13388209.9371 ops/s
+	- Succeeded: 10629552.1471 ops/s
+	Breakdown:
+	- Insert completed: 2511218.8486 ops/s
+	- Insert succeeded: 2428964.1232 ops/s
+	- Read completed: 10876991.0885 ops/s
+	- Read succeeded: 8200588.0238 ops/s
+
+
+======================================
+INSERT RATIO 1.0 
+======================================
+
+SFENCE ONLY 
+16 threads:  6082248.8353 ops/s
+32 threads: 10526831.1942 ops/s
+64 threads: 14970594.9918 ops/s
+
+REGULAR PERSIST  
+16 threads:  5403409.0002 ops/s
+32 threads:  9648222.0919 ops/s
+64 threads: 14227915.6801 ops/s
+
+
+------
+16 LEAF
+
+SFENCE ONLY 
+16 threads: 6992146.3477 ops/s
+32 threads: 10600580.3047 ops/s
+64 threads: 11349189.1040 ops/s
+
+REGULAR PERSIST  
+16 threads: 6164863.2287 ops/s
+32 threads: 9467775.1981 ops/s
+64 threads: 10631674.5967 ops/s

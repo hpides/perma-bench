@@ -93,7 +93,7 @@ def plot_scan(system_data, ax):
 
 
 if __name__ == '__main__':
-    skip_dram = True
+    skip_dram = False
     show_prices = True
     result_path, plot_dir = INIT(sys.argv)
 

@@ -106,7 +106,7 @@ if __name__ == '__main__':
     skip_dram = True
     _, plot_dir = INIT(sys.argv)
 
-    fig, axes = plt.subplots(1, 4, figsize=(DOUBLE_FIG_WIDTH, 3))
+    fig, axes = plt.subplots(1, 4, figsize=(DOUBLE_FIG_WIDTH, 2.7))
     fptree_ax, lbtree_ax, dash_ax, viper_ax = axes
 
     plot_fptree(fptree_ax)

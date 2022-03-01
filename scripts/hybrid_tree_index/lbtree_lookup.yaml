@@ -1,0 +1,16 @@
+lbtree_lookup:
+  matrix:
+    number_threads: [ 16. 32 ] 
+    custom_operations:
+      - "rd_256,rd_256,rd_256,rd_256,rd_256,rp_256"  # root + 3 in cache, has 9 levels
+      - "rd_256,rd_256,rd_256,rd_256,rp_256"         # root + 4 in cache, has 9 levels
+      - "rd_512,rd_512,rd_512,rp_256"                # root + 3 in cache, has 7 levels
+      - "rd_1024,rd_1024,rd_1024,rp_256"             # root + 2 in cache, has 6 levels
+      - "rd_1024,rd_1024,rp_256"                     # root + 3 in cache, has 6 levels
+      - "rd_2048,rd_2048,rp_256"                     # root + 2 in cache, has 5 levels
+
+  args:
+    memory_range: 20G
+    dram_memory_range: 10G
+    number_operations: 100000000
+    exec_mode: custom

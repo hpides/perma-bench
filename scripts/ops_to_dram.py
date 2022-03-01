@@ -19,14 +19,16 @@ def plot_data(system_data, ax, label=False):
     num_bars = len(bars)
     bar_width = 0.8 / num_bars
 
+    dram_data = system_data[bars[-1]]
+
     for i, system in enumerate(bars):
         data = system_data[system]
-        print(system, data)
 
         for j, (_, y_data) in enumerate(data):
-            y_data = y_data / MILLION
+            y_diff = dram_data[j][1] / y_data 
             pos = j + (i * bar_width)
-            bar = ax.bar(pos, y_data, width=bar_width, **BAR(system))
+            print(system, y_diff)
+            bar = ax.bar(pos, y_diff, width=bar_width, **BAR(system))
         if label:
             bar.set_label(SYSTEM_NAME[system])
 
@@ -37,12 +39,12 @@ def plot_hash_index_update(system_data, ax):
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    max_y = 37
+    max_y = 7
     ax.set_ylim(0, max_y)
-    ax.set_yticks(range(0, max_y + 1, 10))
+    ax.set_yticks(range(0, max_y + 1, 2))
 
-    ax.set_ylabel("Million Ops/s")
-    ax.set_title(f"{next(LETTER_ITER)}) Hash Index\nUpdate")
+    ax.set_ylabel("Factor lower\nthan DRAM")
+    ax.set_xlabel(f"{next(LETTER_ITER)}) Up.")
     # ax.set_xlabel("32 Threads")
 
 def plot_aggregation(system_data, ax):
@@ -51,11 +53,11 @@ def plot_aggregation(system_data, ax):
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    max_y = 37
+    max_y = 11
     ax.set_ylim(0, max_y)
-    ax.set_yticks(range(0, max_y + 1, 10))
+    ax.set_yticks(range(0, max_y + 1, 3))
 
-    ax.set_title(f"{next(LETTER_ITER)}) Volatile Hash\nIndex Update")
+    ax.set_xlabel(f"{next(LETTER_ITER)}) Volatile Hash\nUpdate")
     # ax.set_xlabel("32 Threads")
 
 def plot_index_update(system_data, ax):
@@ -64,12 +66,12 @@ def plot_index_update(system_data, ax):
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    max_y = 19
+    max_y = 5
     ax.set_ylim(0, max_y)
-    ax.set_yticks(range(0, max_y + 1, 5))
+    ax.set_yticks(range(0, max_y + 1, 2))
 
     # ax.set_ylabel("Million Ops/s")
-    ax.set_title(f"{next(LETTER_ITER)}) Tree Index\nUpdate (PMem)")
+    ax.set_xlabel(f"{next(LETTER_ITER)}) Up.")
     # ax.set_xlabel("32 Threads")
 
 def plot_hybrid_index_update(system_data, ax):
@@ -78,12 +80,12 @@ def plot_hybrid_index_update(system_data, ax):
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    max_y = 19
+    max_y = 2.5
     ax.set_ylim(0, max_y)
-    ax.set_yticks(range(0, max_y + 1, 5))
+    ax.set_yticks(range(0, 3, 1))
 
     # ax.set_ylabel("Million Ops/s")
-    ax.set_title(f"{next(LETTER_ITER)}) Tree Index\nUpdate (Hybrid)")
+    ax.set_xlabel(f"{next(LETTER_ITER)}) Up.")
     # ax.set_xlabel("32 Threads")
 
 def plot_hash_index_lookup(system_data, ax):
@@ -92,11 +94,11 @@ def plot_hash_index_lookup(system_data, ax):
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    max_y = 84
+    max_y = 7
     ax.set_ylim(0, max_y)
-    ax.set_yticks(range(0, max_y + 1, 25))
+    ax.set_yticks(range(0, max_y + 1, 2))
 
-    ax.set_title(f"{next(LETTER_ITER)}) Hash Index\nLookup")
+    ax.set_xlabel(f"{next(LETTER_ITER)}) Lk.")
     # ax.set_xlabel("32 Threads")
 
 def plot_index_lookup(system_data, ax):
@@ -105,12 +107,12 @@ def plot_index_lookup(system_data, ax):
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    max_y = 40
+    max_y = 5 
     ax.set_ylim(0, max_y)
-    ax.set_yticks(range(0, max_y + 1, 15))
+    ax.set_yticks(range(0, 5, 2))
 
     # ax.set_ylabel("Million Ops/s")
-    ax.set_title(f"{next(LETTER_ITER)}) Tree Index\nLookup (PMem)")
+    ax.set_xlabel(f"{next(LETTER_ITER)}) Lk.")
     # ax.set_xlabel("32 Threads")
 
 def plot_hybrid_index_lookup(system_data, ax):
@@ -119,12 +121,12 @@ def plot_hybrid_index_lookup(system_data, ax):
     ax.set_xticks([])
     ax.set_xticklabels([])
 
-    max_y = 40
+    max_y = 2.5
     ax.set_ylim(0, max_y)
-    ax.set_yticks(range(0, max_y + 1, 15))
+    ax.set_yticks(range(0, 3, 1))
 
     # ax.set_ylabel("Million Ops/s")
-    ax.set_title(f"{next(LETTER_ITER)}) Tree Index\nLookup (Hybrid)")
+    ax.set_xlabel(f"{next(LETTER_ITER)}) Lk.")
     # ax.set_xlabel("32 Threads")
 
 
@@ -160,45 +162,32 @@ if __name__ == '__main__':
     hybrid_index_lookup_runs = get_runs_from_results(result_path, "hybrid_tree_index_lookup", hybrid_index_lookup_config, skip_dram=skip_dram)
     hybrid_index_lookup_data = get_data_from_runs(hybrid_index_lookup_runs, "number_threads", "ops_per_second")
 
-    fig, axes = plt.subplots(1, 7, figsize=(2 * DOUBLE_FIG_WIDTH, 3))
-    # hash_index_update_ax, hash_index_lookup_ax, aggregation_ax, index_update_ax, index_lookup_ax, hybrid_index_update_ax, hybrid_index_lookup_ax  = axes
+    print(hybrid_index_update_data)
+
+    # fig, axes = plt.subplots(1, 7, figsize=(2 * DOUBLE_FIG_WIDTH, 3))
+    fig, axes = plt.subplots(1, 6, figsize=(1 * DOUBLE_FIG_WIDTH, 2.5))
     axes_iter = iter(axes)
 
     plot_hash_index_update(hash_index_update_data, next(axes_iter))
-    plot_aggregation(aggregation_data, next(axes_iter))
-    plot_index_update(index_update_data, next(axes_iter))
-    plot_hybrid_index_update(hybrid_index_update_data, next(axes_iter))
+    # plot_aggregation(aggregation_data, next(axes_iter))
     plot_hash_index_lookup(hash_index_lookup_data, next(axes_iter))
+    plot_index_update(index_update_data, next(axes_iter))
     plot_index_lookup(index_lookup_data, next(axes_iter))
+    plot_hybrid_index_update(hybrid_index_update_data, next(axes_iter))
     plot_hybrid_index_lookup(hybrid_index_lookup_data, next(axes_iter))
-
-    all_data = (hash_index_update_data, aggregation_data, index_update_data, hybrid_index_update_data,
-                hash_index_lookup_data, index_lookup_data, hybrid_index_lookup_data) 
-
-    dist = 0.1393
-    for i, data in enumerate(all_data, 1):
-        dram_sys = 'z-barlow-dram'
-        print('check dram values')
-        dram_y = int(data[dram_sys][THREAD_POS][1] / MILLION)
-        len_y = len(f"{dram_y}")
-        offset = -0.002 if len_y == 3 else 0
-        fig.text((i * dist) + offset, 0.58, dram_y, ha='left', color=SYSTEM_COLOR[dram_sys],
-                 bbox=dict(boxstyle='square,pad=0.05', fc='white', ec=SYSTEM_COLOR[dram_sys]))
-
 
     HATCH_WIDTH()
 
     FIG_LEGEND(fig)
-    # fig.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=3,
-    #            frameon=False, columnspacing=0.4, handletextpad=0.1,
-    #            borderpad=0.1, labelspacing=0.1, handlelength=1.8)
-    # fig.tight_layout()
 
+    fig.text(0.23, 0, "Hash Index", va='center', ha='center')
+    fig.text(0.53, 0, "Tree Index (PMem)", va='center', ha='center')
+    fig.text(0.85, 0, "Tree Index (Hybrid)", va='center', ha='center')
 
     for ax in axes:
         Y_GRID(ax)
         HIDE_BORDERS(ax)
 
-    plot_path = os.path.join(plot_dir, "custom_operations")
+    plot_path = os.path.join(plot_dir, "ops_to_dram")
     SAVE_PLOT(plot_path)
     PRINT_PLOT_PATHS()

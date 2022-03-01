@@ -46,7 +46,7 @@ def plot_data(system_data, ax, offset=0, label=False):
             
         diff = int((y_data / first_bar_y) * 100)
         if 'barlow-256' in system and offset == 0:
-            ax.text(pos + 0.17, y_data * 1.1 , f"{diff}\%", ha="center", va='top', rotation=90) #, color=SYSTEM_COLOR[system])
+            ax.text(pos + 0.16, y_data * 1.2 , f"{diff}\%", ha="center", va='top', rotation=90) #, color=SYSTEM_COLOR[system])
         else:
             ax.text(pos + 0.01, y_data + y_offset, f"{diff}\%", ha="center", va='bottom', rotation=90) #, color=SYSTEM_COLOR[system])
 
@@ -70,12 +70,12 @@ def plot_hash_index_lookup(system_data, ax):
     plot_data(DASH_LOOKUP, ax, offset=1)
 
     ax.set_ylim(0, 85)
-    ax.set_yticks(range(0, 86, 15))
+    ax.set_yticks(range(0, 86, 20))
     ax.set_title("b) Lookup")
 
 
 if __name__ == '__main__':
-    skip_dram = True
+    skip_dram = False
     show_prices = True
     result_path, plot_dir = INIT(sys.argv)
 
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     lookup_runs = get_runs_from_results(result_path, "hash_index_lookup", lookup_config, skip_dram=skip_dram)
     lookup_data = get_data_from_runs(lookup_runs, "number_threads", "ops_per_second")
 
-    fig, (update_ax, lookup_ax) = plt.subplots(1, 2, figsize=DOUBLE_FIG_SIZE)
+    fig, (update_ax, lookup_ax) = plt.subplots(1, 2, figsize=(DOUBLE_FIG_WIDTH, 2.7))
     plot_hash_index_update(update_data, update_ax)
     plot_hash_index_lookup(lookup_data, lookup_ax)
 

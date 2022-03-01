@@ -1,0 +1,174 @@
+LB+ TREE
+========
+
+number of worker threads is 16
+
+------------
+
+NVRAM04:
+
+rm -f /mnt/pmem2/lbtree && numactl -N 1 ./lbtree thread 16 mempool 10000 nvmpool /mnt/pmem2/lbtree 20000 bulkload 100000000 keygen-8B/k100m 0.7 lookup 100000000 keygen-8B/search100m
+nonleaf size= 256, leaf size= 256 --> 
+elapsed time:4578596 us
+
+nonleaf size= 512, leaf size= 256 --> 
+elapsed time:4393932 us
+
+nonleaf size= 1024, leaf size= 256 --> 
+elapsed time:4830572 us
+
+nonleaf size= 2048, leaf size= 256 --> 
+elapsed time:5749504 us
+
+NO PREFETCHER (for 1024 B)
+nonleaf size= 1024, leaf size= 256 --> 
+elapsed time:4649398 us
+
+--------
+256 INNER
+READ:  22709835.7766 ops/s
+WRITE: 14162018.9381 ops/s
+
+512 INNER
+READ:  23424370.3483 ops/s
+WRITE: 14552595.9815 ops/s
+
+1024 INNER
+READ:  21925044.3711 ops/s
+WRITE: 13819455.9598 ops/s
+
+
+===========================
+
+
+NVRAM05:
+
+rm -f /mnt/pmem2/lbtree && numactl -N 1 ./lbtree thread 16 mempool 10000 nvmpool /mnt/pmem2/lbtree 20000 bulkload 100000000 keygen-8B/k100m 0.7 lookup 100000000 keygen-8B/search100m
+
+nonleaf size= 256, leaf size= 256 --> 
+elapsed time:3191578 us
+
+nonleaf size= 512, leaf size= 256 --> 
+elapsed time:3430649 us
+
+nonleaf size= 1024, leaf size= 256 --> 
+elapsed time:3915096 us
+
+nonleaf size= 2048, leaf size= 256 --> 
+elapsed time:5208848 us
+
+NO PREFETCHER (for 512 B)
+nonleaf size= 512, leaf size= 256 --> 
+elapsed time:3428191 us
+
+------------
+256 INNER
+READ:  24845723.3507 ops/s
+WRITE: 24666271.6180 ops/s
+
+512 INNER
+READ:  25431021.5310 ops/s
+WRITE: 25756199.9443 ops/s
+
+1024 INNER
+READ:  24376899.0309 ops/s
+WRITE: 25153168.9003 ops/s
+
+
+-----------
+512 INNER | 256 LEAF | INERT ONLY | PERSIST
+32 threads: 28639002.7139 ops/s
+64 threads: 41241921.5272 ops/s
+
+512 INNER | 256 LEAF | INERT ONLY | SFENCE ONLY
+32 threads: 33791835.8562 ops/s
+64 threads: 45549468.8249 ops/s
+
+====================
+
+
+NVRAM01:
+
+rm -f /mnt/pmem2/lbtree && numactl -N 2,3 ./lbtree thread 16 mempool 10000 nvmpool /mnt/pmem2/lbtree 20000 bulkload 100000000 keygen-8B/k100m 0.7 lookup 100000000 keygen-8B/search100m
+
+nonleaf size= 256, leaf size= 256 --> 
+elapsed time:5163792 us
+
+nonleaf size= 512, leaf size= 256 --> 
+elapsed time:4937890 us
+
+nonleaf size= 1024, leaf size= 256 --> 
+elapsed time:5397106 us
+
+nonleaf size= 2048, leaf size= 256 --> 
+elapsed time:6447470 us
+
+NO PREFETCHER (for 1024 B)
+nonleaf size= 1024, leaf size= 256 --> 
+elapsed time:5361828 us
+
+
+
+=================
+
+NVRAM 512:
+
+rm -f /mnt/pmem0/lbtree && numactl -N 0 ./lbtree thread 16 mempool 10000 nvmpool /mnt/pmem0/lbtree 20000 bulkload 100000000 keygen-8B/k100m 0.7 lookup 100000000 keygen-8B/search100m
+
+nonleaf size= 256, leaf size= 256 --> 
+elapsed time:4727676 us
+
+nonleaf size= 512, leaf size= 256 --> 
+elapsed time:4616938 us
+
+nonleaf size= 1024, leaf size= 256 --> 
+elapsed time:5031748 us
+
+nonleaf size= 2048, leaf size= 256 --> 
+elapsed time:6051729 us
+
+NO PREFETCHER (for 1024 B)
+nonleaf size= 1024, leaf size= 256 --> 
+elapsed time:4869721 us
+
+
+
+
+================
+ 256 Byte inner: root is at 8 level
+ 512 Byte inner: root is at 6 level
+1024 Byte inner: root is at 5 level
+2048 Byte inner: root is at 4 level
+
+=====================
+
+
+lbtree_lookup:
+  matrix:
+    custom_operations:
+      - "rd_256,rd_256,rd_256,rd_256,rd_256,rp_256"  # root + 3 in cache, has 9 levels
+      - "rd_256,rd_256,rd_256,rd_256,rp_256"         # root + 4 in cache, has 9 levels
+      - "rd_512,rd_512,rd_512,rp_256"                # root + 3 in cache, has 7 levels
+      - "rd_1024,rd_1024,rd_1024,rp_256"             # root + 2 in cache, has 6 levels
+      - "rd_1024,rd_1024,rp_256"                     # root + 3 in cache, has 6 levels
+      - "rd_2048,rd_2048,rp_256"                     # root + 2 in cache, has 5 levels
+
+  args:
+    number_threads: 16
+    memory_range: 20G
+    dram_memory_range: 10G
+    number_operations: 100000000
+    exec_mode: custom
+
+
+
+===================
+mygen.sh >>
+
+#!/bin/bash
+# the following is for experiments
+# bulkload keys must be sorted
+./keygen 100000000 sort k100m
+
+# search keys are randomly ordered
+./keygen 100000000 random search100m

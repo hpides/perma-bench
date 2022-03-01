@@ -74,7 +74,7 @@ if __name__ == '__main__':
     b16_data = {system: data[0:4] for system, data in b_read_data.items()}
     b32_data = {system: data[4:] for system, data in b_read_data.items()}
 
-    fig, axes = plt.subplots(2, 2, figsize=(DOUBLE_FIG_WIDTH, 4))
+    fig, axes = plt.subplots(2, 2, figsize=(DOUBLE_FIG_WIDTH, 3.5))
     axes16, axes32  = axes
     (a16_ax, a32_ax) = axes16
     (b16_ax, b32_ax) = axes32

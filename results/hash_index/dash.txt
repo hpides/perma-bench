@@ -52,3 +52,27 @@ Barlow-256:
     gets/s:        56744399
     time in s:     1.762288
     pf off:        56484984
+
+
+========================
+
+SFENCE ONLY 500 + 200 mio
+16 threads, Time = 24.699267 s, throughput = 20243516.138425 ops/s, fastest = 20312602.007348, slowest = 20191721.200467
+32 threads, Time = 23.837302 s, throughput = 20975528.021883 ops/s, fastest = 21044253.750770, slowest = 20915883.969887
+
+EXPLICIT PERSIST 500 + 200 mio
+16 threads, Time = 30.676949 s, throughput = 16298882.916942 ops/s, fastest = 16344397.640627, slowest = 16243062.750330
+32 threads, Time = 24.095139 s, throughput = 20751073.053551 ops/s, fastest = 20799952.875627, slowest = 20696145.483637
+
+==========================
+
+SFENCE 100 + 100 mio
+16 threads, Time = 4.744520 s, throughput = 21076947.998387 ops/s, fastest = 21132574.997924, slowest = 21017896.739073
+32 threads, Time = 4.572742 s, throughput = 21868715.947590 ops/s, fastest = 22013441.847861, slowest = 21710491.464737
+64 threads, Time = 4.589948 s, throughput = 21786738.232017 ops/s, fastest = 22220444.586655, slowest = 21608282.886996
+
+
+PERSIST 100 + 100 mio
+16 threads, Time = 5.906645 s, throughput = 16930084.317534 ops/s, fastest = 16980358.988562, slowest = 16873436.570643
+32 threads, Time = 4.615178 s, throughput = 21667639.001967 ops/s, fastest = 21736111.005449, slowest = 21553851.651736
+64 threads, Time = 4.563366 s, throughput = 21913650.179103 ops/s, fastest = 21986889.217959, slowest = 21868735.973939

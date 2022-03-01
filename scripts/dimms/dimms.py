@@ -62,7 +62,7 @@ def plot_bm(system_data, ax, offset, x_offset=2, label=False):
         if x_offset != 0:
             if y_data == base_y: diff_str = "1x"
             else: diff_str = f"{(y_data / base_y):0.1f}x"
-            ax.text(pos, y_data + x_offset, diff_str, ha='center', 
+            ax.text(pos, y_data + x_offset, diff_str, ha='center', va='bottom',
                     rotation=90, color=DIMM_COLOR[system])
 
 
@@ -73,33 +73,33 @@ def plot_read(scan_data, index_data, ax):
 
     ax.set_xticks(BAR_X_TICKS_POS(0.8 / 4, 4, 2))
     ax.set_xticklabels(["Seq. Read", "Rnd. Read"])
-    ax.set_ylabel("Throughput (GB/s)")
-    ax.set_ylim(0, 44)
-    ax.set_yticks(range(0, 41, 10))
+    ax.set_ylabel("Throughput\n(GB/s)")
+    ax.set_ylim(0, 46)
+    ax.set_yticks(range(0, 46, 15))
     ax.set_xlabel("a) Read") #, fontweight='bold')
 
 def plot_write(seq_write_data, rnd_write_data, ax):
-    x_off=1.5
+    x_off=1
     plot_bm(seq_write_data, ax, 0, x_offset=x_off)
     plot_bm(rnd_write_data, ax, 1, x_offset=x_off)
 
     ax.set_xticks(BAR_X_TICKS_POS(0.8 / 4, 4, 2))
     ax.set_xticklabels(["Seq. Write", "Rnd. Write"])
-    ax.set_ylabel("Throughput (GB/s)")
+    ax.set_ylabel("Throughput\n(GB/s)")
     ax.set_ylim(0, 18)
     ax.set_yticks(range(0, 18, 5))
     ax.set_xlabel("b) Write") #, fontweight='bold')
 
 
 def plot_lat(latency_data, write_latency_data, ax):
-    x_off = 80
+    x_off = 60
     plot_bm(latency_data, ax, 0, x_offset=x_off)
     # plot_bm(write_latency_data, ax, 1)
     ax.set_xticks(BAR_X_TICKS_POS(0.8 / 4, 4, 1))
     ax.set_xticklabels(["64 Byte Read"])
     ax.set_ylabel("Latency (ns)")
     ax.set_ylim(0, 850)
-    ax.set_yticks(range(0, 900, 200))
+    ax.set_yticks(range(0, 900, 250))
     ax.set_xlabel("c) Latency") #, fontweight='bold')
 
 
@@ -152,7 +152,7 @@ if __name__ == '__main__':
     write_latency_runs = get_runs_from_results(result_path, "operation_latency", write_latency_config, skip_dram=skip_dram)
     write_latency_data = get_data_from_runs(write_latency_runs, "number_threads", "latency", "avg")
 
-    fig, axes = plt.subplots(1, 4, figsize=(2 * DOUBLE_FIG_WIDTH, DOUBLE_FIG_HEIGHT), gridspec_kw={'width_ratios': [2, 2, 1, 2]})
+    fig, axes = plt.subplots(1, 4, figsize=(2 * DOUBLE_FIG_WIDTH, 3), gridspec_kw={'width_ratios': [2, 2, 1, 2]})
     read_ax, write_ax, lat_ax, ops_ax = axes
 
     plot_read(scan_data, index_data, read_ax)

@@ -46,7 +46,7 @@ def plot_random(system_data, ax):
 
     for i, (system, data) in enumerate(sorted(system_data.items())):
         data = sorted(data, key=lambda op: ops.index(op[0]))
-        # print(system, data)
+        print(system, data)
         x_data, y_data = zip(*data)
         color = SYSTEM_COLOR[system]
         bar = BAR(system)

@@ -155,8 +155,8 @@ def merge_dict_max_value(dict1, dict2):
     res = {}
     for d in (dict1, dict2):
         for k, v in d.items():
-            res.setdefault(k, float('-inf'))
-            res[k] = max(res[k], v)
+            res.setdefault(k, float('+inf'))
+            res[k] = min(res[k], v)
     return res
 
 
@@ -168,6 +168,7 @@ def calc_prices(system_data, scale_factor=1):
         for _, value in data:
             max_value = max(max_value, (value / scale_factor))
         price_per_system[system] = round(system_price/max_value, 2)
+        # print(system, price_per_system[system], max_value)
 
     return price_per_system
 
