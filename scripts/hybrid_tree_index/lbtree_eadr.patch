@@ -1,0 +1,18 @@
+diff --git a/LB+-Tree/common/nvm-common.h b/LB+-Tree/common/nvm-common.h
+index e2c4fee..7fe423f 100644
+--- a/LB+-Tree/common/nvm-common.h
++++ b/LB+-Tree/common/nvm-common.h
+@@ -64,9 +64,10 @@
+  */
+ static inline void clwb(void *addr)
+ {
+-  asm volatile("clwb %0"
+-               :
+-               : "m"(*((char *)addr)));
++  return;
++  //asm volatile("clwb %0"
++  //             :
++  //             : "m"(*((char *)addr)));
+ }
+ 
+ /**
