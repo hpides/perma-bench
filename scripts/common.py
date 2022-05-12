@@ -172,6 +172,17 @@ def calc_prices(system_data, scale_factor=1):
 
     return price_per_system
 
+def calc_prices_min(system_data, scale_factor=100):
+    price_per_system = {}
+    for system, data in sorted(system_data.items()):
+        system_price = SYSTEM_PRICE[system]
+        min_value = sys.maxsize
+        for _, value in data:
+            min_value = min(min_value, (value / scale_factor))
+        price_per_system[system] = round(system_price * min_value, 2)
+
+    return price_per_system
+
 
 #######################################
 # Benchmark Results

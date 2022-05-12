@@ -133,7 +133,7 @@ if __name__ == '__main__':
     plot_write(write_data, write_ax)
 
     if (show_prices):
-        print("Latency prices", calc_prices(read_data))
+        print("Latency prices", calc_prices_min(read_data))
 
     read_ax.set_ylim(0, 1250)
     read_ax.set_yticks(range(0, 1251, 300))
