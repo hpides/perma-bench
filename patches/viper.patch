@@ -1,0 +1,91 @@
+index c05050c..3aa35e0 100644
+--- a/benchmark/all_ops_benchmark.cpp
++++ b/benchmark/all_ops_benchmark.cpp
+@@ -6,13 +6,13 @@
+ #include "benchmark.hpp"
+ #include "fixtures/common_fixture.hpp"
+ #include "fixtures/viper_fixture.hpp"
+-#include "fixtures/utree_fixture.hpp"
+-#include "fixtures/faster_fixture.hpp"
++//#include "fixtures/utree_fixture.hpp"
++//#include "fixtures/faster_fixture.hpp"
+ #include "fixtures/dash_fixture.hpp"
+-#include "fixtures/tbb_fixture.hpp"
+-#include "fixtures/crl_fixture.hpp"
+-#include "fixtures/pmem_kv_fixture.hpp"
+-#include "fixtures/rocksdb_fixture.hpp"
++//#include "fixtures/tbb_fixture.hpp"
++//#include "fixtures/crl_fixture.hpp"
++//#include "fixtures/pmem_kv_fixture.hpp"
++//#include "fixtures/rocksdb_fixture.hpp"
+
+ using namespace viper::kv_bm;
+
+@@ -28,8 +28,7 @@ constexpr size_t ALL_OPS_NUM_DELETES = 50'000'000;
+             ->Iterations(1) \
+             ->Unit(BM_TIME_UNIT) \
+             ->UseRealTime() \
+-            ->ThreadRange(1, NUM_MAX_THREADS) \
+-            ->Threads(24)
++            ->Threads(16)->Threads(32)->Threads(64)
+
+
+ #define DEFINE_BM(fixture, method) \
+@@ -45,9 +44,7 @@ constexpr size_t ALL_OPS_NUM_DELETES = 50'000'000;
+
+ #define ALL_BMS(fixture) \
+             BM_INSERT(fixture); \
+-            BM_FIND(fixture); \
+-            BM_UPDATE(fixture); \
+-            BM_DELETE(fixture)
++            BM_FIND(fixture);
+
+
+ void bm_insert(benchmark::State& state, BaseFixture& fixture) {
+diff --git a/benchmark/benchmark.hpp b/benchmark/benchmark.hpp
+index 81c798c..f4249d4 100644
+--- a/benchmark/benchmark.hpp
++++ b/benchmark/benchmark.hpp
+@@ -108,10 +108,10 @@ static constexpr char RESULT_FILE_DIR[] = "/hpi/fs00/home/lawrence.benson/clion/
+ static constexpr char CONFIG_DIR[] = "/hpi/fs00/home/lawrence.benson/clion/viper/benchmark/config/";
+ static constexpr size_t CPU_AFFINITY_OFFSET = 0;
+ #else
+-static constexpr char VIPER_POOL_FILE[] = "/dev/dax0.0";
+-static constexpr char DB_PMEM_DIR[] = "/mnt/pmem/";
++static constexpr char VIPER_POOL_FILE[] = "/mnt/pmem2/viper";
++static constexpr char DB_PMEM_DIR[] = "/mnt/pmem2/";
+ static constexpr char DB_FILE_DIR[] = "/home/user/data/";
+-static constexpr char RESULT_FILE_DIR[] = "/home/user/viper/results/";
++static constexpr char RESULT_FILE_DIR[] = "/scratch/lawrence.benson/viper/results/";
+ static constexpr char CONFIG_DIR[] = "/home/user/viper/benchmark/config/";
+ static constexpr size_t CPU_AFFINITY_OFFSET = 0;  // 0 or #logical-cpu-per-socket
+ //static_assert(false, "Need to set these variables for unknown host.");
+diff --git a/benchmark/fixtures/common_fixture.cpp b/benchmark/fixtures/common_fixture.cpp
+index 019b13b..c37cc99 100644
+--- a/benchmark/fixtures/common_fixture.cpp
++++ b/benchmark/fixtures/common_fixture.cpp
+@@ -170,24 +170,6 @@ bool is_init_thread(const benchmark::State& state) {
+ }
+
+ void set_cpu_affinity(const uint16_t from, const uint16_t to) {
+-    const uint16_t from_cpu = from + CPU_AFFINITY_OFFSET;
+-    const uint16_t to_cpu = to + CPU_AFFINITY_OFFSET;
+-    if (from_cpu >= CPUS.size() || to_cpu > CPUS.size() || from < 0 || to < 0 || to < from) {
+-        throw std::runtime_error("Thread range invalid! " +
+-                                 std::to_string(from) + " -> " + std::to_string(to) + " with cpu offset "
+-                                 + std::to_string(CPU_AFFINITY_OFFSET));
+-    }
+-
+-    const auto native_thread_handle = pthread_self();
+-    cpu_set_t cpuset;
+-    CPU_ZERO(&cpuset);
+-    for (int cpu = from_cpu; cpu < to_cpu; ++cpu) {
+-        CPU_SET(CPUS[cpu], &cpuset);
+-    }
+-    int rc = pthread_setaffinity_np(native_thread_handle, sizeof(cpu_set_t), &cpuset);
+-    if (rc != 0) {
+-        std::cerr << "Error calling pthread_setaffinity_np: " << rc << "\n";
+-    }
+ }
+
+ void set_cpu_affinity() {
